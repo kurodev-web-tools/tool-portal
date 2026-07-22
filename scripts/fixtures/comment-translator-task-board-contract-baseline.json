@@ -1,0 +1,688 @@
+{
+  "baseSha": "e465e6b99a4c9082cd5f95b96ba585c15c37ab4a",
+  "baselineTotal": 170,
+  "baselinePass": 43,
+  "baselineFail": 127,
+  "contracts": [
+    {
+      "path": "scripts/account-remote-display-settings-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/auth-provider-decision-spike-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/auth-recovery-session-hardening-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-abuse-rate-limit-hardening-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-account-integrations-entry-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-admin-operational-visibility-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-cloudflare-custom-rule-operations-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-creator-waitlist-admin-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-durable-persistence-readiness-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-durable-session-schema-adapter-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-filter-language-policy-runtime-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-allowed-tester-route-api-smoke-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g1-remote-durable-enforcement-execution-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g2a-server-action-route-api-harness-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g2b-allowed-tester-route-api-harness-smoke-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g2c-allowed-tester-route-api-harness-smoke-evidence-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g2d-route-api-harness-smoke-evidence-follow-up-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g2e-route-api-harness-smoke-execution-gate-after-pl-g2d-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g2f-route-api-harness-smoke-execution-gate-after-pl-g2e-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g2g-route-api-harness-smoke-execution-after-pl-g2f-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g2h-approved-route-api-harness-smoke-execution-after-pl-g2g-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g2i-approved-route-api-harness-smoke-execution-after-pl-g2h-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g2j-approved-route-api-harness-smoke-execution-after-pl-g2i-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g2k-approved-route-api-harness-smoke-execution-after-pl-g2j-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-diagnostic-boundary-after-pr535-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-empty-intake-polling-diagnostics-read-after-pr512-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-empty-provider-ok-next-page-cursor-diagnostics-after-pr516-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-empty-provider-ok-root-cause-triage-after-pr528-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-full-start-to-translation-continuation-after-pr540-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-next-page-target-selection-follow-up-after-pr513-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-operator-local-provider-permission-confirmation-after-pr504-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-operator-local-provider-permission-confirmation-output-after-pr505-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-polling-empty-intake-diagnostics-after-pr511-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-polling-sanitized-diagnostics-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-post-bridge-continuation-ready-preflight-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-provider-error-skip-readiness-after-pr536-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-provider-error-skip-readiness-after-pr537-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-provider-permission-readiness-follow-up-after-pl-g5-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-provider-permission-triage-preflight-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-provider-terminal-error-boundary-after-pr538-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-reset-confirm-boundary-after-pr546-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-sanitized-wrapper-after-pr533-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr531-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-start-to-translation-continuation-after-pr534-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-start-to-translation-rerun-fresh-chat-after-pr510-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-start-to-translation-retry-after-pr507-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-start-to-translation-retry-after-pr509-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-start-to-translation-retry-after-pr515-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-completion-after-pl-g2k-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-start-to-translation-smoke-evidence-follow-up-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-target-selection-diagnostics-after-pr514-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g3-token-material-availability-after-pr508-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g4-production-custom-deployed-smoke-evidence-follow-up-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-evidence-follow-up-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-pl-g6-public-access-change-preflight-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-production-custom-deployed-smoke-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-public-launch-gate-decision-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-public-usability-preflight-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-remote-durable-enforcement-evidence-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-retention-attribution-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-step5-evidence-docs-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-beta-usage-display-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-free-limits-public-copy-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-free-public-beta-final-qa-readiness-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-interactive-shell-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-live-message-normalization-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-manual-input-mvp-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-mock-foundation-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-monitoring-incident-readiness-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-monthly-input-character-accounting-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-oauth-live-connect-smoke-preflight-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-obs-dock-display-name-policy-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-operator-ui-flow-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-operator-ux-readiness-polish-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-pl-g6d-preview-rate-limit-smoke-override-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-portal-admin-navigation-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-preview-author-display-name-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-private-gated-live-provider-smoke-readiness-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-private-gated-production-smoke-evidence-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-private-launch-access-gate-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-production-env-readiness-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-provider-boundary-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-provider-cost-policy-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-provider-execution-runtime-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-provider-implementation-alignment-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-provider-legal-copy-refresh-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-public-beta-access-gate-decision-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-public-deployment-runbook-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-public-entitlement-baseline-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-public-operator-session-ui-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-public-preview-feed-ux-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-public-release-final-qa-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-public-ui-cleanup-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-real-comments-ui-wiring-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-security-privacy-final-review-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-server-only-live-chat-target-lookup-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-session-start-stop-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-shared-timezone-preference-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-start-stop-reason-ux-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-stop-preview-retention-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-stripe-live-readiness-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-stripe-paid-plan-integration-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-supabase-current-grant-drift-readonly-triage-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-supabase-current-grant-remediation-apply-preflight-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-supabase-current-grant-remediation-approval-preflight-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-supabase-db-auth-rls-security-audit-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-supabase-default-privileges-guard-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-supabase-default-privileges-managed-owner-blocker-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-supabase-default-privileges-owner-specific-remediation-preflight-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-supabase-default-privileges-permission-capable-apply-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-supabase-default-privileges-privileged-apply-path-preflight-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-supabase-default-privileges-remediation-apply-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-supabase-default-privileges-remediation-execution-preflight-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-supabase-default-privileges-remote-remediation-approval-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-supabase-default-privileges-risk-acceptance-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-supabase-default-privileges-support-pending-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-supabase-remote-readonly-posture-check-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-api-adapter-token-reference-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-bounded-polling-session-runtime-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-client-safe-credential-reference-source-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-credential-reference-surface-approval-evidence-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-credential-reference-surface-source-recheck-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-credential-source-decision-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-credential-status-display-readiness-after-payload-source-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-credential-status-ui-wiring-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-disconnect-revocation-runtime-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-input-boundary-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-live-comment-intake-pipeline-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-live-runtime-smoke-command-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-new-client-payload-credential-reference-source-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-oauth-account-status-wiring-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-oauth-allowed-tester-connection-smoke-readiness-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-oauth-allowed-tester-session-start-smoke-readiness-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-oauth-connect-callback-implementation-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-oauth-connect-callback-readiness-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-oauth-integration-final-qa-promotion-readiness-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-oauth-token-store-foundation-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-oauth-token-store-persistence-wiring-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-oauth-tool-credential-source-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-oauth-ui-polish-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-runtime-foundation-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-surfaced-credential-reference-source-gate-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-token-refresh-reconnect-status-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-token-store-approved-migration-proposal-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-token-store-blocker-resolution-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-token-store-explicit-approval-collection-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-token-store-remote-apply-run-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-token-store-schema-key-approval-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-token-store-separate-approved-migration-pr-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-token-store-separate-migration-readiness-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-token-store-service-role-smoke-readiness-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/comment-translator-youtube-token-store-supabase-adapter-status-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/preference-classification-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/site-tips-dialog-contract.mjs",
+      "status": "FAIL"
+    },
+    {
+      "path": "scripts/supabase-auth-boundary-design-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/supabase-auth-first-slice-contract.mjs",
+      "status": "PASS"
+    },
+    {
+      "path": "scripts/viewer-engagement-prompt-board-governance-contract.mjs",
+      "status": "PASS"
+    }
+  ]
+}

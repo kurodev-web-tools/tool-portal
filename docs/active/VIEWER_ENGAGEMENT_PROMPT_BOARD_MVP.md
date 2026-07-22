@@ -12,12 +12,14 @@ Date: 2026-07-18
 | `comment_translator_priority` | `P0` |
 | `mvp_price` | `free` |
 | `login_requirement` | `none` |
-| `runtime_implementation_status` | `pr-658-merged-preview-public-entry-localization-post-merge-readiness-pass` |
+| `runtime_implementation_status` | `mvp-complete-pr-660-and-pr-663-merged-main-post-mvp-active` |
 | `preview_branch` | `codex/viewer-engagement-prompt-board-preview` |
-| `promotion_target` | `main-after-mvp-readiness` |
+| `main_promotion_status` | `pr-660-merged-main` |
+| `delete_dialog_follow_up_status` | `pr-663-merged-main` |
+| `post_mvp_development_status` | `active-candidates-remain` |
 | `shared_portal_sidebar_scope` | `workspace-common-expanded-rail` |
 
-Comment Translator FreeはGoogle OAuth承認、edge readiness reconciliation、no-mutation final public release declaration、final production/main-domain smokeまで完了し、`public_release_capable=yes`である。この文書と配信カンペボードのlocal integrationはComment Translatorのruntime、release gate、Google Auth、Cloudflare、Worker binding、環境変数、deploy、public release declarationを変更しない。
+PR #660のMVP promotionとPR #663のdelete-dialog follow-upは`main`へmerge済みで、配信カンペボードMVPは完了している。MVP完了は製品開発終了を意味せず、既存のpost-MVP候補と将来連携flowはこのactive authorityで継続する。Comment Translator FreeはGoogle OAuth承認、edge readiness reconciliation、no-mutation final public release declaration、final production/main-domain smokeまで完了し、`public_release_capable=yes`である。このstatus reconciliationはComment Translatorのruntime、release gate、Google Auth、Cloudflare、Worker binding、環境変数、deploy、public release declarationを変更しない。
 
 ## MVP Purpose
 

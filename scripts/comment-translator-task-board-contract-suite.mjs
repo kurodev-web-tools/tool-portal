@@ -317,6 +317,26 @@ function runSelfTest() {
   assert.equal(missing.exitCode, 1);
   assert.ok(missing.emitted.some((line) => line.startsWith("MISSING_BASELINE ")));
 
+  const regression = executeBehaviorFixture({
+    prepare: (fixture) => fs.writeFileSync(path.join(fixture.fixtureRoot, fixture.baselinePath), "void 'task.md'; process.exitCode = 1;", "utf8"),
+    modifiedPaths: () => [],
+  });
+  assert.equal(regression.exitCode, 1);
+  assert.equal(regression.contractRuns, 2);
+  assert.equal(regression.counts.regressions, 1);
+  assert.equal(regression.counts.executionErrors, 0);
+  assert.equal(regression.emitted.filter((line) => line === "REGRESSION scripts/baseline-contract.mjs").length, 1);
+  assert.equal(regression.emitted.at(-1), summaryLine(1, 1, regression.counts));
+
+  const recovered = executeBehaviorFixture({ baselineStatus: "FAIL" });
+  assert.equal(recovered.exitCode, 0);
+  assert.equal(recovered.contractRuns, 2);
+  assert.equal(recovered.counts.regressions, 0);
+  assert.equal(recovered.counts.baselineFail, 0);
+  assert.equal(recovered.counts.executionErrors, 0);
+  assert.equal(recovered.emitted.filter((line) => line === "RECOVERED scripts/baseline-contract.mjs").length, 1);
+  assert.equal(recovered.emitted.at(-1), summaryLine(1, 0, recovered.counts));
+
   const focusedFailure = executeBehaviorFixture({
     prepare: (fixture) => fs.writeFileSync(path.join(fixture.fixtureRoot, fixture.focusedPath), "void 'task.md'; process.exitCode = 1;", "utf8"),
   });

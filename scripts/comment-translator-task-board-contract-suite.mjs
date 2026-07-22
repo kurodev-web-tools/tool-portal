@@ -104,11 +104,40 @@ function remoteRefsDigest() {
   return sha256(git(["for-each-ref", "--format=%(refname)%00%(objectname)%00", "refs/remotes"]));
 }
 
-function changedPathSnapshot(cwd = root, comparisonRef = baseSha) {
-  const tracked = gitPaths(["diff", "--name-only", "-z", comparisonRef, "--"], cwd);
-  const untracked = gitPaths(["ls-files", "--others", "--exclude-standard", "-z", "--"], cwd);
-  const changed = [...new Set([...tracked, ...untracked])].sort((left, right) => left.localeCompare(right, "en"));
-  return { changed, digest: sha256(changed.map((entry) => `${entry}\0`).join("")) };
+function contentMarker(cwd, relativePath, status) {
+  const target = path.join(cwd, relativePath);
+  if (status === "D") return "tombstone";
+  let fileStat;
+  try {
+    fileStat = fs.lstatSync(target);
+  } catch (error) {
+    if (error?.code === "ENOENT") return "tombstone";
+    throw error;
+  }
+  if (fileStat.isSymbolicLink()) return `symlink-sha256:${sha256(fs.readlinkSync(target))}`;
+  if (fileStat.isFile()) return `file-sha256:${fileSha256(target)}`;
+  if (fileStat.isDirectory()) return "directory";
+  return "other";
+}
+
+function changedContentSnapshot(cwd = root, comparisonRef = baseSha) {
+  const trackedFields = git(["diff", "--name-status", "--no-renames", "-z", comparisonRef, "--"], cwd)
+    .split("\0").filter(Boolean);
+  assert.equal(trackedFields.length % 2, 0);
+  const entries = [];
+  for (let index = 0; index < trackedFields.length; index += 2) {
+    entries.push({ status: trackedFields[index], path: trackedFields[index + 1].split(path.sep).join("/") });
+  }
+  for (const relativePath of gitPaths(["ls-files", "--others", "--exclude-standard", "-z", "--"], cwd)) {
+    entries.push({ status: "??", path: relativePath });
+  }
+  entries.sort((left, right) => left.path.localeCompare(right.path, "en") || left.status.localeCompare(right.status, "en"));
+  const records = entries.map((entry) => ({
+    ...entry,
+    marker: contentMarker(cwd, entry.path, entry.status),
+  }));
+  const canonical = records.map((entry) => `${entry.status}\0${entry.path}\0${entry.marker}\n`).join("");
+  return { changed: records.map((entry) => entry.path), records, digest: sha256(canonical) };
 }
 
 function overlaySourceSnapshot(cwd = root) {
@@ -122,14 +151,14 @@ function sourceSnapshotDriftCount(before, after) {
   return before.reduce((count, hash, index) => count + Number(hash !== after[index]), 0);
 }
 
-function pathSnapshotDriftCount(before, after) {
-  const beforePaths = new Set(before.changed);
-  const afterPaths = new Set(after.changed);
-  return [...new Set([...beforePaths, ...afterPaths])]
-    .reduce((count, entry) => count + Number(beforePaths.has(entry) !== afterPaths.has(entry)), 0);
+function contentSnapshotDriftCount(before, after) {
+  const beforeRecords = new Map(before.records.map((entry) => [entry.path, `${entry.status}\0${entry.marker}`]));
+  const afterRecords = new Map(after.records.map((entry) => [entry.path, `${entry.status}\0${entry.marker}`]));
+  return [...new Set([...beforeRecords.keys(), ...afterRecords.keys()])]
+    .reduce((count, entry) => count + Number(beforeRecords.get(entry) !== afterRecords.get(entry)), 0);
 }
 
-function currentScope(manifestPaths, snapshot = changedPathSnapshot()) {
+function currentScope(manifestPaths, snapshot = changedContentSnapshot()) {
   const { changed } = snapshot;
   return {
     unexpected: changed.filter((entry) => !approvedCurrentPaths.has(entry)),
@@ -218,7 +247,7 @@ function runComparator() {
   const manifest = readManifest();
   const summary = emptySummary();
   const sourceSnapshotBefore = overlaySourceSnapshot();
-  const scopeSnapshotBefore = changedPathSnapshot();
+  const scopeSnapshotBefore = changedContentSnapshot();
   const scope = currentScope(new Set(manifest.contracts.map((entry) => entry.path)), scopeSnapshotBefore);
   summary.baselineScriptsModified = scope.baselineModified.length;
   summary.unexpectedCurrentPaths = scope.unexpected.length;
@@ -325,8 +354,8 @@ function runComparator() {
     summary.sourceSnapshotUnchanged = false;
   }
   try {
-    const scopeSnapshotAfter = changedPathSnapshot();
-    summary.currentScopeSnapshotDriftCount = pathSnapshotDriftCount(scopeSnapshotBefore, scopeSnapshotAfter);
+    const scopeSnapshotAfter = changedContentSnapshot();
+    summary.currentScopeSnapshotDriftCount = contentSnapshotDriftCount(scopeSnapshotBefore, scopeSnapshotAfter);
     summary.currentScopeSnapshotUnchanged = scopeSnapshotAfter.digest === scopeSnapshotBefore.digest
       && summary.currentScopeSnapshotDriftCount === 0;
   } catch {
@@ -372,11 +401,14 @@ function runSelfTest() {
     git(["init", "-q"], fixtureRoot);
     git(["config", "user.email", "overlay-fixture@example.invalid"], fixtureRoot);
     git(["config", "user.name", "Overlay Fixture"], fixtureRoot);
+    const nonOverlaySnapshotPath = "docs/superpowers/specs/snapshot-fixture.md";
     for (const relativePath of trackedOverlayPaths) {
       fs.mkdirSync(path.dirname(path.join(fixtureRoot, relativePath)), { recursive: true });
       fs.writeFileSync(path.join(fixtureRoot, relativePath), "base\n", "utf8");
     }
-    git(["add", "--", ...trackedOverlayPaths], fixtureRoot);
+    fs.mkdirSync(path.dirname(path.join(fixtureRoot, nonOverlaySnapshotPath)), { recursive: true });
+    fs.writeFileSync(path.join(fixtureRoot, nonOverlaySnapshotPath), "base\n", "utf8");
+    git(["add", "--", ...trackedOverlayPaths, nonOverlaySnapshotPath], fixtureRoot);
     git(["commit", "-q", "-m", "base"], fixtureRoot);
     const changedOverlaySource = path.join(fixtureRoot, "changed-overlay-source.md");
     const unchangedOverlaySource = path.join(fixtureRoot, "unchanged-overlay-source.md");
@@ -415,10 +447,11 @@ function runSelfTest() {
     );
     for (const relativePath of newOverlayPaths) assert.ok(fs.existsSync(path.join(fixtureRoot, relativePath)));
 
+    fs.writeFileSync(path.join(fixtureRoot, nonOverlaySnapshotPath), "approved change\n", "utf8");
     const fixtureSourceSnapshot = overlaySourceSnapshot(fixtureRoot);
-    const fixtureScopeSnapshot = changedPathSnapshot(fixtureRoot, "HEAD");
+    const fixtureScopeSnapshot = changedContentSnapshot(fixtureRoot, "HEAD");
     assert.equal(sourceSnapshotDriftCount(fixtureSourceSnapshot, overlaySourceSnapshot(fixtureRoot)), 0);
-    assert.equal(changedPathSnapshot(fixtureRoot, "HEAD").digest, fixtureScopeSnapshot.digest);
+    assert.equal(changedContentSnapshot(fixtureRoot, "HEAD").digest, fixtureScopeSnapshot.digest);
 
     fs.appendFileSync(path.join(fixtureRoot, trackedOverlayPaths[0]), "mid-run mutation\n", "utf8");
     const mutationDriftCount = sourceSnapshotDriftCount(fixtureSourceSnapshot, overlaySourceSnapshot(fixtureRoot));
@@ -432,9 +465,31 @@ function runSelfTest() {
     git(["add", "--", trackedOverlayPaths[0]], fixtureRoot);
     assert.equal(sourceSnapshotDriftCount(fixtureSourceSnapshot, overlaySourceSnapshot(fixtureRoot)), 0);
 
+    fs.writeFileSync(path.join(fixtureRoot, nonOverlaySnapshotPath), "mid-run non-overlay mutation\n", "utf8");
+    const nonOverlayMutationSnapshot = changedContentSnapshot(fixtureRoot, "HEAD");
+    const nonOverlayMutationCount = contentSnapshotDriftCount(fixtureScopeSnapshot, nonOverlayMutationSnapshot);
+    assert.deepEqual(nonOverlayMutationSnapshot.changed, fixtureScopeSnapshot.changed);
+    assert.notEqual(nonOverlayMutationSnapshot.digest, fixtureScopeSnapshot.digest);
+    assert.equal(nonOverlayMutationCount, 1);
+    assert.equal(finalExit({
+      ...success,
+      currentScopeSnapshotDriftCount: nonOverlayMutationCount,
+      currentScopeSnapshotUnchanged: false,
+    }), 1);
+    fs.writeFileSync(path.join(fixtureRoot, nonOverlaySnapshotPath), "approved change\n", "utf8");
+    assert.equal(changedContentSnapshot(fixtureRoot, "HEAD").digest, fixtureScopeSnapshot.digest);
+
+    fs.unlinkSync(path.join(fixtureRoot, nonOverlaySnapshotPath));
+    const deletionSnapshot = changedContentSnapshot(fixtureRoot, "HEAD");
+    const deletionRecord = deletionSnapshot.records.find((entry) => entry.path === nonOverlaySnapshotPath);
+    assert.deepEqual(deletionRecord, { status: "D", path: nonOverlaySnapshotPath, marker: "tombstone" });
+    assert.equal(contentSnapshotDriftCount(fixtureScopeSnapshot, deletionSnapshot), 1);
+    fs.writeFileSync(path.join(fixtureRoot, nonOverlaySnapshotPath), "approved change\n", "utf8");
+    assert.equal(changedContentSnapshot(fixtureRoot, "HEAD").digest, fixtureScopeSnapshot.digest);
+
     fs.writeFileSync(path.join(fixtureRoot, "scope-drift.md"), "mid-run path mutation\n", "utf8");
-    const mutatedScopeSnapshot = changedPathSnapshot(fixtureRoot, "HEAD");
-    const scopeMutationDriftCount = pathSnapshotDriftCount(fixtureScopeSnapshot, mutatedScopeSnapshot);
+    const mutatedScopeSnapshot = changedContentSnapshot(fixtureRoot, "HEAD");
+    const scopeMutationDriftCount = contentSnapshotDriftCount(fixtureScopeSnapshot, mutatedScopeSnapshot);
     assert.notEqual(mutatedScopeSnapshot.digest, fixtureScopeSnapshot.digest);
     assert.equal(scopeMutationDriftCount, 1);
     assert.equal(finalExit({

@@ -18,6 +18,8 @@ const overlayPaths = [
   "docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md",
   "docs/archive/TASK_LEGACY_CONTRACT_LEDGER_2026-07-22.md",
 ];
+const trackedOverlayPaths = overlayPaths.slice(0, 2);
+const newOverlayPaths = overlayPaths.slice(2);
 const approvedCurrentPaths = new Set([
   ...overlayPaths,
   "docs/superpowers/specs/2026-07-22-comment-translator-task-board-cleanup-design.md",
@@ -35,8 +37,8 @@ function fileSha256(filePath) {
   return sha256(fs.readFileSync(filePath));
 }
 
-function run(command, args, cwd = root, stdio = ["ignore", "pipe", "ignore"]) {
-  const result = spawnSync(command, args, { cwd, encoding: "utf8", stdio, timeout: timeoutMs, windowsHide: true });
+function run(command, args, cwd = root, stdio = ["ignore", "pipe", "ignore"], env = process.env) {
+  const result = spawnSync(command, args, { cwd, encoding: "utf8", env, stdio, timeout: timeoutMs, windowsHide: true });
   assert.equal(result.status, 0);
   assert.equal(result.error, undefined);
   return result.stdout ?? "";
@@ -48,6 +50,24 @@ function git(args, cwd = root) {
 
 function normalizedGitPaths(args) {
   return git(args).split("\0").filter(Boolean).map((entry) => entry.split(path.sep).join("/"));
+}
+
+function gitPaths(args, cwd) {
+  return git(args, cwd).split("\0").filter(Boolean).map((entry) => entry.split(path.sep).join("/"));
+}
+
+function childContractEnvironment(excludeFile) {
+  return {
+    ...process.env,
+    GIT_CONFIG_COUNT: "1",
+    GIT_CONFIG_KEY_0: "core.excludesFile",
+    GIT_CONFIG_VALUE_0: excludeFile.split(path.sep).join("/"),
+  };
+}
+
+function gitPathsWithEnvironment(args, cwd, env) {
+  return run("git", args, cwd, ["ignore", "pipe", "ignore"], env)
+    .split("\0").filter(Boolean).map((entry) => entry.split(path.sep).join("/"));
 }
 
 function readManifest() {
@@ -108,13 +128,14 @@ function emptySummary() {
     overlayHashMismatches: 0,
     unexpectedCurrentPaths: 0,
     executionErrors: 0,
+    baselineExecuted: 0,
     remoteRefsUnchanged: true,
     temporaryWorktreeCleanup: "pass",
   };
 }
 
 function summaryLine(summary) {
-  return `baseline_total=170 baseline_pass=43 preserved_pass=${summary.preservedPass} content_regressions=${summary.contentRegressions} baseline_fail=${summary.baselineFail} recovered=${summary.recovered} baseline_scripts_modified=${summary.baselineScriptsModified} overlay_hash_mismatches=${summary.overlayHashMismatches} unexpected_current_paths=${summary.unexpectedCurrentPaths} remote_refs_unchanged=${summary.remoteRefsUnchanged} temporary_worktree_cleanup=${summary.temporaryWorktreeCleanup} execution_errors=${summary.executionErrors}`;
+  return `baseline_total=170 baseline_pass=43 baseline_executed=${summary.baselineExecuted} preserved_pass=${summary.preservedPass} content_regressions=${summary.contentRegressions} baseline_fail=${summary.baselineFail} recovered=${summary.recovered} baseline_scripts_modified=${summary.baselineScriptsModified} overlay_hash_mismatches=${summary.overlayHashMismatches} unexpected_current_paths=${summary.unexpectedCurrentPaths} remote_refs_unchanged=${summary.remoteRefsUnchanged} temporary_worktree_cleanup=${summary.temporaryWorktreeCleanup} execution_errors=${summary.executionErrors}`;
 }
 
 function classifyContent(status, passed) {
@@ -123,7 +144,10 @@ function classifyContent(status, passed) {
 }
 
 function finalExit(summary) {
-  return summary.contentRegressions > 0
+  return summary.baselineExecuted !== 170
+    || summary.preservedPass + summary.contentRegressions !== 43
+    || summary.baselineFail + summary.recovered !== 127
+    || summary.contentRegressions > 0
     || summary.baselineScriptsModified > 0
     || summary.overlayHashMismatches > 0
     || summary.unexpectedCurrentPaths > 0
@@ -132,17 +156,19 @@ function finalExit(summary) {
     || summary.executionErrors > 0 ? 1 : 0;
 }
 
-function runContentContracts(manifest, temporaryRoot, summary) {
+function runContentContracts(manifest, temporaryRoot, summary, env) {
   for (const entry of manifest.contracts) {
     const result = spawnSync(process.execPath, [path.join(temporaryRoot, entry.path)], {
       cwd: temporaryRoot,
       encoding: "utf8",
+      env,
       stdio: "ignore",
       timeout: timeoutMs,
       windowsHide: true,
     });
     const passed = result.status === 0 && result.error === undefined;
     const classification = classifyContent(entry.status, passed);
+    summary.baselineExecuted += 1;
     console.log(`${classification} ${entry.path}`);
     if (classification === "PRESERVED_PASS") summary.preservedPass += 1;
     if (classification === "CONTENT_REGRESSION") summary.contentRegressions += 1;
@@ -175,17 +201,28 @@ function runComparator() {
 
   const refsBefore = remoteRefsDigest();
   const temporaryRoot = path.join(worktreesRoot, `task-board-content-${process.pid}-${randomUUID()}`);
+  const excludeFile = `${temporaryRoot}.exclude`;
   const dependencyLink = path.join(temporaryRoot, "node_modules");
   let worktreeCreated = false;
   let junctionCreated = false;
+  let contentLaneStage = "worktree-create";
   try {
     assert.ok(safeTemporaryPath(temporaryRoot));
     git(["worktree", "add", "--detach", temporaryRoot, baseSha]);
     worktreeCreated = true;
     assert.equal(git(["rev-parse", "HEAD"], temporaryRoot).trim(), baseSha);
+    contentLaneStage = "baseline-presence";
     const basePaths = manifest.contracts.map((entry) => entry.path);
     for (const entry of basePaths) assert.ok(fs.existsSync(path.join(temporaryRoot, entry)));
+    assert.deepEqual(
+      gitPaths(["ls-files", "-z", "--error-unmatch", "--", ...trackedOverlayPaths], temporaryRoot).sort(),
+      [...trackedOverlayPaths].sort(),
+    );
 
+    contentLaneStage = "overlay-copy";
+    const expectedStagedOverlays = trackedOverlayPaths.filter((relativePath) => (
+      fileSha256(path.join(root, relativePath)) !== fileSha256(path.join(temporaryRoot, relativePath))
+    ));
     for (const relativePath of overlayPaths) {
       const source = path.join(root, relativePath);
       const destination = path.join(temporaryRoot, relativePath);
@@ -198,22 +235,43 @@ function runComparator() {
       fs.copyFileSync(source, destination);
       if (fileSha256(destination) !== sourceHash) summary.overlayHashMismatches += 1;
     }
-    git(["add", "--", ...overlayPaths], temporaryRoot);
+    contentLaneStage = "overlay-index";
+    git(["add", "--", ...trackedOverlayPaths], temporaryRoot);
+    const stagedOverlays = gitPaths(["diff", "--cached", "--name-only", "-z"], temporaryRoot)
+      .filter((entry) => overlayPaths.includes(entry))
+      .sort((left, right) => left.localeCompare(right, "en"));
+    const untrackedOverlays = gitPaths(["ls-files", "--others", "--exclude-standard", "-z", "--"], temporaryRoot)
+      .filter((entry) => overlayPaths.includes(entry))
+      .sort((left, right) => left.localeCompare(right, "en"));
+    assert.deepEqual(stagedOverlays, expectedStagedOverlays.sort((left, right) => left.localeCompare(right, "en")));
+    assert.deepEqual(untrackedOverlays, [...newOverlayPaths].sort((left, right) => left.localeCompare(right, "en")));
+    fs.writeFileSync(excludeFile, `${newOverlayPaths.join("\n")}\n`, "utf8");
+    const childEnv = childContractEnvironment(excludeFile);
+    assert.deepEqual(
+      gitPathsWithEnvironment(["ls-files", "--others", "--exclude-standard", "-z", "--"], temporaryRoot, childEnv)
+        .filter((entry) => overlayPaths.includes(entry)),
+      [],
+    );
 
+    contentLaneStage = "runtime-pins";
     assert.equal(process.version, pinnedNodeVersion);
     assert.equal(fileSha256(path.join(root, "package-lock.json")), pinnedPackageLockSha256);
     assert.equal(fileSha256(path.join(temporaryRoot, "package-lock.json")), pinnedPackageLockSha256);
     assert.ok(fs.existsSync(path.join(root, "node_modules")));
+    contentLaneStage = "dependency-link";
     fs.symlinkSync(path.join(root, "node_modules"), dependencyLink, "junction");
     junctionCreated = true;
-    if (summary.overlayHashMismatches === 0) runContentContracts(manifest, temporaryRoot, summary);
+    contentLaneStage = "contract-execution";
+    if (summary.overlayHashMismatches === 0) runContentContracts(manifest, temporaryRoot, summary, childEnv);
   } catch {
     summary.executionErrors += 1;
-    console.log("FAIL content_lane_setup_or_execution exit=1");
+    console.log(`FAIL content_lane_${contentLaneStage} exit=1`);
   } finally {
     try {
       if (junctionCreated && fs.existsSync(dependencyLink)) fs.unlinkSync(dependencyLink);
       junctionCreated = false;
+      if (fs.existsSync(excludeFile)) fs.unlinkSync(excludeFile);
+      assert.equal(fs.existsSync(excludeFile), false);
       assert.ok(safeTemporaryPath(temporaryRoot));
       if (worktreeCreated) {
         assert.equal(git(["rev-parse", "HEAD"], temporaryRoot).trim(), baseSha);
@@ -235,9 +293,12 @@ function runComparator() {
 
 function runSelfTest() {
   const success = emptySummary();
+  success.baselineExecuted = 170;
   success.preservedPass = 43;
   success.baselineFail = 127;
   assert.equal(finalExit(success), 0);
+  assert.equal(finalExit(emptySummary()), 1);
+  assert.equal(finalExit({ ...success, baselineExecuted: 169 }), 1);
   for (const mutation of [
     { contentRegressions: 1 },
     { overlayHashMismatches: 1 },
@@ -251,27 +312,61 @@ function runSelfTest() {
   assert.equal(classifyContent("FAIL", true), "RECOVERED");
   assert.ok(summaryLine(success).includes("remote_refs_unchanged=true"));
   const fixtureRoot = path.join(worktreesRoot, `task-overlay-stage-${process.pid}-${randomUUID()}`);
+  const fixtureExcludeFile = `${fixtureRoot}.exclude`;
   assert.equal(fs.existsSync(fixtureRoot), false);
   fs.mkdirSync(fixtureRoot, { recursive: false });
   try {
     git(["init", "-q"], fixtureRoot);
     git(["config", "user.email", "overlay-fixture@example.invalid"], fixtureRoot);
     git(["config", "user.name", "Overlay Fixture"], fixtureRoot);
-    fs.writeFileSync(path.join(fixtureRoot, "task.md"), "base\n", "utf8");
-    git(["add", "--", "task.md"], fixtureRoot);
+    for (const relativePath of trackedOverlayPaths) {
+      fs.mkdirSync(path.dirname(path.join(fixtureRoot, relativePath)), { recursive: true });
+      fs.writeFileSync(path.join(fixtureRoot, relativePath), "base\n", "utf8");
+    }
+    git(["add", "--", ...trackedOverlayPaths], fixtureRoot);
     git(["commit", "-q", "-m", "base"], fixtureRoot);
-    const overlaySource = path.join(fixtureRoot, "overlay-source.md");
-    fs.writeFileSync(overlaySource, "overlay\n", "utf8");
-    const sourceHash = fileSha256(overlaySource);
-    fs.copyFileSync(overlaySource, path.join(fixtureRoot, "task.md"));
-    assert.equal(fileSha256(path.join(fixtureRoot, "task.md")), sourceHash);
-    git(["add", "--", "task.md"], fixtureRoot);
+    const changedOverlaySource = path.join(fixtureRoot, "changed-overlay-source.md");
+    const unchangedOverlaySource = path.join(fixtureRoot, "unchanged-overlay-source.md");
+    fs.writeFileSync(changedOverlaySource, "overlay\n", "utf8");
+    fs.writeFileSync(unchangedOverlaySource, "base\n", "utf8");
+    for (const relativePath of overlayPaths) {
+      const destination = path.join(fixtureRoot, relativePath);
+      const source = relativePath === trackedOverlayPaths[1] ? unchangedOverlaySource : changedOverlaySource;
+      fs.mkdirSync(path.dirname(destination), { recursive: true });
+      fs.copyFileSync(source, destination);
+      assert.equal(fileSha256(destination), fileSha256(source));
+    }
+    git(["add", "--", ...trackedOverlayPaths], fixtureRoot);
     assert.equal(git(["diff", "--name-only"], fixtureRoot).trim(), "");
-    assert.equal(git(["diff", "--cached", "--name-only"], fixtureRoot).trim(), "task.md");
+    assert.deepEqual(
+      gitPaths(["diff", "--cached", "--name-only", "-z"], fixtureRoot).sort(),
+      [trackedOverlayPaths[0]],
+    );
+    assert.deepEqual(
+      gitPaths(["ls-files", "--others", "--exclude-standard", "-z", "--"], fixtureRoot)
+        .filter((entry) => overlayPaths.includes(entry)).sort(),
+      [...newOverlayPaths].sort(),
+    );
+    const originalConfigCount = process.env.GIT_CONFIG_COUNT;
+    fs.writeFileSync(fixtureExcludeFile, `${newOverlayPaths.join("\n")}\n`, "utf8");
+    const childEnv = childContractEnvironment(fixtureExcludeFile);
+    assert.equal(process.env.GIT_CONFIG_COUNT, originalConfigCount);
+    assert.deepEqual(
+      gitPathsWithEnvironment(["ls-files", "--others", "--exclude-standard", "-z", "--"], fixtureRoot, childEnv)
+        .filter((entry) => overlayPaths.includes(entry)),
+      [],
+    );
+    assert.deepEqual(
+      gitPathsWithEnvironment(["diff", "--cached", "--name-only", "-z"], fixtureRoot, childEnv).sort(),
+      [trackedOverlayPaths[0]],
+    );
+    for (const relativePath of newOverlayPaths) assert.ok(fs.existsSync(path.join(fixtureRoot, relativePath)));
   } finally {
     assert.ok(safeTemporaryPath(fixtureRoot));
+    if (fs.existsSync(fixtureExcludeFile)) fs.unlinkSync(fixtureExcludeFile);
     fs.rmSync(fixtureRoot, { recursive: true, force: true });
     assert.equal(fs.existsSync(fixtureRoot), false);
+    assert.equal(fs.existsSync(fixtureExcludeFile), false);
   }
   console.log("task_contract_comparator_self_test=pass");
 }

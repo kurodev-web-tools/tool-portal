@@ -13,9 +13,9 @@ const requiredPaths = {
 };
 
 const creatorRows = [
-  "| C1 | Durable paid entitlement store | local verified / merge verification pending |",
+  "| C1 | Durable paid entitlement store | merged / integration verified at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995` |",
   "| C2 | Stripe live Checkout / Portal / webhook closed-beta gate | pending / gated |",
-  "| C3 | Paid usage and monthly reset | pending |",
+  "| C3 | Paid usage and monthly reset | local verified / publication approval pending |",
   "| C4 | AI natural translation provider route | pending / gated |",
   "| C5 | OBS overlay token runtime | pending |",
   "| C6 | OBS overlay UI route | pending |",
@@ -46,7 +46,7 @@ const publicAfterP1Rows = [
 
 const taskPriorityLines = [
   "- Current priority: P0 Creator closed beta.",
-  "- First implementation sequence: C1 -> C3.",
+  "- First implementation sequence: C1 -> C3 is locally implemented; C3 publication and integration verification are the next gate.",
   "- P1 Prompt Board is MVP-complete and remains post-MVP work: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`.",
 ];
 
@@ -59,13 +59,13 @@ const sharedBoundaryLines = [
 ];
 
 const taskC1BoundaryLines = [
-  "- C1 in this branch is limited to local schema/runtime/contracts; remote migration apply and production data access remain approval-gated and were not run.",
-  "- Out of scope: C3 implementation. Start C3 only after C1 is merged and the exact integration result is verified.",
+  "- C1 merge / integration verification is complete at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995`; remote migration apply and production data access remain approval-gated and were not run.",
+  "- C3 is locally verified only; commit, push, PR, merge, remote migration apply, and integration verification remain separate approval-gated steps.",
 ];
 
 const creatorC1BoundaryLines = [
-  "- C1 scope is local implementation and verification only; remote migration apply remains approval-gated.",
-  "- Out of scope: C3 implementation until the C1 merge / integration verification condition is met.",
+  "- C1 is merged / integration verified at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995`; remote migration apply remains approval-gated.",
+  "- C3 is locally verified only; publication, remote migration apply, and exact integration verification remain approval-gated.",
 ];
 
 const historicalPromptBoardCheckpointMarker =

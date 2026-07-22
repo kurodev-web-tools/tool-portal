@@ -28,10 +28,12 @@ Operator-local checklist before any approved private-gated Stripe action:
 2. Confirm the live Stripe Price configuration for the intended monthly/yearly public copy. Record only reference name presence, not Price values.
 3. Confirm `COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID` points to the approved live Price reference in the operator-local environment. Do not paste the value.
 4. Confirm `STRIPE_SECRET_KEY` is present only in the server/operator-local command process. Do not paste the value.
-5. Confirm `NEXT_PUBLIC_SITE_URL` points to the approved private-gated site before Checkout execution. Record only the route label or host label if safe.
-6. Confirm Checkout success/cancel routes remain `/account/billing?billing=checkout-returned` and `/account/billing?billing=checkout-canceled`.
-7. Confirm Customer Portal settings are configured in Dashboard only after approval. Portal redirect execution is not run in this task.
-8. Confirm Free remains permanently available and billing setup failures leave Checkout/Portal unavailable instead of weakening session limits.
+5. Confirm `COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_BILLING_ACCESS` remains unset until a separately approved activation and is set only to the exact reviewed marker during that approved action. Record presence/state only, never unrelated environment values.
+6. Confirm `COMMENT_TRANSLATOR_PRIVATE_LAUNCH_ALLOWED_USER_HASHES` contains only the approved closed-beta account hashes through its existing approved process. Do not paste hash or owner values.
+7. Confirm `NEXT_PUBLIC_SITE_URL` points to the approved private-gated site before Checkout execution. Record only the route label or host label if safe.
+8. Confirm Checkout success/cancel routes remain `/account/billing?billing=checkout-returned` and `/account/billing?billing=checkout-canceled`.
+9. Confirm Customer Portal settings are configured in Dashboard only after approval. Portal redirect execution is not run in this task.
+10. Confirm Free remains permanently available and billing setup failures leave Checkout/Portal unavailable instead of weakening session limits.
 
 Task 21 local status: Product, Price, Checkout live execution, Customer Portal redirect, and billing setting mutation were not run. They remain blockers pending same-thread approval and sanitized evidence.
 
@@ -42,6 +44,7 @@ The existing Task 15 billing runtime keeps the webhook route server-owned and si
 - route: `/api/comment-translator/billing/webhook`;
 - signature header: `stripe-signature`;
 - webhook secret reference name: `STRIPE_WEBHOOK_SECRET`;
+- closed-beta activation reference name: `COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_BILLING_ACCESS`;
 - verifier boundary: `createCommentTranslatorStripeWebhookVerifier`;
 - entitlement application boundary: `readCommentTranslatorStripeWebhookResult`;
 - client-readable output: sanitized billing metadata only.
@@ -55,7 +58,7 @@ Launch behavior for subscription states:
 | Stripe status | Billing state | Session entitlement | Launch handling |
 | --- | --- | --- | --- |
 | `active` | paid-active | Paid | allow paid limits after signed webhook evidence |
-| `trialing` | paid-active | Paid | allow paid limits after signed webhook evidence |
+| `trialing` | paid-inactive by default | Free | require a separately reviewed exact server-owned trial policy before paid limits may activate |
 | `past_due` | paid-inactive | Free | degrade to safe Free limits |
 | `unpaid` | paid-inactive | Free | degrade to safe Free limits |
 | `canceled` | paid-inactive | Free | degrade to safe Free limits |

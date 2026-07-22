@@ -1,7 +1,11 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
-import { createCommentTranslatorBillingUserReference } from "./comment-translator-billing-runtime";
+import {
+  createCommentTranslatorBillingUserReference,
+  isCommentTranslatorCreatorClosedBetaBillingActiveForCaller,
+  type CommentTranslatorStripeEnv
+} from "./comment-translator-billing-runtime";
 import {
   createTrustedCommentTranslatorPaidEntitlementSupabaseStore,
   type CommentTranslatorPaidEntitlementRecord,
@@ -24,14 +28,16 @@ export async function readCommentTranslatorPaidUsageOrFailClosed({
   callerAuthorization,
   entitlementStore,
   paidUsageCounterStore,
+  env = process.env,
   nowMs
 }: {
   readonly callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
   readonly entitlementStore?: CommentTranslatorPaidEntitlementStore;
   readonly paidUsageCounterStore?: CommentTranslatorPaidUsageCounterStoreFactoryResult;
+  readonly env?: CommentTranslatorStripeEnv;
   readonly nowMs: number;
 }): Promise<CommentTranslatorPaidUsageReadResult> {
-  const authority = await readPaidUsageAuthority({ callerAuthorization, entitlementStore, nowMs });
+  const authority = await readPaidUsageAuthority({ callerAuthorization, entitlementStore, env, nowMs });
   if (authority.status === "paid-inactive") return authority;
 
   const storeResult = paidUsageCounterStore ?? createTrustedCommentTranslatorPaidUsageSupabaseStore();
@@ -68,16 +74,18 @@ export async function recordCommentTranslatorPaidUsageOrFailClosed({
   callerAuthorization,
   entitlementStore,
   paidUsageCounterStore,
+  env = process.env,
   event,
   nowMs
 }: {
   readonly callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
   readonly entitlementStore?: CommentTranslatorPaidEntitlementStore;
   readonly paidUsageCounterStore?: CommentTranslatorPaidUsageCounterStoreFactoryResult;
+  readonly env?: CommentTranslatorStripeEnv;
   readonly event: CommentTranslatorPaidUsageEvent;
   readonly nowMs: number;
 }): Promise<CommentTranslatorPaidUsagePersistResult> {
-  const authority = await readPaidUsageAuthority({ callerAuthorization, entitlementStore, nowMs });
+  const authority = await readPaidUsageAuthority({ callerAuthorization, entitlementStore, env, nowMs });
   if (authority.status === "paid-inactive") return authority;
 
   const storeResult = paidUsageCounterStore ?? createTrustedCommentTranslatorPaidUsageSupabaseStore();
@@ -121,10 +129,12 @@ export async function recordCommentTranslatorPaidUsageOrFailClosed({
 async function readPaidUsageAuthority({
   callerAuthorization,
   entitlementStore,
+  env,
   nowMs
 }: {
   readonly callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
   readonly entitlementStore?: CommentTranslatorPaidEntitlementStore;
+  readonly env: CommentTranslatorStripeEnv;
   readonly nowMs: number;
 }): Promise<
   | {
@@ -134,6 +144,9 @@ async function readPaidUsageAuthority({
     }
   | CommentTranslatorPaidUsageFailClosedResult
 > {
+  if (!isCommentTranslatorCreatorClosedBetaBillingActiveForCaller({ callerAuthorization, env })) {
+    return createPaidUsageFailClosed("paid-entitlement-inactive");
+  }
   const billingUserReferenceId = createCommentTranslatorBillingUserReference(callerAuthorization);
   if (!billingUserReferenceId) return createPaidUsageFailClosed("caller-not-authorized");
 
@@ -151,7 +164,7 @@ async function readPaidUsageAuthority({
     !record ||
     record.evidenceSource !== "signed-stripe-webhook" ||
     record.billingState !== "paid-active" ||
-    (record.subscriptionStatus !== "active" && record.subscriptionStatus !== "trialing") ||
+    record.subscriptionStatus !== "active" ||
     !record.customerReferenceId ||
     !record.subscriptionReferenceId ||
     !record.currentPeriodEndIso ||

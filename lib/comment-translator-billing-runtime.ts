@@ -43,6 +43,7 @@ export type CommentTranslatorStripeEnvName =
   | "STRIPE_SECRET_KEY"
   | "STRIPE_WEBHOOK_SECRET"
   | "COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID"
+  | "COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_BILLING_ACCESS"
   | "NEXT_PUBLIC_SITE_URL";
 
 export type CommentTranslatorStripeEnv = Record<string, string | undefined>;
@@ -160,19 +161,20 @@ export type CommentTranslatorStripeWebhookVerifier = {
 };
 
 export const commentTranslatorStripeBillingContract = {
-  implementationStage: "public-release-task-15-stripe-paid-plan-integration",
+  implementationStage: "creator-closed-beta-c2-stripe-live-gate",
   runtime: "server-only",
   freePlanAvailability: "permanent",
   stripeSurfaces: ["Checkout Sessions", "Billing Customer Portal", "signed webhook"],
   stripeApiVersion: "2026-05-27.dahlia",
   browserReadableOutput: "sanitized-billing-metadata-only",
   checkoutMode: "subscription",
+  closedBetaActivation: "exact-server-owned-marker-and-private-launch-owner-hash-allowlist",
   entitlementSync: "signed-webhook-to-durable-server-owned-plan-entitlement-state",
   durableEntitlementAuthority: "creator-closed-beta-c1",
   safeDegradation: "failed-expired-canceled-unavailable-payment-states-use-free-or-paid-inactive",
   paidPrioritization: "not-implemented",
   providerUsageCharging: "not-implemented",
-  liveProviderExecution: "not-run-in-task-15",
+  liveProviderExecution: "not-run-in-creator-c2",
   browserStorage: "forbidden",
   handoffPayload: "unchanged",
   forbiddenReadableOutput: [
@@ -211,6 +213,7 @@ export const commentTranslatorOperatorUxReadinessContract = {
 
 const paidPlanEntitlementReferenceId = "comment-translator-paid-public-v1";
 const billingUserMetadataKey = "comment_translator_billing_user_reference";
+const creatorClosedBetaBillingAccessMarker = "enabled-reviewed";
 
 export function createCommentTranslatorBillingUserReference(
   callerAuthorization: CommentTranslatorBillingCallerAuthorization
@@ -229,14 +232,25 @@ export function createCommentTranslatorBillingUserReference(
 
 export async function readCommentTranslatorBillingEntitlementSnapshot({
   callerAuthorization,
-  entitlementStore
+  entitlementStore,
+  env = process.env,
+  nowMs = Date.now()
 }: {
   callerAuthorization: CommentTranslatorBillingCallerAuthorization;
   entitlementStore?: CommentTranslatorPaidEntitlementStore;
+  env?: CommentTranslatorStripeEnv;
+  nowMs?: number;
 }): Promise<CommentTranslatorBillingEntitlementSnapshot> {
   const billingUserReferenceId = createCommentTranslatorBillingUserReference(callerAuthorization);
   if (!billingUserReferenceId) {
     return createFreeBillingSnapshot(null, "free");
+  }
+
+  if (
+    callerAuthorization.status !== "authorized" ||
+    !isCommentTranslatorCreatorClosedBetaBillingActiveForCaller({ callerAuthorization, env })
+  ) {
+    return createFreeBillingSnapshot(billingUserReferenceId, "free");
   }
 
   const durableStore = entitlementStore ?? readDefaultPaidEntitlementStore();
@@ -247,7 +261,7 @@ export async function readCommentTranslatorBillingEntitlementSnapshot({
   try {
     const record = await durableStore.readByBillingUserReference(billingUserReferenceId);
     return record
-      ? createSnapshotFromPaidEntitlementRecord(record)
+      ? createSnapshotFromPaidEntitlementRecord(record, nowMs)
       : createFreeBillingSnapshot(billingUserReferenceId, "free");
   } catch {
     return createFreeBillingSnapshot(billingUserReferenceId, "paid-inactive");
@@ -381,12 +395,14 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
   env,
   stripeAdapter,
   customerEmail = null,
-  abuseRateLimit
+  abuseRateLimit,
+  entitlementStore
 }: {
   callerAuthorization: CommentTranslatorBillingCallerAuthorization;
   env: CommentTranslatorStripeEnv;
   stripeAdapter: Pick<CommentTranslatorStripeAdapter, "createCheckoutSession">;
   customerEmail?: string | null;
+  entitlementStore?: CommentTranslatorPaidEntitlementStore;
   abuseRateLimit?: {
     nowMs?: number;
     requestIp?: string | null;
@@ -401,7 +417,14 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
     }
   | {
       status: "unavailable";
-      reason: "caller-not-authenticated" | "missing-config" | "stripe-session-url-missing" | "rate-limit-exceeded";
+      reason:
+        | "caller-not-authenticated"
+        | "billing-state-unavailable"
+        | "closed-beta-gated"
+        | "existing-customer-use-portal"
+        | "missing-config"
+        | "stripe-session-url-missing"
+        | "rate-limit-exceeded";
       missingEnvReferences: CommentTranslatorStripeEnvName[];
       retryAfterSeconds?: number;
     }
@@ -422,6 +445,22 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
     return createCommentTranslatorBillingRateLimitUnavailableResult({ check: abuseCheck });
   }
 
+  if (callerAuthorization.status !== "authorized") {
+    return {
+      status: "unavailable",
+      reason: "caller-not-authenticated",
+      missingEnvReferences: []
+    };
+  }
+
+  if (!isCommentTranslatorCreatorClosedBetaOwnerAllowed(callerAuthorization.ownerUserId, env)) {
+    return {
+      status: "unavailable",
+      reason: "closed-beta-gated",
+      missingEnvReferences: []
+    };
+  }
+
   const billingUserReferenceId = createCommentTranslatorBillingUserReference(callerAuthorization);
   if (!billingUserReferenceId) {
     return {
@@ -437,6 +476,32 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
       status: "unavailable",
       reason: "missing-config",
       missingEnvReferences
+    };
+  }
+
+  const durableStore = entitlementStore ?? readDefaultPaidEntitlementStore();
+  if (!durableStore) {
+    return {
+      status: "unavailable",
+      reason: "billing-state-unavailable",
+      missingEnvReferences: []
+    };
+  }
+
+  try {
+    const existingRecord = await durableStore.readByBillingUserReference(billingUserReferenceId);
+    if (existingRecord?.customerReferenceId) {
+      return {
+        status: "unavailable",
+        reason: "existing-customer-use-portal",
+        missingEnvReferences: []
+      };
+    }
+  } catch {
+    return {
+      status: "unavailable",
+      reason: "billing-state-unavailable",
+      missingEnvReferences: []
     };
   }
 
@@ -490,7 +555,13 @@ export async function createCommentTranslatorStripePortalSessionResult({
     }
   | {
       status: "unavailable";
-      reason: "caller-not-authenticated" | "missing-config" | "missing-customer" | "stripe-session-url-missing" | "rate-limit-exceeded";
+      reason:
+        | "caller-not-authenticated"
+        | "closed-beta-gated"
+        | "missing-config"
+        | "missing-customer"
+        | "stripe-session-url-missing"
+        | "rate-limit-exceeded";
       missingEnvReferences: CommentTranslatorStripeEnvName[];
       retryAfterSeconds?: number;
     }
@@ -511,7 +582,23 @@ export async function createCommentTranslatorStripePortalSessionResult({
     return createCommentTranslatorBillingRateLimitUnavailableResult({ check: abuseCheck });
   }
 
-  const snapshot = await readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization, entitlementStore });
+  if (callerAuthorization.status !== "authorized") {
+    return {
+      status: "unavailable",
+      reason: "caller-not-authenticated",
+      missingEnvReferences: []
+    };
+  }
+
+  if (!isCommentTranslatorCreatorClosedBetaOwnerAllowed(callerAuthorization.ownerUserId, env)) {
+    return {
+      status: "unavailable",
+      reason: "closed-beta-gated",
+      missingEnvReferences: []
+    };
+  }
+
+  const snapshot = await readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization, entitlementStore, env });
   if (!snapshot.billingUserReferenceId) {
     return {
       status: "unavailable",
@@ -562,13 +649,15 @@ export async function readCommentTranslatorStripeWebhookResult({
   signature,
   env,
   verifier,
-  entitlementStore
+  entitlementStore,
+  nowMs = Date.now()
 }: {
   payload: string;
   signature: string | null;
   env: CommentTranslatorStripeEnv;
   verifier: CommentTranslatorStripeWebhookVerifier;
   entitlementStore?: CommentTranslatorPaidEntitlementStore;
+  nowMs?: number;
 }): Promise<
   | {
       status: "applied";
@@ -599,13 +688,20 @@ export async function readCommentTranslatorStripeWebhookResult({
 
   const webhookSecret = readOptionalEnvValue(env, "STRIPE_WEBHOOK_SECRET");
   const paidPriceReferenceId = readOptionalEnvValue(env, "COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID");
+  const closedBetaBillingEnabled = hasCreatorClosedBetaBillingAccess(env);
   const missingEnvReferences = ([
     webhookSecret ? null : "STRIPE_WEBHOOK_SECRET",
-    paidPriceReferenceId ? null : "COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID"
+    paidPriceReferenceId ? null : "COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID",
+    closedBetaBillingEnabled ? null : "COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_BILLING_ACCESS"
   ] as const).filter(
-    (name): name is "STRIPE_WEBHOOK_SECRET" | "COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID" => Boolean(name)
+    (
+      name
+    ): name is
+      | "STRIPE_WEBHOOK_SECRET"
+      | "COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID"
+      | "COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_BILLING_ACCESS" => Boolean(name)
   );
-  if (!webhookSecret || !paidPriceReferenceId) {
+  if (!webhookSecret || !paidPriceReferenceId || !closedBetaBillingEnabled) {
     return {
       status: "rejected",
       reason: "missing-config",
@@ -673,20 +769,24 @@ export async function readCommentTranslatorStripeWebhookResult({
     };
   }
 
-  const paidStatusIsActive = status === "active" || status === "trialing";
+  const paidStatusIsActive = status === "active";
+  const subscriptionStatusMayActivate = status === "active" || status === "trialing";
   const currentPeriodEndIso =
     event.currentPeriodEndMs && Number.isFinite(event.currentPeriodEndMs)
       ? new Date(event.currentPeriodEndMs).toISOString()
       : existingRecord?.currentPeriodEndIso ?? null;
   const customerReferenceId = event.customerReferenceId ?? existingRecord?.customerReferenceId ?? null;
   const subscriptionReferenceId = event.subscriptionReferenceId ?? existingRecord?.subscriptionReferenceId ?? null;
-  if (paidStatusIsActive && (!currentPeriodEndIso || !customerReferenceId || !subscriptionReferenceId)) {
+  if (
+    subscriptionStatusMayActivate &&
+    (!event.priceReferenceId || !currentPeriodEndIso || !customerReferenceId || !subscriptionReferenceId)
+  ) {
     return {
       status: "ignored",
       reason: "incomplete-billing-evidence"
     };
   }
-  const paidIsActive = paidStatusIsActive && Date.parse(currentPeriodEndIso ?? "") > Date.now();
+  const paidIsActive = paidStatusIsActive && Date.parse(currentPeriodEndIso ?? "") > nowMs;
   const billingState = paidIsActive ? "paid-active" : "paid-inactive";
 
   const evidence: CommentTranslatorVerifiedBillingEvidence = {
@@ -788,12 +888,14 @@ function createStripeClient(env: CommentTranslatorStripeEnv) {
 }
 
 function createSnapshotFromPaidEntitlementRecord(
-  record: CommentTranslatorPaidEntitlementRecord
+  record: CommentTranslatorPaidEntitlementRecord,
+  nowMs: number
 ): CommentTranslatorBillingEntitlementSnapshot {
   const paidIsActive =
     record.billingState === "paid-active" &&
+    record.subscriptionStatus === "active" &&
     Boolean(record.currentPeriodEndIso) &&
-    Date.parse(record.currentPeriodEndIso ?? "") > Date.now();
+    Date.parse(record.currentPeriodEndIso ?? "") > nowMs;
   const billingState: CommentTranslatorBillingState = paidIsActive ? "paid-active" : "paid-inactive";
   return {
     plan: paidIsActive ? "paid" : "free",
@@ -917,13 +1019,50 @@ function readDefaultPaidEntitlementStore(): CommentTranslatorPaidEntitlementStor
 }
 
 function missingCheckoutEnvReferences(env: CommentTranslatorStripeEnv): CommentTranslatorStripeEnvName[] {
-  return (["STRIPE_SECRET_KEY", "COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID", "NEXT_PUBLIC_SITE_URL"] as const).filter(
-    (name) => !readOptionalEnvValue(env, name)
+  return ([
+    "STRIPE_SECRET_KEY",
+    "COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID",
+    "NEXT_PUBLIC_SITE_URL",
+    "COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_BILLING_ACCESS"
+  ] as const).filter((name) =>
+    name === "COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_BILLING_ACCESS"
+      ? !hasCreatorClosedBetaBillingAccess(env)
+      : !readOptionalEnvValue(env, name)
   );
 }
 
 function missingPortalEnvReferences(env: CommentTranslatorStripeEnv): CommentTranslatorStripeEnvName[] {
-  return (["STRIPE_SECRET_KEY", "NEXT_PUBLIC_SITE_URL"] as const).filter((name) => !readOptionalEnvValue(env, name));
+  return (["STRIPE_SECRET_KEY", "NEXT_PUBLIC_SITE_URL", "COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_BILLING_ACCESS"] as const).filter(
+    (name) =>
+      name === "COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_BILLING_ACCESS"
+        ? !hasCreatorClosedBetaBillingAccess(env)
+        : !readOptionalEnvValue(env, name)
+  );
+}
+
+function hasCreatorClosedBetaBillingAccess(env: CommentTranslatorStripeEnv) {
+  return readOptionalEnvValue(env, "COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_BILLING_ACCESS") === creatorClosedBetaBillingAccessMarker;
+}
+
+export function isCommentTranslatorCreatorClosedBetaBillingActiveForCaller({
+  callerAuthorization,
+  env
+}: {
+  callerAuthorization: CommentTranslatorBillingCallerAuthorization;
+  env: CommentTranslatorStripeEnv;
+}) {
+  return callerAuthorization.status === "authorized" &&
+    hasCreatorClosedBetaBillingAccess(env) &&
+    isCommentTranslatorCreatorClosedBetaOwnerAllowed(callerAuthorization.ownerUserId, env);
+}
+
+function isCommentTranslatorCreatorClosedBetaOwnerAllowed(ownerUserId: string, env: CommentTranslatorStripeEnv) {
+  const callerHash = createHash("sha256").update(ownerUserId).digest("hex");
+  return (env.COMMENT_TRANSLATOR_PRIVATE_LAUNCH_ALLOWED_USER_HASHES ?? "")
+    .split(/[\s,]+/)
+    .map((value) => value.trim().toLowerCase())
+    .filter((value) => /^[a-f0-9]{64}$/.test(value))
+    .includes(callerHash);
 }
 
 function readEnvValue(env: CommentTranslatorStripeEnv, name: CommentTranslatorStripeEnvName) {

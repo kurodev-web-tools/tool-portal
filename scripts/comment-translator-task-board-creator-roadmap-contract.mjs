@@ -16,8 +16,8 @@ const creatorRows = [
   "| C1 | Durable paid entitlement store | merged / integration verified at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995` |",
   "| C2 | Stripe live Checkout / Portal / webhook closed-beta gate | merged / integration verified at `4486c180f68369d6620b9f8f3df33518b7cadc38` |",
   "| C3 | Paid usage and monthly reset | merged / integration verified at `5fc3cca2730a58f35279098ec0b2f5c804ce0076` |",
-  "| C4 | AI natural translation provider route | local verified / publication approval pending |",
-  "| C5 | OBS overlay token runtime | pending |",
+  "| C4 | AI natural translation provider route | merged / integration verified at `fa0d5582a296c2164bd3945c37cbec746315f357` |",
+  "| C5 | OBS overlay token runtime | local verified / publication approval pending |",
   "| C6 | OBS overlay UI route | pending |",
   "| C7 | Moderator share token runtime | pending |",
   "| C8 | Moderator share UI route | pending |",
@@ -46,7 +46,7 @@ const publicAfterP1Rows = [
 
 const taskPriorityLines = [
   "- Current priority: P0 Creator closed beta.",
-  "- C1/C2/C3 are merged / integration verified; C4 is locally verified and its publication is the next gate.",
+  "- C1/C2/C3/C4 are merged / integration verified; C5 is locally verified and its publication is the next gate.",
   "- P1 Prompt Board is MVP-complete and remains post-MVP work: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`.",
 ];
 
@@ -62,14 +62,16 @@ const taskC1BoundaryLines = [
   "- C1 merge / integration verification is complete at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995`; remote migration apply and production data access remain approval-gated and were not run.",
   "- C3 merge / integration verification is complete through PR #669 at `5fc3cca2730a58f35279098ec0b2f5c804ce0076`; remote migration apply remains approval-gated.",
   "- C2 merge / integration verification is complete through PR #670 at `4486c180f68369d6620b9f8f3df33518b7cadc38`; Stripe live action and activation remain separate approval-gated steps.",
-  "- C4 is locally verified only; commit, push, PR, merge, provider live execution, Cloudflare configuration, deploy, activation, and exact integration verification remain separate approval-gated steps.",
+  "- C4 merge / integration verification is complete through PR #671 at `fa0d5582a296c2164bd3945c37cbec746315f357`; provider live execution remains separately approval-gated.",
+  "- C5 is locally verified only; commit, push, PR, merge, remote migration apply, Cloudflare configuration, deploy, activation, and exact integration verification remain separate approval-gated steps.",
 ];
 
 const creatorC1BoundaryLines = [
   "- C1 is merged / integration verified at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995`; remote migration apply remains approval-gated.",
   "- C3 is merged / integration verified through PR #669 at `5fc3cca2730a58f35279098ec0b2f5c804ce0076`; remote migration apply remains approval-gated.",
   "- C2 merge / integration verification is complete through PR #670 at `4486c180f68369d6620b9f8f3df33518b7cadc38`; live Stripe action and activation remain approval-gated.",
-  "- C4 is locally verified only; commit, push, PR, merge, provider live execution, Cloudflare configuration, deploy, activation, and exact integration verification remain approval-gated.",
+  "- C4 is merged / integration verified through PR #671 at `fa0d5582a296c2164bd3945c37cbec746315f357`; provider live execution remains approval-gated.",
+  "- C5 is locally verified only; commit, push, PR, merge, remote migration apply, Cloudflare configuration, deploy, activation, and exact integration verification remain approval-gated.",
 ];
 
 const historicalPromptBoardCheckpointMarker =

@@ -122,9 +122,13 @@ function run() {
   assert.match(promptBoard, /`delete_dialog_follow_up_status` \| `pr-663-merged-main`/);
   assert.equal(
     normalizedLines(promptBoard).filter((line) => line === historicalPromptBoardCheckpointMarker).length,
-    2
+    3
   );
-  for (const heading of ["Promotion Readiness Checkpoint", "MVP Public Entry Checkpoint"]) {
+  for (const heading of [
+    "MVP QA Implementation Checkpoint",
+    "Promotion Readiness Checkpoint",
+    "MVP Public Entry Checkpoint",
+  ]) {
     assert.match(
       promptBoard,
       new RegExp(`^### ${escapeRegExp(heading)}\\r?\\n\\r?\\n${escapeRegExp(historicalPromptBoardCheckpointMarker)}$`, "m")

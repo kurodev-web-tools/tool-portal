@@ -200,6 +200,8 @@ mobileは既存drawerを維持し、desktopのhidden状態を適用しない。h
 
 ### MVP QA Implementation Checkpoint
 
+> Historical pre-promotion checkpoint; superseded by PR #660/#663; no next_approval/publication_boundary below is current instruction.
+
 - `implementation_status`: `merged-preview-pr-650`
 - `task_branch`: `codex/viewer-engagement-prompt-board-mvp-qa`
 - `preview_base`: `origin/codex/viewer-engagement-prompt-board-preview` at merged PR #649 commit `a3416de848d54b08fef0d4268f54a50b46787bee`

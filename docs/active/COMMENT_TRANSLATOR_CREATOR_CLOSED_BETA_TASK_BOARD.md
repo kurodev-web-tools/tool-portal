@@ -4,10 +4,11 @@
 
 - Free public beta is complete.
 - Current priority: P0 Creator closed beta.
-- C1 and C3 are merged / integration verified; C2 is locally verified and its publication is the next gate.
+- C1/C2/C3 are merged / integration verified; C4 is locally verified and its publication is the next gate.
 - C1 is merged through PR #668 at exact integration commit `c4b7bc4cd03ad400c737ae662e1e94c4462e9995`; its merge tree matches C1 head `baf8bf57dd570c3dca6bc29c880f47b7f7444fac`.
 - C3 is merged through PR #669 at exact integration commit `5fc3cca2730a58f35279098ec0b2f5c804ce0076`; its merge tree matches and contains C3 head `85fa39896f63e223463a85000eb8e02f538754d4`.
-- C2 publication/live activation and C4 remain separately approval-gated.
+- C2 is merged through PR #670 at exact integration commit `4486c180f68369d6620b9f8f3df33518b7cadc38`; its merge tree matches C2 head `761f503f276a5a7e095c79be5f3ca31c26fe6fff`.
+- C2 live activation and C4 publication/live provider execution remain separately approval-gated.
 - C5 through C11 are the user-visible closed-beta capability sequence after the entitlement and usage foundations; C12 is the ending final-QA gate.
 - P1 Prompt Board is MVP-complete and remains post-MVP work: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`.
 - PRs target `codex/comment-translator-free-public-beta-integration` from short-lived feature branches.
@@ -57,30 +58,47 @@ C1 is accepted only when all of the following are verified:
 - Only signed active subscription evidence with a future signed period end may activate Paid. Trialing remains paid-inactive unless a separate exact server-owned policy marker is reviewed; failed, canceled, expired, incomplete, unreadable, mismatched, or unconfigured state degrades to Free / paid-inactive.
 - Client/operator metadata responses and verification evidence contain sanitized status, reason, plan, billing state, or missing environment reference names only. A separately approved live server action may consume a Stripe redirect target solely to perform the redirect; the URL is never logged, serialized as evidence, placed in docs/PR/handoff text, or exposed as billing authority. No owner, Customer, Subscription, Price, event, payload, secret, credential, provider, target, or private URL value is recorded.
 
-### Verified C2 Local Evidence
+### Verified C2 Merge Evidence
 
 - `comment_translator_creator_c2_stripe_closed_beta_gate_contract=pass` verifies authenticated owner binding, allowlist denial before Stripe invocation, exact activation fail-closed behavior across Checkout/Portal/C1/C3 reads, unreadable ownership and duplicate-Customer Checkout denial, server-configured Checkout Price selection, C1-owned Portal Customer resolution, missing-signature rejection, signed active entitlement, duplicate/stale replay rejection, missing/unexpected Price rejection, unapproved trial fail-closed behavior, and sanitized output.
 - Existing Checkout/Portal server actions and the webhook route remain the surface owners; no new client storage, query authority, public gate, or browser-visible billing identifier was added.
 - No Stripe Product/Price mutation, live Checkout/Portal execution, webhook registration/delivery/replay, billing mutation, Supabase remote operation, deploy, Cloudflare change, provider execution, or activation was run.
 - The browser-safe view-model contract verifies Checkout/Portal remain disabled while C2 activation is closed. No UI/CSS/rendered layout file changed, so width-based layout QA is not applicable; no real Checkout/Portal browser execution was run.
+- PR #670 is merged into `codex/comment-translator-free-public-beta-integration` at `4486c180f68369d6620b9f8f3df33518b7cadc38`; C2 head `761f503f276a5a7e095c79be5f3ca31c26fe6fff` is contained in integration and both commits resolve to tree `176e7ec82d054552408333d4fe55f7645a58a169`.
+
+## C4 Acceptance Boundary
+
+- Paid provider execution requires an authenticated caller, the exact C2 activation marker and owner-hash allowlist, a readable C1 signed active entitlement bound to that caller, a readable C3 current-period counter, and complete server-owned provider/budget configuration.
+- Missing, unreadable, incomplete, expired, mismatched, paid-inactive, stale-period, unconfigured, provider-unavailable, or over-budget state returns a sanitized fail-closed result before a paid provider is invoked.
+- Paid routes to the environment-selected OpenAI mini provider first. Azure fallback is available only when Azure credentials, endpoint, region, and character cap are configured and the current C3 counter remains within budget capacity.
+- Only OpenAI timeout, rate-limit, and temporary-unavailable classes may retry or fall back. Content-policy and strict-output-parse failures do not retry or fall back.
+- Provider-executed translations are recorded through the C3 server-only atomic/deduplicated boundary. Cache hits are not counted as provider execution, and an accounting failure suppresses the translated result.
+- Returned C4 state omits caller/owner ids, billing ids, C3 event ids, provider/model/config values, raw comments, prompts, responses, provider metadata, target metadata, liveChatId, private URLs, and private authority references.
+
+### Verified C4 Local Evidence
+
+- `comment_translator_creator_c4_paid_provider_authority_contract=pass` verifies auth, C2 activation/allowlist, C1 missing/unreadable/expired/mismatched state, C3 missing/unreadable/stale state, provider-selection/configuration, server budget flags, and hard-budget stop all prevent paid provider invocation.
+- `comment_translator_creator_c4_paid_provider_route_contract=pass` verifies OpenAI-first Paid execution, strict structured-output parsing, Azure fallback for approved recoverable classes only, no fallback for content/policy/parse classes, C3 recorded/ignored-replay exactly-once behavior, missing-Azure safe degradation, and sanitized result shape.
+- `comment_translator_creator_c3_paid_usage_counter_contract=pass` remains green after adding explicit C1 billing-user-reference binding to the shared C3 authority read.
+- No OpenAI, Azure, YouTube, Stripe, Supabase remote, Cloudflare, deploy, production/custom-domain, OAuth, target lookup, or browser execution was run. No UI file changed, so browser/width QA is not applicable.
 
 ### Residual Risk And Next Handoff
 
 - Remote Supabase query, migration apply, schema mutation, and production data access were not run. Until an explicitly approved migration apply exists, deployed reads safely return Free / paid-inactive.
 - Stripe live Product, Price, Checkout, Portal, and webhook operations were not run. Local verifier fixtures are not live billing evidence.
 - Local C2 fixtures do not establish live Product/Price interval, billing cadence, trial policy, webhook destination, Customer mapping values, or production configuration; C3 continues to follow only signed period-boundary advances.
-- C3 provides the server-only paid accounting boundary; wiring a paid provider execution path into it remains C4 scope and was not implemented or executed here.
-- Fresh worktree dependencies are absent and install is prohibited in this task, so repository lint, typecheck, build, dependency-backed historical Stripe readiness contracts, and the focused C1 contract remain unchecked locally.
-- Next handoff requires separate approval for commit / push / PR. After merge, the exact integration result must pass focused C1, C2, C3, Stripe readiness, and Creator authority contracts before C4 begins under its own approval gate or any separate live C2 action is considered.
+- C4 does not infer an OpenAI model, provider pricing/token multiplier, budget amount, billing cadence, or production value. Operator-owned server environment values and provider-account caps remain required before any separately approved live/provider smoke.
+- Fresh worktree dependencies are absent and install is prohibited in this task, so repository lint, typecheck, build, dependency-backed historical Stripe/provider contracts, and the focused C1 contract remain unchecked locally.
+- Next handoff requires separate approval for commit / push / PR. After merge, the exact integration result must pass focused C1/C2/C3/C4, provider-policy/translation, Stripe readiness, and Creator authority contracts before C5 or any separate live C2/C4 action is considered.
 
 ## Creator Closed Beta / Before Creator Public Paid
 
 | ID | Task | Status |
 | --- | --- | --- |
 | C1 | Durable paid entitlement store | merged / integration verified at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995` |
-| C2 | Stripe live Checkout / Portal / webhook closed-beta gate | local verified / publication approval pending |
+| C2 | Stripe live Checkout / Portal / webhook closed-beta gate | merged / integration verified at `4486c180f68369d6620b9f8f3df33518b7cadc38` |
 | C3 | Paid usage and monthly reset | merged / integration verified at `5fc3cca2730a58f35279098ec0b2f5c804ce0076` |
-| C4 | AI natural translation provider route | pending / gated |
+| C4 | AI natural translation provider route | local verified / publication approval pending |
 | C5 | OBS overlay token runtime | pending |
 | C6 | OBS overlay UI route | pending |
 | C7 | Moderator share token runtime | pending |
@@ -117,7 +135,8 @@ This authority is a task board only. Every gated operation requires a separate, 
 
 - C1 is merged / integration verified at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995`; remote migration apply remains approval-gated.
 - C3 is merged / integration verified through PR #669 at `5fc3cca2730a58f35279098ec0b2f5c804ce0076`; remote migration apply remains approval-gated.
-- C2 is locally verified only; publication, live Stripe action, activation, and exact integration verification remain approval-gated.
+- C2 merge / integration verification is complete through PR #670 at `4486c180f68369d6620b9f8f3df33518b7cadc38`; live Stripe action and activation remain approval-gated.
+- C4 is locally verified only; commit, push, PR, merge, provider live execution, Cloudflare configuration, deploy, activation, and exact integration verification remain approval-gated.
 - Out of scope: Stripe mutation.
 - Out of scope: Supabase mutation.
 - Out of scope: provider mutation.

@@ -89,7 +89,9 @@ The runner and manifest must:
 - junction the already-installed current dependency tree only after Node version and package-lock hash match; never run a package manager in the temporary worktree;
 - execute the exact-base scripts with `process.execPath` and a bounded timeout, classifying `PRESERVED_PASS`, `CONTENT_REGRESSION`, `BASELINE_FAIL`, or `RECOVERED` without stdout/stderr/body values;
 - independently compare the current tracked-diff / untracked union to the fixed approved path allowlist below and verify no existing baseline script is modified;
-- in `finally`, remove the dependency junction first, verify the resolved detached worktree path, remove the temporary worktree, and confirm remote refs are unchanged;
+- canonicalize the repository root and `.worktrees` root, require every temporary entry to be an exact non-reparse direct child with the expected unique basename, and refuse recursive cleanup when that canonical validation fails;
+- run the complete safety self-test before the ordinary production lane and block temporary worktree creation / child contract execution if self-test fails;
+- in `finally`, remove the dependency junction first, revalidate the canonical detached worktree path, prefer `git worktree remove --force`, block on unverified residue, and confirm remote refs are unchanged;
 - finish with `baseline_total=170 baseline_pass=43 preserved_pass=<n> content_regressions=<n> baseline_fail=<n> recovered=<n> baseline_scripts_modified=<n> overlay_hash_mismatches=<n> unexpected_current_paths=<n> remote_refs_unchanged=<true|false> temporary_worktree_cleanup=<pass|fail>`;
 - exit non-zero for any content regression, manifest / dependency / overlay mismatch, baseline-script change, unexpected current path, remote-ref drift, temporary-worktree cleanup failure, timeout, or execution error.
 
@@ -201,11 +203,12 @@ Update only stale current-selection/checkpoint labels to record:
 Run:
 
 ```bash
+node scripts/comment-translator-task-board-contract-suite.mjs --self-test
 node scripts/comment-translator-task-board-creator-roadmap-contract.mjs
 node scripts/comment-translator-task-board-contract-suite.mjs
 ```
 
-Expected: the focused contract exits 0 with one success marker and the comparator reports `preserved_pass=43`, `content_regressions=0`, `baseline_scripts_modified=0`, `overlay_hash_mismatches=0`, `unexpected_current_paths=0`, `remote_refs_unchanged=true`, and `temporary_worktree_cleanup=pass`. This second baseline-aware run is mandatory after legacy duplication is removed.
+Expected: standalone self-test exits 0 with `task_contract_comparator_self_test=pass`; the focused contract exits 0 after matching the complete normalized Prompt Board section from `## MVP対象外` through EOF to its exact-base SHA-256; and ordinary comparator execution emits the same self-test PASS marker before any temporary worktree / child lane, then reports `baseline_executed=170`, `preserved_pass=43`, `content_regressions=0`, `baseline_scripts_modified=0`, `overlay_hash_mismatches=0`, `unexpected_current_paths=0`, `source_snapshot_unchanged=true`, `current_scope_snapshot_unchanged=true`, `remote_refs_unchanged=true`, and `temporary_worktree_cleanup=pass`. This second baseline-aware run is mandatory after legacy duplication is removed.
 
 ### Task 4: Eliminate exact-base regressions
 
@@ -223,7 +226,7 @@ Run:
 node scripts/comment-translator-task-board-contract-suite.mjs
 ```
 
-Expected: the exact base manifest remains 170 paths with 43 PASS / 127 FAIL, all 43 base-pass content contracts remain PASS in the overlay lane, `content_regressions=0`, and `baseline_scripts_modified=0` across all 170 existing scripts. The 17 current-worktree changed-files allowlist failures are recorded as Git-history-context false regressions and are not used as content-regression evidence.
+Expected: the ordinary command first reports `task_contract_comparator_self_test=pass`, then the exact base manifest remains 170 paths with 43 PASS / 127 FAIL, all 43 base-pass content contracts remain PASS in the overlay lane, `content_regressions=0`, and `baseline_scripts_modified=0` across all 170 existing scripts. Any self-test failure blocks temporary worktree creation and all child contract execution. The 17 current-worktree changed-files allowlist failures are recorded as Git-history-context false regressions and are not used as content-regression evidence.
 
 - [ ] **Step 2: Fix failures using the smallest safe compatibility path**
 

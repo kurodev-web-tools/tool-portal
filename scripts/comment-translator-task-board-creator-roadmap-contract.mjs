@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -65,6 +66,7 @@ const historicalPromptBoardCheckpointMarker =
   "> Historical pre-promotion checkpoint; superseded by PR #660/#663; no next_approval/publication_boundary below is current instruction.";
 
 const archiveStatusLine = "> Status: Historical archive; non-authoritative.";
+const expectedPromptBoardFutureSectionSha256 = "29a80be1b52c90ece46ef6e0cc8091f1cdd9aa3eb2d930fc8eab73a221d35c18";
 
 function readRequired(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -76,6 +78,25 @@ function escapeRegExp(value) {
 
 function normalizedLines(source) {
   return source.split(/\r?\n/).map((line) => line.trim());
+}
+
+function sha256(value) {
+  return createHash("sha256").update(value).digest("hex");
+}
+
+function normalizedPromptBoardFutureSection(source) {
+  const normalized = source.replace(/\r\n/g, "\n");
+  const heading = "## MVP対象外";
+  assert.equal(normalized.split(heading).length - 1, 1);
+  const headingIndex = normalized.indexOf(heading);
+  return normalized.slice(headingIndex).replace(/\n*$/, "\n");
+}
+
+function assertPromptBoardFutureSectionPreserved(source) {
+  const section = normalizedPromptBoardFutureSection(source);
+  assert.equal(sha256(section), expectedPromptBoardFutureSectionSha256);
+  const redSimulation = section.replace("Schedule Calendar", "Schedule Calendar altered");
+  assert.notEqual(sha256(redSimulation), expectedPromptBoardFutureSectionSha256);
 }
 
 function assertLinesExactOnce(source, requiredLines) {
@@ -118,6 +139,7 @@ function run() {
   assert.match(promptBoard, /Schedule Calendar/);
   assert.match(promptBoard, /browser-only/i);
   assert.match(promptBoard, /(?:ログイン不要|no-login)/i);
+  assertPromptBoardFutureSectionPreserved(promptBoard);
   assert.match(promptBoard, /`main_promotion_status` \| `pr-660-merged-main`/);
   assert.match(promptBoard, /`delete_dialog_follow_up_status` \| `pr-663-merged-main`/);
   assert.equal(

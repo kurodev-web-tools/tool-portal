@@ -254,10 +254,80 @@ function runContentContracts(manifest, temporaryRoot, summary, env, beforeContra
   }
 }
 
-function safeTemporaryPath(temporaryRoot) {
-  const parent = path.resolve(worktreesRoot).toLowerCase();
-  const candidate = path.resolve(temporaryRoot).toLowerCase();
-  return candidate.startsWith(`${parent}${path.sep.toLowerCase()}`) && candidate !== parent;
+function pathKey(target) {
+  return path.resolve(target).toLowerCase();
+}
+
+function pathEntryExists(target) {
+  try {
+    fs.lstatSync(target);
+    return true;
+  } catch (error) {
+    if (error?.code === "ENOENT") return false;
+    throw error;
+  }
+}
+
+function canonicalTemporaryBoundary(realpathSync = fs.realpathSync) {
+  const commonGitDirectory = path.resolve(git(["rev-parse", "--path-format=absolute", "--git-common-dir"]).trim());
+  const repositoryRoot = path.dirname(commonGitDirectory);
+  const resolvedWorktreesRoot = path.resolve(worktreesRoot);
+  const repositoryStat = fs.lstatSync(repositoryRoot);
+  const worktreesStat = fs.lstatSync(resolvedWorktreesRoot);
+  assert.equal(repositoryStat.isDirectory(), true);
+  assert.equal(repositoryStat.isSymbolicLink(), false);
+  assert.equal(worktreesStat.isDirectory(), true);
+  assert.equal(worktreesStat.isSymbolicLink(), false);
+  const canonicalRepositoryRoot = realpathSync(repositoryRoot);
+  const canonicalWorktreesRoot = realpathSync(resolvedWorktreesRoot);
+  assert.equal(pathKey(path.dirname(canonicalWorktreesRoot)), pathKey(canonicalRepositoryRoot));
+  assert.equal(path.basename(canonicalWorktreesRoot).toLowerCase(), ".worktrees");
+  return { canonicalRepositoryRoot, canonicalWorktreesRoot };
+}
+
+function assertTemporaryCandidate(target, expectedBasename, expectedPrefix) {
+  const { canonicalWorktreesRoot } = canonicalTemporaryBoundary();
+  const resolvedTarget = path.resolve(target);
+  assert.equal(path.basename(resolvedTarget), expectedBasename);
+  assert.ok(expectedBasename.startsWith(expectedPrefix));
+  assert.equal(pathKey(path.dirname(resolvedTarget)), pathKey(path.resolve(worktreesRoot)));
+  assert.equal(pathKey(fs.realpathSync(path.dirname(resolvedTarget))), pathKey(canonicalWorktreesRoot));
+  let absent = false;
+  try {
+    fs.lstatSync(resolvedTarget);
+  } catch (error) {
+    if (error?.code === "ENOENT") absent = true;
+    else throw error;
+  }
+  assert.equal(absent, true);
+}
+
+function assertCanonicalTemporaryEntry(
+  target,
+  expectedBasename,
+  expectedType,
+  { lstatSync = fs.lstatSync, realpathSync = fs.realpathSync } = {},
+) {
+  const { canonicalWorktreesRoot } = canonicalTemporaryBoundary(realpathSync);
+  const resolvedTarget = path.resolve(target);
+  assert.equal(path.basename(resolvedTarget), expectedBasename);
+  assert.equal(pathKey(path.dirname(resolvedTarget)), pathKey(path.resolve(worktreesRoot)));
+  const fileStat = lstatSync(resolvedTarget);
+  assert.equal(fileStat.isSymbolicLink(), false);
+  if (expectedType === "directory") assert.equal(fileStat.isDirectory(), true);
+  if (expectedType === "file") assert.equal(fileStat.isFile(), true);
+  const canonicalTarget = realpathSync(resolvedTarget);
+  assert.equal(pathKey(path.dirname(canonicalTarget)), pathKey(canonicalWorktreesRoot));
+  assert.equal(path.basename(canonicalTarget), expectedBasename);
+  assert.equal(pathKey(canonicalTarget), pathKey(path.join(canonicalWorktreesRoot, expectedBasename)));
+}
+
+function unlinkVerifiedDependencyJunction(dependencyLink, temporaryRoot, temporaryBasename) {
+  assertCanonicalTemporaryEntry(temporaryRoot, temporaryBasename, "directory");
+  assert.equal(pathKey(path.dirname(dependencyLink)), pathKey(temporaryRoot));
+  const linkStat = fs.lstatSync(dependencyLink);
+  assert.equal(linkStat.isSymbolicLink(), true);
+  fs.unlinkSync(dependencyLink);
 }
 
 function runComparator({
@@ -287,17 +357,20 @@ function runComparator({
   }
 
   const refsBefore = remoteRefsDigest();
-  const temporaryRoot = path.join(worktreesRoot, `task-board-content-${process.pid}-${randomUUID()}`);
+  const temporaryBasename = `task-board-content-${process.pid}-${randomUUID()}`;
+  const temporaryRoot = path.join(worktreesRoot, temporaryBasename);
   const excludeFile = `${temporaryRoot}.exclude`;
+  const excludeBasename = `${temporaryBasename}.exclude`;
   const dependencyLink = path.join(temporaryRoot, "node_modules");
   let worktreeCreated = false;
   let junctionCreated = false;
   let contentLaneStage = "worktree-create";
   try {
-    assert.ok(safeTemporaryPath(temporaryRoot));
+    assertTemporaryCandidate(temporaryRoot, temporaryBasename, `task-board-content-${process.pid}-`);
     beforeWorktreeCreate(temporaryRoot);
     git(["worktree", "add", "--detach", temporaryRoot, baseSha]);
     worktreeCreated = true;
+    assertCanonicalTemporaryEntry(temporaryRoot, temporaryBasename, "directory");
     assert.equal(git(["rev-parse", "HEAD"], temporaryRoot).trim(), baseSha);
     contentLaneStage = "baseline-presence";
     const basePaths = manifest.contracts.map((entry) => entry.path);
@@ -333,7 +406,9 @@ function runComparator({
       .sort((left, right) => left.localeCompare(right, "en"));
     assert.deepEqual(stagedOverlays, expectedStagedOverlays.sort((left, right) => left.localeCompare(right, "en")));
     assert.deepEqual(untrackedOverlays, [...newOverlayPaths].sort((left, right) => left.localeCompare(right, "en")));
+    assertTemporaryCandidate(excludeFile, excludeBasename, `task-board-content-${process.pid}-`);
     fs.writeFileSync(excludeFile, `${newOverlayPaths.join("\n")}\n`, "utf8");
+    assertCanonicalTemporaryEntry(excludeFile, excludeBasename, "file");
     const childEnv = childContractEnvironment(excludeFile);
     assert.deepEqual(
       gitPathsWithEnvironment(["ls-files", "--others", "--exclude-standard", "-z", "--"], temporaryRoot, childEnv)
@@ -358,16 +433,21 @@ function runComparator({
     log(`FAIL content_lane_${contentLaneStage} exit=1`);
   } finally {
     try {
-      if (junctionCreated && fs.existsSync(dependencyLink)) fs.unlinkSync(dependencyLink);
+      if (junctionCreated && pathEntryExists(dependencyLink)) {
+        unlinkVerifiedDependencyJunction(dependencyLink, temporaryRoot, temporaryBasename);
+      }
       junctionCreated = false;
-      if (fs.existsSync(excludeFile)) fs.unlinkSync(excludeFile);
-      assert.equal(fs.existsSync(excludeFile), false);
-      assert.ok(safeTemporaryPath(temporaryRoot));
+      if (pathEntryExists(excludeFile)) {
+        assertCanonicalTemporaryEntry(excludeFile, excludeBasename, "file");
+        fs.unlinkSync(excludeFile);
+      }
+      assert.equal(pathEntryExists(excludeFile), false);
       if (worktreeCreated) {
+        assertCanonicalTemporaryEntry(temporaryRoot, temporaryBasename, "directory");
         assert.equal(git(["rev-parse", "HEAD"], temporaryRoot).trim(), baseSha);
         git(["worktree", "remove", "--force", temporaryRoot]);
       }
-      assert.equal(fs.existsSync(temporaryRoot), false);
+      assert.equal(pathEntryExists(temporaryRoot), false);
     } catch {
       summary.temporaryWorktreeCleanup = "fail";
     }
@@ -425,11 +505,32 @@ function runSelfTest() {
   assert.equal(success.sourceSnapshotUnchanged, true);
   assert.equal(success.currentScopeSnapshotUnchanged, true);
   assert.ok(summaryLine(success).includes("remote_refs_unchanged=true"));
-  const fixtureRoot = path.join(worktreesRoot, `task-overlay-stage-${process.pid}-${randomUUID()}`);
+  const fixtureBasename = `task-overlay-stage-${process.pid}-${randomUUID()}`;
+  const fixtureRoot = path.join(worktreesRoot, fixtureBasename);
   const fixtureExcludeFile = `${fixtureRoot}.exclude`;
-  assert.equal(fs.existsSync(fixtureRoot), false);
+  const fixtureExcludeBasename = `${fixtureBasename}.exclude`;
+  assertTemporaryCandidate(fixtureRoot, fixtureBasename, `task-overlay-stage-${process.pid}-`);
   fs.mkdirSync(fixtureRoot, { recursive: false });
   try {
+    assertCanonicalTemporaryEntry(fixtureRoot, fixtureBasename, "directory");
+    assert.throws(() => assertCanonicalTemporaryEntry(
+      fixtureRoot,
+      fixtureBasename,
+      "directory",
+      { lstatSync: () => ({ isSymbolicLink: () => true }) },
+    ));
+    const { canonicalWorktreesRoot } = canonicalTemporaryBoundary();
+    const simulatedOwnedReparseTarget = path.join(canonicalWorktreesRoot, `${fixtureBasename}-simulated-reparse`);
+    assert.throws(() => assertCanonicalTemporaryEntry(
+      fixtureRoot,
+      fixtureBasename,
+      "directory",
+      {
+        realpathSync: (target) => (
+          pathKey(target) === pathKey(fixtureRoot) ? simulatedOwnedReparseTarget : fs.realpathSync(target)
+        ),
+      },
+    ));
     git(["init", "-q"], fixtureRoot);
     git(["config", "user.email", "overlay-fixture@example.invalid"], fixtureRoot);
     git(["config", "user.name", "Overlay Fixture"], fixtureRoot);
@@ -469,7 +570,9 @@ function runSelfTest() {
       [...newOverlayPaths].sort(),
     );
     const originalConfigCount = process.env.GIT_CONFIG_COUNT;
+    assertTemporaryCandidate(fixtureExcludeFile, fixtureExcludeBasename, `task-overlay-stage-${process.pid}-`);
     fs.writeFileSync(fixtureExcludeFile, `${newOverlayPaths.join("\n")}\n`, "utf8");
+    assertCanonicalTemporaryEntry(fixtureExcludeFile, fixtureExcludeBasename, "file");
     const childEnv = childContractEnvironment(fixtureExcludeFile);
     assert.equal(process.env.GIT_CONFIG_COUNT, originalConfigCount);
     assert.deepEqual(
@@ -574,11 +677,15 @@ function runSelfTest() {
     assert.equal(contractSpawnCount, 0);
     assert.ok(raceLogs.some((message) => message === "FAIL input_snapshot_drift source_count=0 scope_count=1"));
   } finally {
-    assert.ok(safeTemporaryPath(fixtureRoot));
-    if (fs.existsSync(fixtureExcludeFile)) fs.unlinkSync(fixtureExcludeFile);
+    assertCanonicalTemporaryEntry(fixtureRoot, fixtureBasename, "directory");
+    if (pathEntryExists(fixtureExcludeFile)) {
+      assertCanonicalTemporaryEntry(fixtureExcludeFile, fixtureExcludeBasename, "file");
+      fs.unlinkSync(fixtureExcludeFile);
+    }
+    assertCanonicalTemporaryEntry(fixtureRoot, fixtureBasename, "directory");
     fs.rmSync(fixtureRoot, { recursive: true, force: true });
-    assert.equal(fs.existsSync(fixtureRoot), false);
-    assert.equal(fs.existsSync(fixtureExcludeFile), false);
+    assert.equal(pathEntryExists(fixtureRoot), false);
+    assert.equal(pathEntryExists(fixtureExcludeFile), false);
   }
   console.log("task_contract_comparator_self_test=pass");
 }
@@ -586,6 +693,11 @@ function runSelfTest() {
 if (process.argv.includes("--self-test")) {
   try { runSelfTest(); } catch { console.log("task_contract_comparator_self_test=fail"); process.exitCode = 1; }
 } else {
-  try { process.exitCode = runComparator(); }
-  catch { console.log("FAIL task_contract_comparator exit=1"); console.log(summaryLine({ ...emptySummary(), executionErrors: 1 })); process.exitCode = 1; }
+  let selfTestPassed = true;
+  try { runSelfTest(); }
+  catch { console.log("task_contract_comparator_self_test=fail"); selfTestPassed = false; process.exitCode = 1; }
+  if (selfTestPassed) {
+    try { process.exitCode = runComparator(); }
+    catch { console.log("FAIL task_contract_comparator exit=1"); console.log(summaryLine({ ...emptySummary(), executionErrors: 1 })); process.exitCode = 1; }
+  }
 }

@@ -48,10 +48,6 @@ function git(args, cwd = root) {
   return run("git", args, cwd);
 }
 
-function normalizedGitPaths(args) {
-  return git(args).split("\0").filter(Boolean).map((entry) => entry.split(path.sep).join("/"));
-}
-
 function gitPaths(args, cwd) {
   return git(args, cwd).split("\0").filter(Boolean).map((entry) => entry.split(path.sep).join("/"));
 }
@@ -108,10 +104,33 @@ function remoteRefsDigest() {
   return sha256(git(["for-each-ref", "--format=%(refname)%00%(objectname)%00", "refs/remotes"]));
 }
 
-function currentScope(manifestPaths) {
-  const tracked = normalizedGitPaths(["diff", "--name-only", "-z", baseSha, "--"]);
-  const untracked = normalizedGitPaths(["ls-files", "--others", "--exclude-standard", "-z", "--"]);
+function changedPathSnapshot(cwd = root, comparisonRef = baseSha) {
+  const tracked = gitPaths(["diff", "--name-only", "-z", comparisonRef, "--"], cwd);
+  const untracked = gitPaths(["ls-files", "--others", "--exclude-standard", "-z", "--"], cwd);
   const changed = [...new Set([...tracked, ...untracked])].sort((left, right) => left.localeCompare(right, "en"));
+  return { changed, digest: sha256(changed.map((entry) => `${entry}\0`).join("")) };
+}
+
+function overlaySourceSnapshot(cwd = root) {
+  return overlayPaths.map((relativePath) => {
+    const source = path.join(cwd, relativePath);
+    return fs.existsSync(source) ? fileSha256(source) : null;
+  });
+}
+
+function sourceSnapshotDriftCount(before, after) {
+  return before.reduce((count, hash, index) => count + Number(hash !== after[index]), 0);
+}
+
+function pathSnapshotDriftCount(before, after) {
+  const beforePaths = new Set(before.changed);
+  const afterPaths = new Set(after.changed);
+  return [...new Set([...beforePaths, ...afterPaths])]
+    .reduce((count, entry) => count + Number(beforePaths.has(entry) !== afterPaths.has(entry)), 0);
+}
+
+function currentScope(manifestPaths, snapshot = changedPathSnapshot()) {
+  const { changed } = snapshot;
   return {
     unexpected: changed.filter((entry) => !approvedCurrentPaths.has(entry)),
     baselineModified: changed.filter((entry) => manifestPaths.has(entry)),
@@ -129,13 +148,17 @@ function emptySummary() {
     unexpectedCurrentPaths: 0,
     executionErrors: 0,
     baselineExecuted: 0,
+    sourceSnapshotDriftCount: 0,
+    sourceSnapshotUnchanged: true,
+    currentScopeSnapshotDriftCount: 0,
+    currentScopeSnapshotUnchanged: true,
     remoteRefsUnchanged: true,
     temporaryWorktreeCleanup: "pass",
   };
 }
 
 function summaryLine(summary) {
-  return `baseline_total=170 baseline_pass=43 baseline_executed=${summary.baselineExecuted} preserved_pass=${summary.preservedPass} content_regressions=${summary.contentRegressions} baseline_fail=${summary.baselineFail} recovered=${summary.recovered} baseline_scripts_modified=${summary.baselineScriptsModified} overlay_hash_mismatches=${summary.overlayHashMismatches} unexpected_current_paths=${summary.unexpectedCurrentPaths} remote_refs_unchanged=${summary.remoteRefsUnchanged} temporary_worktree_cleanup=${summary.temporaryWorktreeCleanup} execution_errors=${summary.executionErrors}`;
+  return `baseline_total=170 baseline_pass=43 baseline_executed=${summary.baselineExecuted} preserved_pass=${summary.preservedPass} content_regressions=${summary.contentRegressions} baseline_fail=${summary.baselineFail} recovered=${summary.recovered} baseline_scripts_modified=${summary.baselineScriptsModified} overlay_hash_mismatches=${summary.overlayHashMismatches} unexpected_current_paths=${summary.unexpectedCurrentPaths} source_snapshot_unchanged=${summary.sourceSnapshotUnchanged} source_snapshot_drift_count=${summary.sourceSnapshotDriftCount} current_scope_snapshot_unchanged=${summary.currentScopeSnapshotUnchanged} current_scope_snapshot_drift_count=${summary.currentScopeSnapshotDriftCount} remote_refs_unchanged=${summary.remoteRefsUnchanged} temporary_worktree_cleanup=${summary.temporaryWorktreeCleanup} execution_errors=${summary.executionErrors}`;
 }
 
 function classifyContent(status, passed) {
@@ -151,6 +174,10 @@ function finalExit(summary) {
     || summary.baselineScriptsModified > 0
     || summary.overlayHashMismatches > 0
     || summary.unexpectedCurrentPaths > 0
+    || !summary.sourceSnapshotUnchanged
+    || summary.sourceSnapshotDriftCount > 0
+    || !summary.currentScopeSnapshotUnchanged
+    || summary.currentScopeSnapshotDriftCount > 0
     || !summary.remoteRefsUnchanged
     || summary.temporaryWorktreeCleanup !== "pass"
     || summary.executionErrors > 0 ? 1 : 0;
@@ -190,7 +217,9 @@ function safeTemporaryPath(temporaryRoot) {
 function runComparator() {
   const manifest = readManifest();
   const summary = emptySummary();
-  const scope = currentScope(new Set(manifest.contracts.map((entry) => entry.path)));
+  const sourceSnapshotBefore = overlaySourceSnapshot();
+  const scopeSnapshotBefore = changedPathSnapshot();
+  const scope = currentScope(new Set(manifest.contracts.map((entry) => entry.path)), scopeSnapshotBefore);
   summary.baselineScriptsModified = scope.baselineModified.length;
   summary.unexpectedCurrentPaths = scope.unexpected.length;
   if (summary.baselineScriptsModified > 0 || summary.unexpectedCurrentPaths > 0) {
@@ -287,6 +316,26 @@ function runComparator() {
       summary.remoteRefsUnchanged = false;
     }
   }
+  try {
+    const sourceSnapshotAfter = overlaySourceSnapshot();
+    summary.sourceSnapshotDriftCount = sourceSnapshotDriftCount(sourceSnapshotBefore, sourceSnapshotAfter);
+    summary.sourceSnapshotUnchanged = summary.sourceSnapshotDriftCount === 0;
+  } catch {
+    summary.sourceSnapshotDriftCount = overlayPaths.length;
+    summary.sourceSnapshotUnchanged = false;
+  }
+  try {
+    const scopeSnapshotAfter = changedPathSnapshot();
+    summary.currentScopeSnapshotDriftCount = pathSnapshotDriftCount(scopeSnapshotBefore, scopeSnapshotAfter);
+    summary.currentScopeSnapshotUnchanged = scopeSnapshotAfter.digest === scopeSnapshotBefore.digest
+      && summary.currentScopeSnapshotDriftCount === 0;
+  } catch {
+    summary.currentScopeSnapshotDriftCount = 1;
+    summary.currentScopeSnapshotUnchanged = false;
+  }
+  if (!summary.sourceSnapshotUnchanged || !summary.currentScopeSnapshotUnchanged) {
+    console.log(`FAIL input_snapshot_drift source_count=${summary.sourceSnapshotDriftCount} scope_count=${summary.currentScopeSnapshotDriftCount}`);
+  }
   console.log(summaryLine(summary));
   return finalExit(summary);
 }
@@ -304,12 +353,16 @@ function runSelfTest() {
     { overlayHashMismatches: 1 },
     { baselineScriptsModified: 1 },
     { unexpectedCurrentPaths: 1 },
+    { sourceSnapshotDriftCount: 1, sourceSnapshotUnchanged: false },
+    { currentScopeSnapshotDriftCount: 1, currentScopeSnapshotUnchanged: false },
     { remoteRefsUnchanged: false },
     { temporaryWorktreeCleanup: "fail" },
     { executionErrors: 1 },
   ]) assert.equal(finalExit({ ...success, ...mutation }), 1);
   assert.equal(classifyContent("PASS", false), "CONTENT_REGRESSION");
   assert.equal(classifyContent("FAIL", true), "RECOVERED");
+  assert.equal(success.sourceSnapshotUnchanged, true);
+  assert.equal(success.currentScopeSnapshotUnchanged, true);
   assert.ok(summaryLine(success).includes("remote_refs_unchanged=true"));
   const fixtureRoot = path.join(worktreesRoot, `task-overlay-stage-${process.pid}-${randomUUID()}`);
   const fixtureExcludeFile = `${fixtureRoot}.exclude`;
@@ -361,6 +414,34 @@ function runSelfTest() {
       [trackedOverlayPaths[0]],
     );
     for (const relativePath of newOverlayPaths) assert.ok(fs.existsSync(path.join(fixtureRoot, relativePath)));
+
+    const fixtureSourceSnapshot = overlaySourceSnapshot(fixtureRoot);
+    const fixtureScopeSnapshot = changedPathSnapshot(fixtureRoot, "HEAD");
+    assert.equal(sourceSnapshotDriftCount(fixtureSourceSnapshot, overlaySourceSnapshot(fixtureRoot)), 0);
+    assert.equal(changedPathSnapshot(fixtureRoot, "HEAD").digest, fixtureScopeSnapshot.digest);
+
+    fs.appendFileSync(path.join(fixtureRoot, trackedOverlayPaths[0]), "mid-run mutation\n", "utf8");
+    const mutationDriftCount = sourceSnapshotDriftCount(fixtureSourceSnapshot, overlaySourceSnapshot(fixtureRoot));
+    assert.equal(mutationDriftCount, 1);
+    assert.equal(finalExit({
+      ...success,
+      sourceSnapshotDriftCount: mutationDriftCount,
+      sourceSnapshotUnchanged: false,
+    }), 1);
+    fs.copyFileSync(changedOverlaySource, path.join(fixtureRoot, trackedOverlayPaths[0]));
+    git(["add", "--", trackedOverlayPaths[0]], fixtureRoot);
+    assert.equal(sourceSnapshotDriftCount(fixtureSourceSnapshot, overlaySourceSnapshot(fixtureRoot)), 0);
+
+    fs.writeFileSync(path.join(fixtureRoot, "scope-drift.md"), "mid-run path mutation\n", "utf8");
+    const mutatedScopeSnapshot = changedPathSnapshot(fixtureRoot, "HEAD");
+    const scopeMutationDriftCount = pathSnapshotDriftCount(fixtureScopeSnapshot, mutatedScopeSnapshot);
+    assert.notEqual(mutatedScopeSnapshot.digest, fixtureScopeSnapshot.digest);
+    assert.equal(scopeMutationDriftCount, 1);
+    assert.equal(finalExit({
+      ...success,
+      currentScopeSnapshotDriftCount: scopeMutationDriftCount,
+      currentScopeSnapshotUnchanged: false,
+    }), 1);
   } finally {
     assert.ok(safeTemporaryPath(fixtureRoot));
     if (fs.existsSync(fixtureExcludeFile)) fs.unlinkSync(fixtureExcludeFile);

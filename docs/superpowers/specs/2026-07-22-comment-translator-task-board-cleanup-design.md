@@ -140,6 +140,8 @@ ID比較元はintegration baseの `task.md` にある `Later Work / Post-MVP Roa
 3. exact base `e465e6b99a4c9082cd5f95b96ba585c15c37ab4a` でPASSしたcontractだけをcleanup regression gateの対象とする。
 4. baseでFAILした127本はpre-existing baseline failureとしてpath単位で記録し、成功証拠として扱わず、このcleanupでは変更しない。
 5. base-pass contractの回帰は、truthfulな互換anchorを `task.md` またはcurrent canonical authorityへ戻して解消する。assertionの削除・弱体化または既存contract scriptの変更が必要ならcompaction範囲を縮小する。
+6. 既存170 contractのcontent compatibilityは、exact baseのdetached temporary worktreeで評価する。現在の承認済みdocumentation surfacesだけをoverlayし、script codeとGit HEADはexact baseのまま保持する。
+7. Git changed-files / scope compatibilityはcurrent worktreeで独立して評価する。temporary worktreeの結果をcurrent branch diff allowlistの成功証拠として使用しない。
 
 ## Archive And Deletion Policy
 
@@ -156,11 +158,15 @@ ID比較元はintegration baseの `task.md` にある `Later Work / Post-MVP Roa
 - `task.md` から配信カンペボードactive authorityへ到達でき、将来候補が保持されていることを確認する。
 - exact base `e465e6b99a4c9082cd5f95b96ba585c15c37ab4a` のtask-reading setは170本で、同一dependency/runtime条件で43 PASS / 127 FAILだった。
 - baseline manifestには170本のscript pathとPASS/FAIL分類だけを保存し、stdout、stderr、payload、identifier、provider metadataは保存しない。
-- focused preservation contractは必ずPASSする。
-- base-pass 43本はpre-compactionとpost-compactionの両方で43 / 43 PASSを必須とし、PASSからFAILへのregressionを1本も許容しない。
-- 新規にdiscovery対象となったcontractは明示的に分類し、focused contractを含め全件PASSさせる。
+- focused preservation contractはcurrent worktreeで必ずPASSする。
+- baseline comparatorはexact baseのdetached temporary worktreeを作成し、exact-base script code 170本を実行する。
+- overlay対象は `task.md`、Prompt Board authority、Creator authority、dated archiveの4 pathに固定し、各source / overlay hash一致を確認する。
+- base-pass 43本はpre-compactionとpost-compactionの両方で43 / 43 PASSを必須とし、`content_regressions=0`を必須とする。
 - base-fail 127本は既知成功として扱わず、このcleanupで修正・変更しない。自然にPASSへ改善した場合はrecoveredとして記録してよい。
-- exact-base比較を同一条件で実行できないenvironment limitation、baseline pathの欠落、未分類の追加script、base-pass regressionはPR作成をblockする。
+- existing baseline scripts 170本とのcurrent diff intersectionは0を必須とする。
+- current branchのchanged / untracked path unionを承認済み固定allowlistと比較し、`unexpected_current_paths=0`を必須とする。
+- dependency treeはbaseline取得時と同一Node versionおよびpackage-lock hashであることを確認する。不一致時は比較不能としてblockする。
+- temporary worktreeはdetached HEAD、`HEAD=e465e6b99a4c9082cd5f95b96ba585c15c37ab4a`、remote refs unchangedを確認し、finally処理でdependency junctionを先に解除してから安全に削除する。
 - 変更したcontract scriptは `node --check` を通す。
 - `git diff --check` を通す。
 - changed-file secret / private identifier scanを通す。
@@ -171,8 +177,9 @@ ID比較元はintegration baseの `task.md` にある `Later Work / Post-MVP Roa
 - 必須ID、カンペ将来候補、fail-closed方針のいずれかが欠落した場合はPRを作成しない。
 - contract互換のために大幅なruntime/script refactorが必要になった場合は、`task.md` の互換anchorを残して整理範囲を縮小する。
 - exact baseで確認済みの127 baseline failuresだけではPRをblockしないが、成功またはcleanup検証済みとは表現しない。
-- focused contract failure、base-pass regression、未分類のnew failure、baseline manifest不一致はPR作成またはmergeをblockする。
+- focused contract failure、content regression、baseline manifest不一致はPR作成またはmergeをblockする。
 - baseline manifestに含まれる既存170 contract scriptはこのcleanupで変更しない。変更対象とのintersectionが1件でもあればblockする。
+- temporary worktree作成失敗、overlay hash mismatch、dependency mismatch、remote-ref drift、cleanup failure、`unexpected_current_paths > 0`はPR作成をblockする。
 - merge conflictまたはintegration tipの変化があれば、最新integrationを再取得して差分を再監査する。
 - Cloudflare preview checkが失敗した場合、task整理PRのdiffと無関係と断定せず、check evidenceを確認してmergeを止める。
 
@@ -188,6 +195,6 @@ ID比較元はintegration baseの `task.md` にある `Later Work / Post-MVP Roa
 
 ## Completion Boundary
 
-task整理PRは、focused preservation contract PASS、base-pass 43 / 43 preserved、regressions=0、new_failures=0、baseline scripts modified=0、changed contract syntax、`git diff --check`、sanitized scan、GitHub required checksが成功した場合だけ、今回の明示承認範囲でintegrationへmergeする。merge commitがintegrationに包含され、Cloudflare previewの自動build結果を読み取り確認したらこのcleanupは完了する。手動deployまたは外部mutationは行わない。
+task整理PRは、focused preservation contract PASS、base-pass 43 / 43 preserved、`content_regressions=0`、`baseline_scripts_modified=0`、`unexpected_current_paths=0`、`overlay_hash_mismatches=0`、`remote_refs_unchanged=true`、`temporary_worktree_cleanup=pass`、changed contract syntax、`git diff --check`、sanitized scan、GitHub required checksが成功した場合だけ、今回の明示承認範囲でintegrationへmergeする。merge commitがintegrationに包含され、Cloudflare previewの自動build結果を読み取り確認したらこのcleanupは完了する。手動deployまたは外部mutationは行わない。
 
 次のCodex taskは、最新integration tipからC1 durable paid entitlement storeの設計・実装を開始する。

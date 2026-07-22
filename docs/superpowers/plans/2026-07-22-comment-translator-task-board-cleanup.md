@@ -81,14 +81,31 @@ Assert each exact row appears once in both `task.md` and the Creator authority. 
 
 The runner and manifest must:
 
-- recursively discover `scripts/*.mjs` files whose text contains `task` + `.md`;
-- exclude only itself;
-- sort paths deterministically;
 - validate the manifest's exact 170 base paths, including 43 base-pass and 127 base-fail classifications;
-- execute each file with `process.execPath` and a bounded timeout;
-- classify results as `PRESERVED_PASS`, `REGRESSION`, `BASELINE_FAIL`, `RECOVERED`, `NEW_PASS`, or `NEW_FAIL` without stdout/stderr/body values;
-- finish with `baseline_total=170 baseline_pass=43 preserved_pass=<n> regressions=<n> baseline_fail=<n> new_pass=<n> new_fail=<n> baseline_scripts_modified=<n>`;
-- exit non-zero for a focused contract failure, regression, missing baseline path, manifest mismatch, any change to the 170 baseline scripts, or new failure.
+- record current remote refs, Node version, and package-lock hash without exposing private values;
+- create a unique detached temporary worktree under `D:/V_streamer_tools/.worktrees` at exact base `e465e6b99a4c9082cd5f95b96ba585c15c37ab4a` without creating a branch or changing remote refs;
+- validate detached HEAD and exact-base scripts against the manifest;
+- overlay only `task.md`, Prompt Board authority, Creator authority, and dated archive from the current worktree, verifying each source / overlay hash;
+- junction the already-installed current dependency tree only after Node version and package-lock hash match; never run a package manager in the temporary worktree;
+- execute the exact-base scripts with `process.execPath` and a bounded timeout, classifying `PRESERVED_PASS`, `CONTENT_REGRESSION`, `BASELINE_FAIL`, or `RECOVERED` without stdout/stderr/body values;
+- independently compare the current tracked-diff / untracked union to the fixed approved path allowlist below and verify no existing baseline script is modified;
+- in `finally`, remove the dependency junction first, verify the resolved detached worktree path, remove the temporary worktree, and confirm remote refs are unchanged;
+- finish with `baseline_total=170 baseline_pass=43 preserved_pass=<n> content_regressions=<n> baseline_fail=<n> recovered=<n> baseline_scripts_modified=<n> overlay_hash_mismatches=<n> unexpected_current_paths=<n> remote_refs_unchanged=<true|false> temporary_worktree_cleanup=<pass|fail>`;
+- exit non-zero for any content regression, manifest / dependency / overlay mismatch, baseline-script change, unexpected current path, remote-ref drift, temporary-worktree cleanup failure, timeout, or execution error.
+
+The fixed current-scope allowlist is:
+
+```text
+task.md
+docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md
+docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md
+docs/archive/TASK_LEGACY_CONTRACT_LEDGER_2026-07-22.md
+docs/superpowers/specs/2026-07-22-comment-translator-task-board-cleanup-design.md
+docs/superpowers/plans/2026-07-22-comment-translator-task-board-cleanup.md
+scripts/comment-translator-task-board-creator-roadmap-contract.mjs
+scripts/comment-translator-task-board-contract-suite.mjs
+scripts/fixtures/comment-translator-task-board-contract-baseline.json
+```
 
 - [ ] **Step 3: Run the focused contract and confirm RED**
 
@@ -142,7 +159,7 @@ The active board must contain:
 
 Before removing any historical text, add only the new current index, Creator sequence, authority links, and approval boundaries above the existing `Legacy Contract Compatibility Ledger`. Keep the entire old ledger body and its existing single copies of all 23 roadmap rows in `task.md` during this phase. Do not add duplicate roadmap tables until compaction replaces the legacy ledger; this keeps the focused contract's exact-row count at one before and after compaction.
 
-Run the focused preservation contract and the baseline-comparator runner. Expected: focused PASS, `preserved_pass=43`, `regressions=0`, `new_pass=1`, `new_fail=0`, and `baseline_scripts_modified=0`. The 127 exact-base failures remain explicitly classified as pre-existing and are not reported as successful.
+Run the focused preservation contract in the current worktree and the content comparator in the temporary exact-base lane. Expected: focused PASS, `preserved_pass=43`, `content_regressions=0`, `baseline_scripts_modified=0`, `overlay_hash_mismatches=0`, `unexpected_current_paths=0`, `remote_refs_unchanged=true`, and `temporary_worktree_cleanup=pass`. The 127 exact-base failures remain explicitly classified as pre-existing and are not reported as successful.
 
 - [ ] **Step 2: Compact the current `task.md` only after the first baseline-aware no-regression gate**
 
@@ -188,7 +205,7 @@ node scripts/comment-translator-task-board-creator-roadmap-contract.mjs
 node scripts/comment-translator-task-board-contract-suite.mjs
 ```
 
-Expected: the focused contract exits 0 with one success marker and the comparator reports `preserved_pass=43`, `regressions=0`, `new_fail=0`, and `baseline_scripts_modified=0`. This second baseline-aware run is mandatory after legacy duplication is removed.
+Expected: the focused contract exits 0 with one success marker and the comparator reports `preserved_pass=43`, `content_regressions=0`, `baseline_scripts_modified=0`, `overlay_hash_mismatches=0`, `unexpected_current_paths=0`, `remote_refs_unchanged=true`, and `temporary_worktree_cleanup=pass`. This second baseline-aware run is mandatory after legacy duplication is removed.
 
 ### Task 4: Eliminate exact-base regressions
 
@@ -206,11 +223,11 @@ Run:
 node scripts/comment-translator-task-board-contract-suite.mjs
 ```
 
-Expected: the exact base manifest remains 170 paths with 43 PASS / 127 FAIL, all 43 base-pass contracts remain PASS, no new contract fails, and `baseline_scripts_modified=0` across all 170 existing scripts.
+Expected: the exact base manifest remains 170 paths with 43 PASS / 127 FAIL, all 43 base-pass content contracts remain PASS in the overlay lane, `content_regressions=0`, and `baseline_scripts_modified=0` across all 170 existing scripts. The 17 current-worktree changed-files allowlist failures are recorded as Git-history-context false regressions and are not used as content-regression evidence.
 
 - [ ] **Step 2: Fix failures using the smallest safe compatibility path**
 
-For each regression from the 43 exact-base passing contracts, use this order:
+For each content regression from the 43 exact-base passing contracts in the overlay lane, use this order:
 
 1. restore a short truthful compatibility anchor in `task.md` when it remains an active invariant;
 2. keep all existing 170 contract scripts read-only, including the 127 baseline-fail files;
@@ -303,7 +320,7 @@ Fetch origin, confirm the branch still contains the latest integration tip, and 
 
 - [ ] **Step 2: Push the cleanup branch and create the PR**
 
-Create a ready PR targeting `codex/comment-translator-free-public-beta-integration`. The body must list preservation guarantees, `43/43` base-pass preserved, `regressions=0`, `127` pre-existing baseline failures, `baseline scripts modified=0`, checks run, archive path, no runtime/UI change, and excluded external operations. Do not claim that all historical contracts passed.
+Create a ready PR targeting `codex/comment-translator-free-public-beta-integration`. The body must list preservation guarantees, `43/43` exact-base content contracts preserved, `content_regressions=0`, `127` pre-existing baseline failures, `17` current-context changed-files allowlist failures isolated by exact-base overlay execution, `baseline scripts modified=0`, `unexpected current paths=0`, temporary worktree cleanup, checks run, archive path, no runtime/UI change, and excluded external operations. Do not claim that all historical contracts passed.
 
 - [ ] **Step 3: Verify GitHub checks and mergeability**
 

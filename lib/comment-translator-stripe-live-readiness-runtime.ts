@@ -80,6 +80,7 @@ export const commentTranslatorStripeLiveReadinessContract = {
     "STRIPE_SECRET_KEY",
     "STRIPE_WEBHOOK_SECRET",
     "COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID",
+    "COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_BILLING_ACCESS",
     "NEXT_PUBLIC_SITE_URL"
   ],
   signedWebhookEntitlementEvidence: "local-deterministic-verifier-contract-only",
@@ -159,13 +160,23 @@ export function createCommentTranslatorStripeLiveReadinessReport({
 export function reviewCommentTranslatorStripeSubscriptionStatusForLaunch(
   status: CommentTranslatorStripeSubscriptionStatus
 ): CommentTranslatorStripeSubscriptionLaunchReview {
-  if (status === "active" || status === "trialing") {
+  if (status === "active") {
     return {
       stripeStatus: status,
       entitlementPlan: "paid",
       billingState: "paid-active",
       sessionAccess: "paid-limits",
       operatorNote: "signed webhook entitlement evidence may activate paid limits"
+    };
+  }
+
+  if (status === "trialing") {
+    return {
+      stripeStatus: status,
+      entitlementPlan: "free",
+      billingState: "paid-inactive",
+      sessionAccess: "safe-free-limits",
+      operatorNote: "trialing requires a separately reviewed server-owned policy before paid limits may activate"
     };
   }
 

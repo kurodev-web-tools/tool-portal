@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import { registerHooks } from "node:module";
 import path from "node:path";
@@ -81,6 +82,10 @@ const callerAuthorization = {
   status: "authorized",
   ownerUserId: "server-only-owner-value"
 };
+process.env.COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_BILLING_ACCESS = "enabled-reviewed";
+process.env.COMMENT_TRANSLATOR_PRIVATE_LAUNCH_ALLOWED_USER_HASHES = createHash("sha256")
+  .update(callerAuthorization.ownerUserId)
+  .digest("hex");
 const billingUserReferenceId = billingModule.createCommentTranslatorBillingUserReference(callerAuthorization);
 assert.ok(billingUserReferenceId);
 

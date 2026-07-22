@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -53,6 +54,12 @@ for (const fragment of [
 const storeModule = await import("../lib/comment-translator-paid-entitlement-store.ts");
 const testStoreModule = await import("../lib/comment-translator-paid-entitlement-test-store.ts");
 const billingModule = await import("../lib/comment-translator-billing-runtime.ts");
+
+process.env.COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_BILLING_ACCESS = "enabled-reviewed";
+process.env.COMMENT_TRANSLATOR_PRIVATE_LAUNCH_ALLOWED_USER_HASHES = [
+  "server-only-owner-value",
+  "different-server-only-owner"
+].map((ownerUserId) => createHash("sha256").update(ownerUserId).digest("hex")).join(",");
 
 const billingUserReferenceId = billingModule.createCommentTranslatorBillingUserReference({
   status: "authorized",

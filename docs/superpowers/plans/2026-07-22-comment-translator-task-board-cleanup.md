@@ -87,7 +87,7 @@ The runner and manifest must:
 - validate the manifest's exact 170 base paths, including 43 base-pass and 127 base-fail classifications;
 - execute each file with `process.execPath` and a bounded timeout;
 - classify results as `PRESERVED_PASS`, `REGRESSION`, `BASELINE_FAIL`, `RECOVERED`, `NEW_PASS`, or `NEW_FAIL` without stdout/stderr/body values;
-- finish with `baseline_total=170 baseline_pass=43 preserved_pass=<n> regressions=<n> baseline_fail=<n> new_pass=<n> new_fail=<n>`;
+- finish with `baseline_total=170 baseline_pass=43 preserved_pass=<n> regressions=<n> baseline_fail=<n> new_pass=<n> new_fail=<n> baseline_scripts_modified=<n>`;
 - exit non-zero for a focused contract failure, regression, missing baseline path, manifest mismatch, any change to the 170 baseline scripts, or new failure.
 
 - [ ] **Step 3: Run the focused contract and confirm RED**
@@ -142,7 +142,7 @@ The active board must contain:
 
 Before removing any historical text, add only the new current index, Creator sequence, authority links, and approval boundaries above the existing `Legacy Contract Compatibility Ledger`. Keep the entire old ledger body and its existing single copies of all 23 roadmap rows in `task.md` during this phase. Do not add duplicate roadmap tables until compaction replaces the legacy ledger; this keeps the focused contract's exact-row count at one before and after compaction.
 
-Run the focused preservation contract and the baseline-comparator runner. Expected: focused PASS, `preserved_pass=43`, `regressions=0`, `new_pass=1`, and `new_fail=0`. The 127 exact-base failures remain explicitly classified as pre-existing and are not reported as successful.
+Run the focused preservation contract and the baseline-comparator runner. Expected: focused PASS, `preserved_pass=43`, `regressions=0`, `new_pass=1`, `new_fail=0`, and `baseline_scripts_modified=0`. The 127 exact-base failures remain explicitly classified as pre-existing and are not reported as successful.
 
 - [ ] **Step 2: Compact the current `task.md` only after the first baseline-aware no-regression gate**
 
@@ -188,7 +188,7 @@ node scripts/comment-translator-task-board-creator-roadmap-contract.mjs
 node scripts/comment-translator-task-board-contract-suite.mjs
 ```
 
-Expected: the focused contract exits 0 with one success marker and the comparator reports `preserved_pass=43`, `regressions=0`, and `new_fail=0`. This second baseline-aware run is mandatory after legacy duplication is removed.
+Expected: the focused contract exits 0 with one success marker and the comparator reports `preserved_pass=43`, `regressions=0`, `new_fail=0`, and `baseline_scripts_modified=0`. This second baseline-aware run is mandatory after legacy duplication is removed.
 
 ### Task 4: Eliminate exact-base regressions
 
@@ -206,7 +206,7 @@ Run:
 node scripts/comment-translator-task-board-contract-suite.mjs
 ```
 
-Expected: the exact base manifest remains 170 paths with 43 PASS / 127 FAIL, all 43 base-pass contracts remain PASS, no new contract fails, and no baseline-fail script is modified.
+Expected: the exact base manifest remains 170 paths with 43 PASS / 127 FAIL, all 43 base-pass contracts remain PASS, no new contract fails, and `baseline_scripts_modified=0` across all 170 existing scripts.
 
 - [ ] **Step 2: Fix failures using the smallest safe compatibility path**
 

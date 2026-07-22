@@ -52,6 +52,18 @@ export const tools: ToolDefinition[] = [
     icon: "SC"
   },
   {
+    id: "viewer-engagement-prompt-board",
+    name: "配信カンペボード",
+    description:
+      "配信プランごとにカンペを準備し、配信中はカテゴリ別に見やすく表示・切り替え・コピーできるブラウザ保存ツールです。",
+    category: "stream",
+    status: "available",
+    suite: "stream-workflow",
+    href: "/tools/viewer-engagement-prompt-board",
+    sidebar: true,
+    icon: "PB"
+  },
+  {
     id: "comment-translator",
     name: "Kuro Live Comment Translator",
     description:

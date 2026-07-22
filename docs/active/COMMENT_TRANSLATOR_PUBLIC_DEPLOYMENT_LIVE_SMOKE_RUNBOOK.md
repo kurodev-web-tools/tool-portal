@@ -12,7 +12,8 @@ Completion evidence for this task is documentation and contract verification onl
 
 ## Operator-Local Preconditions
 
-- Work from a feature branch based on `origin/codex/comment-translator-preview`; do not work directly on `main`.
+- Treat `origin/codex/comment-translator-free-public-beta-integration` as the Cloudflare production-control branch. Before new Comment Translator work, fetch current refs, confirm its relationship to `origin/main`, and complete any required integration synchronization under separate deployment approval before creating the feature branch. Do not work directly on `main` or mutate the integration branch without approval.
+- The legacy `codex/comment-translator-preview` line is frozen for retirement. Its exact tip `1a30609376c0573685463cbd4a4a2e8c2c190620` is preserved by the annotated tag `archive/comment-translator-preview-2026-07-21`; do not use the legacy branch as a new work base.
 - Confirm the release branch contains the latest merged public-roadmap PR.
 - Confirm local dependency installation is current before verification.
 - Confirm Cloudflare account/project access and Wrangler authentication locally, without printing credentials.

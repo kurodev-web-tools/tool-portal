@@ -1,14 +1,14 @@
 # Kuro Live Comment Translator Free Beta PL-G6 Public Access Change Preflight
 
-Status: PL-G6 public access change / promotion execution preflight prepared. Preview auto deploy evidence and production/main-domain private-launch smoke evidence recorded from sanitized operator-provided status. Public-release capable: no.
+Status: promotion, main-connected production deployment, login-only runtime activation, 11/11 post-activation browser verification, Google OAuth approval, edge deferral reconciliation, final public release declaration, and final production/main-domain smoke are complete. Public-release capable: yes.
 
 PL-G6C production/main-domain env readiness is confirmed by operator-provided labels, and production/main-domain private-launch-only smoke is pass by operator-provided browser evidence.
 
-Public access change, public gate flip, production/main deploy/upload, production/main-domain smoke, production env apply, and integration-to-main promotion remain not-run / approval-gated.
+The final public release declaration and separately approved final production/main-domain smoke are complete. Translator-specific Cloudflare Rate Limiting is an optional later load-shedding control, not a Free public beta release prerequisite.
 
-Repository runtime support for the approved login-only policy is implemented behind an exact server-owned activation control. Unset, malformed, or non-exact state retains the private-launch SHA-256 owner allowlist. Merging the implementation does not activate login-only access in preview or production; environment apply and the public gate flip remain separate exact approval-gated operations.
+Repository runtime support for the approved login-only policy is active through the separately approved production Worker deployment. The private-launch SHA-256 owner allowlist remains the compatibility path for existing allowed testers. The final public release declaration does not change this binding.
 
-This document is the execution preflight and approval surface for PL-G6 after PL-G5 recorded `release_owner_decision_status=accepted-promotion-readiness-only`. It identifies the exact approval and command boundaries still needed before any public access change or promotion operation can run. It is not approval to execute PL-G6, not a Cloudflare mutation, not a deploy/upload, not a production smoke, and not a public capability decision.
+This document is the reconciled readiness and completion surface after PL-G5, completed promotion, login-only activation, post-activation verification, final public release declaration, and final production/main-domain smoke. It does not approve any new Cloudflare, deployment, OAuth, database, billing, paid/Creator, admin, privileged, or OBS operation.
 
 ## Preflight Labels
 
@@ -16,38 +16,79 @@ This document is the execution preflight and approval surface for PL-G6 after PL
 | --- | --- |
 | `pl_g6_public_access_change_preflight_status` | `complete` |
 | `pl_g6_public_access_change_preflight_doc` | `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
-| `pl_g6_public_access_change_status` | `not-run-approval-gated` |
-| `public_release_capable` | `no` |
-| `public_gate_flip_status` | `not-run` |
-| `deploy_upload_status` | `complete-auto-preview-after-merge` |
+| `pl_g6_public_access_change_status` | `declared-free-public-beta` |
+| `public_release_capable` | `yes` |
+| `public_gate_flip_status` | `complete-release-declaration-no-mutation` |
+| `deploy_upload_status` | `complete-main-connected-and-activation-deployments` |
 | `deploy_upload_evidence_source` | `operator-provided` |
 | `preview_deployment_target` | `cloudflare-preview-domain` |
 | `preview_deployment_status` | `deployed-operator-provided` |
-| `production_env_apply_status` | `confirmed-ready-operator-provided` |
-| `production_main_domain_smoke_status` | `pass-operator-provided-private-launch-browser` |
-| `pl_g6c_production_main_domain_env_readiness_status` | `prepared-approval-gated` |
-| `pl_g6c_production_env_operator_action_status` | `action-required-sanitized-instructions-only` |
+| `production_env_apply_status` | `applied-login-only-runtime` |
+| `production_main_domain_smoke_status` | `pass-post-activation-browser-11-of-11` |
+| `pl_g6c_production_main_domain_env_readiness_status` | `complete` |
+| `pl_g6c_production_env_operator_action_status` | `complete-for-login-only-activation` |
 | `pl_g6c_production_env_apply_readiness_confirmation_approval_status` | `present` |
 | `pl_g6c_production_env_apply_readiness_confirmation_status` | `recorded-no-mutation` |
 | `pl_g6c_production_smoke_approval_status` | `present` |
 | `operator_start_to_translation_smoke_status` | `pass-production-main-domain-private-launch` |
 | `live_provider_execution_status` | `pass-operator-provided-private-launch-smoke` |
-| `main_promotion_status` | `not-run` |
+| `main_promotion_status` | `complete-pr-640-merged-main-contained` |
+| `main_connected_deployment_status` | `pass` |
+| `main_connected_workers_build_status` | `success` |
+| `main_connected_workers_build_evidence_source` | `github-check-run-cloudflare-workers-and-pages` |
 | `release_owner_decision_status` | `accepted-promotion-readiness-only` |
 | `release_owner_exact_approval_status` | `present-promotion-readiness-only` |
 | `release_owner_missing_approval_scope` | `promotion-operation-and-post-deploy-verification` |
-| `operator_remaining_external_verification_status` | `action-required` |
+| `operator_remaining_external_verification_status` | `complete` |
 | `operator_production_harness_block_status` | `pass-production-404` |
 | `operator_production_api_managed_challenge_status` | `not-selected` |
+| `google_auth_verification_status` | `approved` |
+| `unverified_app_warning_status` | `not-observed-after-fresh-reconnect` |
+| `oauth_reconnect_verification_status` | `pass` |
+| `final_public_gate_target` | `free-public-beta-release-declaration` |
+| `final_public_gate_mutation_target` | `none` |
+| `final_public_release_declaration_approval_status` | `present-in-thread` |
+| `final_public_release_declaration_preflight_status` | `pass` |
+| `final_public_release_declaration_status` | `complete` |
+| `final_public_release_declaration_evidence_source` | `operator-confirmed-main-build-active-deployment-and-read-only-harness` |
+| `final_production_smoke_status` | `pass` |
+| `final_production_smoke_execution_source` | `user-operated-existing-authenticated-browser` |
+| `final_production_smoke_comment_observed_count` | `3` |
+| `final_production_smoke_cache_hit_count` | `1` |
+| `final_production_smoke_provider_translation_count` | `2` |
+| `final_production_smoke_usage_delta_status` | `expected` |
+| `final_production_smoke_stop_status` | `pass` |
+| `final_production_smoke_unsanitized_output_status` | `not-shared` |
+| `final_production_smoke_stop_reason` | `none` |
+| `login_only_runtime_binding_action` | `unchanged` |
+| `edge_protection_operation_boundary` | `optional-control-deferred-no-activation-required-for-free-beta` |
+| `edge_rate_limiting_disposition` | `deferred-existing-free-slot-reserved-for-leaked-credential-protection` |
+| `cloudflare_free_rate_limiting_slot_status` | `occupied-leaked-credential-protection` |
+| `app_enforcement_authority` | `durable-quotas-session-caps-rate-guards` |
+| `edge_activation_status` | `deferred-not-required-for-free-public-beta` |
+| `edge_protection_readiness_status` | `pass-with-optional-edge-control-deferred` |
+| `optional_limit_proof_disposition` | `accepted-deterministic-evidence` |
+| `post_activation_browser_verification_status` | `pass-11-of-11` |
+| `post_activation_browser_failure_count` | `0` |
+| `production_main_domain_health_status` | `pass` |
+| `unauthenticated_access_status` | `pass-blocked` |
+| `auth_unavailable_access_status` | `pass-fail-closed` |
+| `authenticated_free_access_status` | `pass-allowed` |
+| `existing_allowed_tester_parity_status` | `pass` |
+| `preview_rate_limit_override_boundary_status` | `pass-tester-only` |
+| `privileged_boundaries_status` | `pass-unchanged` |
+| `youtube_connect_no_autostart_status` | `pass` |
+| `production_route_api_harness_status` | `pass-404` |
+| `browser_output_sanitization_status` | `pass` |
 | `public_beta_access_gate_selected` | `login-only` |
 | `public_beta_waitlist_boundary` | `creator-paid-beta-only` |
-| `login_only_runtime_implementation_status` | `implemented-not-activated` |
-| `login_only_runtime_default` | `private-launch-sha256-owner-allowlist` |
-| `login_only_runtime_activation_status` | `not-run-approval-gated` |
+| `login_only_runtime_implementation_status` | `activated-login-only` |
+| `login_only_runtime_default` | `login-only-with-private-tester-parity` |
+| `login_only_runtime_activation_status` | `complete-production-worker-deployment` |
 | `login_only_runtime_activation_target` | `cloudflare-production-worker-runtime` |
-| `login_only_runtime_activation_preflight_status` | `prepared-local-only` |
-| `login_only_runtime_activation_approval_status` | `present-insufficient-for-required-deploy` |
-| `login_only_runtime_activation_apply_status` | `blocked-deploy-upload-not-approved` |
+| `login_only_runtime_activation_preflight_status` | `pass` |
+| `login_only_runtime_activation_approval_status` | `present-separate-production-deployment` |
+| `login_only_runtime_activation_apply_status` | `complete` |
 | `preview_rate_limit_smoke_tester_boundary` | `private-launch-allowlisted-tester-only` |
 | `public_traffic_rate_limit_backing_selected` | `cloudflare-edge` |
 | `pl_g6_first_operational_target` | `production-route-api-harness-block-removal` |
@@ -58,28 +99,72 @@ This document is the execution preflight and approval surface for PL-G6 after PL
 | `support_response_status` | `pending` |
 | `risk_acceptance_scope` | `future-public-object-default-privileges-only` |
 | `new_public_db_object_review_status` | `required-before-work` |
-| `post_pr_637_runtime_status` | `implemented-not-activated` |
-| `integration_to_main_promotion_readiness_status` | `ready-after-exact-approvals` |
-| `main_connected_deployment_activation_state` | `unset-required` |
-| `post_deploy_private_default_verification_status` | `not-run-approval-gated` |
+| `post_pr_637_runtime_status` | `activated-login-only` |
+| `integration_to_main_promotion_readiness_status` | `complete-promoted` |
+| `main_connected_deployment_activation_state` | `login-only-active` |
+| `post_deploy_private_default_verification_status` | `pass-before-activation` |
+
+## Post-Activation Reconciliation
+
+The reviewed PR #640 merge is contained in `origin/main`, the main-connected production deployment completed, and login-only runtime activation was applied through its separately approved production Worker deployment. The later browser verification completed with 11/11 pass and zero failures.
+
+Verified behavior is limited to sanitized labels: main-domain health passed; unauthenticated and auth-unavailable access remained blocked/fail-closed; authenticated Free access passed; existing allowed-tester parity passed; the preview override remained tester-only; Creator/paid waitlist, billing, admin, and privileged boundaries remained unchanged; YouTube connection alone did not start polling, translation, persistence use, or quota consumption; the production route/API harness returned 404; and browser-visible output remained sanitized.
+
+No public release declaration, edge-rule mutation, Google Auth publishing, final production smoke, Start, provider/live execution, target lookup, Supabase action, Stripe action, paid/Creator runtime, or OBS runtime is implied by those completed operations. Historical activation and promotion instructions below remain an audit trail and are not current next actions.
 
 ## Required Same-Thread Approval Surface
 
-PL-G6 execution remains blocked until exact same-thread approval names the operation, target boundary, allowed evidence shape, and non-actions.
+The final public release declaration received exact same-thread approval naming the declaration target, prerequisites, evidence shape, and non-actions. Its declaration preflight passed.
 
-The approval text must explicitly cover the intended operation. Paste-ready minimum:
+The exact paste-ready approval text is recorded under `Final Public Gate Definition`. It did not approve edge activation, deployment, final smoke, or any already completed operation to be rerun. Its `public_release_capable=no` condition remained in force until the later separately approved final production/main-domain smoke passed; that condition is now satisfied.
 
-> I approve PL-G6 public access change / promotion preflight execution for the Free public beta integration line only. Keep evidence sanitized to labels/counts/pass-fail/status only. Do not expose secrets, tokens, cookies, Authorization headers, browser storage, raw responses, raw comments, owner/internal ids, provider target metadata, liveChatId, Cloudflare token/zone/account/rule ids, support ticket ids, raw SQL output, or raw provider payloads. Do not run any operation outside the named PL-G6 target boundary.
+## Final Public Release Declaration 2026-07-16
 
-If the requested PL-G6 action includes public gate flip, production/main deploy/upload, Cloudflare mutation, production env apply, production/main-domain smoke, or main promotion, the approval must name that exact operation. Approval for one PL-G6 operation does not approve adjacent operations.
+The release owner approved `final_public_gate_target=free-public-beta-release-declaration` in this thread. The declaration preflight recorded `main_connected_workers_build_status=success`, `active_deployment_matches_latest_successful_main_build=yes`, and a same-process read-only production route/API harness result of HTTP 404. Production API Managed Challenge was not observed in that request path, and the recorded production API Managed Challenge selection remains `not-selected`.
 
-Keep public_release_capable=no unless this same-thread approval explicitly changes it after the listed checks are closed or accepted.
+Declaration result:
 
-## Login-Only Runtime Activation And Later Public Gate Flip
+- `final_public_release_declaration_approval_status=present-in-thread`;
+- `final_public_release_declaration_preflight_status=pass`;
+- `final_public_release_declaration_status=complete`;
+- `pl_g6_public_access_change_status=declared-free-public-beta`;
+- `public_gate_flip_status=complete-release-declaration-no-mutation`;
+- `final_public_gate_mutation_target=none`;
+- `login_only_runtime_binding_action=unchanged`;
+- declaration-time `operator_remaining_external_verification_status=action-required-final-smoke`;
+- declaration-time `final_production_smoke_status=not-run-approval-gated`;
+- declaration-time `public_release_capable=no`.
 
-The smallest safe next activation operation after the merged runtime is a production-only environment apply for the exact server-owned login-only runtime control. It is narrower than a public gate flip: it changes Free runtime eligibility for authenticated users in the named production Worker environment, but does not by itself approve Cloudflare edge-rule mutation, deploy/upload, production browser smoke, live/provider execution, OAuth live flow, Google target lookup, Supabase work, Stripe work, paid/Creator runtime, OBS runtime, main promotion, or a declaration that public release is capable.
+The declaration created no Cloudflare rule, binding, environment, secret, version, deployment, database, billing, OAuth, provider/live, paid/Creator, admin, or OBS mutation. Evidence remains labels/counts/pass-fail/status only. At declaration time, the only unrun release operation in this chain was the separately approved final production/main-domain smoke; the result below supersedes that declaration-time state.
 
-Before the operation and in the same command process that would apply it, the operator must confirm only these sanitized preflight labels:
+## Final Production/Main-Domain Smoke 2026-07-16
+
+The release owner approved `target final-production-main-domain-smoke` in the same thread after the read-only preflight passed. The final browser execution was user-operated in an existing authenticated production session with an existing YouTube connection. No login, credential request, OAuth revoke/reconnect, Google Auth Platform mutation, Cloudflare mutation, environment/binding/deployment change, Supabase action, Stripe action, paid/Creator runtime, admin/privileged action, or OBS action was performed.
+
+Sanitized result:
+
+- `final_production_smoke_status=pass`;
+- `authenticated_free_access_status=pass`;
+- `youtube_connection_status=connected`;
+- `no_autostart_status=pass`;
+- `start_status=pass`;
+- `final_production_smoke_comment_observed_count=3`;
+- `final_production_smoke_cache_hit_count=1`;
+- `final_production_smoke_provider_translation_count=2`;
+- `final_production_smoke_usage_delta_status=expected`;
+- `final_production_smoke_stop_status=pass`;
+- `final_production_smoke_unsanitized_output_status=not-shared`;
+- `final_production_smoke_stop_reason=none`;
+- `operator_remaining_external_verification_status=complete`;
+- `public_release_capable=yes`.
+
+The Google result remains recorded only as `google_auth_verification_status=approved`, `unverified_app_warning_status=not-observed-after-fresh-reconnect`, and `oauth_reconnect_verification_status=pass`. No raw comments, account metadata, provider target metadata, identifiers, browser storage, response payloads, or screenshot contents are recorded.
+
+## Completed Login-Only Runtime Activation And Later Final Public Release Declaration
+
+The separately approved production Worker activation is complete. It changed Free runtime eligibility for authenticated users without approving a final public release declaration or any adjacent Cloudflare, provider, database, billing, paid/Creator, or OBS operation.
+
+Before that completed operation, the operator had to confirm these sanitized preflight labels:
 
 - target environment is exactly `cloudflare-production-worker-runtime`;
 - fetched integration revision contains the reviewed login-only runtime merge;
@@ -91,19 +176,33 @@ Before the operation and in the same command process that would apply it, the op
 - activation input is exact and server-owned without printing or persisting its value;
 - evidence output is restricted to labels/counts/pass-fail/status only.
 
-Paste-ready approval for login-only runtime activation only:
+Historical approval text for the completed login-only runtime activation only:
 
 > I approve the login-only runtime activation environment apply for the Kuro Stream Kit / Comment Translator Free public beta integration line in the Cloudflare production Worker environment only. Run the apply only after same-process sanitized preflight passes. Keep evidence to labels/counts/pass-fail/status only. Do not expose or persist activation values, secrets, tokens, cookies, Authorization headers, browser storage, raw responses, raw comments, owner/internal ids, hashes, provider metadata, liveChatId, Cloudflare ids, support ids, raw SQL, or raw provider payloads. Do not run deploy/upload, Cloudflare edge-rule mutation, public gate flip, production browser smoke, live/provider execution, OAuth live flow, Google target lookup, Supabase query/mutation/migration, Stripe action, paid/Creator runtime, OBS runtime, Google Auth publishing, main promotion, or any operation outside this named target.
 
 After an approved activation, verification remains a separate operation unless the same-thread approval names the production browser smoke and any required live/OAuth/provider boundaries. Required sanitized checks are: unauthenticated and auth-unavailable blocked; authenticated Free user allowed; existing allowed tester allowed; preview 5/min override tester-only; Creator/paid waitlist, billing, admin, and privileged surfaces unchanged; YouTube connection alone produces no polling, translation, or quota use; browser output sanitized.
 
-The later public gate flip is a separate remote operation and must not be inferred from login-only activation approval. Paste-ready approval for that later operation:
+The later public gate flip is a separate release declaration and must not be inferred from login-only activation approval. It is not a second Worker binding mutation. Paste-ready approval for that later declaration:
 
-> I approve the PL-G6 public gate flip for the Kuro Stream Kit / Comment Translator Free public beta integration line in the Cloudflare production environment only, after login-only activation and the named sanitized operator checks pass or are explicitly accepted. Run the flip only after same-process sanitized preflight passes. Keep evidence to labels/counts/pass-fail/status only. Do not expose or persist secrets, tokens, cookies, Authorization headers, browser storage, raw responses, raw comments, owner/internal ids, hashes, activation values, provider metadata, liveChatId, Cloudflare ids, support ids, raw SQL, or raw provider payloads. Do not run deploy/upload, unrelated Cloudflare mutation, production browser smoke, live/provider execution, OAuth live flow, Google target lookup, Supabase query/mutation/migration, Stripe action, paid/Creator runtime, OBS runtime, Google Auth publishing, or main promotion unless separately named in this same-thread approval.
+> I approve the PL-G6 final public release declaration for the Kuro Stream Kit / Comment Translator Free public beta integration line only after the separately approved login-only runtime activation and required post-activation checks are recorded pass, Google OAuth verification is approved, production edge protection readiness is confirmed, the production route/API harness remains blocked with HTTP 404, and the required same-process sanitized preflight passes. Keep the existing login-only runtime binding unchanged. This declaration does not approve a Worker binding change, Cloudflare mutation, deploy/upload, or final production smoke. Keep evidence to labels/counts/pass-fail/status only and keep public_release_capable=no until the separately approved final production/main-domain smoke passes.
 
-Latest activation attempt status: same-process local preflight passed for reviewed revision, reviewed branch, private-launch default, exact server-owned control, and production harness block. Activation apply stopped before remote mutation because Cloudflare requires a new Worker version/deployment to make the binding active while the approval explicitly prohibited deploy/upload. Cloudflare auth references and the local Wrangler runtime were also unavailable in the same process. Sanitized result: `activation_apply_status=blocked-deploy-upload-not-approved`, `remote_mutation_count=0`, `deploy_upload_count=0`, `public_gate_flip_count=0`.
+Historical blocked attempt, superseded by the later separately approved activation deployment: same-process local preflight passed, but that narrower attempt stopped before remote mutation because deploy/upload was not approved. Sanitized result: `activation_apply_status=blocked-deploy-upload-not-approved`, `remote_mutation_count=0`, `deploy_upload_count=0`, `public_gate_flip_count=0`.
 
-## Integration-To-Main Promotion Sequence
+## Final Public Gate Definition
+
+The final public gate does not create, remove, or change a Worker binding.
+
+`COMMENT_TRANSLATOR_FREE_BETA_RUNTIME_ACCESS` remains unchanged at the separately activated login-only runtime policy. The private-launch allowlist remains the compatibility path for existing allowed testers and is not a second public-release switch.
+
+Cloudflare production edge protection activation or confirmation remains a separate approval-gated operation when required. Cloudflare edge protection is a traffic-control prerequisite, not the final release declaration itself. Production API Managed Challenge remains `not-selected` unless an explicit emergency exception is approved.
+
+The final public gate is a release declaration after the separately approved login-only activation and required post-activation checks are recorded pass, Google OAuth verification is approved, production edge protection is confirmed ready, and the production route/API harness remains blocked with HTTP 404. Google OAuth verification is approved, production edge readiness passes, the active deployment matches the latest successful main build, and the same-process production route/API harness recheck returned HTTP 404. The final release declaration is complete.
+
+Final production/main-domain smoke was a later separate approval-gated task after the release declaration. The declaration alone kept `public_release_capable` at `no`; the separately approved final smoke has now passed with no stop condition, so the current status is `yes`.
+
+## Completed Integration-To-Main Promotion Sequence
+
+This sequence is retained as a historical audit trail. Promotion, main-connected deployment, private-default verification, login-only activation, and final release declaration completed before the later separately approved final production/main-domain smoke, which is now also complete.
 
 The operational order is fixed:
 
@@ -123,7 +222,9 @@ Paste-ready post-deploy private-default verification approval:
 
 Approval for the promotion does not approve the post-deploy verification. Approval for the verification does not approve login-only activation. Login-only activation does not approve the later public gate flip.
 
-## Smallest Safe First Operational Target
+## Completed First Operational Target
+
+This section records the historical first target and is not a current next action.
 
 The smallest safe first PL-G6 operational target is `production-route-api-harness-block-removal`.
 
@@ -146,7 +247,9 @@ PL-G6B preview deploy evidence status: recorded.
 
 Operator-provided sanitized evidence states that PR #628 is merged and Cloudflare preview domain deployment is complete. This records preview deploy/upload as `complete-auto-preview-after-merge` only; it is not production/main-domain smoke, production env apply, public gate flip, public access change, or main promotion evidence.
 
-## PL-G6C Production/Main-Domain Env Readiness And Smoke Approval Gate
+## Completed PL-G6C Production/Main-Domain Env Readiness And Smoke Gate
+
+This section is retained as the historical readiness and private-launch smoke approval trail. Its env-readiness, private-default smoke, and later login-only activation steps are complete.
 
 PL-G6C prepares the next approval gate only. It does not apply production environment variables, mutate Cloudflare, deploy/upload, smoke the production/main domain, run live/provider flows, or change public access.
 
@@ -225,7 +328,7 @@ Cloudflare route-class and traffic-growth operation guidance remains centralized
 Allowed after future exact approval only:
 
 - public access policy change for the selected `login-only` Free public beta boundary;
-- Cloudflare edge rate-limit activation or route-class protection change for the approved target;
+- later Translator-specific Cloudflare edge rate-limit activation or route-class protection change only after separate approval and when traffic or revenue justifies it;
 - production/main deploy/upload for the approved target;
 - production env apply for the approved target;
 - public gate flip for the approved target;
@@ -247,31 +350,26 @@ Do not run Cloudflare mutation, production/main deploy/upload, production env ap
 
 ## Public Capability Result
 
-Public capability can remain `no` through this preflight. The preflight result is:
+Public capability is `yes` after the separately approved final production/main-domain smoke passed. The reconciled result is:
 
-- PL-G6 approval surface prepared;
-- exact PL-G6 public access change approval absent;
-- remaining operator checks still action-required unless separately closed or accepted;
-- public access change not run;
-- public gate flip not run;
-- preview deploy/upload complete via operator-provided automatic merge deployment status;
-- production/main deploy/upload not run;
-- production env readiness confirmed by operator-provided labels;
-- PL-G6C production/main-domain env readiness confirmed for private-launch-only smoke;
-- production/main-domain private-launch smoke passed by operator-provided browser evidence;
-- main promotion not run.
+- PR #640 promotion and main-connected production deployment complete;
+- main-connected Workers Build completed successfully;
+- separately approved login-only production Worker activation complete;
+- post-activation production browser verification passed 11/11 with zero failures;
+- Google OAuth verification is approved, the unverified-app warning was not observed after a fresh reconnect, and reconnect verification passed;
+- Translator-specific Cloudflare Rate Limiting is deferred because the available Free rule slot remains reserved for leaked-credential protection;
+- app-side durable quotas, session caps, and rate guards remain the enforcement authority;
+- production edge readiness passes with the optional edge control deferred;
+- production route/API harness remained verified as HTTP 404 in the final-smoke preflight;
+- final public release declaration complete with no mutation target;
+- final production/main-domain smoke passed with 3 observed comments, including 1 cache hit and 2 provider translations, expected usage delta, and successful Stop;
+- `public_release_capable=yes`.
 
 ## Operator Checks Still Required
 
-Before or during any approved PL-G6 operation, the release owner must close or explicitly accept these surfaces:
+The release owner closed the declaration and final-smoke surfaces: same-thread approvals were present, the active deployment matched the latest successful main build, the production route/API harness returned HTTP 404, production API Managed Challenge remained `not-selected`, and the bounded final production/main-domain Start-to-translation-to-Stop smoke passed.
 
-- production Cloudflare edge activation / route-class protection evidence;
-- production route/API harness block or removal before production traffic;
-- production API Managed Challenge remains `not-selected` unless an emergency exception is named;
-- Start-to-translation live smoke: complete for production/main-domain private-launch-only evidence;
-- optional burst comment, 30-minute session, and monthly 20,000 provider-input-character checks or explicit acceptance that fixture/local evidence is enough;
-- final production/main-domain smoke after any approved public access or promotion change.
-- PL-G6C production env apply readiness confirmation before production/main-domain smoke.
+Start-to-translation evidence and deterministic burst, 30-minute session, and monthly 20,000 provider-input-character proof remain accepted. No release-chain operation remains open.
 
 No new `public` database object work may proceed without explicit object-level grant/RLS/default-privileges review.
 

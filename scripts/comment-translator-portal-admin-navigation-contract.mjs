@@ -235,7 +235,7 @@ assert.doesNotMatch(portalSidebarSource, /copy\.fixed/, "desktop sidebar no long
 assert.doesNotMatch(portalSidebarSource, /copy\.futureItems|copy\.future|copy\.comingSoon/, "persistent sidebar does not render future placeholder clutter");
 assert.match(portalSidebarSource, /min-h-0 flex-1 overflow-y-auto/, "desktop sidebar middle navigation region is independently scrollable");
 assert.match(portalSidebarSource, /shrink-0 border-t border-border/, "desktop sidebar bottom account/settings region is stable");
-assert.match(portalSidebarSource, /hidden xl:block[\s\S]*sidebarTools\.map/, "implemented tool list is expanded-sidebar only");
+assert.match(portalSidebarSource, /data-portal-sidebar-tools="all-tools-in-every-rail"[\s\S]*sidebarTools\.map/, "implemented tool list stays available in expanded and compact sidebars");
 assert.match(portalSidebarSource, /data-comment-translator-admin-shortcut="server-allowlisted-admin-only"/, "sidebar admin entry stays server-state driven");
 assert.doesNotMatch(
   portalSidebarSource,
@@ -243,7 +243,8 @@ assert.doesNotMatch(
   "sidebar does not implement client-side admin checks"
 );
 
-assert.doesNotMatch(portalHeaderSource, /sidebarTools\.map|getToolCopy/, "mobile drawer does not enumerate every implemented tool");
+assert.match(portalHeaderSource, /sidebarTools\.map/, "mobile drawer enumerates every implemented sidebar tool");
+assert.match(portalHeaderSource, /getToolCopy\(tool\.id, locale\)\.name/, "mobile drawer localizes implemented tool names");
 assert.match(portalHeaderSource, /const navItems = \[[\s\S]*href: "\/"[\s\S]*href: "\/tools"[\s\S]*\]/, "mobile drawer uses top-level destinations");
 assert.match(portalHeaderSource, /pathname\.startsWith\("\/admin"\)/, "header title recognizes admin routes");
 assert.match(portalHeaderSource, /data-comment-translator-admin-shortcut="server-allowlisted-admin-only"/, "mobile drawer admin entry stays server-state driven");

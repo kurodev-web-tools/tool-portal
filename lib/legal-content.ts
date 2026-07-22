@@ -19,7 +19,7 @@ export type LegalDocument = {
 
 const sharedDates = {
   effectiveDate: "2026年5月30日",
-  updatedDate: "2026年6月12日"
+  updatedDate: "2026年7月14日"
 };
 
 export const legalDocuments = {
@@ -197,7 +197,7 @@ export const legalDocuments = {
         heading: "第9条（開示・訂正・削除）",
         paragraphs: [
           "利用者本人から、当方が保有する個人情報の開示、訂正、削除、利用停止等の請求があった場合、本人確認のうえ、法令に従い合理的な範囲で対応します。",
-          "問い合わせは feedback@kuro-lab.com または本サービス内のフィードバック導線からご連絡ください。"
+          "Comment Translator のYouTube連携は、Kuro Stream Kit側のアカウント連携ページで切断できます。この切断はserver-only credential referenceを無効化しますが、Google側で許可したアクセス権は取り消しません。Google側のアクセス権は、Googleアカウントの「サードパーティとの接続」で Kuro Live Comment Translator を選び、アクセス権を削除してください。既に共有されたデータの開示、訂正、削除、利用停止に関する問い合わせは feedback@kuro-lab.com または本サービス内のフィードバック導線からご連絡ください。"
         ]
       },
       {

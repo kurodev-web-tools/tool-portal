@@ -25,28 +25,43 @@ for (const marker of [
   "`remote_default_privileges_posture_status` | `fail`",
   "`risk_acceptance_status` | `accepted`",
   "`risk_acceptance_scope` | `future-public-object-default-privileges-only`",
-  "`public_release_capable_status` | `no`",
-  "`public_gate_flip_status` | `not-run`",
-  "`main_promotion_status` | `not-run`",
+  "`public_release_capable_status` | `yes`",
+  "`public_gate_flip_status` | `complete-release-declaration-no-mutation`",
+  "`main_promotion_status` | `complete-pr-640-merged-main-contained`",
   "`obs_dock_display_name_policy_status` | `complete`",
   "`public_beta_access_gate_decision_status` | `complete`",
   "`public_beta_access_gate_selected` | `login-only`",
   "`public_beta_waitlist_boundary` | `creator-paid-beta-only`",
   "`public_traffic_rate_limit_backing_status` | `complete`",
   "`public_traffic_rate_limit_backing_selected` | `cloudflare-edge`",
-  "`edge_activation_status` | `not-run-approval-gated`",
+  "`edge_activation_status` | `deferred-not-required-for-free-public-beta`",
+  "`edge_protection_readiness_status` | `pass-with-optional-edge-control-deferred`",
+  "`edge_rate_limiting_disposition` | `deferred-existing-free-slot-reserved-for-leaked-credential-protection`",
+  "`cloudflare_free_rate_limiting_slot_status` | `occupied-leaked-credential-protection`",
+  "`app_enforcement_authority` | `durable-quotas-session-caps-rate-guards`",
   "`public_launch_operator_qa_checklist_status` | `complete`",
-  "`operator_external_verification_status` | `partial-pass-preview-and-production-private-launch-browser`",
-  "`operator_remaining_external_verification_status` | `action-required`",
+  "`operator_external_verification_status` | `pass-post-activation-browser-11-of-11`",
+  "`operator_remaining_external_verification_status` | `complete`",
+  "`final_public_release_declaration_status` | `complete`",
+  "`final_public_release_declaration_preflight_status` | `pass`",
+  "`final_production_smoke_status` | `pass`",
+  "`final_production_smoke_comment_observed_count` | `3`",
+  "`final_production_smoke_cache_hit_count` | `1`",
+  "`final_production_smoke_provider_translation_count` | `2`",
+  "`final_production_smoke_usage_delta_status` | `expected`",
+  "`final_production_smoke_stop_status` | `pass`",
+  "`google_auth_verification_status` | `approved`",
+  "`unverified_app_warning_status` | `not-observed-after-fresh-reconnect`",
+  "`oauth_reconnect_verification_status` | `pass`",
   "`operator_cloudflare_preview_custom_rule_status` | `configured-preview-only-managed-challenge`",
   "`operator_cloudflare_env_reference_status` | `present-enabled-label`",
-  "`operator_free_beta_login_browser_smoke_status` | `pass-preview-browser`",
-  "`operator_waitlist_boundary_browser_smoke_status` | `pass-preview-browser`",
+  "`operator_free_beta_login_browser_smoke_status` | `pass-post-activation-production-browser`",
+  "`operator_waitlist_boundary_browser_smoke_status` | `pass-post-activation-production-browser`",
   "`operator_youtube_connect_no_autostart_smoke_status` | `pass-preview-and-production-browser`",
   "`operator_production_api_managed_challenge_status` | `not-selected`",
   "`operator_production_harness_block_status` | `pass-production-404`",
-  "`production_env_apply_status` | `confirmed-ready-operator-provided`",
-  "`production_main_domain_smoke_status` | `pass-operator-provided-private-launch-browser`",
+  "`production_env_apply_status` | `applied-login-only-runtime`",
+  "`production_main_domain_smoke_status` | `pass-post-activation-browser-11-of-11`",
   "`operator_start_to_translation_smoke_status` | `pass-production-main-domain-private-launch`",
   "`live_provider_execution_status` | `pass-operator-provided-private-launch-smoke`",
   "`cloudflare_custom_rule_operations_doc_status` | `complete`",
@@ -69,10 +84,10 @@ for (const marker of [
   "`Supabase default privileges support response or risk acceptance`",
   "`Public launch operator QA checklist`",
   "`PL-G5 release-owner decision`",
-  "`PL-G6 public access change / promotion`",
+  "`PL-G6 final release declaration`",
   "The Step 8 update is a policy/UI/contract slice only.",
   "The Step 9 policy selected `login-only` for Free public beta access",
-  "The Step 10 update is a policy/contract/documentation slice only.",
+  "The Step 10 update selected `cloudflare-edge` as the preferred outer load-shedding backing",
   "The Step 11 update is a policy/contract/documentation slice only.",
   "The operator QA checklist update is a documentation/contract slice only.",
   "The Cloudflare custom-rule operations update is a documentation/contract slice only.",
@@ -80,11 +95,11 @@ for (const marker of [
   "Public copy changes: complete for Free limits public copy; no quota enforcement logic changed.",
   "OBS Dock behavior: display-name policy only.",
   "Public beta access gate behavior: decision only.",
-  "Public traffic rate-limit backing behavior: decision only.",
+  "Public traffic rate-limit backing behavior: `cloudflare-edge` remains the preferred optional outer load-shedding layer",
   "Supabase default privileges risk acceptance: decision only.",
-  "Public launch operator QA checklist: complete for docs/contract separation and 2026-07-09 / 2026-07-10 sanitized operator updates.",
+  "Public launch operator QA checklist: complete for docs/contract separation and sanitized operator updates.",
   "Cloudflare custom-rule operations: complete for docs/contract guidance only.",
-  "PL-G5 release-owner decision record: complete for docs/contract guidance only.",
+  "PL-G5 release-owner decision record: complete as a decision-time audit record.",
   "Supabase default privileges remediation/apply: not run."
 ]) {
   assert.ok(doc.includes(marker), `launch remaining task board doc records ${marker}`);
@@ -135,7 +150,7 @@ for (const marker of [
   "remote_default_privileges_status=fail-accepted-risk",
   "risk_acceptance_status=accepted",
   "risk_acceptance_scope=future-public-object-default-privileges-only",
-  "public_release_capable=no",
+  "public_release_capable=yes",
   "COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md",
   "COMMENT_TRANSLATOR_CLOUDFLARE_CUSTOM_RULE_OPERATIONS.md"
 ]) {
@@ -152,10 +167,52 @@ const taskOrder = [
   "Public launch operator QA checklist",
   "Cloudflare custom-rule operations doc",
   "PL-G5 release-owner decision",
-  "PL-G6 public access change / promotion"
+  "PL-G6 final release declaration"
 ];
 
-const taskOrderSection = doc.slice(doc.indexOf("## Remaining Public Launch Task Order"));
+function sectionBetween(source, startMarker, endMarker, label) {
+  const start = source.indexOf(startMarker);
+  const end = source.indexOf(endMarker);
+  assert.notEqual(start, -1, `${label} start marker exists`);
+  assert.notEqual(end, -1, `${label} end marker exists`);
+  assert.ok(end > start, `${label} markers are in order`);
+  return source.slice(start, end);
+}
+
+function sectionFrom(source, startMarker, label) {
+  const start = source.indexOf(startMarker);
+  assert.notEqual(start, -1, `${label} start marker exists`);
+  return source.slice(start);
+}
+
+const taskOrderSection = sectionFrom(
+  doc,
+  "## Remaining Public Launch Task Order",
+  "launch task order"
+);
+const currentTaskOrderSection = sectionBetween(
+  doc,
+  "## Remaining Public Launch Task Order",
+  "## Public-Before-Paid Boundary",
+  "current launch task order"
+);
+assert.doesNotMatch(
+  currentTaskOrderSection,
+  /Public release capable remains no|Final production\/main-domain smoke remains later/i,
+  "current launch task order has no stale pre-smoke release state"
+);
+
+const currentResidualRiskSection = sectionFrom(
+  task,
+  "## Current Blockers / Residual Risks",
+  "current task residual risks"
+);
+assert.doesNotMatch(
+  currentResidualRiskSection,
+  /Public-release capable remains `no`|Final production\/main-domain smoke remains separately approval-gated|next public-capability decision point is the final release declaration/i,
+  "current task residual risks have no stale pre-smoke release state"
+);
+
 let previousIndex = -1;
 for (const taskLabel of taskOrder) {
   const index = taskOrderSection.indexOf(taskLabel);
@@ -180,5 +237,5 @@ for (const pattern of sensitivePatterns) {
 }
 
 console.log(
-  "comment translator public launch remaining task board contract passed (public_release_capable=no, support=pending, risk_acceptance=accepted, secret_scan=pass)"
+  "comment translator public launch remaining task board contract passed (public_release_capable=yes, support=pending, risk_acceptance=accepted, secret_scan=pass)"
 );

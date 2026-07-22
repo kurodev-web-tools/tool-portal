@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { execSync } from "node:child_process";
+import { execFileSync, execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -20,9 +20,69 @@ function exists(relativePath) {
   return fs.existsSync(path.join(root, relativePath));
 }
 
+function isAncestor(ancestor, descendant) {
+  try {
+    execFileSync("git", ["merge-base", "--is-ancestor", ancestor, descendant], {
+      cwd: root,
+      stdio: "ignore"
+    });
+    return true;
+  } catch (error) {
+    if (error && typeof error === "object" && error.status === 1) return false;
+    throw error;
+  }
+}
+
+function selectCommittedDiffBase(integrationIsPromoted, branchContainsMain, integrationDiffBase) {
+  return integrationIsPromoted && branchContainsMain ? "origin/main" : integrationDiffBase;
+}
+
+function mergeInProgressIncludesMain() {
+  try {
+    return execSync("git rev-parse --verify MERGE_HEAD", { cwd: root, encoding: "utf8" }).trim()
+      === execSync("git rev-parse origin/main", { cwd: root, encoding: "utf8" }).trim();
+  } catch {
+    return false;
+  }
+}
+
+function contractScopedChangedFiles(files, isCommentTranslatorBranch) {
+  if (isCommentTranslatorBranch) return files;
+  return files.filter((file) => {
+    const normalizedFile = file.toLowerCase();
+    return file === taskPath
+      || normalizedFile.includes("comment-translator")
+      || normalizedFile.includes("comment_translator")
+      || file === "scripts/viewer-engagement-prompt-board-governance-contract.mjs";
+  });
+}
+
 function changedFiles() {
+  const integrationDiffBase = "origin/codex/comment-translator-free-public-beta-integration";
+  assert.equal(
+    selectCommittedDiffBase(false, true, integrationDiffBase),
+    integrationDiffBase,
+    "a pre-promotion integration branch retains the integration diff base"
+  );
+  assert.equal(
+    selectCommittedDiffBase(true, false, integrationDiffBase),
+    integrationDiffBase,
+    "a branch not containing promoted main retains the integration diff base"
+  );
+  assert.equal(
+    selectCommittedDiffBase(true, true, integrationDiffBase),
+    "origin/main",
+    "a post-promotion branch based on main uses the main diff base"
+  );
+  const integrationIsPromoted = isAncestor(integrationDiffBase, "origin/main");
+  const branchContainsMain = isAncestor("origin/main", "HEAD") || mergeInProgressIncludesMain();
+  const committedDiffBase = selectCommittedDiffBase(
+    integrationIsPromoted,
+    branchContainsMain,
+    integrationDiffBase
+  );
   const committedDiff = execSync(
-    "git diff --name-only origin/codex/comment-translator-free-public-beta-integration...HEAD",
+    `git diff --name-only ${committedDiffBase}...HEAD`,
     {
       cwd: root,
       encoding: "utf8",
@@ -38,6 +98,13 @@ function changedFiles() {
   })
     .split(/\r?\n/)
     .filter(Boolean);
+  const stagedDiff = execSync("git diff --cached --name-only HEAD", {
+    cwd: root,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "ignore"]
+  })
+    .split(/\r?\n/)
+    .filter(Boolean);
   const untracked = execSync("git ls-files --others --exclude-standard", {
     cwd: root,
     encoding: "utf8",
@@ -46,7 +113,7 @@ function changedFiles() {
     .split(/\r?\n/)
     .filter(Boolean);
 
-  return [...new Set([...committedDiff, ...uncommittedDiff, ...untracked])].map((file) =>
+  return [...new Set([...committedDiff, ...stagedDiff, ...uncommittedDiff, ...untracked])].map((file) =>
     file.replace(/\\/g, "/")
   );
 }
@@ -128,7 +195,12 @@ for (const fragment of [
   "`cloudflare_custom_rule_operations_doc_status` | `complete`",
   "`operator_cloudflare_preview_custom_rule_status` | `configured-preview-only-managed-challenge`",
   "`operator_production_api_managed_challenge_status` | `not-selected`",
-  "`operator_production_harness_block_status` | `action-required-before-production`",
+  "`operator_production_harness_block_status` | `pass-production-404`",
+  "`cloudflare_free_rate_limiting_slot_status` | `occupied-leaked-credential-protection`",
+  "`edge_rate_limiting_disposition` | `deferred-existing-free-slot-reserved-for-leaked-credential-protection`",
+  "`edge_activation_status` | `deferred-not-required-for-free-public-beta`",
+  "`edge_protection_readiness_status` | `pass-with-optional-edge-control-deferred`",
+  "`app_enforcement_authority` | `durable-quotas-session-caps-rate-guards`",
   "`comment_translator_edge_rate_limiting_reference` | `COMMENT_TRANSLATOR_EDGE_RATE_LIMITING`",
   "`comment_translator_edge_rate_limiting_runtime_role` | `control-reference-label-not-parsed-behavior-flag`",
   "`free_public_launch_default` | `login-turnstile-app-quotas-no-constant-ordinary-route-challenge`",
@@ -137,12 +209,12 @@ for (const fragment of [
   "`managed_challenge_passage_guidance` | `about-45-minutes-if-html-managed-challenge-is-used`",
   "`paid_creator_boundary_authority` | `app-side-entitlement-session-usage-quota-not-cloudflare-clearance`",
   "`traffic_growth_response_ladder_status` | `documented`",
-  "`public_release_capable_status` | `no`",
+  "`public_release_capable_status` | `yes`",
   "Free public beta access is `login-only`",
   "YouTube connection alone must not start monitoring, polling, translation, target lookup, or quota consumption.",
   "Start is the first provider-affecting action.",
   "Normal Free public launch should not challenge every ordinary route constantly.",
-  "Production route/API harness exposure must be blocked or removed before production exposure.",
+  "Production route/API harness remains blocked with HTTP 404.",
   "API Managed Challenge can break fetch, heartbeat, credential-status, OAuth, and server-action-like traffic",
   "Cloudflare Rate Limiting Rules are preferred for API load shedding when available.",
   "Managed Challenge is reserved for HTML route protection, targeted suspicious traffic, or temporary emergency response.",
@@ -219,11 +291,15 @@ for (const fragment of [
   assertIncludes(checklist, fragment, `operator checklist records ${fragment}`);
 }
 
-assert.doesNotMatch(combinedDocs, /public_release_capable(?:_status)?[=|]\s*`?yes`?/i);
+assert.match(operationsDoc, /`public_release_capable_status` \| `yes`/);
 assert.doesNotMatch(combinedDocs, /operator_production_api_managed_challenge_status[=|]\s*`?(?:selected|enabled|complete|completed)`?/i);
 assert.doesNotMatch(combinedDocs, /edge_activation_status[=|]\s*`?(?:configured|complete|completed|done)`?/i);
 assert.doesNotMatch(combinedDocs, /live_provider_execution_status[=|]\s*`?(?:configured|complete|completed|done)`?/i);
-assert.doesNotMatch(combinedDocs, /public_gate_flip_status[=|]\s*`?(?:configured|complete|completed|done)`?/i);
+assertIncludes(
+  combinedDocs,
+  "public_gate_flip_status` | `complete-release-declaration-no-mutation`",
+  "release declaration completes without a Cloudflare mutation"
+);
 assert.doesNotMatch(combinedDocs, /paid entitlement runtime: complete|paid_entitlement_runtime_status[=|]\s*`?(?:complete|completed|enabled)`?/i);
 
 for (const [label, source] of [
@@ -243,6 +319,8 @@ const allowedChangedFiles = new Set([
   taskBoardPath,
   checklistPath,
   rateLimitDecisionPath,
+  "docs/active/COMMENT_TRANSLATOR_GOOGLE_OAUTH_REVIEW_RESPONSE_PACKET.md",
+  "lib/comment-translator-public-traffic-rate-limit-backing-policy.ts",
   "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md",
   plG6PreflightPath,
   "app/api/comment-translator/free-beta/route-api-harness/route.ts",
@@ -251,20 +329,32 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-free-beta-pl-g5-public-launch-gate-decision-contract.mjs",
   "scripts/comment-translator-free-beta-pl-g6-public-access-change-preflight-contract.mjs",
   "scripts/comment-translator-monthly-input-character-accounting-contract.mjs",
+  "scripts/comment-translator-oauth-public-info-page-contract.mjs",
   "scripts/comment-translator-per-minute-auto-resume-contract.mjs",
+  "scripts/comment-translator-portal-admin-navigation-contract.mjs",
   "scripts/comment-translator-public-launch-operator-qa-checklist-contract.mjs",
   "scripts/comment-translator-public-launch-remaining-task-board-contract.mjs",
   "scripts/comment-translator-public-traffic-rate-limit-backing-contract.mjs",
   "scripts/comment-translator-session-start-stop-contract.mjs",
+  "scripts/viewer-engagement-prompt-board-governance-contract.mjs",
   "docs/active/COMMENT_TRANSLATOR_YOUTUBE_OAUTH_ALLOWED_TESTER_CONNECTION_SMOKE_READINESS.md"
 ]);
 
-for (const file of changedFiles()) {
+const isCommentTranslatorBranch = execSync("git branch --show-current", { cwd: root, encoding: "utf8" })
+  .trim()
+  .includes("comment-translator");
+assert.deepEqual(
+  contractScopedChangedFiles(["app/tools/viewer-engagement-prompt-board/page.tsx", taskBoardPath, taskPath], false),
+  [taskBoardPath, taskPath],
+  "cross-feature promotion scopes the contract allowlist to Comment Translator authority"
+);
+
+for (const file of contractScopedChangedFiles(changedFiles(), isCommentTranslatorBranch)) {
   assert.ok(allowedChangedFiles.has(file), `Cloudflare custom-rule operations change stays in allowed files: ${file}`);
   if (file.endsWith(".mjs")) continue;
   assertNoSensitiveValues(read(file), `changed file ${file}`);
 }
 
 console.log(
-  "comment translator Cloudflare custom-rule operations contract passed (doc=complete, api_managed_challenge=not-selected, public_release_capable=no, secret_scan=pass)"
+  "comment translator Cloudflare custom-rule operations contract passed (doc=complete, api_managed_challenge=not-selected, public_release_capable=yes, secret_scan=pass)"
 );

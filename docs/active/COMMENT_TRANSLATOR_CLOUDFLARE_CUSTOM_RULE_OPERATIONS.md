@@ -1,6 +1,6 @@
 # Comment Translator Cloudflare Custom Rule Operations
 
-Status: active operational guidance for Free public launch and later Creator/Paid launch. Public-release capable: no.
+Status: active operational guidance for Free public launch and later Creator/Paid launch. Public-release capable: yes after the completed final production/main-domain smoke.
 
 This document records how to operate Cloudflare Custom Rules, Turnstile, and Rate Limiting around Kuro Live Comment Translator. It is a docs/contract slice only. It does not approve or perform Cloudflare dashboard changes, environment mutation, deploy/upload, public gate flip, live/provider execution, OAuth live flow, Google target lookup, remote Supabase mutation, Stripe live action, paid entitlement runtime, or main promotion.
 
@@ -14,16 +14,21 @@ Sanitization boundary: record only status labels, route-class labels, pass/fail,
 | `operator_cloudflare_preview_custom_rule_status` | `configured-preview-only-managed-challenge` |
 | `operator_cloudflare_preview_rule_scope` | `preview-host-translator-integrations-comment-translator-api-route-classes` |
 | `operator_production_api_managed_challenge_status` | `not-selected` |
-| `operator_production_harness_block_status` | `action-required-before-production` |
+| `operator_production_harness_block_status` | `pass-production-404` |
 | `comment_translator_edge_rate_limiting_reference` | `COMMENT_TRANSLATOR_EDGE_RATE_LIMITING` |
 | `comment_translator_edge_rate_limiting_runtime_role` | `control-reference-label-not-parsed-behavior-flag` |
+| `cloudflare_free_rate_limiting_slot_status` | `occupied-leaked-credential-protection` |
+| `edge_rate_limiting_disposition` | `deferred-existing-free-slot-reserved-for-leaked-credential-protection` |
+| `edge_activation_status` | `deferred-not-required-for-free-public-beta` |
+| `edge_protection_readiness_status` | `pass-with-optional-edge-control-deferred` |
+| `app_enforcement_authority` | `durable-quotas-session-caps-rate-guards` |
 | `free_public_launch_default` | `login-turnstile-app-quotas-no-constant-ordinary-route-challenge` |
 | `api_protection_preference_order` | `app-quotas-session-caps-rate-guards-then-cloudflare-rate-limiting-then-managed-challenge-emergency-or-html-only` |
 | `turnstile_pre_clearance_status` | `later-improvement-not-free-launch-requirement` |
 | `managed_challenge_passage_guidance` | `about-45-minutes-if-html-managed-challenge-is-used` |
 | `paid_creator_boundary_authority` | `app-side-entitlement-session-usage-quota-not-cloudflare-clearance` |
 | `traffic_growth_response_ladder_status` | `documented` |
-| `public_release_capable_status` | `no` |
+| `public_release_capable_status` | `yes` |
 
 ## Operating Principles
 
@@ -32,11 +37,21 @@ Sanitization boundary: record only status labels, route-class labels, pass/fail,
 3. Start is the first provider-affecting action. Server-owned session, usage, quota, and credential readiness checks remain the authority before provider work.
 4. Normal Free public launch should not challenge every ordinary route constantly.
 5. Login Turnstile and app server-owned quotas/session limits are the primary Free launch controls.
-6. Production route/API harness exposure must be blocked or removed before production exposure.
+6. Production route/API harness remains blocked with HTTP 404.
 7. API Managed Challenge can break fetch, heartbeat, credential-status, OAuth, and server-action-like traffic by returning challenge HTML. It is not the production default.
 8. Cloudflare Rate Limiting Rules are preferred for API load shedding when available.
 9. Managed Challenge is reserved for HTML route protection, targeted suspicious traffic, or temporary emergency response.
 10. Cloudflare clearance is not an entitlement, session, quota, or paid-plan boundary.
+
+Cloudflare edge protection is a separate approval-gated operation and is not the final public gate declaration itself. The final release declaration does not create or change a Worker binding and must not be used to bundle an otherwise unapproved edge-rule mutation.
+
+## Free Rule Slot Deferral Decision
+
+The available Free Cloudflare Rate Limiting rule slot remains reserved for leaked-credential protection. That existing security control must not be replaced or weakened to create capacity for a Translator-specific rule.
+
+Translator-specific Cloudflare Rate Limiting is deferred until traffic or revenue justifies a separately reviewed and approved operation. This optional outer load-shedding layer is not a Free public beta release prerequisite. App-side durable quotas, session caps, and rate guards remain the enforcement authority for provider cost and session behavior.
+
+The deferral does not select production API Managed Challenge. It does not create a Custom Rule, move the leaked-credential control between rule types, change `COMMENT_TRANSLATOR_EDGE_RATE_LIMITING`, or mutate any Cloudflare rule, binding, environment value, secret, or deployment.
 
 ## Phase Guidance
 
@@ -123,14 +138,14 @@ Production API protection preference order:
 Before PL-G5 or PL-G6, the release operator should verify:
 
 - this document is linked from `task.md`;
-- production route/API harness is blocked or removed before production exposure;
+- production route/API harness remains blocked with HTTP 404;
 - production API Managed Challenge remains `not-selected` unless an emergency exception is recorded;
 - login Turnstile is present where the approved auth flow expects it;
 - Free public beta remains login-only and waitlist remains Creator/Paid-only;
 - YouTube connection alone does not start provider-affecting work;
 - Start remains the first provider-affecting action;
 - app-side durable session/usage/quota limits are still the authority;
-- Cloudflare Rate Limiting Rules are preferred for API load shedding when available;
+- Cloudflare Rate Limiting Rules remain an optional later API load-shedding layer when available and justified by traffic or revenue;
 - Managed Challenge, if used for Free launch, is scoped to HTML routes or temporary emergency response;
 - Challenge Passage, if changed, is not used as an entitlement or plan-duration boundary;
 - traffic-growth monitoring covers the signals listed in this document.

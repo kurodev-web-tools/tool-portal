@@ -4,9 +4,19 @@ Mock-only / docs-only comparison material. No route, component, storage, auth, b
 
 ## Images
 
-- `desktop.png` - PC viewport mock.
-- `tablet-landscape.png` - landscape tablet viewport mock.
-- `mobile.png` - smartphone viewport mock.
+- `stream-plan-list-and-live-workspace.png` - approved final direction board covering the stream-plan list and live workspace.
+- `stream-plan-edit.png` - approved final direction for the dedicated stream-plan edit page.
+- `desktop.png` - earlier desktop comparison mock.
+- `tablet-landscape.png` - earlier landscape tablet comparison mock.
+- `mobile.png` - earlier smartphone comparison mock.
+
+## Approved MVP Screen Flow
+
+1. `配信プラン一覧` - `stream-plan-list-and-live-workspace.png` left frame
+2. `配信プラン編集` - `stream-plan-edit.png`
+3. `配信中ワークスペース` - `stream-plan-list-and-live-workspace.png` right frame
+
+The approved images define the screen roles, information hierarchy, shared Portal sidebar, and tool-local navigation direction. Exact copy, validation, state transitions, responsive behavior, and accessibility remain governed by `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` and the active design specification rather than by generated placeholder text.
 
 ## Direction Memo
 

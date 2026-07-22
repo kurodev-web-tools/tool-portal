@@ -2,9 +2,9 @@
 
 Status: PL-G5 release-owner public launch decision recorded. Public-release capable: no.
 
-Current execution result: release-owner-decision=accepted-promotion-readiness-only / public_release_capable=no.
+Decision-time result: release-owner-decision=accepted-promotion-readiness-only / public_release_capable=no.
 
-Public launch gate unchanged. Limited public beta open: not-run / approval-gated. Public launch gate flip: not-run / approval-gated. PL-G6 public access change / promotion: not-run / approval-gated.
+The PL-G5 decision itself did not change the public launch gate. Later separately approved operations completed promotion, deployment, login-only activation, and post-activation verification; they did not approve the final public release declaration.
 
 This document is the discoverable PL-G5 release-owner decision record for the current Free public beta integration line. It records the decision inputs, accepted residual risks, blocking labels, missing approval scope, and the gates still required before public capability can be recorded. It is not a public gate flip, not a deploy/upload, and not final release approval.
 
@@ -70,11 +70,11 @@ Cloudflare custom-rule operations doc from PR #624 is the operational reference.
 
 It covers Free public launch defaults, API-vs-HTML Managed Challenge boundaries, Rate Limiting preference, Turnstile Pre-clearance treatment, Creator/Paid transition handling, traffic-growth response, release-operator checks, and non-actions.
 
-## What PL-G5 Can Decide
+## Decision-Time PL-G5 Scope
 
-PL-G5 can record the current release-owner decision surface.
+PL-G5 recorded the release-owner decision surface available at that decision-time checkpoint.
 
-Current PL-G5 release-owner decision is:
+The initial PL-G5 release-owner decision was:
 
 - release-owner-decision=blocked-no-approval;
 - public_release_capable=no;
@@ -83,7 +83,7 @@ Current PL-G5 release-owner decision is:
 
 PL-G5 can also carry the accepted future `public` object default-privileges risk label into the release-owner decision surface, provided the scope remains limited and all current-table/RLS/current-grant posture remains pass-not-accepted-as-drift.
 
-## What PL-G5 Cannot Decide
+## Decision-Time Non-Authorization Boundary
 
 PL-G5 cannot flip the public gate, change public access, deploy/upload, promote to `main`, mutate Cloudflare, mutate Supabase, run live/provider flows, run OAuth live flows, run Google target lookup, run Stripe live actions, implement paid entitlement runtime, or add OBS overlay route/token runtime.
 
@@ -99,11 +99,11 @@ Existing current-table/RLS/current-grant pass posture is not accepted as drift. 
 
 No new `public` database object work may proceed without explicit object-level grant/RLS/default-privileges review.
 
-## Missing Approval For Public Capability
+## Decision-Time Missing Approval For Public Capability
 
-The current source-thread approval is approval to start this PL-G5 decision slice only. It is not approval to mark public release capable, flip public access, run production operations, or accept unfinished operator checks as complete.
+The source-thread approval at the PL-G5 checkpoint was approval to run that decision slice only. It did not approve public capability, a gate change, or production operations.
 
-To change `public_release_capable` to `yes`, a later same-thread release-owner approval must explicitly accept or close all of these surfaces:
+The decision-time record required a later release-owner approval to close or accept these then-open surfaces:
 
 - `support_response_status=pending` with the accepted future `public` object default-privileges risk scope unchanged;
 - `operator_external_verification_status=partial-pass-preview-browser` and `operator_remaining_external_verification_status=action-required`;
@@ -113,9 +113,9 @@ To change `public_release_capable` to `yes`, a later same-thread release-owner a
 - optional burst, 30-minute, and monthly 20,000 provider-input-character checks, or explicit acceptance that fixture/local evidence is enough;
 - PL-G6 public access change / promotion as a separate exact operation with sanitized output expectations.
 
-## Blocking Labels Before Public Capability
+## Decision-Time Blocking Labels
 
-| Blocking surface | Current label |
+| Blocking surface | Decision-time label |
 | --- | --- |
 | Release-owner exact approval | `absent` |
 | Release-owner decision | `blocked-no-approval` |
@@ -132,23 +132,27 @@ To change `public_release_capable` to `yes`, a later same-thread release-owner a
 
 Production API Managed Challenge remains `not-selected`.
 
-Production route/API harness blocking/removal remains `action-required-before-production`.
+At decision time, production route/API harness blocking/removal was `action-required-before-production`.
 
-PL-G6 public access change / promotion remains approval-gated and not-run.
+At decision time, PL-G6 public access change / promotion was approval-gated and not-run.
+
+The final public gate is a release declaration, not a second Worker binding mutation. Google OAuth verification must be approved before that release declaration. The existing login-only runtime binding remains unchanged, and any production Cloudflare edge-protection activation or confirmation remains a separate approval-gated prerequisite.
+
+Post-decision reconciliation: PR #640 is merged and contained in main; the main-connected deployment, separately approved login-only activation, and 11/11 post-activation browser verification are complete. These later facts supersede only the operational `not-run` labels recorded at PL-G5 decision time. The accepted risk boundary and `public_release_capable=no` remain unchanged.
 
 The PL-G6 execution preflight and approval surface is recorded in `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`.
 
-## Operator Checks Still Required
+## Current Post-Decision Operator Actions
 
-The following checks remain release-operator owned or approval-gated:
+After the completed promotion, activation, and 11/11 verification, the remaining release-operator actions are:
 
-- production Cloudflare edge activation / route-class protection check;
-- production route/API harness block or removal before production traffic;
-- Start-to-translation live smoke with sanitized counts only;
-- optional burst comment smoke for the 30 translated messages/min behavior;
-- optional 30 minute session smoke if fixture/fake-clock evidence is not considered enough;
-- monthly 20,000 provider-input-character fixture/live proof, preferably fixture first;
-- final production/main-domain smoke after any approved PL-G6 change.
+- Google OAuth verification approval;
+- production Cloudflare edge activation or readiness confirmation;
+- production route/API harness 404 recheck in the final-declaration preflight;
+- separately approved final public release declaration;
+- later separately approved final production/main-domain smoke.
+
+Start-to-translation evidence and deterministic burst, 30-minute, and monthly 20,000 provider-input-character proof are already accepted for this release decision.
 
 Codex should not run these checks from this docs/contract slice.
 
@@ -158,7 +162,9 @@ PL-G6 is a separate approval-gated operation. It may include public access chang
 
 This PL-G5 document must remain valid even if the release owner later approves PL-G6. PL-G6 should update its own evidence and should not retroactively convert this decision record into an executed gate flip.
 
-## Post-PR 637 Promotion Decision
+## Decision-Time Post-PR 637 Promotion Plan
+
+This section is a historical audit trail. The promotion, private-default verification, and later login-only activation described below are complete and are not current next actions.
 
 PR #637 is contained in the current Free public beta integration tip. The repository runtime is `implemented-not-activated`; unset, malformed, or non-exact activation state retains the private-launch SHA-256 owner allowlist. Promotion to `main` must not set the login-only activation control and must not flip the public gate.
 

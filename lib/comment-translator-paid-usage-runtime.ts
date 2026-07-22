@@ -162,6 +162,7 @@ async function readPaidUsageAuthority({
   const evidenceCreatedAtMs = Date.parse(record?.evidenceCreatedAtIso ?? "");
   if (
     !record ||
+    record.billingUserReferenceId !== billingUserReferenceId ||
     record.evidenceSource !== "signed-stripe-webhook" ||
     record.billingState !== "paid-active" ||
     record.subscriptionStatus !== "active" ||

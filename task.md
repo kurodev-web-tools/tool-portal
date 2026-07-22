@@ -6,13 +6,13 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0 | Comment Translator Creator closed beta | C1/C3はmerge・integration verified。C2 Stripe closed-beta gateはlocal verifiedでpublication approval待ち。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md` |
+| P0 | Comment Translator Creator closed beta | C1/C2/C3はmerge・integration verified。C4 paid provider routeはlocal verifiedでpublication approval待ち。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md` |
 | Completed | Comment Translator Free public beta | Google OAuth approval、login-only activation、final release declaration、final production/main-domain smokeまで完了し、`public_release_capable=yes`。 | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md` and `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
 | P1 | 配信カンペボード | PR #660とdelete-dialog follow-up PR #663は`main`へmerge済み。MVPは完了し、post-MVP開発候補はactive authorityで継続する。 | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
 | Workflow | New-tool preview development | Task PRs target a tool-specific preview/integration branch; promotion to `main` remains separately approval-gated. | `docs/active/TOOL_PREVIEW_DEVELOPMENT_WORKFLOW.md` |
 
 - Current priority: P0 Creator closed beta.
-- C1 and C3 are merged / integration verified; C2 is locally verified and its publication is the next gate.
+- C1/C2/C3 are merged / integration verified; C4 is locally verified and its publication is the next gate.
 - P1 Prompt Board is MVP-complete and remains post-MVP work: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`.
 
 ## Current Premises
@@ -31,8 +31,9 @@
 - Creator closed betaのcurrent authorityは`docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md`。
 - C1 establishes durable server-owned paid entitlement rows from signed billing evidence with sanitized output and safe Free / paid-inactive fallback; PR #668 is merged and integration verified at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995`, while remote migration apply remains incomplete.
 - C3 adds service-role-only paid counters, private event deduplication, and atomic reset only when signed entitlement evidence advances its period end; PR #669 is merged and integration verified at `5fc3cca2730a58f35279098ec0b2f5c804ce0076` with C3 head `85fa39896f63e223463a85000eb8e02f538754d4` contained in integration.
-- C2 locally requires the existing authenticated owner-hash allowlist plus an exact server-owned billing activation marker before Checkout/Portal, and the same marker plus a signed webhook, configured private Price reference, and C1 durable stale/replay guard before entitlement mutation. Trialing stays paid-inactive unless a separate exact server-owned trial policy is reviewed.
-- C2 publication/live activationとC4は別承認gate、C5-C11はentitlement/usage foundation後のuser-visible sequence、C12はclosed-beta final QAとする。
+- C2 is merged through PR #670 at exact integration commit `4486c180f68369d6620b9f8f3df33518b7cadc38`; the integration tree matches C2 head `761f503f276a5a7e095c79be5f3ca31c26fe6fff`. Stripe live activation remains separately approval-gated.
+- C4 locally adds a server-only Paid route that ignores caller-selected plan/provider authority, requires authenticated C2 allowlist/activation plus readable C1 signed Paid entitlement and C3 current-period counters, requires complete server-owned provider/budget configuration, routes OpenAI mini first, allows Azure fallback only for timeout/rate-limit/temporary-unavailable with configured Azure budget capacity, and records provider-executed usage through the C3 deduplicated boundary.
+- C4 publication/live provider executionは別承認gate、C5-C11はentitlement/usage foundation後のuser-visible sequence、C12はclosed-beta final QAとする。
 - Free Azure translation route remains current; Creator/Paid routes to an OpenAI mini model first with Azure fallback only for recoverable provider errors.
 
 ## Account Limits / Entitlement Control
@@ -52,7 +53,8 @@ Do not perform live/external operations without same-thread ready preflight, san
 
 - C1 merge / integration verification is complete at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995`; remote migration apply and production data access remain approval-gated and were not run.
 - C3 merge / integration verification is complete through PR #669 at `5fc3cca2730a58f35279098ec0b2f5c804ce0076`; remote migration apply remains approval-gated.
-- C2 is locally verified only; commit, push, PR, merge, live Stripe action, activation, and exact integration verification remain separate approval-gated steps.
+- C2 merge / integration verification is complete through PR #670 at `4486c180f68369d6620b9f8f3df33518b7cadc38`; Stripe live action and activation remain separate approval-gated steps.
+- C4 is locally verified only; commit, push, PR, merge, provider live execution, Cloudflare configuration, deploy, activation, and exact integration verification remain separate approval-gated steps.
 - Out of scope: Stripe mutation.
 - Out of scope: Supabase mutation.
 - Out of scope: provider mutation.
@@ -110,9 +112,9 @@ These items stay visible but are not current release blockers unless explicitly 
 | ID | Task | Status |
 | --- | --- | --- |
 | C1 | Durable paid entitlement store | merged / integration verified at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995` |
-| C2 | Stripe live Checkout / Portal / webhook closed-beta gate | local verified / publication approval pending |
+| C2 | Stripe live Checkout / Portal / webhook closed-beta gate | merged / integration verified at `4486c180f68369d6620b9f8f3df33518b7cadc38` |
 | C3 | Paid usage and monthly reset | merged / integration verified at `5fc3cca2730a58f35279098ec0b2f5c804ce0076` |
-| C4 | AI natural translation provider route | pending / gated |
+| C4 | AI natural translation provider route | local verified / publication approval pending |
 | C5 | OBS overlay token runtime | pending |
 | C6 | OBS overlay UI route | pending |
 | C7 | Moderator share token runtime | pending |

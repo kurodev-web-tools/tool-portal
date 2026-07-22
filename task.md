@@ -49,6 +49,7 @@
 
 Do not perform live/external operations without same-thread ready preflight, sanitized output review, and exact explicit approval.
 
+- Cleanup-only clarification: this exclusion applies only to this task-board cleanup PR. After merge, start C1 in a separate task; start C3 only after C1 is merged and verified.
 - Out of scope: C1/C3 implementation.
 - Out of scope: Stripe mutation.
 - Out of scope: Supabase mutation.

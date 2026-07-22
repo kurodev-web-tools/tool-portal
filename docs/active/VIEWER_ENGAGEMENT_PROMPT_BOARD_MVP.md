@@ -222,6 +222,8 @@ mobileは既存drawerを維持し、desktopのhidden状態を適用しない。h
 
 ### Promotion Readiness Checkpoint
 
+> Historical pre-promotion checkpoint; superseded by PR #660/#663; no next_approval/publication_boundary below is current instruction.
+
 - `implementation_status`: `pr-658-merged-preview-post-public-entry-authority-reconciled-local-promotion-gates-pass`
 - `task_branch`: `codex/viewer-engagement-prompt-board-post-public-entry-readiness`; exact fetched preview stateから作成し、shared preview / mainへ直接作業していない
 - `preview_tip`: PR #658 `MERGED`、`origin/codex/viewer-engagement-prompt-board-preview` = `6d423713951484cae654a5efdfb2c32174c8254d` = PR #658 merge commit
@@ -240,6 +242,8 @@ mobileは既存drawerを維持し、desktopのhidden状態を適用しない。h
 - `next_approval`: 次に必要なのは、この12-file reconciliationをstage / commit / pushし、`codex/viewer-engagement-prompt-board-preview`向けPRを作成する明示承認。reconciliation PR merge後にexact preview tipとrangeを再取得し、preview-to-main Promotion PR作成は別の明示承認とする
 
 ### MVP Public Entry Checkpoint
+
+> Historical pre-promotion checkpoint; superseded by PR #660/#663; no next_approval/publication_boundary below is current instruction.
 
 - `implementation_status`: `merged-preview-pr-658-public-entry-and-localization-production-revalidated`
 - `task_branch`: PR #658 source branch `codex/viewer-engagement-prompt-board-public-entry`; current reconciliation branch `codex/viewer-engagement-prompt-board-post-public-entry-readiness`

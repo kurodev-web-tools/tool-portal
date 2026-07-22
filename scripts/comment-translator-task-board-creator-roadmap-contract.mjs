@@ -58,6 +58,12 @@ const sharedBoundaryLines = [
   "- Out of scope: manual deploy.",
 ];
 
+const cleanupOnlyC1C3Qualification =
+  "- Cleanup-only clarification: this exclusion applies only to this task-board cleanup PR. After merge, start C1 in a separate task; start C3 only after C1 is merged and verified.";
+
+const historicalPromptBoardCheckpointMarker =
+  "> Historical pre-promotion checkpoint; superseded by PR #660/#663; no next_approval/publication_boundary below is current instruction.";
+
 const archiveStatusLine = "> Status: Historical archive; non-authoritative.";
 
 function readRequired(relativePath) {
@@ -101,11 +107,29 @@ function run() {
   assertLinesExactOnce(task, sharedBoundaryLines);
   assertLinesExactOnce(creator, sharedBoundaryLines);
 
+  const taskLines = normalizedLines(task);
+  assert.equal(taskLines.filter((line) => line === cleanupOnlyC1C3Qualification).length, 1);
+  assert.ok(
+    taskLines.indexOf(cleanupOnlyC1C3Qualification) < taskLines.indexOf("- Out of scope: C1/C3 implementation.")
+  );
+
   assert.match(promptBoard, /MVP対象外/);
   assert.match(promptBoard, /Implementation Task Order/);
   assert.match(promptBoard, /Schedule Calendar/);
   assert.match(promptBoard, /browser-only/i);
   assert.match(promptBoard, /(?:ログイン不要|no-login)/i);
+  assert.match(promptBoard, /`main_promotion_status` \| `pr-660-merged-main`/);
+  assert.match(promptBoard, /`delete_dialog_follow_up_status` \| `pr-663-merged-main`/);
+  assert.equal(
+    normalizedLines(promptBoard).filter((line) => line === historicalPromptBoardCheckpointMarker).length,
+    2
+  );
+  for (const heading of ["Promotion Readiness Checkpoint", "MVP Public Entry Checkpoint"]) {
+    assert.match(
+      promptBoard,
+      new RegExp(`^### ${escapeRegExp(heading)}\\r?\\n\\r?\\n${escapeRegExp(historicalPromptBoardCheckpointMarker)}$`, "m")
+    );
+  }
 
   assert.equal(normalizedLines(archive).slice(0, 10).filter((line) => line === archiveStatusLine).length, 1);
   for (const heading of [

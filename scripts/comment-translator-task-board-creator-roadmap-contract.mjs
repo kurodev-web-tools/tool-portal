@@ -58,6 +58,8 @@ const sharedBoundaryLines = [
   "- Out of scope: manual deploy.",
 ];
 
+const archiveStatusLine = "> Status: Historical archive; non-authoritative.";
+
 function readRequired(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
 }
@@ -105,8 +107,7 @@ function run() {
   assert.match(promptBoard, /browser-only/i);
   assert.match(promptBoard, /(?:ログイン不要|no-login)/i);
 
-  assert.match(archive, /(?:historical|履歴)/i);
-  assert.match(archive, /(?:non-authoritative|非authoritative|非 authority)/i);
+  assert.equal(normalizedLines(archive).slice(0, 10).filter((line) => line === archiveStatusLine).length, 1);
   for (const heading of [
     "Current Free Public Beta State",
     "Public Launch Next Flow",

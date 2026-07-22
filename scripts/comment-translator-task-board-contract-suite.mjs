@@ -228,8 +228,9 @@ function finalExit(summary) {
     || summary.executionErrors > 0 ? 1 : 0;
 }
 
-function runContentContracts(manifest, temporaryRoot, summary, env) {
+function runContentContracts(manifest, temporaryRoot, summary, env, beforeContractSpawn = () => {}, log = console.log) {
   for (const entry of manifest.contracts) {
+    beforeContractSpawn(entry.path);
     const result = spawnSync(process.execPath, [path.join(temporaryRoot, entry.path)], {
       cwd: temporaryRoot,
       encoding: "utf8",
@@ -241,14 +242,14 @@ function runContentContracts(manifest, temporaryRoot, summary, env) {
     const passed = result.status === 0 && result.error === undefined;
     const classification = classifyContent(entry.status, passed);
     summary.baselineExecuted += 1;
-    console.log(`${classification} ${entry.path}`);
+    log(`${classification} ${entry.path}`);
     if (classification === "PRESERVED_PASS") summary.preservedPass += 1;
     if (classification === "CONTENT_REGRESSION") summary.contentRegressions += 1;
     if (classification === "BASELINE_FAIL") summary.baselineFail += 1;
     if (classification === "RECOVERED") summary.recovered += 1;
     if (result.status === null || result.error !== undefined) {
       summary.executionErrors += 1;
-      console.log(`EXECUTION_ERROR ${entry.path}`);
+      log(`EXECUTION_ERROR ${entry.path}`);
     }
   }
 }
@@ -259,15 +260,20 @@ function safeTemporaryPath(temporaryRoot) {
   return candidate.startsWith(`${parent}${path.sep.toLowerCase()}`) && candidate !== parent;
 }
 
-function runComparator() {
+function runComparator({
+  acquireInputs = () => acquireValidatedInputSnapshot(),
+  beforeContractSpawn = () => {},
+  beforeWorktreeCreate = () => {},
+  log = console.log,
+} = {}) {
   const summary = emptySummary();
-  const initialInputs = acquireValidatedInputSnapshot();
+  const initialInputs = acquireInputs();
   const { manifest, scopeSnapshot: scopeSnapshotBefore } = initialInputs;
   summary.currentScopeSnapshotDriftCount = initialInputs.driftCount;
   summary.currentScopeSnapshotUnchanged = initialInputs.unchanged;
   if (!initialInputs.unchanged) {
-    console.log(`FAIL input_snapshot_drift source_count=0 scope_count=${initialInputs.driftCount}`);
-    console.log(summaryLine(summary));
+    log(`FAIL input_snapshot_drift source_count=0 scope_count=${initialInputs.driftCount}`);
+    log(summaryLine(summary));
     return 1;
   }
   const sourceSnapshotBefore = overlaySourceSnapshot();
@@ -275,8 +281,8 @@ function runComparator() {
   summary.baselineScriptsModified = scope.baselineModified.length;
   summary.unexpectedCurrentPaths = scope.unexpected.length;
   if (summary.baselineScriptsModified > 0 || summary.unexpectedCurrentPaths > 0) {
-    console.log("FAIL current_scope_gate exit=1");
-    console.log(summaryLine(summary));
+    log("FAIL current_scope_gate exit=1");
+    log(summaryLine(summary));
     return 1;
   }
 
@@ -289,6 +295,7 @@ function runComparator() {
   let contentLaneStage = "worktree-create";
   try {
     assert.ok(safeTemporaryPath(temporaryRoot));
+    beforeWorktreeCreate(temporaryRoot);
     git(["worktree", "add", "--detach", temporaryRoot, baseSha]);
     worktreeCreated = true;
     assert.equal(git(["rev-parse", "HEAD"], temporaryRoot).trim(), baseSha);
@@ -343,10 +350,12 @@ function runComparator() {
     fs.symlinkSync(path.join(root, "node_modules"), dependencyLink, "junction");
     junctionCreated = true;
     contentLaneStage = "contract-execution";
-    if (summary.overlayHashMismatches === 0) runContentContracts(manifest, temporaryRoot, summary, childEnv);
+    if (summary.overlayHashMismatches === 0) {
+      runContentContracts(manifest, temporaryRoot, summary, childEnv, beforeContractSpawn, log);
+    }
   } catch {
     summary.executionErrors += 1;
-    console.log(`FAIL content_lane_${contentLaneStage} exit=1`);
+    log(`FAIL content_lane_${contentLaneStage} exit=1`);
   } finally {
     try {
       if (junctionCreated && fs.existsSync(dependencyLink)) fs.unlinkSync(dependencyLink);
@@ -386,9 +395,9 @@ function runComparator() {
     summary.currentScopeSnapshotUnchanged = false;
   }
   if (!summary.sourceSnapshotUnchanged || !summary.currentScopeSnapshotUnchanged) {
-    console.log(`FAIL input_snapshot_drift source_count=${summary.sourceSnapshotDriftCount} scope_count=${summary.currentScopeSnapshotDriftCount}`);
+    log(`FAIL input_snapshot_drift source_count=${summary.sourceSnapshotDriftCount} scope_count=${summary.currentScopeSnapshotDriftCount}`);
   }
-  console.log(summaryLine(summary));
+  log(summaryLine(summary));
   return finalExit(summary);
 }
 
@@ -525,23 +534,45 @@ function runSelfTest() {
       currentScopeSnapshotUnchanged: false,
     }), 1);
 
-    let simulatedChildrenStarted = 0;
-    const manifestRace = acquireValidatedInputSnapshot({
-      manifestReader: () => {
-        fs.appendFileSync(fixtureManifestPath, " \n", "utf8");
-        return readManifest(fixtureManifestPath);
+    fs.unlinkSync(changedOverlaySource);
+    fs.unlinkSync(unchangedOverlaySource);
+    fs.unlinkSync(path.join(fixtureRoot, "scope-drift.md"));
+    fs.writeFileSync(path.join(fixtureRoot, nonOverlaySnapshotPath), "base\n", "utf8");
+    const racePreconditionScope = currentScope(
+      new Set(readManifest(fixtureManifestPath).contracts.map((entry) => entry.path)),
+      changedContentSnapshot(fixtureRoot, "HEAD"),
+    );
+    assert.deepEqual(racePreconditionScope.unexpected, []);
+    assert.deepEqual(racePreconditionScope.baselineModified, []);
+
+    let contractSpawnCount = 0;
+    let manifestRace;
+    let worktreeCreateCount = 0;
+    const raceLogs = [];
+    const manifestRaceExit = runComparator({
+      acquireInputs: () => {
+        manifestRace = acquireValidatedInputSnapshot({
+          manifestReader: () => {
+            fs.appendFileSync(fixtureManifestPath, " \n", "utf8");
+            return readManifest(fixtureManifestPath);
+          },
+          snapshotReader: () => changedContentSnapshot(fixtureRoot, "HEAD"),
+        });
+        return manifestRace;
       },
-      snapshotReader: () => changedContentSnapshot(fixtureRoot, "HEAD"),
+      beforeContractSpawn: () => { contractSpawnCount += 1; },
+      beforeWorktreeCreate: () => {
+        worktreeCreateCount += 1;
+        throw new Error("self-test must not create a worktree");
+      },
+      log: (message) => { raceLogs.push(message); },
     });
-    if (manifestRace.unchanged) simulatedChildrenStarted += 1;
+    assert.equal(manifestRaceExit, 1);
     assert.equal(manifestRace.unchanged, false);
     assert.equal(manifestRace.driftCount, 1);
-    assert.equal(simulatedChildrenStarted, 0);
-    assert.equal(finalExit({
-      ...success,
-      currentScopeSnapshotDriftCount: manifestRace.driftCount,
-      currentScopeSnapshotUnchanged: manifestRace.unchanged,
-    }), 1);
+    assert.equal(worktreeCreateCount, 0);
+    assert.equal(contractSpawnCount, 0);
+    assert.ok(raceLogs.some((message) => message === "FAIL input_snapshot_drift source_count=0 scope_count=1"));
   } finally {
     assert.ok(safeTemporaryPath(fixtureRoot));
     if (fs.existsSync(fixtureExcludeFile)) fs.unlinkSync(fixtureExcludeFile);

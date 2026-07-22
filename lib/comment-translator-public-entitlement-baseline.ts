@@ -23,7 +23,7 @@ export type CommentTranslatorPublicEntitlementBaselineResult =
       monthlyProviderInputCharacterEstimate: number;
       monthlyProviderInputCharacterRemaining: number;
       entitlementSource: "free-public-beta-baseline";
-      degradedFrom: "non-durable-paid-entitlement" | null;
+      degradedFrom: "durable-paid-entitlement-awaiting-c3-usage" | null;
       publicLaunchAllowed: false;
     }
   | {
@@ -39,7 +39,7 @@ export const commentTranslatorPublicEntitlementBaselineContract = {
   implementationStage: "free-public-beta-f5-public-entitlement-baseline",
   runtime: "server-only",
   planAuthority: "server-owned-free-public-beta-baseline",
-  billingReadPath: "safe-free-degradation-until-durable-paid-entitlement-c1",
+  billingReadPath: "durable-paid-entitlement-c1-with-free-enforcement-until-c3",
   durableUsageAuthority: "durable-usage-counter-required",
   publicLaunchAllowed: false,
   freePlanLimits: {
@@ -118,7 +118,10 @@ export function resolveCommentTranslatorPublicEntitlementBaseline({
     monthlyProviderInputCharacterEstimate,
     monthlyProviderInputCharacterRemaining,
     entitlementSource: "free-public-beta-baseline",
-    degradedFrom: billingSnapshot.plan === "paid" || billingSnapshot.billingState === "paid-active" ? "non-durable-paid-entitlement" : null,
+    degradedFrom:
+      billingSnapshot.plan === "paid" || billingSnapshot.billingState === "paid-active"
+        ? "durable-paid-entitlement-awaiting-c3-usage"
+        : null,
     publicLaunchAllowed: false
   };
 }

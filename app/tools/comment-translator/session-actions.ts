@@ -80,7 +80,7 @@ async function readCommentTranslatorSessionActionResult({
     }
     return createCommentTranslatorPrivateLaunchBlockedSessionState({ nowMs, plan: "free", access: launchAccess });
   }
-  const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
+  const billingSnapshot = await readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
   const previewRateLimitSmokeOverride = resolveCommentTranslatorFreeBetaPreviewRateLimitSmokeOverride({
     privateLaunchAccess: readCommentTranslatorPrivateLaunchAccess({ callerAuthorization })
   });

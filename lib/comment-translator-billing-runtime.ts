@@ -14,6 +14,12 @@ import {
   type CommentTranslatorAbuseRateLimitBlockedResult,
   type CommentTranslatorAbuseRateLimitStore
 } from "./comment-translator-abuse-rate-limit-runtime";
+import {
+  createTrustedCommentTranslatorPaidEntitlementSupabaseStore,
+  type CommentTranslatorPaidEntitlementRecord,
+  type CommentTranslatorPaidEntitlementStore,
+  type CommentTranslatorVerifiedBillingEvidence
+} from "./comment-translator-paid-entitlement-store";
 
 export type CommentTranslatorBillingUserReference = `ctbill_${string}`;
 export type CommentTranslatorBillingState = "free" | "paid-active" | "paid-inactive";
@@ -60,8 +66,9 @@ export type CommentTranslatorBillingEntitlementSnapshot = {
 
 export type CommentTranslatorBillingBrowserSafeViewModel = Omit<
   CommentTranslatorBillingEntitlementSnapshot,
-  "billingUserReferenceId" | "stripeCustomerReferenceId" | "stripeSubscriptionReferenceId"
+  "billingUserReferenceId" | "stripeCustomerReferenceId" | "stripeSubscriptionReferenceId" | "paidPlan"
 > & {
+  paidPlan: Omit<CommentTranslatorBillingEntitlementSnapshot["paidPlan"], "provider">;
   checkoutAvailable: boolean;
   portalAvailable: boolean;
   planComparison: CommentTranslatorPlanComparisonViewModel;
@@ -122,11 +129,13 @@ export type CommentTranslatorStripePortalSessionParams = {
 export type CommentTranslatorStripeAdapter = {
   createCheckoutSession: (
     params: CommentTranslatorStripeCheckoutSessionParams
-  ) => Promise<{ url: string | null; observed?: CommentTranslatorStripeCheckoutSessionParams }>;
+  ) => Promise<{ url: string | null }>;
   createPortalSession: (params: CommentTranslatorStripePortalSessionParams) => Promise<{ url: string | null }>;
 };
 
 export type CommentTranslatorStripeWebhookEvent = {
+  eventReferenceId: string;
+  eventCreatedAtMs: number;
   type:
     | "checkout.session.completed"
     | "customer.subscription.created"
@@ -158,7 +167,8 @@ export const commentTranslatorStripeBillingContract = {
   stripeApiVersion: "2026-05-27.dahlia",
   browserReadableOutput: "sanitized-billing-metadata-only",
   checkoutMode: "subscription",
-  entitlementSync: "signed-webhook-to-server-owned-plan-entitlement-state",
+  entitlementSync: "signed-webhook-to-durable-server-owned-plan-entitlement-state",
+  durableEntitlementAuthority: "creator-closed-beta-c1",
   safeDegradation: "failed-expired-canceled-unavailable-payment-states-use-free-or-paid-inactive",
   paidPrioritization: "not-implemented",
   providerUsageCharging: "not-implemented",
@@ -176,6 +186,10 @@ export const commentTranslatorStripeBillingContract = {
     "liveChatId-value",
     "service-role-key-value",
     "authorization-header-value",
+    "billing-user-reference-value",
+    "stripe-customer-reference-value",
+    "stripe-subscription-reference-value",
+    "stripe-price-reference-value",
     "provider-target-metadata"
   ]
 } as const;
@@ -197,7 +211,6 @@ export const commentTranslatorOperatorUxReadinessContract = {
 
 const paidPlanEntitlementReferenceId = "comment-translator-paid-public-v1";
 const billingUserMetadataKey = "comment_translator_billing_user_reference";
-const paidEntitlementsByBillingUser = new Map<CommentTranslatorBillingUserReference, CommentTranslatorBillingEntitlementSnapshot>();
 
 export function createCommentTranslatorBillingUserReference(
   callerAuthorization: CommentTranslatorBillingCallerAuthorization
@@ -214,17 +227,31 @@ export function createCommentTranslatorBillingUserReference(
   return `ctbill_${digest}`;
 }
 
-export function readCommentTranslatorBillingEntitlementSnapshot({
-  callerAuthorization
+export async function readCommentTranslatorBillingEntitlementSnapshot({
+  callerAuthorization,
+  entitlementStore
 }: {
   callerAuthorization: CommentTranslatorBillingCallerAuthorization;
-}): CommentTranslatorBillingEntitlementSnapshot {
+  entitlementStore?: CommentTranslatorPaidEntitlementStore;
+}): Promise<CommentTranslatorBillingEntitlementSnapshot> {
   const billingUserReferenceId = createCommentTranslatorBillingUserReference(callerAuthorization);
   if (!billingUserReferenceId) {
     return createFreeBillingSnapshot(null, "free");
   }
 
-  return paidEntitlementsByBillingUser.get(billingUserReferenceId) ?? createFreeBillingSnapshot(billingUserReferenceId, "free");
+  const durableStore = entitlementStore ?? readDefaultPaidEntitlementStore();
+  if (!durableStore) {
+    return createFreeBillingSnapshot(billingUserReferenceId, "paid-inactive");
+  }
+
+  try {
+    const record = await durableStore.readByBillingUserReference(billingUserReferenceId);
+    return record
+      ? createSnapshotFromPaidEntitlementRecord(record)
+      : createFreeBillingSnapshot(billingUserReferenceId, "free");
+  } catch {
+    return createFreeBillingSnapshot(billingUserReferenceId, "paid-inactive");
+  }
 }
 
 export function createCommentTranslatorBillingBrowserSafeViewModel({
@@ -239,7 +266,10 @@ export function createCommentTranslatorBillingBrowserSafeViewModel({
     billingState: snapshot.billingState,
     freePlanAvailable: snapshot.freePlanAvailable,
     planEntitlement: snapshot.planEntitlement,
-    paidPlan: snapshot.paidPlan,
+    paidPlan: {
+      status: snapshot.paidPlan.status,
+      currentPeriodEndIso: snapshot.paidPlan.currentPeriodEndIso
+    },
     checkoutAvailable: missingCheckoutEnvReferences(env).length === 0,
     portalAvailable: Boolean(snapshot.stripeCustomerReferenceId) && missingPortalEnvReferences(env).length === 0,
     planComparison: createCommentTranslatorPlanComparisonViewModel({
@@ -368,7 +398,6 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
   | {
       status: "redirect-ready";
       url: string;
-      observed?: CommentTranslatorStripeCheckoutSessionParams;
     }
   | {
       status: "unavailable";
@@ -432,8 +461,7 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
 
   return {
     status: "redirect-ready",
-    url: result.url,
-    observed: result.observed
+    url: result.url
   };
 }
 
@@ -441,11 +469,13 @@ export async function createCommentTranslatorStripePortalSessionResult({
   callerAuthorization,
   env,
   stripeAdapter,
-  abuseRateLimit
+  abuseRateLimit,
+  entitlementStore
 }: {
   callerAuthorization: CommentTranslatorBillingCallerAuthorization;
   env: CommentTranslatorStripeEnv;
   stripeAdapter: Pick<CommentTranslatorStripeAdapter, "createPortalSession">;
+  entitlementStore?: CommentTranslatorPaidEntitlementStore;
   abuseRateLimit?: {
     nowMs?: number;
     requestIp?: string | null;
@@ -481,7 +511,7 @@ export async function createCommentTranslatorStripePortalSessionResult({
     return createCommentTranslatorBillingRateLimitUnavailableResult({ check: abuseCheck });
   }
 
-  const snapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
+  const snapshot = await readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization, entitlementStore });
   if (!snapshot.billingUserReferenceId) {
     return {
       status: "unavailable",
@@ -531,24 +561,32 @@ export async function readCommentTranslatorStripeWebhookResult({
   payload,
   signature,
   env,
-  verifier
+  verifier,
+  entitlementStore
 }: {
   payload: string;
   signature: string | null;
   env: CommentTranslatorStripeEnv;
   verifier: CommentTranslatorStripeWebhookVerifier;
+  entitlementStore?: CommentTranslatorPaidEntitlementStore;
 }): Promise<
   | {
       status: "applied";
-      entitlement: CommentTranslatorBillingEntitlementSnapshot;
+      plan: CommentTranslatorSessionPlan;
+      billingState: Extract<CommentTranslatorBillingState, "paid-active" | "paid-inactive">;
     }
   | {
       status: "ignored";
-      reason: "unsupported-event" | "missing-billing-user-reference";
+      reason:
+        | "unsupported-event"
+        | "missing-billing-user-reference"
+        | "unexpected-paid-price"
+        | "incomplete-billing-evidence"
+        | "stale-billing-evidence";
     }
   | {
       status: "rejected";
-      reason: "missing-signature" | "missing-config" | "invalid-signature";
+      reason: "missing-signature" | "missing-config" | "invalid-signature" | "entitlement-store-unavailable";
       missingEnvReferences?: CommentTranslatorStripeEnvName[];
     }
 > {
@@ -560,11 +598,18 @@ export async function readCommentTranslatorStripeWebhookResult({
   }
 
   const webhookSecret = readOptionalEnvValue(env, "STRIPE_WEBHOOK_SECRET");
-  if (!webhookSecret) {
+  const paidPriceReferenceId = readOptionalEnvValue(env, "COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID");
+  const missingEnvReferences = ([
+    webhookSecret ? null : "STRIPE_WEBHOOK_SECRET",
+    paidPriceReferenceId ? null : "COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID"
+  ] as const).filter(
+    (name): name is "STRIPE_WEBHOOK_SECRET" | "COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID" => Boolean(name)
+  );
+  if (!webhookSecret || !paidPriceReferenceId) {
     return {
       status: "rejected",
       reason: "missing-config",
-      missingEnvReferences: ["STRIPE_WEBHOOK_SECRET"]
+      missingEnvReferences
     };
   }
 
@@ -585,7 +630,34 @@ export async function readCommentTranslatorStripeWebhookResult({
     };
   }
 
-  const billingUserReferenceId = event.billingUserReferenceId ?? findBillingUserReferenceByCustomer(event.customerReferenceId);
+  if (event.priceReferenceId && event.priceReferenceId !== paidPriceReferenceId) {
+    return {
+      status: "ignored",
+      reason: "unexpected-paid-price"
+    };
+  }
+
+  const durableStore = entitlementStore ?? readDefaultPaidEntitlementStore();
+  if (!durableStore) {
+    return {
+      status: "rejected",
+      reason: "entitlement-store-unavailable"
+    };
+  }
+
+  let existingRecord: CommentTranslatorPaidEntitlementRecord | null = null;
+  if (!event.billingUserReferenceId && event.customerReferenceId) {
+    try {
+      existingRecord = await durableStore.readByCustomerReference(event.customerReferenceId);
+    } catch {
+      return {
+        status: "rejected",
+        reason: "entitlement-store-unavailable"
+      };
+    }
+  }
+
+  const billingUserReferenceId = event.billingUserReferenceId ?? existingRecord?.billingUserReferenceId ?? null;
   if (!billingUserReferenceId) {
     return {
       status: "ignored",
@@ -593,19 +665,61 @@ export async function readCommentTranslatorStripeWebhookResult({
     };
   }
 
-  const entitlement = createSnapshotFromStripeSubscriptionEvent({
-    billingUserReferenceId,
-    customerReferenceId: event.customerReferenceId,
-    subscriptionReferenceId: event.subscriptionReferenceId,
-    status: event.status,
-    currentPeriodEndMs: event.currentPeriodEndMs
-  });
+  const status = event.status ?? existingRecord?.subscriptionStatus ?? null;
+  if (!status || !event.eventReferenceId || !Number.isFinite(event.eventCreatedAtMs)) {
+    return {
+      status: "ignored",
+      reason: "incomplete-billing-evidence"
+    };
+  }
 
-  paidEntitlementsByBillingUser.set(billingUserReferenceId, entitlement);
+  const paidStatusIsActive = status === "active" || status === "trialing";
+  const currentPeriodEndIso =
+    event.currentPeriodEndMs && Number.isFinite(event.currentPeriodEndMs)
+      ? new Date(event.currentPeriodEndMs).toISOString()
+      : existingRecord?.currentPeriodEndIso ?? null;
+  const customerReferenceId = event.customerReferenceId ?? existingRecord?.customerReferenceId ?? null;
+  const subscriptionReferenceId = event.subscriptionReferenceId ?? existingRecord?.subscriptionReferenceId ?? null;
+  if (paidStatusIsActive && (!currentPeriodEndIso || !customerReferenceId || !subscriptionReferenceId)) {
+    return {
+      status: "ignored",
+      reason: "incomplete-billing-evidence"
+    };
+  }
+  const paidIsActive = paidStatusIsActive && Date.parse(currentPeriodEndIso ?? "") > Date.now();
+  const billingState = paidIsActive ? "paid-active" : "paid-inactive";
+
+  const evidence: CommentTranslatorVerifiedBillingEvidence = {
+    evidenceSource: "signed-stripe-webhook",
+    evidenceEventReferenceId: event.eventReferenceId,
+    evidenceCreatedAtIso: new Date(event.eventCreatedAtMs).toISOString(),
+    billingUserReferenceId,
+    customerReferenceId,
+    subscriptionReferenceId,
+    subscriptionStatus: status,
+    billingState,
+    currentPeriodEndIso
+  };
+
+  try {
+    const persisted = await durableStore.persistVerifiedBillingEvidence(evidence);
+    if (persisted === "ignored-stale") {
+      return {
+        status: "ignored",
+        reason: "stale-billing-evidence"
+      };
+    }
+  } catch {
+    return {
+      status: "rejected",
+      reason: "entitlement-store-unavailable"
+    };
+  }
 
   return {
     status: "applied",
-    entitlement
+    plan: paidIsActive ? "paid" : "free",
+    billingState
   };
 }
 
@@ -666,10 +780,6 @@ export function createCommentTranslatorStripeWebhookVerifier(
   };
 }
 
-export function resetInMemoryCommentTranslatorBillingEntitlementsForTests() {
-  paidEntitlementsByBillingUser.clear();
-}
-
 function createStripeClient(env: CommentTranslatorStripeEnv) {
   const secretKey = readEnvValue(env, "STRIPE_SECRET_KEY");
   return new Stripe(secretKey, {
@@ -677,33 +787,25 @@ function createStripeClient(env: CommentTranslatorStripeEnv) {
   });
 }
 
-function createSnapshotFromStripeSubscriptionEvent({
-  billingUserReferenceId,
-  customerReferenceId,
-  subscriptionReferenceId,
-  status,
-  currentPeriodEndMs
-}: {
-  billingUserReferenceId: CommentTranslatorBillingUserReference;
-  customerReferenceId: string | null;
-  subscriptionReferenceId: string | null;
-  status: CommentTranslatorStripeSubscriptionStatus | null;
-  currentPeriodEndMs: number | null;
-}): CommentTranslatorBillingEntitlementSnapshot {
-  const paidIsActive = status === "active" || status === "trialing";
+function createSnapshotFromPaidEntitlementRecord(
+  record: CommentTranslatorPaidEntitlementRecord
+): CommentTranslatorBillingEntitlementSnapshot {
+  const paidIsActive =
+    record.billingState === "paid-active" &&
+    Boolean(record.currentPeriodEndIso) &&
+    Date.parse(record.currentPeriodEndIso ?? "") > Date.now();
   const billingState: CommentTranslatorBillingState = paidIsActive ? "paid-active" : "paid-inactive";
-
   return {
     plan: paidIsActive ? "paid" : "free",
     billingState,
     freePlanAvailable: true,
     planEntitlement: paidIsActive ? createPaidPlanEntitlement() : createCommentTranslatorSessionPlanEntitlement({ plan: "free" }),
-    billingUserReferenceId,
-    stripeCustomerReferenceId: customerReferenceId,
-    stripeSubscriptionReferenceId: subscriptionReferenceId,
+    billingUserReferenceId: record.billingUserReferenceId,
+    stripeCustomerReferenceId: record.customerReferenceId,
+    stripeSubscriptionReferenceId: record.subscriptionReferenceId,
     paidPlan: {
       status: paidIsActive ? "available" : "inactive",
-      currentPeriodEndIso: currentPeriodEndMs ? new Date(currentPeriodEndMs).toISOString() : null,
+      currentPeriodEndIso: record.currentPeriodEndIso,
       provider: "stripe"
     },
     tokenValue: "never-returned-by-design",
@@ -752,6 +854,8 @@ function normalizeStripeWebhookEvent(event: Stripe.Event): CommentTranslatorStri
   if (event.type === "checkout.session.completed") {
     const session = object as Stripe.Checkout.Session;
     return {
+      eventReferenceId: event.id,
+      eventCreatedAtMs: event.created * 1_000,
       type: event.type,
       customerReferenceId: stringReference(session.customer),
       subscriptionReferenceId: stringReference(session.subscription),
@@ -769,6 +873,8 @@ function normalizeStripeWebhookEvent(event: Stripe.Event): CommentTranslatorStri
   ) {
     const subscription = object as Stripe.Subscription;
     return {
+      eventReferenceId: event.id,
+      eventCreatedAtMs: event.created * 1_000,
       type: event.type,
       customerReferenceId: stringReference(subscription.customer),
       subscriptionReferenceId: subscription.id,
@@ -784,6 +890,8 @@ function normalizeStripeWebhookEvent(event: Stripe.Event): CommentTranslatorStri
 
   const invoice = object as Stripe.Invoice;
   return {
+    eventReferenceId: event.id,
+    eventCreatedAtMs: event.created * 1_000,
     type: event.type as CommentTranslatorStripeWebhookEvent["type"],
     customerReferenceId: stringReference(invoice.customer),
     subscriptionReferenceId: typeof invoice.parent?.subscription_details?.subscription === "string" ? invoice.parent.subscription_details.subscription : null,
@@ -803,18 +911,9 @@ function isSupportedEntitlementEvent(type: CommentTranslatorStripeWebhookEvent["
   );
 }
 
-function findBillingUserReferenceByCustomer(customerReferenceId: string | null) {
-  if (!customerReferenceId) {
-    return null;
-  }
-
-  for (const [billingUserReferenceId, snapshot] of Array.from(paidEntitlementsByBillingUser.entries())) {
-    if (snapshot.stripeCustomerReferenceId === customerReferenceId) {
-      return billingUserReferenceId;
-    }
-  }
-
-  return null;
+function readDefaultPaidEntitlementStore(): CommentTranslatorPaidEntitlementStore | null {
+  const result = createTrustedCommentTranslatorPaidEntitlementSupabaseStore();
+  return result.status === "ready" ? result.store : null;
 }
 
 function missingCheckoutEnvReferences(env: CommentTranslatorStripeEnv): CommentTranslatorStripeEnvName[] {

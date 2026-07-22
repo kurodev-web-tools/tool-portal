@@ -51,45 +51,60 @@ function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-function assertExactOnce(source, value) {
-  assert.equal(source.split(value).length - 1, 1);
+function normalizedLines(source) {
+  return source.split(/\r?\n/).map((line) => line.trim());
 }
 
 function assertRoadmapRows(source) {
+  const lines = normalizedLines(source);
   for (const row of [...creatorRows, ...creatorPublicRows, ...publicAfterP1Rows]) {
-    assertExactOnce(source, row);
+    assert.equal(lines.filter((line) => line === row).length, 1);
     const id = row.split("|")[1].trim();
-    const idRowPattern = new RegExp(`^\\|\\s*${escapeRegExp(id)}\\s*\\|`, "gm");
-    assert.equal(source.match(idRowPattern)?.length ?? 0, 1);
+    const idRowPattern = new RegExp(`^\\|\\s*${escapeRegExp(id)}\\s*\\|`);
+    assert.equal(lines.filter((line) => idRowPattern.test(line)).length, 1);
   }
 }
 
 function assertPaidFallback(source) {
-  const boundary = source
-    .split(/\r?\n\s*\r?\n/)
-    .find((section) => /Paid entitlement/i.test(section) && /(?:Free|paid-inactive)/i.test(section));
-  assert.ok(boundary);
-  for (const state of ["incomplete", "missing", "unreadable", "inactive"]) {
-    assert.match(boundary, new RegExp(state, "i"));
-  }
+  const boundaryPattern = /Paid entitlement[^.\n]*incomplete[^.\n]*missing[^.\n]*unreadable[^.\n]*inactive[^.\n]*(?:degrades?(?: safely)? to|falls? back to|->|→)[^.\n]*(?:Free[^.\n]*paid-inactive|paid-inactive[^.\n]*Free)/i;
+  const boundaryLine = normalizedLines(source).find((line) => boundaryPattern.test(line));
+  assert.ok(boundaryLine);
+  assert.doesNotMatch(boundaryLine, /\b(?:does not|must not|never)\b/i);
 }
 
 function assertCleanupExclusions(source) {
-  const sections = source.split(/\r?\n\s*\r?\n/);
-  assert.ok(sections.some((section) =>
-    /C1/.test(section)
-    && /C3/.test(section)
-    && /(?:implementation|実装)/i.test(section)
-    && /(?:out of scope|対象外)/i.test(section)));
-  assert.ok(sections.some((section) =>
-    /Stripe/i.test(section)
-    && /Supabase/i.test(section)
-    && /(?:provider|プロバイダ)/i.test(section)
-    && /(?:mutation|変更|実行)/i.test(section)
-    && /(?:out of scope|対象外)/i.test(section)));
-  assert.ok(sections.some((section) =>
-    /manual deploy/i.test(section)
-    && /(?:out of scope|対象外)/i.test(section)));
+  const lines = normalizedLines(source);
+  const excluded = /(?:out of scope|対象外)/i;
+  const explicitlyExcluded = (targetPattern) => lines.some((line) =>
+    targetPattern.test(line)
+    && excluded.test(line)
+    && !/(?:\bin scope\b|対象内)/i.test(line));
+
+  assert.ok(explicitlyExcluded(/(?:C1\s*\/\s*C3|C1\s+(?:and|then|と)\s+C3)\s*(?:implementation|実装)/i));
+  assert.ok(explicitlyExcluded(/Stripe\s+mutation/i));
+  assert.ok(explicitlyExcluded(/Supabase\s+mutation/i));
+  assert.ok(explicitlyExcluded(/(?:provider\s+mutation|プロバイダ\s*(?:mutation|変更))/i));
+  assert.ok(explicitlyExcluded(/manual deploy/i));
+}
+
+function assertCurrentPriorities(source) {
+  const lines = normalizedLines(source);
+  const p0Line = lines.find((line) => /(?:^[-*]\s*)?(?:\|\s*)?P0\s*(?:\||:|-)\s*(?:Comment Translator\s+)?Creator closed beta\b/i.test(line));
+  assert.ok(p0Line);
+  assert.doesNotMatch(p0Line, /\b(?:not|later|deferred|historical|former)\b|対象外|未選択/i);
+
+  assert.ok(lines.some((line) =>
+    /(?:first implementation sequence|first sequence|最初の実装順|初回実装順)/i.test(line)
+    && /C1[^\n]*(?:then|->|→|次に)[^\n]*C3/i.test(line)
+    && !/\b(?:not|never)\b/i.test(line)));
+
+  const p1Line = lines.find((line) =>
+    /\bP1\b/.test(line)
+    && /post-MVP/i.test(line)
+    && /(?:Prompt Board|配信カンペボード)/i.test(line)
+    && /docs\/active\/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP\.md/i.test(line));
+  assert.ok(p1Line);
+  assert.doesNotMatch(p1Line, /\b(?:not|removed|historical)\b|対象外|削除/i);
 }
 
 function run() {
@@ -101,9 +116,7 @@ function run() {
   assertRoadmapRows(task);
   assertRoadmapRows(creator);
 
-  assert.match(task, /P0[^\n]{0,160}Creator closed beta/i);
-  assert.match(task, /(?:first implementation sequence|first sequence|最初の実装順|初回実装順)[^\n]{0,160}C1[^\n]{0,160}C3/i);
-  assert.match(task, /P1[^\n]{0,160}(?:Prompt Board|配信カンペボード)[^\n]{0,240}docs\/active\/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP\.md/i);
+  assertCurrentPriorities(task);
 
   assert.match(promptBoard, /MVP対象外/);
   assert.match(promptBoard, /Implementation Task Order/);

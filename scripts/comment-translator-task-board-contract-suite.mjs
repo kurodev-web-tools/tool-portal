@@ -66,8 +66,8 @@ function gitPathsWithEnvironment(args, cwd, env) {
     .split("\0").filter(Boolean).map((entry) => entry.split(path.sep).join("/"));
 }
 
-function readManifest() {
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+function readManifest(sourcePath = manifestPath) {
+  const manifest = JSON.parse(fs.readFileSync(sourcePath, "utf8"));
   assert.deepEqual(Object.keys(manifest).sort(), [
     "baseSha",
     "baselineFail",
@@ -158,6 +158,22 @@ function contentSnapshotDriftCount(before, after) {
     .reduce((count, entry) => count + Number(beforeRecords.get(entry) !== afterRecords.get(entry)), 0);
 }
 
+function acquireValidatedInputSnapshot({
+  manifestReader = () => readManifest(),
+  snapshotReader = () => changedContentSnapshot(),
+} = {}) {
+  const beforeManifestRead = snapshotReader();
+  const manifest = manifestReader();
+  const afterManifestRead = snapshotReader();
+  const driftCount = contentSnapshotDriftCount(beforeManifestRead, afterManifestRead);
+  return {
+    driftCount,
+    manifest,
+    scopeSnapshot: afterManifestRead,
+    unchanged: driftCount === 0 && beforeManifestRead.digest === afterManifestRead.digest,
+  };
+}
+
 function currentScope(manifestPaths, snapshot = changedContentSnapshot()) {
   const { changed } = snapshot;
   return {
@@ -244,10 +260,17 @@ function safeTemporaryPath(temporaryRoot) {
 }
 
 function runComparator() {
-  const manifest = readManifest();
   const summary = emptySummary();
+  const initialInputs = acquireValidatedInputSnapshot();
+  const { manifest, scopeSnapshot: scopeSnapshotBefore } = initialInputs;
+  summary.currentScopeSnapshotDriftCount = initialInputs.driftCount;
+  summary.currentScopeSnapshotUnchanged = initialInputs.unchanged;
+  if (!initialInputs.unchanged) {
+    console.log(`FAIL input_snapshot_drift source_count=0 scope_count=${initialInputs.driftCount}`);
+    console.log(summaryLine(summary));
+    return 1;
+  }
   const sourceSnapshotBefore = overlaySourceSnapshot();
-  const scopeSnapshotBefore = changedContentSnapshot();
   const scope = currentScope(new Set(manifest.contracts.map((entry) => entry.path)), scopeSnapshotBefore);
   summary.baselineScriptsModified = scope.baselineModified.length;
   summary.unexpectedCurrentPaths = scope.unexpected.length;
@@ -402,13 +425,17 @@ function runSelfTest() {
     git(["config", "user.email", "overlay-fixture@example.invalid"], fixtureRoot);
     git(["config", "user.name", "Overlay Fixture"], fixtureRoot);
     const nonOverlaySnapshotPath = "docs/superpowers/specs/snapshot-fixture.md";
+    const fixtureManifestRelativePath = "scripts/fixtures/comment-translator-task-board-contract-baseline.json";
+    const fixtureManifestPath = path.join(fixtureRoot, fixtureManifestRelativePath);
     for (const relativePath of trackedOverlayPaths) {
       fs.mkdirSync(path.dirname(path.join(fixtureRoot, relativePath)), { recursive: true });
       fs.writeFileSync(path.join(fixtureRoot, relativePath), "base\n", "utf8");
     }
     fs.mkdirSync(path.dirname(path.join(fixtureRoot, nonOverlaySnapshotPath)), { recursive: true });
     fs.writeFileSync(path.join(fixtureRoot, nonOverlaySnapshotPath), "base\n", "utf8");
-    git(["add", "--", ...trackedOverlayPaths, nonOverlaySnapshotPath], fixtureRoot);
+    fs.mkdirSync(path.dirname(fixtureManifestPath), { recursive: true });
+    fs.copyFileSync(manifestPath, fixtureManifestPath);
+    git(["add", "--", ...trackedOverlayPaths, nonOverlaySnapshotPath, fixtureManifestRelativePath], fixtureRoot);
     git(["commit", "-q", "-m", "base"], fixtureRoot);
     const changedOverlaySource = path.join(fixtureRoot, "changed-overlay-source.md");
     const unchangedOverlaySource = path.join(fixtureRoot, "unchanged-overlay-source.md");
@@ -496,6 +523,24 @@ function runSelfTest() {
       ...success,
       currentScopeSnapshotDriftCount: scopeMutationDriftCount,
       currentScopeSnapshotUnchanged: false,
+    }), 1);
+
+    let simulatedChildrenStarted = 0;
+    const manifestRace = acquireValidatedInputSnapshot({
+      manifestReader: () => {
+        fs.appendFileSync(fixtureManifestPath, " \n", "utf8");
+        return readManifest(fixtureManifestPath);
+      },
+      snapshotReader: () => changedContentSnapshot(fixtureRoot, "HEAD"),
+    });
+    if (manifestRace.unchanged) simulatedChildrenStarted += 1;
+    assert.equal(manifestRace.unchanged, false);
+    assert.equal(manifestRace.driftCount, 1);
+    assert.equal(simulatedChildrenStarted, 0);
+    assert.equal(finalExit({
+      ...success,
+      currentScopeSnapshotDriftCount: manifestRace.driftCount,
+      currentScopeSnapshotUnchanged: manifestRace.unchanged,
     }), 1);
   } finally {
     assert.ok(safeTemporaryPath(fixtureRoot));

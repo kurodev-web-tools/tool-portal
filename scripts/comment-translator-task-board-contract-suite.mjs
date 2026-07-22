@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
 
 const root = process.cwd();
@@ -231,6 +232,28 @@ function runSelfTest() {
   assert.equal(classifyContent("PASS", false), "CONTENT_REGRESSION");
   assert.equal(classifyContent("FAIL", true), "RECOVERED");
   assert.ok(summaryLine(success).includes("remote_refs_unchanged=true"));
+  const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), "task-overlay-stage-"));
+  try {
+    git(["init", "-q"], fixtureRoot);
+    git(["config", "user.email", "overlay-fixture@example.invalid"], fixtureRoot);
+    git(["config", "user.name", "Overlay Fixture"], fixtureRoot);
+    fs.writeFileSync(path.join(fixtureRoot, "task.md"), "base\n", "utf8");
+    git(["add", "--", "task.md"], fixtureRoot);
+    git(["commit", "-q", "-m", "base"], fixtureRoot);
+    const overlaySource = path.join(fixtureRoot, "overlay-source.md");
+    fs.writeFileSync(overlaySource, "overlay\n", "utf8");
+    const sourceHash = fileSha256(overlaySource);
+    fs.copyFileSync(overlaySource, path.join(fixtureRoot, "task.md"));
+    assert.equal(fileSha256(path.join(fixtureRoot, "task.md")), sourceHash);
+    git(["add", "--", "task.md"], fixtureRoot);
+    assert.equal(git(["diff", "--name-only"], fixtureRoot).trim(), "");
+    assert.equal(git(["diff", "--cached", "--name-only"], fixtureRoot).trim(), "task.md");
+  } finally {
+    const temporaryRoot = path.resolve(os.tmpdir()).toLowerCase();
+    const resolvedFixture = path.resolve(fixtureRoot).toLowerCase();
+    assert.ok(resolvedFixture.startsWith(`${temporaryRoot}${path.sep.toLowerCase()}`));
+    fs.rmSync(fixtureRoot, { recursive: true, force: true });
+  }
   console.log("task_contract_comparator_self_test=pass");
 }
 

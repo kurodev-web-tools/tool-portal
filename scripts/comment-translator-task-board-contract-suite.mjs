@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -13,6 +14,7 @@ const approvedBaseSha = "e465e6b99a4c9082cd5f95b96ba585c15c37ab4a";
 const expectedBaselineTotal = 170;
 const expectedBaselinePass = 43;
 const expectedBaselineFail = 127;
+const expectedManifestMappingSha256 = "071377319ac69be75093fa8569c1dceaabb1a6db079f4a9da95425d0917535d9";
 const focusedContractPath = "scripts/comment-translator-task-board-creator-roadmap-contract.mjs";
 const selfTestFlag = "--self-test";
 
@@ -70,6 +72,15 @@ function discoverBaseTaskContracts(baseSha) {
   return discovered.sort((left, right) => left.localeCompare(right, "en"));
 }
 
+function manifestMappingSha256(contracts) {
+  const canonical = contracts.map((entry) => `${entry.path}\t${entry.status}\n`).join("");
+  return createHash("sha256").update(canonical, "utf8").digest("hex");
+}
+
+function assertExactManifestMapping(contracts) {
+  assert.equal(manifestMappingSha256(contracts), expectedManifestMappingSha256);
+}
+
 function readValidatedManifest() {
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
   assert.deepEqual(Object.keys(manifest).sort(), [
@@ -105,6 +116,7 @@ function readValidatedManifest() {
   assert.equal(passCount, expectedBaselinePass);
   assert.equal(paths.length - passCount, expectedBaselineFail);
   assert.deepEqual(paths, discoverBaseTaskContracts(manifest.baseSha));
+  assertExactManifestMapping(manifest.contracts);
   return manifest;
 }
 
@@ -169,6 +181,15 @@ function runSelfTest() {
   assert.equal(missingBaselinePaths(baselinePaths, []).length, expectedBaselineTotal);
   assert.deepEqual(missingBaselinePaths(baselinePaths, baselinePaths), []);
   assert.deepEqual(intersectBaselinePaths(baselinePaths, [baselinePaths[0]]), [baselinePaths[0]]);
+  const passIndex = manifest.contracts.findIndex((entry) => entry.status === "PASS");
+  const failIndex = manifest.contracts.findIndex((entry) => entry.status === "FAIL");
+  assert.notEqual(passIndex, -1);
+  assert.notEqual(failIndex, -1);
+  const swappedStatuses = manifest.contracts.map((entry) => ({ ...entry }));
+  swappedStatuses[passIndex].status = "FAIL";
+  swappedStatuses[failIndex].status = "PASS";
+  assert.equal(swappedStatuses.filter((entry) => entry.status === "PASS").length, expectedBaselinePass);
+  assert.throws(() => assertExactManifestMapping(swappedStatuses));
   console.log("task_contract_comparator_self_test=pass");
 }
 
@@ -195,11 +216,15 @@ function runSuite() {
     const counts = { ...emptyCounts, baselineScriptsModified: modifiedPaths.length };
     let executionErrors = 0;
 
+    if (modifiedPaths.length > 0) {
+      console.log("FAIL baseline_script_modified_gate exit=1");
+      emitSummary(counts);
+      process.exitCode = 1;
+      return;
+    }
+
     for (const missingPath of missingPaths) {
       console.log(`MISSING_BASELINE ${missingPath}`);
-    }
-    for (const modifiedPath of modifiedPaths) {
-      console.log(`BASELINE_SCRIPT_MODIFIED ${modifiedPath}`);
     }
 
     let focusedPassed = false;

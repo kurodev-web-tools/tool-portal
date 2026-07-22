@@ -6,7 +6,7 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0 | Comment Translator Creator closed beta | C1 durable paid entitlement storeを最初に実装し、merge / verification後にC3 paid usage and monthly resetへ進む。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md` |
+| P0 | Comment Translator Creator closed beta | C1 durable paid entitlement storeはlocal contractで実装確認済み。merge / integration verification待ちで、C3 paid usage and monthly resetはそれまでblocked。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md` |
 | Completed | Comment Translator Free public beta | Google OAuth approval、login-only activation、final release declaration、final production/main-domain smokeまで完了し、`public_release_capable=yes`。 | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md` and `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
 | P1 | 配信カンペボード | PR #660とdelete-dialog follow-up PR #663は`main`へmerge済み。MVPは完了し、post-MVP開発候補はactive authorityで継続する。 | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
 | Workflow | New-tool preview development | Task PRs target a tool-specific preview/integration branch; promotion to `main` remains separately approval-gated. | `docs/active/TOOL_PREVIEW_DEVELOPMENT_WORKFLOW.md` |
@@ -29,7 +29,7 @@
 - Free public betaはGoogle OAuth approval、login-only production activation、edge readiness reconciliation、no-mutation final release declaration、final production/main-domain smokeまで完了し、`public_release_capable=yes`。
 - Cloudflare production control authority remains `codex/comment-translator-free-public-beta-integration`; Creator task PRs target that integration branch from short-lived branches.
 - Creator closed betaのcurrent authorityは`docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md`。
-- C1 establishes durable server-owned paid entitlement rows from signed billing evidence with sanitized output and safe Free fallback.
+- C1 local implementation now establishes durable server-owned paid entitlement rows from signed billing evidence with sanitized output and safe Free / paid-inactive fallback; merge / integration verification and remote migration apply remain incomplete.
 - C3 paid usage counters and monthly reset remain blocked until C1 is merged and verified.
 - C2/C4は別承認gate、C5-C11はentitlement/usage foundation後のuser-visible sequence、C12はclosed-beta final QAとする。
 - Free Azure translation route remains current; Creator/Paid routes to an OpenAI mini model first with Azure fallback only for recoverable provider errors.
@@ -49,8 +49,8 @@
 
 Do not perform live/external operations without same-thread ready preflight, sanitized output review, and exact explicit approval.
 
-- Cleanup-only clarification: this exclusion applies only to this task-board cleanup PR. After merge, start C1 in a separate task; start C3 only after C1 is merged and verified.
-- Out of scope: C1/C3 implementation.
+- C1 in this branch is limited to local schema/runtime/contracts; remote migration apply and production data access remain approval-gated and were not run.
+- Out of scope: C3 implementation. Start C3 only after C1 is merged and the exact integration result is verified.
 - Out of scope: Stripe mutation.
 - Out of scope: Supabase mutation.
 - Out of scope: provider mutation.
@@ -107,7 +107,7 @@ These items stay visible but are not current release blockers unless explicitly 
 
 | ID | Task | Status |
 | --- | --- | --- |
-| C1 | Durable paid entitlement store | pending |
+| C1 | Durable paid entitlement store | local verified / merge verification pending |
 | C2 | Stripe live Checkout / Portal / webhook closed-beta gate | pending / gated |
 | C3 | Paid usage and monthly reset | pending |
 | C4 | AI natural translation provider route | pending / gated |

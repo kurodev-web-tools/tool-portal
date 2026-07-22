@@ -270,7 +270,7 @@ assert.equal(paidDegraded.status, "ready");
 assert.equal(paidDegraded.plan, "free", "paid snapshot safely degrades to Free until durable paid entitlement exists");
 assert.equal(paidDegraded.usage.planEntitlement.plan, "free");
 assert.equal(paidDegraded.usage.planEntitlement.dailyLimitMs, 1_800_000);
-assert.equal(paidDegraded.degradedFrom, "non-durable-paid-entitlement");
+assert.equal(paidDegraded.degradedFrom, "durable-paid-entitlement-awaiting-c3-usage");
 
 const cappedBaseline = entitlement.resolveCommentTranslatorPublicEntitlementBaseline({
   billingSnapshot: {

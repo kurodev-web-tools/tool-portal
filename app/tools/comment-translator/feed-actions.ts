@@ -70,7 +70,7 @@ export async function getCommentTranslatorRealCommentsFeedAction(options: Commen
   let liveProviderDiagnostics: CommentTranslatorLiveProviderDiagnostics | null = null;
   if (activeSession) {
     const nowMs = Date.now();
-    const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
+    const billingSnapshot = await readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
     const previewRateLimitSmokeOverride = resolveCommentTranslatorFreeBetaPreviewRateLimitSmokeOverride({
       privateLaunchAccess: readCommentTranslatorPrivateLaunchAccess({ callerAuthorization })
     });

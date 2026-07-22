@@ -110,12 +110,13 @@ assert.equal(
   "Task 18 does not run Stripe live-mode actions"
 );
 
+const signedOutBillingSnapshot = await billingRuntime.readCommentTranslatorBillingEntitlementSnapshot({
+  callerAuthorization: { status: "unauthenticated" }
+});
 const planComparison = billingRuntime.createCommentTranslatorPlanComparisonViewModel({
   billingState: "free",
   planEntitlement: billingRuntime.createCommentTranslatorBillingBrowserSafeViewModel({
-    snapshot: billingRuntime.readCommentTranslatorBillingEntitlementSnapshot({
-      callerAuthorization: { status: "unauthenticated" }
-    }),
+    snapshot: signedOutBillingSnapshot,
     env: {}
   }).planEntitlement
 });

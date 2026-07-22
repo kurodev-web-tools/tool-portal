@@ -13,7 +13,7 @@ const requiredPaths = {
 };
 
 const creatorRows = [
-  "| C1 | Durable paid entitlement store | pending |",
+  "| C1 | Durable paid entitlement store | local verified / merge verification pending |",
   "| C2 | Stripe live Checkout / Portal / webhook closed-beta gate | pending / gated |",
   "| C3 | Paid usage and monthly reset | pending |",
   "| C4 | AI natural translation provider route | pending / gated |",
@@ -52,15 +52,21 @@ const taskPriorityLines = [
 
 const sharedBoundaryLines = [
   "- Paid entitlement fallback: missing / unreadable / incomplete / inactive -> Free / paid-inactive.",
-  "- Out of scope: C1/C3 implementation.",
   "- Out of scope: Stripe mutation.",
   "- Out of scope: Supabase mutation.",
   "- Out of scope: provider mutation.",
   "- Out of scope: manual deploy.",
 ];
 
-const cleanupOnlyC1C3Qualification =
-  "- Cleanup-only clarification: this exclusion applies only to this task-board cleanup PR. After merge, start C1 in a separate task; start C3 only after C1 is merged and verified.";
+const taskC1BoundaryLines = [
+  "- C1 in this branch is limited to local schema/runtime/contracts; remote migration apply and production data access remain approval-gated and were not run.",
+  "- Out of scope: C3 implementation. Start C3 only after C1 is merged and the exact integration result is verified.",
+];
+
+const creatorC1BoundaryLines = [
+  "- C1 scope is local implementation and verification only; remote migration apply remains approval-gated.",
+  "- Out of scope: C3 implementation until the C1 merge / integration verification condition is met.",
+];
 
 const historicalPromptBoardCheckpointMarker =
   "> Historical pre-promotion checkpoint; superseded by PR #660/#663; no next_approval/publication_boundary below is current instruction.";
@@ -127,12 +133,8 @@ function run() {
   assertLinesExactOnce(task, taskPriorityLines);
   assertLinesExactOnce(task, sharedBoundaryLines);
   assertLinesExactOnce(creator, sharedBoundaryLines);
-
-  const taskLines = normalizedLines(task);
-  assert.equal(taskLines.filter((line) => line === cleanupOnlyC1C3Qualification).length, 1);
-  assert.ok(
-    taskLines.indexOf(cleanupOnlyC1C3Qualification) < taskLines.indexOf("- Out of scope: C1/C3 implementation.")
-  );
+  assertLinesExactOnce(task, taskC1BoundaryLines);
+  assertLinesExactOnce(creator, creatorC1BoundaryLines);
 
   assert.match(promptBoard, /MVP対象外/);
   assert.match(promptBoard, /Implementation Task Order/);

@@ -6,6 +6,7 @@ import ts from "typescript";
 
 const root = process.cwd();
 const billingRuntimePath = "lib/comment-translator-billing-runtime.ts";
+const paidEntitlementTestStorePath = "lib/comment-translator-paid-entitlement-test-store.ts";
 const accountBillingPagePath = "app/account/billing/page.tsx";
 const accountBillingActionsPath = "app/account/billing/actions.ts";
 const accountBillingShellPath = "components/account/AccountBillingShell.tsx";
@@ -147,6 +148,7 @@ for (const source of [
 }
 
 const billing = loadTsModule(billingRuntimePath);
+const paidEntitlementTestStore = loadTsModule(paidEntitlementTestStorePath);
 
 assert.equal(
   billing.commentTranslatorStripeBillingContract.runtime,
@@ -192,6 +194,7 @@ const customerUserReference = billing.createCommentTranslatorBillingUserReferenc
 assert.match(customerUserReference, /^ctbill_[a-f0-9]{24}$/, "billing user reference is sanitized metadata");
 assert.doesNotMatch(customerUserReference, /server-only-owner-value/, "billing user reference does not expose owner id value");
 
+let observedCheckoutParams = null;
 const configuredCheckout = await billing.createCommentTranslatorStripeCheckoutSessionResult({
   callerAuthorization: {
     status: "authorized",
@@ -203,17 +206,17 @@ const configuredCheckout = await billing.createCommentTranslatorStripeCheckoutSe
     NEXT_PUBLIC_SITE_URL: "https://example.test"
   },
   stripeAdapter: {
-    createCheckoutSession: async (params) => ({
-      url: "https://checkout.stripe.test/session",
-      observed: params
-    })
+    createCheckoutSession: async (params) => {
+      observedCheckoutParams = params;
+      return { url: "https://checkout.stripe.test/session" };
+    }
   }
 });
 assert.equal(configuredCheckout.status, "redirect-ready");
 assert.equal(configuredCheckout.url, "https://checkout.stripe.test/session");
-assert.equal(configuredCheckout.observed.mode, "subscription");
-assert.equal(configuredCheckout.observed.priceReferenceId, "price_test_public_paid");
-assert.equal(configuredCheckout.observed.clientReferenceId, customerUserReference);
+assert.equal(observedCheckoutParams.mode, "subscription");
+assert.equal(observedCheckoutParams.priceReferenceId, "price_test_public_paid");
+assert.equal(observedCheckoutParams.clientReferenceId, customerUserReference);
 assert.doesNotMatch(JSON.stringify(configuredCheckout), /present-for-test-only|server-only-owner-value/, "checkout output excludes secret and owner id values");
 
 const missingCheckout = await billing.createCommentTranslatorStripeCheckoutSessionResult({
@@ -235,14 +238,18 @@ assert.deepEqual(
   "checkout reports missing env references by name only"
 );
 
+const durableEntitlementStore = paidEntitlementTestStore.createInMemoryCommentTranslatorPaidEntitlementStoreForTests();
 const activeWebhook = await billing.readCommentTranslatorStripeWebhookResult({
   payload: "{}",
   signature: "signed-test-payload",
   env: {
-    STRIPE_WEBHOOK_SECRET: "present-for-test-only"
+    STRIPE_WEBHOOK_SECRET: "present-for-test-only",
+    COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_test_public_paid"
   },
   verifier: {
     constructEvent: async () => ({
+      eventReferenceId: "evt_active",
+      eventCreatedAtMs: 2_000,
       type: "customer.subscription.updated",
       customerReferenceId: "cus_public_reference",
       subscriptionReferenceId: "sub_public_reference",
@@ -251,19 +258,20 @@ const activeWebhook = await billing.readCommentTranslatorStripeWebhookResult({
       billingUserReferenceId: customerUserReference,
       currentPeriodEndMs: 1_900_000_000_000
     })
-  }
+  },
+  entitlementStore: durableEntitlementStore
 });
 assert.equal(activeWebhook.status, "applied");
-assert.equal(activeWebhook.entitlement.plan, "paid");
-assert.equal(activeWebhook.entitlement.billingState, "paid-active");
-assert.equal(activeWebhook.entitlement.planEntitlement.dailyLimitMs, 7_200_000);
+assert.equal(activeWebhook.plan, "paid");
+assert.equal(activeWebhook.billingState, "paid-active");
 assert.doesNotMatch(JSON.stringify(activeWebhook), /present-for-test-only|server-only-owner-value/, "webhook output excludes secret and owner id values");
 
-const activeSnapshot = billing.readCommentTranslatorBillingEntitlementSnapshot({
+const activeSnapshot = await billing.readCommentTranslatorBillingEntitlementSnapshot({
   callerAuthorization: {
     status: "authorized",
     ownerUserId: "server-only-owner-value"
-  }
+  },
+  entitlementStore: durableEntitlementStore
 });
 assert.equal(activeSnapshot.plan, "paid", "applied active webhook activates paid plan");
 assert.equal(activeSnapshot.billingState, "paid-active");
@@ -273,10 +281,13 @@ const canceledWebhook = await billing.readCommentTranslatorStripeWebhookResult({
   payload: "{}",
   signature: "signed-test-payload",
   env: {
-    STRIPE_WEBHOOK_SECRET: "present-for-test-only"
+    STRIPE_WEBHOOK_SECRET: "present-for-test-only",
+    COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_test_public_paid"
   },
   verifier: {
     constructEvent: async () => ({
+      eventReferenceId: "evt_canceled",
+      eventCreatedAtMs: 3_000,
       type: "customer.subscription.deleted",
       customerReferenceId: "cus_public_reference",
       subscriptionReferenceId: "sub_public_reference",
@@ -285,24 +296,25 @@ const canceledWebhook = await billing.readCommentTranslatorStripeWebhookResult({
       billingUserReferenceId: customerUserReference,
       currentPeriodEndMs: 1_900_000_000_000
     })
-  }
+  },
+  entitlementStore: durableEntitlementStore
 });
 assert.equal(canceledWebhook.status, "applied");
-assert.equal(canceledWebhook.entitlement.plan, "free", "canceled paid state degrades to Free plan");
-assert.equal(canceledWebhook.entitlement.billingState, "paid-inactive");
-assert.equal(canceledWebhook.entitlement.planEntitlement.dailyLimitMs, 1_800_000);
+assert.equal(canceledWebhook.plan, "free", "canceled paid state degrades to Free plan");
+assert.equal(canceledWebhook.billingState, "paid-inactive");
 
-const inactiveSnapshot = billing.readCommentTranslatorBillingEntitlementSnapshot({
+const inactiveSnapshot = await billing.readCommentTranslatorBillingEntitlementSnapshot({
   callerAuthorization: {
     status: "authorized",
     ownerUserId: "server-only-owner-value"
-  }
+  },
+  entitlementStore: durableEntitlementStore
 });
 assert.equal(inactiveSnapshot.plan, "free", "inactive paid snapshot uses Free plan for session limits");
 assert.equal(inactiveSnapshot.billingState, "paid-inactive");
 assert.equal(inactiveSnapshot.freePlanAvailable, true);
 
-const signedOutSnapshot = billing.readCommentTranslatorBillingEntitlementSnapshot({
+const signedOutSnapshot = await billing.readCommentTranslatorBillingEntitlementSnapshot({
   callerAuthorization: {
     status: "unauthenticated"
   }

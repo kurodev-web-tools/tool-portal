@@ -88,7 +88,7 @@ The runner and manifest must:
 - execute each file with `process.execPath` and a bounded timeout;
 - classify results as `PRESERVED_PASS`, `REGRESSION`, `BASELINE_FAIL`, `RECOVERED`, `NEW_PASS`, or `NEW_FAIL` without stdout/stderr/body values;
 - finish with `baseline_total=170 baseline_pass=43 preserved_pass=<n> regressions=<n> baseline_fail=<n> new_pass=<n> new_fail=<n>`;
-- exit non-zero for a focused contract failure, regression, missing baseline path, manifest mismatch, baseline-fail-script change, or new failure.
+- exit non-zero for a focused contract failure, regression, missing baseline path, manifest mismatch, any change to the 170 baseline scripts, or new failure.
 
 - [ ] **Step 3: Run the focused contract and confirm RED**
 
@@ -303,7 +303,7 @@ Fetch origin, confirm the branch still contains the latest integration tip, and 
 
 - [ ] **Step 2: Push the cleanup branch and create the PR**
 
-Create a ready PR targeting `codex/comment-translator-free-public-beta-integration`. The body must list preservation guarantees, `43/43` base-pass preserved, `regressions=0`, `127` pre-existing baseline failures, `baseline-fail scripts modified=0`, checks run, archive path, no runtime/UI change, and excluded external operations. Do not claim that all historical contracts passed.
+Create a ready PR targeting `codex/comment-translator-free-public-beta-integration`. The body must list preservation guarantees, `43/43` base-pass preserved, `regressions=0`, `127` pre-existing baseline failures, `baseline scripts modified=0`, checks run, archive path, no runtime/UI change, and excluded external operations. Do not claim that all historical contracts passed.
 
 - [ ] **Step 3: Verify GitHub checks and mergeability**
 

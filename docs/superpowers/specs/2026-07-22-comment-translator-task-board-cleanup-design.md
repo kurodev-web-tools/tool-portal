@@ -172,7 +172,7 @@ ID比較元はintegration baseの `task.md` にある `Later Work / Post-MVP Roa
 - contract互換のために大幅なruntime/script refactorが必要になった場合は、`task.md` の互換anchorを残して整理範囲を縮小する。
 - exact baseで確認済みの127 baseline failuresだけではPRをblockしないが、成功またはcleanup検証済みとは表現しない。
 - focused contract failure、base-pass regression、未分類のnew failure、baseline manifest不一致はPR作成またはmergeをblockする。
-- baseline-fail contract fileをこのcleanupで変更しない。変更対象とのintersectionが1件でもあればblockする。
+- baseline manifestに含まれる既存170 contract scriptはこのcleanupで変更しない。変更対象とのintersectionが1件でもあればblockする。
 - merge conflictまたはintegration tipの変化があれば、最新integrationを再取得して差分を再監査する。
 - Cloudflare preview checkが失敗した場合、task整理PRのdiffと無関係と断定せず、check evidenceを確認してmergeを止める。
 
@@ -188,6 +188,6 @@ ID比較元はintegration baseの `task.md` にある `Later Work / Post-MVP Roa
 
 ## Completion Boundary
 
-task整理PRは、focused preservation contract PASS、base-pass 43 / 43 preserved、regressions=0、new_failures=0、baseline-fail contract変更=0、changed contract syntax、`git diff --check`、sanitized scan、GitHub required checksが成功した場合だけ、今回の明示承認範囲でintegrationへmergeする。merge commitがintegrationに包含され、Cloudflare previewの自動build結果を読み取り確認したらこのcleanupは完了する。手動deployまたは外部mutationは行わない。
+task整理PRは、focused preservation contract PASS、base-pass 43 / 43 preserved、regressions=0、new_failures=0、baseline scripts modified=0、changed contract syntax、`git diff --check`、sanitized scan、GitHub required checksが成功した場合だけ、今回の明示承認範囲でintegrationへmergeする。merge commitがintegrationに包含され、Cloudflare previewの自動build結果を読み取り確認したらこのcleanupは完了する。手動deployまたは外部mutationは行わない。
 
 次のCodex taskは、最新integration tipからC1 durable paid entitlement storeの設計・実装を開始する。

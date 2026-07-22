@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
-import os from "node:os";
 import path from "node:path";
 
 const root = process.cwd();
@@ -11,6 +10,8 @@ const manifestPath = path.join(root, "scripts/fixtures/comment-translator-task-b
 const worktreesRoot = "D:/V_streamer_tools/.worktrees";
 const timeoutMs = 60_000;
 const expectedMappingSha256 = "071377319ac69be75093fa8569c1dceaabb1a6db079f4a9da95425d0917535d9";
+const pinnedNodeVersion = "v22.22.2";
+const pinnedPackageLockSha256 = "0f3b1074691b8296e1e6c957c469dcb536b6c67b90890170600d7f50aea138c8";
 const overlayPaths = [
   "task.md",
   "docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md",
@@ -51,7 +52,18 @@ function normalizedGitPaths(args) {
 
 function readManifest() {
   const manifest = JSON.parse(fs.readFileSync(manifestPath, "utf8"));
+  assert.deepEqual(Object.keys(manifest).sort(), [
+    "baseSha",
+    "baselineFail",
+    "baselinePass",
+    "baselineTotal",
+    "contracts",
+    "nodeVersion",
+    "packageLockSha256",
+  ]);
   assert.equal(manifest.baseSha, baseSha);
+  assert.equal(manifest.nodeVersion, pinnedNodeVersion);
+  assert.equal(manifest.packageLockSha256, pinnedPackageLockSha256);
   assert.equal(manifest.baselineTotal, 170);
   assert.equal(manifest.baselinePass, 43);
   assert.equal(manifest.baselineFail, 127);
@@ -63,7 +75,12 @@ function readManifest() {
     manifest.contracts.map((entry) => entry.path),
     [...manifest.contracts.map((entry) => entry.path)].sort((left, right) => left.localeCompare(right, "en")),
   );
-  for (const entry of manifest.contracts) assert.ok(entry.status === "PASS" || entry.status === "FAIL");
+  for (const entry of manifest.contracts) {
+    assert.deepEqual(Object.keys(entry).sort(), ["path", "status"]);
+    assert.equal(typeof entry.path, "string");
+    assert.match(entry.path, /^scripts\/[A-Za-z0-9._/-]+\.mjs$/);
+    assert.ok(entry.status === "PASS" || entry.status === "FAIL");
+  }
   return manifest;
 }
 
@@ -183,8 +200,9 @@ function runComparator() {
     }
     git(["add", "--", ...overlayPaths], temporaryRoot);
 
-    assert.equal(fileSha256(path.join(root, "package-lock.json")), fileSha256(path.join(temporaryRoot, "package-lock.json")));
-    assert.equal(run(process.execPath, ["--version"], temporaryRoot).trim(), process.version);
+    assert.equal(process.version, pinnedNodeVersion);
+    assert.equal(fileSha256(path.join(root, "package-lock.json")), pinnedPackageLockSha256);
+    assert.equal(fileSha256(path.join(temporaryRoot, "package-lock.json")), pinnedPackageLockSha256);
     assert.ok(fs.existsSync(path.join(root, "node_modules")));
     fs.symlinkSync(path.join(root, "node_modules"), dependencyLink, "junction");
     junctionCreated = true;
@@ -232,7 +250,9 @@ function runSelfTest() {
   assert.equal(classifyContent("PASS", false), "CONTENT_REGRESSION");
   assert.equal(classifyContent("FAIL", true), "RECOVERED");
   assert.ok(summaryLine(success).includes("remote_refs_unchanged=true"));
-  const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), "task-overlay-stage-"));
+  const fixtureRoot = path.join(worktreesRoot, `task-overlay-stage-${process.pid}-${randomUUID()}`);
+  assert.equal(fs.existsSync(fixtureRoot), false);
+  fs.mkdirSync(fixtureRoot, { recursive: false });
   try {
     git(["init", "-q"], fixtureRoot);
     git(["config", "user.email", "overlay-fixture@example.invalid"], fixtureRoot);
@@ -249,10 +269,9 @@ function runSelfTest() {
     assert.equal(git(["diff", "--name-only"], fixtureRoot).trim(), "");
     assert.equal(git(["diff", "--cached", "--name-only"], fixtureRoot).trim(), "task.md");
   } finally {
-    const temporaryRoot = path.resolve(os.tmpdir()).toLowerCase();
-    const resolvedFixture = path.resolve(fixtureRoot).toLowerCase();
-    assert.ok(resolvedFixture.startsWith(`${temporaryRoot}${path.sep.toLowerCase()}`));
+    assert.ok(safeTemporaryPath(fixtureRoot));
     fs.rmSync(fixtureRoot, { recursive: true, force: true });
+    assert.equal(fs.existsSync(fixtureRoot), false);
   }
   console.log("task_contract_comparator_self_test=pass");
 }

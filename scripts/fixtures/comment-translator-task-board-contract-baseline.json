@@ -1,5 +1,7 @@
 {
   "baseSha": "e465e6b99a4c9082cd5f95b96ba585c15c37ab4a",
+  "nodeVersion": "v22.22.2",
+  "packageLockSha256": "0f3b1074691b8296e1e6c957c469dcb536b6c67b90890170600d7f50aea138c8",
   "baselineTotal": 170,
   "baselinePass": 43,
   "baselineFail": 127,

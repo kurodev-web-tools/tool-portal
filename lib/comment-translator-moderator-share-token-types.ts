@@ -118,3 +118,15 @@ export type CommentTranslatorModeratorShareTokenValidationResult =
       readonly reason: "invalid-token" | "moderator-share-unavailable";
       readonly retryable: boolean;
     };
+
+export type CommentTranslatorModeratorShareTokenPrivateAuthorization = {
+  readonly status: "authorized";
+  readonly ownerUserId: string;
+  readonly sessionReferenceId: string;
+  readonly tokenVersion: number;
+  readonly expiresAtIso: string;
+};
+
+export type CommentTranslatorModeratorShareTokenPrivateAuthorizationResult =
+  | CommentTranslatorModeratorShareTokenPrivateAuthorization
+  | Extract<CommentTranslatorModeratorShareTokenValidationResult, { status: "denied" }>;

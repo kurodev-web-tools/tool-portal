@@ -8,6 +8,7 @@ const root = process.cwd();
 const requiredPaths = {
   task: "task.md",
   creator: "docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md",
+  creatorFinalQa: "docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_FINAL_QA_READINESS.md",
   promptBoard: "docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md",
   archive: "docs/archive/TASK_LEGACY_CONTRACT_LEDGER_2026-07-22.md",
 };
@@ -23,8 +24,8 @@ const creatorRows = [
   "| C8 | Moderator share UI route | merged / integration verified at `1ec79ca222149626670ec6692c19356bc56bb2c6`; authenticated feed QA pending / gated |",
   "| C9 | Custom dictionary minimum | merged / integration verified at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb` |",
   "| C10 | Priority display polish | merged / integration verified at `c0ac7152687dc0c91470037ec164fda57d7f4259` |",
-  "| C11 | Simple 7-day history | local implementation / focused verification complete; width QA blocked by missing dependencies and no local server |",
-  "| C12 | Creator closed beta final QA | pending |",
+  "| C11 | Simple 7-day history | merged / integration verified at `d1ce9b0d063f65bac968c85f3242398be4b8317f` |",
+  "| C12 | Creator closed beta final QA | local readiness complete; operational readiness blocked / approval-gated |",
 ];
 
 const creatorPublicRows = [
@@ -46,7 +47,7 @@ const publicAfterP1Rows = [
 
 const taskPriorityLines = [
   "- Current priority: P0 Creator closed beta.",
-  "- C1-C10 are merged / integration verified; C11 simple 7-day history is locally implemented and focused verification is complete, while width QA is blocked by missing dependencies and no local server.",
+  "- C1-C11 are merged / integration verified; C12 local readiness is complete, while operational readiness remains blocked by approval-gated live/remote evidence and dependency-blocked browser/toolchain checks.",
   "- P1 Prompt Board is MVP-complete and remains post-MVP work: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`.",
 ];
 
@@ -65,6 +66,8 @@ const taskC1BoundaryLines = [
   "- C4 merge / integration verification is complete through PR #671 at `fa0d5582a296c2164bd3945c37cbec746315f357`; provider live execution remains separately approval-gated.",
   "- C5 merge / integration verification is complete through PR #672 at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8`; remote migration apply remains separately approval-gated.",
   "- C9 merge / integration verification is complete through PR #676 at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; remote migration apply and production persistence remain separately approval-gated.",
+  "- C11 merge / integration verification is complete through PR #678 at `d1ce9b0d063f65bac968c85f3242398be4b8317f`; remote migration apply, production persistence, and authenticated browser history verification remain separately approval-gated.",
+  "- C12 local readiness is complete. CP1 readiness preflight is the next justified handoff; remote/live execution, deploy, activation, CP2, and public paid launch remain separately approval-gated.",
 ];
 
 const creatorC1BoundaryLines = [
@@ -74,6 +77,8 @@ const creatorC1BoundaryLines = [
   "- C4 is merged / integration verified through PR #671 at `fa0d5582a296c2164bd3945c37cbec746315f357`; provider live execution remains approval-gated.",
   "- C5 merge / integration verification is complete through PR #672 at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8`; remote migration apply remains approval-gated.",
   "- C9 merge / integration verification is complete through PR #676 at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; remote migration apply and production persistence remain approval-gated.",
+  "- C11 merge / integration verification is complete through PR #678 at `d1ce9b0d063f65bac968c85f3242398be4b8317f`; remote migration apply, production persistence, and authenticated browser history verification remain approval-gated.",
+  "- C12 local readiness is complete. CP1 readiness preflight is the next justified handoff; remote/live execution, deploy, activation, CP2, and public paid launch remain separately approval-gated.",
 ];
 
 const historicalPromptBoardCheckpointMarker =
@@ -133,6 +138,7 @@ function assertRoadmapRows(source) {
 function run() {
   const task = readRequired(requiredPaths.task);
   const creator = readRequired(requiredPaths.creator);
+  const creatorFinalQa = readRequired(requiredPaths.creatorFinalQa);
   const promptBoard = readRequired(requiredPaths.promptBoard);
   const archive = readRequired(requiredPaths.archive);
 
@@ -149,6 +155,13 @@ function run() {
   assert.match(creator, /^## C11 Acceptance Boundary$/m);
   assert.match(creator, /comment translator creator C11 history contract passed/);
   assert.match(creator, /exact rolling seven-day boundary/i);
+  assert.match(creator, /^## C12 Acceptance Boundary$/m);
+  assert.match(creator, /comment translator creator C12 final QA readiness contract passed/);
+  assert.match(creatorFinalQa, /^c12_local_readiness_status=complete$/m);
+  assert.match(
+    creatorFinalQa,
+    /^creator_closed_beta_operational_readiness_status=blocked-approval-gated$/m
+  );
 
   assert.match(promptBoard, /MVP対象外/);
   assert.match(promptBoard, /Implementation Task Order/);

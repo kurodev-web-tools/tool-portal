@@ -4,6 +4,9 @@ import {
   readCommentTranslatorBillingEntitlementSnapshot,
   type CommentTranslatorStripeEnv
 } from "./comment-translator-billing-runtime";
+import { readCommentTranslatorCustomDictionaryGlossary } from "./comment-translator-custom-dictionary-runtime";
+import { createTrustedCommentTranslatorCustomDictionarySupabaseStore } from "./comment-translator-custom-dictionary-store";
+import type { CommentTranslatorCustomDictionaryStoreFactoryResult } from "./comment-translator-custom-dictionary-types";
 import type { CommentTranslatorPaidEntitlementStore } from "./comment-translator-paid-entitlement-store";
 import {
   readCommentTranslatorPaidUsageOrFailClosed,
@@ -28,6 +31,7 @@ export type CommentTranslatorCreatorPaidProviderRouteRequest = {
   readonly callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
   readonly entitlementStore?: CommentTranslatorPaidEntitlementStore;
   readonly paidUsageCounterStore?: CommentTranslatorPaidUsageCounterStoreFactoryResult;
+  readonly customDictionaryStore?: CommentTranslatorCustomDictionaryStoreFactoryResult;
   readonly env?: CommentTranslatorStripeEnv;
   readonly usage: CommentTranslatorUsageLedgerSnapshot;
   readonly comments: readonly YouTubeProviderSafeCommentPayload[];
@@ -86,6 +90,7 @@ export type CommentTranslatorCreatorPaidProviderRouteResult =
         | "paid-authority-unavailable"
         | "paid-provider-policy-unavailable"
         | "paid-provider-budget-stop"
+        | "custom-dictionary-unavailable"
         | "paid-provider-unavailable"
         | "paid-usage-accounting-unavailable";
       readonly providerCallCount: 0;
@@ -145,6 +150,16 @@ export async function executeCommentTranslatorCreatorPaidProviderRoute(
     return unavailable("paid-provider-budget-stop");
   }
 
+  const dictionary = await readCommentTranslatorCustomDictionaryGlossary({
+    callerAuthorization: request.callerAuthorization,
+    dictionaryStore: request.customDictionaryStore ?? createTrustedCommentTranslatorCustomDictionarySupabaseStore(),
+    sourceLanguages: request.sourceLanguages,
+    targetLanguage: request.targetLanguage
+  });
+  if (dictionary.status !== "ready") {
+    return unavailable("custom-dictionary-unavailable");
+  }
+
   const configuredProviders = request.providers ?? createCommentTranslatorDefaultTranslationProviderSet(env);
   if (!configuredProviders.openAiMini) {
     return unavailable("paid-provider-unavailable");
@@ -166,6 +181,8 @@ export async function executeCommentTranslatorCreatorPaidProviderRoute(
     },
     targetLanguage: request.targetLanguage,
     sourceLanguages: request.sourceLanguages,
+    glossaryTerms: dictionary.glossaryTerms,
+    glossaryVersion: dictionary.glossaryVersion,
     maxBatchSize: request.maxBatchSize,
     maxProviderAttemptsPerComment: request.maxProviderAttemptsPerComment,
     comments: request.comments

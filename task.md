@@ -6,13 +6,13 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0 | Comment Translator Creator closed beta | C1-C11はmerge・integration verified。C12 local readinessはcompleteで、operational readinessはapproval-gated evidence待ち。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md` |
+| P0 | Comment Translator Creator public paid readiness | C12はPR #679でmerge・integration verified。CP1 local readinessはcompleteで、external evidenceはblocked / approval-gated。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md` and `docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_LAUNCH_READINESS_PREFLIGHT.md` |
 | Completed | Comment Translator Free public beta | Google OAuth approval、login-only activation、final release declaration、final production/main-domain smokeまで完了し、`public_release_capable=yes`。 | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md` and `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
 | P1 | 配信カンペボード | PR #660とdelete-dialog follow-up PR #663は`main`へmerge済み。MVPは完了し、post-MVP開発候補はactive authorityで継続する。 | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
 | Workflow | New-tool preview development | Task PRs target a tool-specific preview/integration branch; promotion to `main` remains separately approval-gated. | `docs/active/TOOL_PREVIEW_DEVELOPMENT_WORKFLOW.md` |
 
-- Current priority: P0 Creator closed beta.
-- C1-C11 are merged / integration verified; C12 local readiness is complete, while operational readiness remains blocked by approval-gated live/remote evidence and dependency-blocked browser/toolchain checks.
+- Current priority: P0 Creator public paid launch readiness.
+- C1-C12 are merged / integration verified through C12 PR #679 at `097f369a47564b7a44d211c212580f993eddc71b`; CP1 local readiness is complete while external/deployed/browser/release-owner evidence remains blocked / approval-gated.
 - P1 Prompt Board is MVP-complete and remains post-MVP work: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`.
 
 ## Current Premises
@@ -40,7 +40,8 @@
 - C9 adds authenticated owner-only server CRUD for at most 30 language-scoped terms, a service-role-only durable store/migration, optimistic stale-write rejection, deterministic effective dictionary versioning, and C4 `glossaryTerms` / `glossaryVersion` cache integration. PR #676 is merged and integration verified at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; C9 head `10b48d524901c54e4c0402c05709d95bdfe92792` is contained in integration.
 - C10 adds one browser-safe priority classification seam with deterministic `Super Chat -> Super Sticker -> owner -> moderator -> member -> standard` precedence, fail-safe malformed metadata handling, Creator and moderator Priority filters, and shared Creator/OBS/moderator category badges without adding an API or authority surface. PR #677 is merged and integration verified at `c0ac7152687dc0c91470037ec164fda57d7f4259`; C10 head `834284011252782d98139072c7a183c854f9302a` is contained in integration.
 - C11 is merged through PR #678 at exact integration commit `d1ce9b0d063f65bac968c85f3242398be4b8317f`; C11 head `4bf598f7fca3f21175de7b3aeda0d001121b376b` is contained in integration. It adds authenticated, server-derived paid-active Creator-only seven-day browser-safe history, service-role-only durable snapshots, exact instant-based cutoff reads, owner-scoped cleanup readiness, strict deleted tombstones, and C10 priority preservation.
-- C12 local readiness is complete through `docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_FINAL_QA_READINESS.md`. The 24-gate matrix has no unclassified or missing local gate; live Stripe/provider/token/history/cleanup evidence remains approval-gated, and toolchain/browser evidence remains dependency-blocked.
+- C12 PR #679 is merged / integration verified at `097f369a47564b7a44d211c212580f993eddc71b`; C12 head `e93bfb77dc2017fd4a15e99e075f7e419c14a94d` is contained in integration.
+- CP1 local readiness is complete through `docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_LAUNCH_READINESS_PREFLIGHT.md`. Five evidence lanes, 11 ordered stages, 29 independent approval units, and the later six-surface width sequence are defined without running external operations.
 - Free Azure translation route remains current; Creator/Paid routes to an OpenAI mini model first with Azure fallback only for recoverable provider errors.
 
 ## Account Limits / Entitlement Control
@@ -68,7 +69,8 @@ Do not perform live/external operations without same-thread ready preflight, san
 - C9 merge / integration verification is complete through PR #676 at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; remote migration apply and production persistence remain separately approval-gated.
 - C10 merge / integration verification is complete through PR #677 at `c0ac7152687dc0c91470037ec164fda57d7f4259`.
 - C11 merge / integration verification is complete through PR #678 at `d1ce9b0d063f65bac968c85f3242398be4b8317f`; remote migration apply, production persistence, and authenticated browser history verification remain separately approval-gated.
-- C12 local readiness is complete. CP1 readiness preflight is the next justified handoff; remote/live execution, deploy, activation, CP2, and public paid launch remain separately approval-gated.
+- C12 merge / integration verification is complete through PR #679 at `097f369a47564b7a44d211c212580f993eddc71b`; C12 head `e93bfb77dc2017fd4a15e99e075f7e419c14a94d` is contained in integration.
+- CP1 local readiness is complete. Remote/deployed/billing/provider/token/cleanup/authenticated-browser operations each retain a separate approval unit; deploy, activation, CP2, promotion to `main`, and public paid launch remain out of scope / separately approval-gated.
 - Out of scope: Stripe mutation.
 - Out of scope: Supabase mutation.
 - Out of scope: provider mutation.
@@ -79,6 +81,7 @@ Do not perform live/external operations without same-thread ready preflight, san
 
 - Creator closed beta current authority: `docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md`
 - Creator closed beta final QA/readiness: `docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_FINAL_QA_READINESS.md`
+- Creator public paid launch readiness preflight: `docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_LAUNCH_READINESS_PREFLIGHT.md`
 - Free beta public launch completion: `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md`
 - Free beta PL-G6 release authority: `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md`
 - Prompt Board MVP/post-MVP authority: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`
@@ -143,7 +146,7 @@ These items stay visible but are not current release blockers unless explicitly 
 
 | ID | Task | Status |
 | --- | --- | --- |
-| CP1 | Creator paid launch readiness | pending |
+| CP1 | Creator paid launch readiness | local readiness complete; external evidence blocked / approval-gated |
 | CP2 | Creator public paid gate flip | pending / gated |
 
 ### Public-after-P1 / Post-MVP
@@ -167,6 +170,7 @@ These items stay visible but are not current release blockers unless explicitly 
 - UI changes: relevant UI/action contracts and width checks at `390 / 820 / 1024 / 1280 / 1366px`.
 - Live/provider execution: same-thread ready preflight, sanitized review, exact approval, and sanitized evidence only.
 - C12 width QA at `390 / 820 / 1024 / 1280 / 1366px` is dependency-blocked because this worktree has no installed dependencies, local Next binary, or existing local server. Authenticated C6/C8/C11 rendering remains separately approval-gated.
+- CP1 browser QA at `390 / 820 / 1024 / 1280 / 1366px` is planned but not run; remote store readiness, exact deployed revision, allowed-tester state, sanitized capture policy, and separate exact approval are required first.
 
 ## Legacy Contract Compatibility Anchors
 

@@ -9,6 +9,8 @@ const requiredPaths = {
   task: "task.md",
   creator: "docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md",
   creatorFinalQa: "docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_FINAL_QA_READINESS.md",
+  creatorPaidLaunchReadiness:
+    "docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_LAUNCH_READINESS_PREFLIGHT.md",
   promptBoard: "docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md",
   archive: "docs/archive/TASK_LEGACY_CONTRACT_LEDGER_2026-07-22.md",
 };
@@ -29,7 +31,7 @@ const creatorRows = [
 ];
 
 const creatorPublicRows = [
-  "| CP1 | Creator paid launch readiness | pending |",
+  "| CP1 | Creator paid launch readiness | local readiness complete; external evidence blocked / approval-gated |",
   "| CP2 | Creator public paid gate flip | pending / gated |",
 ];
 
@@ -46,8 +48,8 @@ const publicAfterP1Rows = [
 ];
 
 const taskPriorityLines = [
-  "- Current priority: P0 Creator closed beta.",
-  "- C1-C11 are merged / integration verified; C12 local readiness is complete, while operational readiness remains blocked by approval-gated live/remote evidence and dependency-blocked browser/toolchain checks.",
+  "- Current priority: P0 Creator public paid launch readiness.",
+  "- C1-C12 are merged / integration verified through C12 PR #679 at `097f369a47564b7a44d211c212580f993eddc71b`; CP1 local readiness is complete while external/deployed/browser/release-owner evidence remains blocked / approval-gated.",
   "- P1 Prompt Board is MVP-complete and remains post-MVP work: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`.",
 ];
 
@@ -67,7 +69,8 @@ const taskC1BoundaryLines = [
   "- C5 merge / integration verification is complete through PR #672 at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8`; remote migration apply remains separately approval-gated.",
   "- C9 merge / integration verification is complete through PR #676 at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; remote migration apply and production persistence remain separately approval-gated.",
   "- C11 merge / integration verification is complete through PR #678 at `d1ce9b0d063f65bac968c85f3242398be4b8317f`; remote migration apply, production persistence, and authenticated browser history verification remain separately approval-gated.",
-  "- C12 local readiness is complete. CP1 readiness preflight is the next justified handoff; remote/live execution, deploy, activation, CP2, and public paid launch remain separately approval-gated.",
+  "- C12 merge / integration verification is complete through PR #679 at `097f369a47564b7a44d211c212580f993eddc71b`; C12 head `e93bfb77dc2017fd4a15e99e075f7e419c14a94d` is contained in integration.",
+  "- CP1 local readiness is complete. Remote/deployed/billing/provider/token/cleanup/authenticated-browser operations each retain a separate approval unit; deploy, activation, CP2, promotion to `main`, and public paid launch remain out of scope / separately approval-gated.",
 ];
 
 const creatorC1BoundaryLines = [
@@ -78,7 +81,8 @@ const creatorC1BoundaryLines = [
   "- C5 merge / integration verification is complete through PR #672 at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8`; remote migration apply remains approval-gated.",
   "- C9 merge / integration verification is complete through PR #676 at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; remote migration apply and production persistence remain approval-gated.",
   "- C11 merge / integration verification is complete through PR #678 at `d1ce9b0d063f65bac968c85f3242398be4b8317f`; remote migration apply, production persistence, and authenticated browser history verification remain approval-gated.",
-  "- C12 local readiness is complete. CP1 readiness preflight is the next justified handoff; remote/live execution, deploy, activation, CP2, and public paid launch remain separately approval-gated.",
+  "- C12 is merged / integration verified through PR #679 at `097f369a47564b7a44d211c212580f993eddc71b`; C12 head `e93bfb77dc2017fd4a15e99e075f7e419c14a94d` is contained in integration.",
+  "- CP1 local readiness is complete. Its 29 external-operation approval units remain not-run / separately approval-gated; deploy, activation, CP2, promotion to `main`, and public paid launch remain out of CP1.",
 ];
 
 const historicalPromptBoardCheckpointMarker =
@@ -139,6 +143,7 @@ function run() {
   const task = readRequired(requiredPaths.task);
   const creator = readRequired(requiredPaths.creator);
   const creatorFinalQa = readRequired(requiredPaths.creatorFinalQa);
+  const creatorPaidLaunchReadiness = readRequired(requiredPaths.creatorPaidLaunchReadiness);
   const promptBoard = readRequired(requiredPaths.promptBoard);
   const archive = readRequired(requiredPaths.archive);
 
@@ -157,10 +162,17 @@ function run() {
   assert.match(creator, /exact rolling seven-day boundary/i);
   assert.match(creator, /^## C12 Acceptance Boundary$/m);
   assert.match(creator, /comment translator creator C12 final QA readiness contract passed/);
+  assert.match(creator, /^## CP1 Acceptance Boundary$/m);
+  assert.match(creator, /comment translator creator CP1 paid launch readiness contract passed/);
   assert.match(creatorFinalQa, /^c12_local_readiness_status=complete$/m);
   assert.match(
     creatorFinalQa,
     /^creator_closed_beta_operational_readiness_status=blocked-approval-gated$/m
+  );
+  assert.match(creatorPaidLaunchReadiness, /^cp1_local_readiness_status=complete$/m);
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^creator_public_paid_launch_readiness_status=blocked-approval-gated$/m
   );
 
   assert.match(promptBoard, /MVP対象外/);

@@ -3,8 +3,9 @@
 ## Authority And Current State
 
 - Free public beta is complete.
-- Current priority: P0 Creator closed beta.
-- C1-C11 are merged / integration verified; C12 local readiness is complete, while operational readiness remains blocked by approval-gated live/remote evidence and dependency-blocked browser/toolchain checks.
+- Current priority: P0 Creator public paid launch readiness.
+- C1-C11 are merged / integration verified. C12 is merged through PR #679 at exact integration commit `097f369a47564b7a44d211c212580f993eddc71b`; C12 head `e93bfb77dc2017fd4a15e99e075f7e419c14a94d` is contained in integration.
+- CP1 local readiness is complete through `docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_LAUNCH_READINESS_PREFLIGHT.md`; Creator public paid launch readiness remains blocked by approval-gated remote/deployed/billing/provider/browser/release-owner evidence.
 - C1 is merged through PR #668 at exact integration commit `c4b7bc4cd03ad400c737ae662e1e94c4462e9995`; its merge tree matches C1 head `baf8bf57dd570c3dca6bc29c880f47b7f7444fac`.
 - C3 is merged through PR #669 at exact integration commit `5fc3cca2730a58f35279098ec0b2f5c804ce0076`; its merge tree matches and contains C3 head `85fa39896f63e223463a85000eb8e02f538754d4`.
 - C2 is merged through PR #670 at exact integration commit `4486c180f68369d6620b9f8f3df33518b7cadc38`; its merge tree matches C2 head `761f503f276a5a7e095c79be5f3ca31c26fe6fff`.
@@ -17,7 +18,7 @@
 - C10 is merged through PR #677 at exact integration commit `c0ac7152687dc0c91470037ec164fda57d7f4259`; C10 head `834284011252782d98139072c7a183c854f9302a` is contained in integration.
 - C11 is merged through PR #678 at exact integration commit `d1ce9b0d063f65bac968c85f3242398be4b8317f`; C11 head `4bf598f7fca3f21175de7b3aeda0d001121b376b` is contained in integration.
 - C2 live activation, C4 live provider execution, and C5/C6/C7/C8 remote migration apply remain separately approval-gated.
-- C6 authenticated safe-feed rendering, C8 browser rendering, and C11 authenticated history rendering remain unchecked and approval-gated. C12 closes local readiness without treating those gates as live evidence.
+- C6 authenticated safe-feed rendering, C8 browser rendering, and C11 authenticated history rendering remain unchecked and approval-gated. CP1 preserves those gates without treating local, planned, or reference-presence evidence as live proof.
 - P1 Prompt Board is MVP-complete and remains post-MVP work: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`.
 - PRs target `codex/comment-translator-free-public-beta-integration` from short-lived feature branches.
 
@@ -249,7 +250,24 @@ C1 is accepted only when all of the following are verified:
 - The pre-edit and post-edit 30-contract set is expected to remain `18 pass / 9 dependency-blocked / 3 known historical / 0 unexpected`; dependency-backed checks are unavailable because `node_modules` is absent and installation was not approved.
 - Browser QA at `390 / 820 / 1024 / 1280 / 1366px` is dependency-blocked because dependencies, the local Next binary, and an existing local server are absent. Authenticated C6/C8/C11 rendering remains separately approval-gated.
 - `docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_FINAL_QA_READINESS.md` is the task-specific allowed-tester smoke/readiness authority.
-- C12 local readiness is complete. Creator closed beta operational readiness remains blocked / approval-gated, with CP1 readiness preflight as the next justified handoff.
+- C12 local readiness is complete. Its recorded handoff was CP1; CP1 is now locally complete without collecting the approval-gated operational evidence.
+
+## CP1 Acceptance Boundary
+
+- CP1 is docs/contracts/readiness only. Existing authenticated server actions and routes remain authoritative; no public/deployed API, route, Worker binding, Cloudflare configuration, backend surface, runtime, UI, or browser authority is added.
+- CP1 records five non-substitutable evidence lanes and an ordered CP1-S0 through CP1-S10 sequence covering remote migrations/stores, Stripe, entitlement, usage/cost/limits, Paid provider/fallback, OBS/moderator, dictionary, C10/C11 history/cleanup, authenticated browser QA, and release-owner decision.
+- Every external operation has an independent approval unit. Approval for one migration, store check, Stripe/provider/capability/cleanup/browser operation, retry, rollback, deploy, CP2, promotion, or public launch does not authorize another.
+- Browser QA is planned for Creator, OBS, moderator, dictionary, history, and priority/deleted/source display at `390 / 820 / 1024 / 1280 / 1366px`; it is not run without remote-store readiness, reviewed deployed revision, allowed-tester state, sanitized capture policy, and exact browser-QA approval.
+- Fixture, local deterministic, reference-presence, planned, and fail-closed evidence never become remote, deployed, billing, provider, authenticated-browser, or public-release proof.
+- CP1 does not authorize remote query/mutation/migration apply, Stripe action, provider/live execution, token/session operation, authenticated browser QA, dependency installation, deploy, activation, CP2, promotion to `main`, or public paid launch.
+
+### Verified CP1 Local Evidence
+
+- C12 PR #679 is merged into `codex/comment-translator-free-public-beta-integration` at `097f369a47564b7a44d211c212580f993eddc71b`; C12 head `e93bfb77dc2017fd4a15e99e075f7e419c14a94d` is contained in integration.
+- `comment translator creator CP1 paid launch readiness contract passed` verifies the fixed C12 state, five evidence lanes, 11 ordered stages, 29 independent approval units, six browser surfaces, allowed docs/contracts file scope, and sanitized evidence boundary.
+- The C12 30-contract baseline remains `18 pass / 9 dependency-blocked / 3 known historical / 0 unexpected`. Missing `node_modules` remains a setup limitation; installation was not approved.
+- No concrete CP1 runtime/UI blocker was found. `docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_LAUNCH_READINESS_PREFLIGHT.md` is the exact approval-sequencing authority.
+- CP1 local readiness is complete. Every external/deployed/browser/release-owner lane remains not-run / blocked / approval-gated.
 
 ## Creator Closed Beta / Before Creator Public Paid
 
@@ -272,7 +290,7 @@ C1 is accepted only when all of the following are verified:
 
 | ID | Task | Status |
 | --- | --- | --- |
-| CP1 | Creator paid launch readiness | pending |
+| CP1 | Creator paid launch readiness | local readiness complete; external evidence blocked / approval-gated |
 | CP2 | Creator public paid gate flip | pending / gated |
 
 ## Public-after-P1 / Post-MVP
@@ -303,7 +321,8 @@ This authority is a task board only. Every gated operation requires a separate, 
 - C9 merge / integration verification is complete through PR #676 at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; remote migration apply and production persistence remain approval-gated.
 - C10 merge / integration verification is complete through PR #677 at `c0ac7152687dc0c91470037ec164fda57d7f4259`.
 - C11 merge / integration verification is complete through PR #678 at `d1ce9b0d063f65bac968c85f3242398be4b8317f`; remote migration apply, production persistence, and authenticated browser history verification remain approval-gated.
-- C12 local readiness is complete. CP1 readiness preflight is the next justified handoff; remote/live execution, deploy, activation, CP2, and public paid launch remain separately approval-gated.
+- C12 is merged / integration verified through PR #679 at `097f369a47564b7a44d211c212580f993eddc71b`; C12 head `e93bfb77dc2017fd4a15e99e075f7e419c14a94d` is contained in integration.
+- CP1 local readiness is complete. Its 29 external-operation approval units remain not-run / separately approval-gated; deploy, activation, CP2, promotion to `main`, and public paid launch remain out of CP1.
 - Out of scope: Stripe mutation.
 - Out of scope: Supabase mutation.
 - Out of scope: provider mutation.

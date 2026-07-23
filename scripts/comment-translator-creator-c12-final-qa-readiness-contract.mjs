@@ -165,6 +165,8 @@ const allowedChangedFiles = new Set([
   gapAuditPath,
   taskPath,
   "scripts/comment-translator-creator-c12-final-qa-readiness-contract.mjs",
+  "docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_LAUNCH_READINESS_PREFLIGHT.md",
+  "scripts/comment-translator-creator-cp1-paid-launch-readiness-contract.mjs",
   "scripts/comment-translator-task-board-creator-roadmap-contract.mjs",
 ]);
 for (const file of changedFiles()) {

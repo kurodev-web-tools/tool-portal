@@ -3,6 +3,8 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { readCommentTranslatorFreeBetaRuntimeAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
+import { cleanupCommentTranslatorCreatorHistoryForOwner } from "@/lib/comment-translator-creator-history";
+import { createTrustedCommentTranslatorCreatorHistoryStore } from "@/lib/comment-translator-creator-history-store";
 import { readYouTubeOAuthCredentialDisconnectResult } from "@/lib/comment-translator-youtube-disconnect-runtime";
 import { readYouTubeAccountIntegrationCredentialReference } from "@/lib/comment-translator-youtube-account-integration-status";
 import {
@@ -438,6 +440,20 @@ export async function disconnectYouTubeIntegrationAction() {
     callerAuthorization: credentialReference.callerAuthorization,
     credentialResolutionDisabled: false
   });
+
+  if (
+    disconnectResult.status === "disconnected" ||
+    disconnectResult.status === "already-disconnected"
+  ) {
+    const historyCleanup = await cleanupCommentTranslatorCreatorHistoryForOwner({
+      callerAuthorization: credentialReference.callerAuthorization,
+      trigger: "oauth-disconnect",
+      historyStore: createTrustedCommentTranslatorCreatorHistoryStore()
+    });
+    if (historyCleanup.status !== "completed") {
+      accountIntegrationsRedirect("youtube-disconnect-failed");
+    }
+  }
 
   if (disconnectResult.status === "disconnected") {
     accountIntegrationsRedirect("youtube-disconnect-disconnected");

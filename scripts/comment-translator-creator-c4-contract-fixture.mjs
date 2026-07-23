@@ -104,6 +104,16 @@ export function createRequest(authority, providers, overrides = {}) {
     callerAuthorization,
     entitlementStore: authority.entitlementStore,
     paidUsageCounterStore: authority.paidUsageCounterStore,
+    customDictionaryStore: {
+      status: "ready",
+      store: {
+        async readCurrent() { return []; },
+        async createEntry() { return "applied"; },
+        async updateEntry() { return "applied"; },
+        async deleteEntry() { return "applied"; }
+      },
+      missingEnvReferences: []
+    },
     env: configuredEnv,
     usage: createUsage(),
     comments: [{

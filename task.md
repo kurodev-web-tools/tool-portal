@@ -6,13 +6,13 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0 | Comment Translator Creator closed beta | C1-C7はmerge・integration verified。C8 moderator share UI routeはlocal focused contract verified、commit / push / PR承認待ち。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md` |
+| P0 | Comment Translator Creator closed beta | C1-C7はmerge・integration verified。C8 moderator share UI routeはPR #675をdraft作成済み、merge承認待ち。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md` |
 | Completed | Comment Translator Free public beta | Google OAuth approval、login-only activation、final release declaration、final production/main-domain smokeまで完了し、`public_release_capable=yes`。 | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md` and `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
 | P1 | 配信カンペボード | PR #660とdelete-dialog follow-up PR #663は`main`へmerge済み。MVPは完了し、post-MVP開発候補はactive authorityで継続する。 | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
 | Workflow | New-tool preview development | Task PRs target a tool-specific preview/integration branch; promotion to `main` remains separately approval-gated. | `docs/active/TOOL_PREVIEW_DEVELOPMENT_WORKFLOW.md` |
 
 - Current priority: P0 Creator closed beta.
-- C1-C7 are merged / integration verified; C8 moderator share UI route and browser-capability focused contract are locally verified, while commit / push / PR remain approval-gated.
+- C1-C7 are merged / integration verified; C8 moderator share UI route is locally verified and draft PR #675 is open, while merge remains approval-gated.
 - P1 Prompt Board is MVP-complete and remains post-MVP work: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`.
 
 ## Current Premises
@@ -60,7 +60,7 @@ Do not perform live/external operations without same-thread ready preflight, san
 - C4 merge / integration verification is complete through PR #671 at `fa0d5582a296c2164bd3945c37cbec746315f357`; provider live execution remains separately approval-gated.
 - C5 merge / integration verification is complete through PR #672 at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8`; remote migration apply remains separately approval-gated.
 - C5/C6/C7/C8 remote migration apply and deployed authenticated-feed browser verification remain separate approval-gated steps.
-- C8 commit / push / PR, Cloudflare configuration, deploy, activation, and any live token/session operation remain separate approval-gated steps.
+- C8 merge, Cloudflare configuration, deploy, activation, and any live token/session operation remain separate approval-gated steps.
 - Out of scope: Stripe mutation.
 - Out of scope: Supabase mutation.
 - Out of scope: provider mutation.
@@ -124,7 +124,7 @@ These items stay visible but are not current release blockers unless explicitly 
 | C5 | OBS overlay token runtime | merged / integration verified at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8` |
 | C6 | OBS overlay UI route | merged / integration verified at `05104fc2d4c6730be6aae772708a10cb2b39d2d6`; authenticated feed QA pending / gated |
 | C7 | Moderator share token runtime | merged / integration verified at `0307b5542c8ac9957370533228ec02893bd48c27` |
-| C8 | Moderator share UI route | local focused contract verified / commit, push, and PR approval pending |
+| C8 | Moderator share UI route | draft PR #675 open / local focused contracts verified / merge approval pending |
 | C9 | Custom dictionary minimum | pending |
 | C10 | Priority display polish | pending |
 | C11 | Simple 7-day history | pending |

@@ -4,7 +4,7 @@
 
 - Free public beta is complete.
 - Current priority: P0 Creator closed beta.
-- C1-C7 are merged / integration verified; C8 focused route/browser-capability contract is locally verified, while commit / push / PR remain approval-gated.
+- C1-C7 are merged / integration verified; C8 focused route/browser-capability contracts are locally verified and draft PR #675 is open, while merge remains approval-gated.
 - C1 is merged through PR #668 at exact integration commit `c4b7bc4cd03ad400c737ae662e1e94c4462e9995`; its merge tree matches C1 head `baf8bf57dd570c3dca6bc29c880f47b7f7444fac`.
 - C3 is merged through PR #669 at exact integration commit `5fc3cca2730a58f35279098ec0b2f5c804ce0076`; its merge tree matches and contains C3 head `85fa39896f63e223463a85000eb8e02f538754d4`.
 - C2 is merged through PR #670 at exact integration commit `4486c180f68369d6620b9f8f3df33518b7cadc38`; its merge tree matches C2 head `761f503f276a5a7e095c79be5f3ca31c26fe6fff`.
@@ -166,7 +166,7 @@ C1 is accepted only when all of the following are verified:
 - C4 does not infer an OpenAI model, provider pricing/token multiplier, budget amount, billing cadence, or production value. Operator-owned server environment values and provider-account caps remain required before any separately approved live/provider smoke.
 - Dependency-backed contracts, ESLint, TypeScript, build, and browser QA remain blocked in this worktree by missing `node_modules`; installation was not approved. Two dependency-free historical contracts also retain known stale task-history/feed-owner assertions and are baseline limitations rather than C8 regressions.
 - C5, C6, C7, and C8 remote migration apply and production persistence remain unverified and separately approval-gated. Until reviewed migrations are applied, deployed token/browser-session/share stores remain unavailable and fail closed.
-- Next handoff requires separate approval for C8 commit / push / PR. C6/C8 authenticated-feed browser QA remains a separately approved candidate after reviewed migrations and environment readiness.
+- Next handoff requires separate approval for C8 PR #675 merge. C6/C8 authenticated-feed browser QA remains a separately approved candidate after reviewed migrations and environment readiness.
 
 ## Creator Closed Beta / Before Creator Public Paid
 
@@ -179,7 +179,7 @@ C1 is accepted only when all of the following are verified:
 | C5 | OBS overlay token runtime | merged / integration verified at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8` |
 | C6 | OBS overlay UI route | merged / integration verified at `05104fc2d4c6730be6aae772708a10cb2b39d2d6`; authenticated feed QA pending / gated |
 | C7 | Moderator share token runtime | merged / integration verified at `0307b5542c8ac9957370533228ec02893bd48c27` |
-| C8 | Moderator share UI route | local focused contract verified / commit, push, and PR approval pending |
+| C8 | Moderator share UI route | draft PR #675 open / local focused contracts verified / merge approval pending |
 | C9 | Custom dictionary minimum | pending |
 | C10 | Priority display polish | pending |
 | C11 | Simple 7-day history | pending |
@@ -216,7 +216,7 @@ This authority is a task board only. Every gated operation requires a separate, 
 - C4 is merged / integration verified through PR #671 at `fa0d5582a296c2164bd3945c37cbec746315f357`; provider live execution remains approval-gated.
 - C5 merge / integration verification is complete through PR #672 at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8`; remote migration apply remains approval-gated.
 - C5/C6/C7/C8 remote migration apply and deployed authenticated-feed browser verification remain approval-gated.
-- C8 commit / push / PR, Cloudflare configuration, deploy, activation, and any live token/session operation remain approval-gated.
+- C8 merge, Cloudflare configuration, deploy, activation, and any live token/session operation remain approval-gated.
 - Out of scope: Stripe mutation.
 - Out of scope: Supabase mutation.
 - Out of scope: provider mutation.

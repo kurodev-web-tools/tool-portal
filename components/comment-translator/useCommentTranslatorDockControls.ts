@@ -12,6 +12,7 @@ import {
   type CommentTranslatorTargetLanguageId
 } from "@/lib/comment-translator";
 import { resolveCommentTranslatorAuthorDisplayNamePolicy } from "@/lib/comment-translator-real-comments-feed-shared";
+import type { CommentTranslatorPriorityFilter } from "@/lib/comment-translator-priority-classification";
 
 export function useCommentTranslatorDockControls(locale: "ja" | "en") {
   const snapshot = mockTranslationProvider.getSnapshot();
@@ -22,6 +23,7 @@ export function useCommentTranslatorDockControls(locale: "ja" | "en") {
   const [surfaceMode, setSurfaceMode] = useState<CommentTranslatorSurfaceMode>(snapshot.settings.surfaceMode);
   const [showStreamSafeAuthorDisplayNames, setShowStreamSafeAuthorDisplayNames] = useState(false);
   const [statusFilter, setStatusFilter] = useState<CommentTranslatorStatusFilter>("all");
+  const [priorityFilter, setPriorityFilter] = useState<CommentTranslatorPriorityFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"normal" | "comments">("normal");
   const selectedConnection = findCommentTranslatorOption(snapshot.connectionStates, "connected");
@@ -48,6 +50,7 @@ export function useCommentTranslatorDockControls(locale: "ja" | "en") {
     surfaceMode, setSurfaceMode,
     showStreamSafeAuthorDisplayNames, setShowStreamSafeAuthorDisplayNames,
     statusFilter, setStatusFilter,
+    priorityFilter, setPriorityFilter,
     searchQuery, setSearchQuery,
     viewMode, setViewMode,
     localizedConnection, localizedStream, localizedSourceLanguage, localizedTargetLanguage, localizedSurface,

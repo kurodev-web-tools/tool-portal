@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import {
   resolveCommentTranslatorAuthorDisplayName,
   resolveCommentTranslatorAuthorDisplayNamePolicy,
@@ -5,6 +8,11 @@ import {
   type CommentTranslatorRealCommentsDisplayRow,
   type CommentTranslatorRealCommentsFeedState
 } from "@/lib/comment-translator-real-comments-feed-shared";
+import {
+  filterCommentTranslatorPriorityRows,
+  readCommentTranslatorProjectedPriority,
+  type CommentTranslatorPriorityFilter
+} from "@/lib/comment-translator-priority-classification";
 
 const authorDisplayNamePolicy = resolveCommentTranslatorAuthorDisplayNamePolicy({
   surfaceMode: "narrow-viewport",
@@ -17,15 +25,17 @@ export function CommentTranslatorModeratorShare({
 }: {
   readonly feed: CommentTranslatorRealCommentsFeedState;
 }) {
-  const rows = sortCommentTranslatorRealCommentsFeedRowsNewestFirst(feed.rows).filter(
+  const [priorityFilter, setPriorityFilter] = useState<CommentTranslatorPriorityFilter>("all");
+  const availableRows = sortCommentTranslatorRealCommentsFeedRowsNewestFirst(feed.rows).filter(
     (row) =>
       (row.translationStatus === "translated-f10" && Boolean(row.translatedText)) ||
       row.moderationLabel !== "visible"
   );
 
-  if (feed.status !== "ready" || rows.length === 0) {
+  if (feed.status !== "ready" || availableRows.length === 0) {
     return <CommentTranslatorModeratorShareUnavailable showCredentialForm={false} />;
   }
+  const rows = filterCommentTranslatorPriorityRows(availableRows, priorityFilter);
 
   return (
     <main
@@ -39,30 +49,60 @@ export function CommentTranslatorModeratorShare({
           <p className="mt-2 max-w-2xl text-sm leading-6 text-muted sm:text-base">
             Read-only translated feed. This view cannot control the creator session or change comments.
           </p>
+          <div className="mt-4 flex flex-wrap gap-2" aria-label="Priority filter">
+            {(["all", "priority"] as const).map((filter) => {
+              const selected = filter === priorityFilter;
+              return (
+                <button
+                  key={filter}
+                  type="button"
+                  aria-pressed={selected}
+                  onClick={() => setPriorityFilter(filter)}
+                  className={[
+                    "min-h-11 rounded-base border px-4 py-2 text-sm font-black transition",
+                    selected
+                      ? "border-primary bg-primary text-white"
+                      : "border-border bg-surface text-muted hover:border-primary/60 hover:bg-primary-soft/40"
+                  ].join(" ")}
+                >
+                  {filter === "priority" ? "Priority" : "All comments"}
+                </button>
+              );
+            })}
+          </div>
         </header>
-        <ol className="m-0 grid list-none gap-3 p-0" aria-label="Latest translated comments">
-          {rows.map((row) => (
-            <ModeratorFeedCard key={row.id} row={row} />
-          ))}
-        </ol>
+        {rows.length > 0 ? (
+          <ol className="m-0 grid list-none gap-3 p-0" aria-label="Latest translated comments">
+            {rows.map((row) => (
+              <ModeratorFeedCard key={row.id} row={row} />
+            ))}
+          </ol>
+        ) : (
+          <p className="rounded-base border border-dashed border-border bg-surface p-5 text-sm font-bold text-muted">
+            No priority comments in this feed.
+          </p>
+        )}
       </div>
     </main>
   );
 }
 
 function ModeratorFeedCard({ row }: { readonly row: CommentTranslatorRealCommentsDisplayRow }) {
-  const priorityLabel = resolvePriorityLabel(row);
+  const priority = readCommentTranslatorProjectedPriority(row.priority);
   const stateLabel = resolveModerationStateLabel(row);
   const displayText = row.translatedText ?? stateLabel;
+  const safeBadgeLabel = priority.badgeLabel ?? (row.badgeLabel === "system" ? "System" : null);
 
   return (
-    <li className="min-w-0 rounded-base border border-border bg-surface p-4 shadow-panel sm:p-5">
+    <li
+      data-priority-category={priority.category}
+      className="min-w-0 rounded-base border border-border bg-surface p-4 shadow-panel sm:p-5"
+    >
       <div className="flex flex-wrap items-center gap-2 text-sm text-muted">
         <strong className="break-words text-foreground">
           {resolveCommentTranslatorAuthorDisplayName({ row, policy: authorDisplayNamePolicy })}
         </strong>
-        {row.badgeLabel ? <SafeBadge>{row.badgeLabel}</SafeBadge> : null}
-        {priorityLabel ? <SafeBadge>{priorityLabel}</SafeBadge> : null}
+        {safeBadgeLabel ? <SafeBadge>{safeBadgeLabel}</SafeBadge> : null}
         {stateLabel ? <StateBadge>{stateLabel}</StateBadge> : null}
       </div>
       <p className="mt-3 break-words text-lg font-bold leading-7 text-foreground sm:text-xl">
@@ -99,13 +139,6 @@ function StateBadge({ children }: { readonly children: string }) {
       {children}
     </span>
   );
-}
-
-function resolvePriorityLabel(row: CommentTranslatorRealCommentsDisplayRow): string | null {
-  return row.role === "owner" || row.role === "moderator" || row.kind === "super-chat" ||
-    row.kind === "super-sticker" || row.kind === "member"
-    ? "Priority"
-    : null;
 }
 
 function resolveModerationStateLabel(row: CommentTranslatorRealCommentsDisplayRow): string | null {

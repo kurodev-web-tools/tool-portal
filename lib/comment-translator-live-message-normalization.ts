@@ -1,6 +1,10 @@
 import "server-only";
 
 import type { YouTubeProviderSafeCommentPayload } from "./comment-translator-youtube-input-boundary";
+import {
+  resolveCommentTranslatorPriorityClassification,
+  type CommentTranslatorPriorityClassification
+} from "./comment-translator-priority-classification";
 
 export type CommentTranslatorNormalizedLiveMessageKind =
   | "text"
@@ -114,6 +118,7 @@ export type CommentTranslatorLiveMessageBrowserSafeRow = {
   role: CommentTranslatorNormalizedLiveMessage["role"];
   purchase: CommentTranslatorNormalizedLiveMessage["purchase"];
   member: CommentTranslatorNormalizedLiveMessage["member"];
+  priority: CommentTranslatorPriorityClassification;
   moderationLabel: "visible" | "deleted" | "banned" | "ended" | "system";
   deletionPropagation: "not-deleted" | "message-reference-tombstone-only" | "author-history-p1-deferred" | "stream-ended";
   rawProviderPayload: "not-returned-by-design";
@@ -268,6 +273,7 @@ export function projectCommentTranslatorNormalizedLiveMessagesForBrowser(
     role: message.role,
     purchase: message.purchase,
     member: message.member,
+    priority: resolveCommentTranslatorPriorityClassification(message),
     moderationLabel: mapModerationLabel(message),
     deletionPropagation: mapDeletionPropagation(message),
     rawProviderPayload: "not-returned-by-design",
@@ -516,15 +522,15 @@ function normalizeNumber(value: number | null | undefined): number | null {
 function normalizeAuthorRole(
   authorDetails: CommentTranslatorYouTubeLiveMessageProviderPayload["authorDetails"]
 ): CommentTranslatorNormalizedLiveMessage["role"] {
-  if (authorDetails?.isChatOwner) {
+  if (authorDetails?.isChatOwner === true) {
     return "owner";
   }
 
-  if (authorDetails?.isChatModerator) {
+  if (authorDetails?.isChatModerator === true) {
     return "moderator";
   }
 
-  if (authorDetails?.isChatSponsor) {
+  if (authorDetails?.isChatSponsor === true) {
     return "member";
   }
 

@@ -169,6 +169,7 @@ function mapBrowserSafeRowToDisplayRow({
     translationCacheStatus: null,
     moderationLabel: row.moderationLabel,
     deletionPropagation: row.deletionPropagation,
+    priority: row.priority,
     badgeLabel: resolveBadgeLabel(row),
     purchaseLabel: row.purchase?.amountDisplayString ?? null,
     memberMonthCount: row.member?.monthCount ?? null,
@@ -195,8 +196,8 @@ function resolveBadgeLabel(
     return "system";
   }
 
-  if (row.role === "owner" || row.role === "moderator" || row.role === "member") {
-    return row.role;
+  if (row.priority.category !== "standard") {
+    return row.priority.category;
   }
 
   return null;

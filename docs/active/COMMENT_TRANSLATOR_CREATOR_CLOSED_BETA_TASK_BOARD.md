@@ -4,7 +4,7 @@
 
 - Free public beta is complete.
 - Current priority: P0 Creator closed beta.
-- C1-C9 are merged / integration verified; C10 priority display polish is locally implemented and focused verification is complete, while width QA is blocked by missing dependencies and no local server.
+- C1-C10 are merged / integration verified; C11 simple 7-day history is locally implemented and focused verification is complete, while width QA is blocked by missing dependencies and no local server.
 - C1 is merged through PR #668 at exact integration commit `c4b7bc4cd03ad400c737ae662e1e94c4462e9995`; its merge tree matches C1 head `baf8bf57dd570c3dca6bc29c880f47b7f7444fac`.
 - C3 is merged through PR #669 at exact integration commit `5fc3cca2730a58f35279098ec0b2f5c804ce0076`; its merge tree matches and contains C3 head `85fa39896f63e223463a85000eb8e02f538754d4`.
 - C2 is merged through PR #670 at exact integration commit `4486c180f68369d6620b9f8f3df33518b7cadc38`; its merge tree matches C2 head `761f503f276a5a7e095c79be5f3ca31c26fe6fff`.
@@ -14,8 +14,9 @@
 - C7 is merged through PR #674 at exact integration commit `0307b5542c8ac9957370533228ec02893bd48c27`; C7 head `23369de66fe75d4068c923334b09712ef0bd9831` is contained as the second merge parent.
 - C8 is merged through PR #675 at exact integration commit `1ec79ca222149626670ec6692c19356bc56bb2c6`; C8 head `b2bfc5e52ef529a626440334654738a1b4c0e799` is contained as the second merge parent and both trees are `5e06baefd75b8a00010581956953cb6547debff9`.
 - C9 is merged through PR #676 at exact integration commit `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; C9 head `10b48d524901c54e4c0402c05709d95bdfe92792` is contained in integration.
+- C10 is merged through PR #677 at exact integration commit `c0ac7152687dc0c91470037ec164fda57d7f4259`; C10 head `834284011252782d98139072c7a183c854f9302a` is contained in integration.
 - C2 live activation, C4 live provider execution, and C5/C6/C7/C8 remote migration apply remain separately approval-gated.
-- C6 authenticated safe-feed rendering and C8 browser rendering remain unchecked. C10 has a local implementation and focused contract; C11 remains the later capability slice and C12 is the ending final-QA gate.
+- C6 authenticated safe-feed rendering and C8 browser rendering remain unchecked. C11 has a local implementation and focused contracts; C12 is the ending final-QA gate.
 - P1 Prompt Board is MVP-complete and remains post-MVP work: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`.
 - PRs target `codex/comment-translator-free-public-beta-integration` from short-lived feature branches.
 
@@ -192,7 +193,7 @@ C1 is accepted only when all of the following are verified:
 - Original and translated text, deleted state, source attribution, translation status, purchase display label, and member month display remain preserved. Priority display does not aggregate revenue or expose new analytics.
 - C10 adds no public/deployed API, session or token capability, account-role management, provider execution, polling, target lookup, OAuth operation, remote migration, or browser storage.
 
-### Verified C10 Local Evidence
+### Verified C10 Merge And Integration Evidence
 
 - `comment translator creator C10 priority display contract passed` verifies category normalization, deterministic precedence, exact-match revenue classification, normalized new-member event classification, malformed/unknown fail-safe behavior, strict boolean role normalization, browser-safe projection, priority lane filtering, C6/C8 compatibility, deleted/source/original preservation, and sensitive-field exclusion.
 - Focused C6, C8, C9, C10, and Creator roadmap contracts pass. The broader C1-C10/provider/feed run has 16 passes out of 28: nine checks remain blocked by missing dependencies and three dependency-free historical contracts retain the same baseline assertions seen before C10.
@@ -200,15 +201,37 @@ C1 is accepted only when all of the following are verified:
 - Browser-visible files changed, but width QA at `390 / 820 / 1024 / 1280 / 1366px` is blocked because there is no local server and dependencies are absent. C6/C8 authenticated/live-token browser QA remains separately approval-gated and was not run.
 - No provider, polling, OAuth, YouTube, target lookup, live session, Supabase remote, Stripe, Cloudflare, deploy, activation, or production operation was run.
 
+- PR #677 is merged into `codex/comment-translator-free-public-beta-integration` at `c0ac7152687dc0c91470037ec164fda57d7f4259`; C10 head `834284011252782d98139072c7a183c854f9302a` is contained in integration.
+
+## C11 Acceptance Boundary
+
+- C11 history persistence and reads require an authenticated caller plus server-derived paid-active Creator entitlement. Free, inactive, missing, or unreadable entitlement state cannot persist or display Creator history. Cleanup remains authenticated and owner-scoped so previously eligible owners can remove retained history after entitlement changes. Browser input cannot select the owner, entitlement, session, provider target, retention state, cleanup target, or deletion authority.
+- The durable store is service-role-only and persists one owner/session snapshot containing only the minimum browser-safe history projection: safe author display, original and translated text, translation status, deleted/moderation state, source attribution, safe purchase/member display, and the validated C10 priority category.
+- Reads enforce an exact rolling seven-day boundary from a server-derived clock using parsed instants rather than timestamp string ordering. The exact cutoff is included; older rows are removed owner-scoped, while malformed, unreadable, cross-owner, future, or unconfigured state returns sanitized unavailable or empty state without inventing history.
+- Repeated session persistence replaces the same owner/session snapshot so deleted-message tombstones propagate into history without returning message references or private session references. A deleted tombstone containing original or translated text is treated as unreadable and fails closed.
+- Expiry, OAuth disconnect, and account-deletion cleanup use one deterministic, idempotent owner-scoped store seam. Both translator and Account Integrations disconnect paths invoke the seam after credential revocation; account deletion is ready through the same seam and database cascade, without adding a scheduler, cron, queue, or deployed cleanup infrastructure.
+- The existing authenticated Creator surface adds one bounded history panel. It does not expose search, CSV export, 30-day history, analytics, aggregates, revenue totals, or a new public/deployed API.
+- History reads use only the existing server-owned durable entitlement read to enforce paid-active Creator access. They and cleanup do not execute providers, polling, OAuth/YouTube calls, target lookup, translation, live sessions, Stripe calls, or billing mutations.
+
+### Verified C11 Local Evidence
+
+- `comment translator creator C11 history contract passed` verifies authenticated owner isolation, paid-active Creator gating, Free-plan non-retention, exact inclusive instant cutoff behavior across timezone offsets, older-row expiry, store-construction/malformed/unreadable/cross-owner fail-closed handling, browser-safe projection, strict deleted-message replacement, original/translated/source/translation-status preservation, C10 priority preservation, sensitive-field exclusion, cleanup idempotency, and OAuth/account cleanup readiness.
+- `comment translator creator C11 history UI contract passed` verifies the no-input authenticated history server action, server-derived paid-active entitlement gate, paid-only existing Creator surface integration, safe source/priority/deleted rendering, paid-session safe-feed persistence wiring, both OAuth-disconnect cleanup paths, unique entry keys, and absence of browser-selected owner/session authority.
+- A final read-only semantic re-audit confirmed the OAuth path, Creator-only access, exact timestamp boundary, store-construction fail-closed behavior, strict tombstone correlation, and React entry-key fixes with no remaining concrete finding.
+- The focused C1-C11, Creator authority, session/feed, retention/deletion, OAuth cleanup, provider-boundary, OBS Dock, and UI regression run has 18 passes out of 30 with no unexpected failure: nine checks are blocked by missing dependencies and three dependency-free historical contracts retain their pre-C11 stale assertions.
+- Changed server `.ts` and contract `.mjs` files pass dependency-free Node syntax checks. LSP, ESLint, TypeScript, production build, and real browser QA remain unavailable because dependencies are absent and installation was not approved.
+- No provider, polling, OAuth/YouTube, target lookup, live session, translation, Supabase remote query/mutation/migration apply, Stripe, Cloudflare, deploy, activation, or production operation was run.
+
 ### Residual Risk And Next Handoff
 
 - Remote Supabase query, migration apply, schema mutation, and production data access were not run. Until an explicitly approved migration apply exists, deployed reads safely return Free / paid-inactive.
 - Stripe live Product, Price, Checkout, Portal, and webhook operations were not run. Local verifier fixtures are not live billing evidence.
 - Local C2 fixtures do not establish live Product/Price interval, billing cadence, trial policy, webhook destination, Customer mapping values, or production configuration; C3 continues to follow only signed period-boundary advances.
 - C4 does not infer an OpenAI model, provider pricing/token multiplier, budget amount, billing cadence, or production value. Operator-owned server environment values and provider-account caps remain required before any separately approved live/provider smoke.
-- Dependency-backed contracts, ESLint, TypeScript, build, and browser QA remain blocked in this worktree by missing `node_modules`; installation was not approved. Three dependency-free historical contracts retain known stale provider-fixture, task-history, and feed-owner assertions and are baseline limitations rather than C10 regressions.
-- C5, C6, C7, and C8 remote migration apply and production persistence remain unverified and separately approval-gated. Until reviewed migrations are applied, deployed token/browser-session/share stores remain unavailable and fail closed.
-- Next handoff is C10 local review and separate commit/push/PR approval. C5-C9 remote migration apply and C6/C8 authenticated-feed browser QA remain separately approved candidates after reviewed migrations and environment readiness.
+- Dependency-backed contracts, ESLint, TypeScript, build, and browser QA remain blocked in this worktree by missing `node_modules`; installation was not approved. Three dependency-free historical contracts retain known stale provider-fixture, task-history, and feed-owner assertions and remain baseline limitations.
+- C5-C9 and C11 remote migration apply and production persistence remain unverified and separately approval-gated. Until reviewed migrations are applied, deployed token/browser-session/share/dictionary/history stores remain unavailable and fail closed.
+- C11 browser-visible files changed, but width QA at `390 / 820 / 1024 / 1280 / 1366px` is blocked because dependencies and a local server are absent. C6/C8 authenticated/live-token browser QA remains separately approval-gated and was not run.
+- Next handoff is C11 local review and separate commit/push/PR approval. C12 final QA, C5-C9/C11 remote migration apply, and C6/C8 authenticated-feed browser QA remain separate later gates.
 
 ## Creator Closed Beta / Before Creator Public Paid
 
@@ -223,8 +246,8 @@ C1 is accepted only when all of the following are verified:
 | C7 | Moderator share token runtime | merged / integration verified at `0307b5542c8ac9957370533228ec02893bd48c27` |
 | C8 | Moderator share UI route | merged / integration verified at `1ec79ca222149626670ec6692c19356bc56bb2c6`; authenticated feed QA pending / gated |
 | C9 | Custom dictionary minimum | merged / integration verified at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb` |
-| C10 | Priority display polish | local implementation / focused verification complete; width QA blocked by missing dependencies and no local server |
-| C11 | Simple 7-day history | pending |
+| C10 | Priority display polish | merged / integration verified at `c0ac7152687dc0c91470037ec164fda57d7f4259` |
+| C11 | Simple 7-day history | local implementation / focused verification complete; width QA blocked by missing dependencies and no local server |
 | C12 | Creator closed beta final QA | pending |
 
 ## Creator Public Paid Launch
@@ -260,6 +283,8 @@ This authority is a task board only. Every gated operation requires a separate, 
 - C5/C6/C7/C8 remote migration apply and deployed authenticated-feed browser verification remain approval-gated.
 - C8 merge is complete at `1ec79ca222149626670ec6692c19356bc56bb2c6`; Cloudflare configuration, deploy, activation, and any live token/session operation remain approval-gated.
 - C9 merge / integration verification is complete through PR #676 at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; remote migration apply and production persistence remain approval-gated.
+- C10 merge / integration verification is complete through PR #677 at `c0ac7152687dc0c91470037ec164fda57d7f4259`.
+- C11 remote migration apply, production persistence, and authenticated browser history verification remain approval-gated.
 - Out of scope: Stripe mutation.
 - Out of scope: Supabase mutation.
 - Out of scope: provider mutation.

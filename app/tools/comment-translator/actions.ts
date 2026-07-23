@@ -20,9 +20,16 @@ import {
   startCommentTranslatorSessionAction as startCommentTranslatorSession,
   stopCommentTranslatorSessionAction as stopCommentTranslatorSession
 } from "./session-actions";
+import {
+  getCommentTranslatorCreatorHistoryAction as getCommentTranslatorCreatorHistory
+} from "./history-actions";
 
 export async function getYouTubeOAuthCredentialStatusAction() {
   return getYouTubeOAuthCredentialStatus();
+}
+
+export async function getCommentTranslatorCreatorHistoryAction() {
+  return getCommentTranslatorCreatorHistory();
 }
 
 export async function disconnectYouTubeOAuthCredentialAction() {

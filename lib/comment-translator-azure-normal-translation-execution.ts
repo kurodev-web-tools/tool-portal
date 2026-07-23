@@ -368,6 +368,7 @@ async function persistFeedBridgeResult({
     sessionReferenceId: request.sessionReferenceId,
     feed: feedWithDiagnostics,
     recordedAtMs: request.occurredAtMs,
+    creatorHistoryAccess: request.usage.plan === "paid" ? "paid-active" : "unavailable",
     durableFeedStore: request.feedPersistenceStore
   });
 

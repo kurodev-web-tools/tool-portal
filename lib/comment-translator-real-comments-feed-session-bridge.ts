@@ -2,6 +2,9 @@ import "server-only";
 
 import type { YouTubeOAuthCredentialStatusCallerAuthorization } from "./comment-translator-youtube-credential-status-boundary";
 import type { CommentTranslatorActiveSessionRecord } from "./comment-translator-session-runtime";
+import { persistCommentTranslatorCreatorHistorySnapshot } from "./comment-translator-creator-history";
+import type { CommentTranslatorCreatorHistoryStoreFactoryResult } from "./comment-translator-creator-history-store";
+import type { CommentTranslatorCreatorHistoryAccess } from "./comment-translator-creator-history-types";
 import {
   createUnavailableCommentTranslatorRealCommentsFeedState
 } from "./comment-translator-real-comments-ui-wiring";
@@ -68,13 +71,17 @@ export function persistCommentTranslatorRealCommentsFeedForActiveSession({
   sessionReferenceId,
   feed,
   recordedAtMs = Date.now(),
-  durableFeedStore
+  durableFeedStore,
+  creatorHistoryAccess,
+  historyStore
 }: {
   callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
   sessionReferenceId: string;
   feed: CommentTranslatorRealCommentsFeedState;
   recordedAtMs?: number;
   durableFeedStore?: CommentTranslatorRealCommentsFeedDurableStoreFactoryResult;
+  creatorHistoryAccess: CommentTranslatorCreatorHistoryAccess;
+  historyStore?: CommentTranslatorCreatorHistoryStoreFactoryResult;
 }): Promise<CommentTranslatorRealCommentsFeedSessionBridgePersistResult> {
   if (callerAuthorization.status !== "authorized") {
     return Promise.resolve(skippedPersist("skipped-caller-not-authorized"));
@@ -100,17 +107,27 @@ export function persistCommentTranslatorRealCommentsFeedForActiveSession({
     feed,
     recordedAtMs,
     durableFeedStore
-  }).then((durableFeedPersistResult) => ({
-    status: "persisted",
-    feedAuthority: "server-owned-session-scoped-safe-feed",
-    durableFeedPersistResultLabel: durableFeedPersistResult.durableFeedPersistResultLabel,
-    durableFeedPersistDiagnostics: durableFeedPersistResult.durableFeedPersistDiagnostics,
-    displayRowCount: feed.rows.length,
-    rawProviderPayload: "not-returned-by-design",
-    rawComments: "not-returned-by-design",
-    providerTargetMetadata: "forbidden",
-    publicLaunchAllowed: false
-  }));
+  }).then(async (durableFeedPersistResult) => {
+    await persistCommentTranslatorCreatorHistorySnapshot({
+      callerAuthorization,
+      creatorAccess: creatorHistoryAccess,
+      sessionReferenceId,
+      feed,
+      recordedAtMs,
+      historyStore
+    });
+    return {
+      status: "persisted",
+      feedAuthority: "server-owned-session-scoped-safe-feed",
+      durableFeedPersistResultLabel: durableFeedPersistResult.durableFeedPersistResultLabel,
+      durableFeedPersistDiagnostics: durableFeedPersistResult.durableFeedPersistDiagnostics,
+      displayRowCount: feed.rows.length,
+      rawProviderPayload: "not-returned-by-design",
+      rawComments: "not-returned-by-design",
+      providerTargetMetadata: "forbidden",
+      publicLaunchAllowed: false
+    };
+  });
 }
 
 export async function readCommentTranslatorRealCommentsFeedForActiveSession({

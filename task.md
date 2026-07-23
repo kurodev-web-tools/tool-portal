@@ -6,13 +6,13 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0 | Comment Translator Creator closed beta | C1-C9はmerge・integration verified。C10 priority display polishはlocal implementation / focused verification済みで、width QAは依存関係未導入・local server不在のため未実施。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md` |
+| P0 | Comment Translator Creator closed beta | C1-C10はmerge・integration verified。C11 simple 7-day historyはlocal implementation / focused verification済みで、width QAは依存関係未導入・local server不在のため未実施。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md` |
 | Completed | Comment Translator Free public beta | Google OAuth approval、login-only activation、final release declaration、final production/main-domain smokeまで完了し、`public_release_capable=yes`。 | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md` and `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
 | P1 | 配信カンペボード | PR #660とdelete-dialog follow-up PR #663は`main`へmerge済み。MVPは完了し、post-MVP開発候補はactive authorityで継続する。 | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
 | Workflow | New-tool preview development | Task PRs target a tool-specific preview/integration branch; promotion to `main` remains separately approval-gated. | `docs/active/TOOL_PREVIEW_DEVELOPMENT_WORKFLOW.md` |
 
 - Current priority: P0 Creator closed beta.
-- C1-C9 are merged / integration verified; C10 priority display polish is locally implemented and focused verification is complete, while width QA is blocked by missing dependencies and no local server.
+- C1-C10 are merged / integration verified; C11 simple 7-day history is locally implemented and focused verification is complete, while width QA is blocked by missing dependencies and no local server.
 - P1 Prompt Board is MVP-complete and remains post-MVP work: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`.
 
 ## Current Premises
@@ -38,7 +38,8 @@
 - C7 is merged through PR #674 at exact integration commit `0307b5542c8ac9957370533228ec02893bd48c27`; C7 head `23369de66fe75d4068c923334b09712ef0bd9831` is contained in integration.
 - C8 is merged through PR #675 at exact integration commit `1ec79ca222149626670ec6692c19356bc56bb2c6`; C8 head `b2bfc5e52ef529a626440334654738a1b4c0e799` is contained as the second merge parent and both trees are `5e06baefd75b8a00010581956953cb6547debff9`.
 - C9 adds authenticated owner-only server CRUD for at most 30 language-scoped terms, a service-role-only durable store/migration, optimistic stale-write rejection, deterministic effective dictionary versioning, and C4 `glossaryTerms` / `glossaryVersion` cache integration. PR #676 is merged and integration verified at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; C9 head `10b48d524901c54e4c0402c05709d95bdfe92792` is contained in integration.
-- C10 locally adds one browser-safe priority classification seam with deterministic `Super Chat -> Super Sticker -> owner -> moderator -> member -> standard` precedence, fail-safe malformed metadata handling, Creator and moderator Priority filters, and shared Creator/OBS/moderator category badges without adding an API or authority surface. C11 remains later and C12 is final QA.
+- C10 adds one browser-safe priority classification seam with deterministic `Super Chat -> Super Sticker -> owner -> moderator -> member -> standard` precedence, fail-safe malformed metadata handling, Creator and moderator Priority filters, and shared Creator/OBS/moderator category badges without adding an API or authority surface. PR #677 is merged and integration verified at `c0ac7152687dc0c91470037ec164fda57d7f4259`; C10 head `834284011252782d98139072c7a183c854f9302a` is contained in integration.
+- C11 locally adds authenticated, server-derived paid-active Creator-only seven-day browser-safe history on the existing Creator surface, service-role-only durable snapshots, exact instant-based server cutoff reads, owner-scoped expiry and disconnect/account cleanup readiness, strict deleted-message tombstones, and C10 priority preservation. Free or unreadable entitlement state neither persists nor displays Creator history. C12 remains the final QA task.
 - Free Azure translation route remains current; Creator/Paid routes to an OpenAI mini model first with Azure fallback only for recoverable provider errors.
 
 ## Account Limits / Entitlement Control
@@ -64,6 +65,8 @@ Do not perform live/external operations without same-thread ready preflight, san
 - C5/C6/C7/C8 remote migration apply and deployed authenticated-feed browser verification remain separate approval-gated steps.
 - C8 merge is complete at `1ec79ca222149626670ec6692c19356bc56bb2c6`; Cloudflare configuration, deploy, activation, and any live token/session operation remain separate approval-gated steps.
 - C9 merge / integration verification is complete through PR #676 at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; remote migration apply and production persistence remain separately approval-gated.
+- C10 merge / integration verification is complete through PR #677 at `c0ac7152687dc0c91470037ec164fda57d7f4259`.
+- C11 remote migration apply, production persistence, and authenticated browser history verification remain separately approval-gated.
 - Out of scope: Stripe mutation.
 - Out of scope: Supabase mutation.
 - Out of scope: provider mutation.
@@ -129,8 +132,8 @@ These items stay visible but are not current release blockers unless explicitly 
 | C7 | Moderator share token runtime | merged / integration verified at `0307b5542c8ac9957370533228ec02893bd48c27` |
 | C8 | Moderator share UI route | merged / integration verified at `1ec79ca222149626670ec6692c19356bc56bb2c6`; authenticated feed QA pending / gated |
 | C9 | Custom dictionary minimum | merged / integration verified at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb` |
-| C10 | Priority display polish | local implementation / focused verification complete; width QA blocked by missing dependencies and no local server |
-| C11 | Simple 7-day history | pending |
+| C10 | Priority display polish | merged / integration verified at `c0ac7152687dc0c91470037ec164fda57d7f4259` |
+| C11 | Simple 7-day history | local implementation / focused verification complete; width QA blocked by missing dependencies and no local server |
 | C12 | Creator closed beta final QA | pending |
 
 ### Creator Public Paid Launch

@@ -22,8 +22,8 @@ const creatorRows = [
   "| C7 | Moderator share token runtime | merged / integration verified at `0307b5542c8ac9957370533228ec02893bd48c27` |",
   "| C8 | Moderator share UI route | merged / integration verified at `1ec79ca222149626670ec6692c19356bc56bb2c6`; authenticated feed QA pending / gated |",
   "| C9 | Custom dictionary minimum | merged / integration verified at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb` |",
-  "| C10 | Priority display polish | local implementation / focused verification complete; width QA blocked by missing dependencies and no local server |",
-  "| C11 | Simple 7-day history | pending |",
+  "| C10 | Priority display polish | merged / integration verified at `c0ac7152687dc0c91470037ec164fda57d7f4259` |",
+  "| C11 | Simple 7-day history | local implementation / focused verification complete; width QA blocked by missing dependencies and no local server |",
   "| C12 | Creator closed beta final QA | pending |",
 ];
 
@@ -46,7 +46,7 @@ const publicAfterP1Rows = [
 
 const taskPriorityLines = [
   "- Current priority: P0 Creator closed beta.",
-  "- C1-C9 are merged / integration verified; C10 priority display polish is locally implemented and focused verification is complete, while width QA is blocked by missing dependencies and no local server.",
+  "- C1-C10 are merged / integration verified; C11 simple 7-day history is locally implemented and focused verification is complete, while width QA is blocked by missing dependencies and no local server.",
   "- P1 Prompt Board is MVP-complete and remains post-MVP work: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`.",
 ];
 
@@ -146,6 +146,9 @@ function run() {
   assert.match(creator, /^## C10 Acceptance Boundary$/m);
   assert.match(creator, /comment translator creator C10 priority display contract passed/);
   assert.match(creator, /Super Chat -> Super Sticker -> owner -> moderator -> member -> standard/);
+  assert.match(creator, /^## C11 Acceptance Boundary$/m);
+  assert.match(creator, /comment translator creator C11 history contract passed/);
+  assert.match(creator, /exact rolling seven-day boundary/i);
 
   assert.match(promptBoard, /MVP対象外/);
   assert.match(promptBoard, /Implementation Task Order/);

@@ -4,7 +4,7 @@
 
 - Free public beta is complete.
 - Current priority: P0 Creator closed beta.
-- C1-C8 are merged / integration verified; C9 custom dictionary minimum is locally implemented and focused verification is complete, while draft PR review / merge remain approval-gated.
+- C1-C9 are merged / integration verified; C10 priority display polish is locally implemented and focused verification is complete, while width QA is blocked by missing dependencies and no local server.
 - C1 is merged through PR #668 at exact integration commit `c4b7bc4cd03ad400c737ae662e1e94c4462e9995`; its merge tree matches C1 head `baf8bf57dd570c3dca6bc29c880f47b7f7444fac`.
 - C3 is merged through PR #669 at exact integration commit `5fc3cca2730a58f35279098ec0b2f5c804ce0076`; its merge tree matches and contains C3 head `85fa39896f63e223463a85000eb8e02f538754d4`.
 - C2 is merged through PR #670 at exact integration commit `4486c180f68369d6620b9f8f3df33518b7cadc38`; its merge tree matches C2 head `761f503f276a5a7e095c79be5f3ca31c26fe6fff`.
@@ -13,8 +13,9 @@
 - C6 is merged through PR #673 at exact integration commit `05104fc2d4c6730be6aae772708a10cb2b39d2d6`; C6 head `60729f844b099d687e8c28ae794d38398d5a31ad` is contained in integration and both trees are `9090e9af7d2f20a1258eca5e2840895cb7e35c8b`.
 - C7 is merged through PR #674 at exact integration commit `0307b5542c8ac9957370533228ec02893bd48c27`; C7 head `23369de66fe75d4068c923334b09712ef0bd9831` is contained as the second merge parent.
 - C8 is merged through PR #675 at exact integration commit `1ec79ca222149626670ec6692c19356bc56bb2c6`; C8 head `b2bfc5e52ef529a626440334654738a1b4c0e799` is contained as the second merge parent and both trees are `5e06baefd75b8a00010581956953cb6547debff9`.
+- C9 is merged through PR #676 at exact integration commit `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; C9 head `10b48d524901c54e4c0402c05709d95bdfe92792` is contained in integration.
 - C2 live activation, C4 live provider execution, and C5/C6/C7/C8 remote migration apply remain separately approval-gated.
-- C6 authenticated safe-feed rendering and C8 browser rendering remain unchecked. C9 has a local server-only implementation and focused contracts; C10-C11 remain later capability slices and C12 is the ending final-QA gate.
+- C6 authenticated safe-feed rendering and C8 browser rendering remain unchecked. C10 has a local implementation and focused contract; C11 remains the later capability slice and C12 is the ending final-QA gate.
 - P1 Prompt Board is MVP-complete and remains post-MVP work: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`.
 - PRs target `codex/comment-translator-free-public-beta-integration` from short-lived feature branches.
 
@@ -170,13 +171,34 @@ C1 is accepted only when all of the following are verified:
 - C4 Paid reads the authenticated owner's current durable dictionary before provider execution and passes only language-pair-filtered `glossaryTerms` plus `glossaryVersion` into the existing intake/provider seam. Missing, unreadable, or unconfigured storage fails closed before provider execution.
 - CRUD does not execute providers. C9 adds no public/deployed API, UI, client storage, logging, analytics payload, Cloudflare configuration, or live/provider behavior.
 
-### Verified C9 Local Evidence
+### Verified C9 Merge And Integration Evidence
 
 - `comment translator creator C9 custom dictionary runtime contract passed` verifies authenticated owner-only CRUD, owner isolation, 30-term enforcement, bounded term/replacement/note validation, note sanitization, supported language pairs, duplicate/conflict behavior, stale update/delete rejection, deterministic effective versions, and sanitized mutation results.
 - `comment translator creator C9 custom dictionary durable store contract passed` verifies missing service-role configuration, owner-filtered reads and RPC params, unreadable-row failure, service-role-only migration policy, per-owner locking, 30-term enforcement, and optimistic update/delete authority.
 - `comment translator creator C9 provider and cache integration contract passed` verifies owner-derived glossary injection, no note forwarding, cache reuse for an unchanged dictionary, cache separation after an effective change, and provider suppression for missing/unreadable storage.
 - Available dependency-free C2-C9, provider authority/route, OBS, and Creator roadmap contracts pass. Nine dependency-backed checks remain unavailable because `node_modules` is absent and installation was not approved; two historical dependency-free contracts retain the already-known stale Mock-provider/feed-action assertions.
 - No browser-visible file changed, so browser/width QA is not applicable. No provider, Stripe, Supabase remote, Cloudflare, deploy, OAuth, target lookup, token/session, or production operation was run.
+- PR #676 is merged into `codex/comment-translator-free-public-beta-integration` at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; C9 head `10b48d524901c54e4c0402c05709d95bdfe92792` is contained in integration.
+
+## C10 Acceptance Boundary
+
+- C10 classifies only existing server-normalized, browser-safe event and role signals. Deterministic precedence is `Super Chat -> Super Sticker -> owner -> moderator -> member -> standard`.
+- Super Chat and Super Sticker require an exact matching normalized purchase kind. Unknown event kinds, mismatched purchase metadata, malformed role metadata, and moderation tombstones resolve to standard unless a separate valid lower-precedence role signal exists.
+- Provider role flags grant owner, moderator, or member state only when the provider-safe boundary supplies the exact boolean `true`; truthy strings, numbers, objects, and missing values do not grant privilege.
+- The classification is attached once during the existing F8 browser-safe projection and is preserved through the F9 display row, F10 translation projection, durable safe-feed snapshot, Creator feed, C6 OBS overlay, and C8 moderator view.
+- Pre-C10 rows with no classification and inconsistent projected classification objects remain displayable as standard; display filters validate the projected object and do not infer privilege from browser input.
+- Creator and moderator surfaces reuse existing chip-filter patterns for an `all / priority` display-only filter. OBS and moderator cards reuse existing Safe Feed Card badge patterns with category-specific labels.
+- Browser input can only filter already projected safe rows. It cannot set event kind, role, priority, owner identity, purchase status, feed contents, session state, or provider behavior.
+- Original and translated text, deleted state, source attribution, translation status, purchase display label, and member month display remain preserved. Priority display does not aggregate revenue or expose new analytics.
+- C10 adds no public/deployed API, session or token capability, account-role management, provider execution, polling, target lookup, OAuth operation, remote migration, or browser storage.
+
+### Verified C10 Local Evidence
+
+- `comment translator creator C10 priority display contract passed` verifies category normalization, deterministic precedence, exact-match revenue classification, normalized new-member event classification, malformed/unknown fail-safe behavior, strict boolean role normalization, browser-safe projection, priority lane filtering, C6/C8 compatibility, deleted/source/original preservation, and sensitive-field exclusion.
+- Focused C6, C8, C9, C10, and Creator roadmap contracts pass. The broader C1-C10/provider/feed run has 16 passes out of 28: nine checks remain blocked by missing dependencies and three dependency-free historical contracts retain the same baseline assertions seen before C10.
+- Changed `.ts` and `.mjs` files pass dependency-free Node syntax checks. Full ESLint, TypeScript, and production build remain unavailable because `node_modules` is absent and dependency installation was not approved.
+- Browser-visible files changed, but width QA at `390 / 820 / 1024 / 1280 / 1366px` is blocked because there is no local server and dependencies are absent. C6/C8 authenticated/live-token browser QA remains separately approval-gated and was not run.
+- No provider, polling, OAuth, YouTube, target lookup, live session, Supabase remote, Stripe, Cloudflare, deploy, activation, or production operation was run.
 
 ### Residual Risk And Next Handoff
 
@@ -184,9 +206,9 @@ C1 is accepted only when all of the following are verified:
 - Stripe live Product, Price, Checkout, Portal, and webhook operations were not run. Local verifier fixtures are not live billing evidence.
 - Local C2 fixtures do not establish live Product/Price interval, billing cadence, trial policy, webhook destination, Customer mapping values, or production configuration; C3 continues to follow only signed period-boundary advances.
 - C4 does not infer an OpenAI model, provider pricing/token multiplier, budget amount, billing cadence, or production value. Operator-owned server environment values and provider-account caps remain required before any separately approved live/provider smoke.
-- Dependency-backed contracts, ESLint, TypeScript, build, and browser QA remain blocked in this worktree by missing `node_modules`; installation was not approved. Two dependency-free historical contracts also retain known stale task-history/feed-owner assertions and are baseline limitations rather than C8 regressions.
+- Dependency-backed contracts, ESLint, TypeScript, build, and browser QA remain blocked in this worktree by missing `node_modules`; installation was not approved. Three dependency-free historical contracts retain known stale provider-fixture, task-history, and feed-owner assertions and are baseline limitations rather than C10 regressions.
 - C5, C6, C7, and C8 remote migration apply and production persistence remain unverified and separately approval-gated. Until reviewed migrations are applied, deployed token/browser-session/share stores remain unavailable and fail closed.
-- Next handoff is C9 draft PR review / merge approval. C5-C9 remote migration apply and C6/C8 authenticated-feed browser QA remain separately approved candidates after reviewed migrations and environment readiness.
+- Next handoff is C10 local review and separate commit/push/PR approval. C5-C9 remote migration apply and C6/C8 authenticated-feed browser QA remain separately approved candidates after reviewed migrations and environment readiness.
 
 ## Creator Closed Beta / Before Creator Public Paid
 
@@ -200,8 +222,8 @@ C1 is accepted only when all of the following are verified:
 | C6 | OBS overlay UI route | merged / integration verified at `05104fc2d4c6730be6aae772708a10cb2b39d2d6`; authenticated feed QA pending / gated |
 | C7 | Moderator share token runtime | merged / integration verified at `0307b5542c8ac9957370533228ec02893bd48c27` |
 | C8 | Moderator share UI route | merged / integration verified at `1ec79ca222149626670ec6692c19356bc56bb2c6`; authenticated feed QA pending / gated |
-| C9 | Custom dictionary minimum | local implementation / focused verification complete; draft PR review / merge approval pending |
-| C10 | Priority display polish | pending |
+| C9 | Custom dictionary minimum | merged / integration verified at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb` |
+| C10 | Priority display polish | local implementation / focused verification complete; width QA blocked by missing dependencies and no local server |
 | C11 | Simple 7-day history | pending |
 | C12 | Creator closed beta final QA | pending |
 
@@ -237,7 +259,7 @@ This authority is a task board only. Every gated operation requires a separate, 
 - C5 merge / integration verification is complete through PR #672 at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8`; remote migration apply remains approval-gated.
 - C5/C6/C7/C8 remote migration apply and deployed authenticated-feed browser verification remain approval-gated.
 - C8 merge is complete at `1ec79ca222149626670ec6692c19356bc56bb2c6`; Cloudflare configuration, deploy, activation, and any live token/session operation remain approval-gated.
-- C9 remote migration apply, production persistence, PR review, and merge remain approval-gated.
+- C9 merge / integration verification is complete through PR #676 at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; remote migration apply and production persistence remain approval-gated.
 - Out of scope: Stripe mutation.
 - Out of scope: Supabase mutation.
 - Out of scope: provider mutation.

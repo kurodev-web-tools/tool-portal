@@ -46,6 +46,7 @@ export function CommentTranslatorDock({
     surfaceMode, setSurfaceMode,
     showStreamSafeAuthorDisplayNames, setShowStreamSafeAuthorDisplayNames,
     statusFilter, setStatusFilter,
+    priorityFilter, setPriorityFilter,
     searchQuery, setSearchQuery,
     viewMode, setViewMode,
     localizedConnection,
@@ -95,7 +96,7 @@ export function CommentTranslatorDock({
   });
   const commentOnly = viewMode === "comments";
   const publicFeedComments = feedComments.filter((comment) => comment.status !== "skipped");
-  const filteredComments = filterCommentTranslatorComments(publicFeedComments, { statusFilter, searchQuery });
+  const filteredComments = filterCommentTranslatorComments(publicFeedComments, { statusFilter, searchQuery, priorityFilter });
   const liveStats = {
     translated: publicFeedComments.filter((comment) => comment.status === "translated").length,
     errors: publicFeedComments.filter((comment) => comment.status === "error").length
@@ -217,6 +218,7 @@ export function CommentTranslatorDock({
             searchQuery={searchQuery}
             statusFilter={statusFilter}
             statusFilters={statusFilters}
+            priorityFilter={priorityFilter}
             filteredComments={filteredComments}
             publicCommentCount={publicFeedComments.length}
             translatedCount={liveStats.translated}
@@ -229,6 +231,7 @@ export function CommentTranslatorDock({
             onNormalView={() => setViewMode("normal")}
             onSearchQueryChange={setSearchQuery}
             onStatusFilterChange={setStatusFilter}
+            onPriorityFilterChange={setPriorityFilter}
             onRefresh={refreshRealCommentsFeed}
             onClear={clearRetainedPreviewFeed}
           />

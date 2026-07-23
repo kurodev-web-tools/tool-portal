@@ -4,6 +4,7 @@ import {
   sortCommentTranslatorRealCommentsFeedRowsNewestFirst,
   type CommentTranslatorRealCommentsFeedState
 } from "@/lib/comment-translator-real-comments-feed-shared";
+import { readCommentTranslatorProjectedPriority } from "@/lib/comment-translator-priority-classification";
 
 const authorDisplayNamePolicy = resolveCommentTranslatorAuthorDisplayNamePolicy({
   surfaceMode: "obs-browser-dock",
@@ -23,23 +24,28 @@ export function CommentTranslatorObsOverlay({ feed }: { readonly feed: CommentTr
   return (
     <main data-comment-translator-obs-overlay-root="ready" className="obs-overlay-root" aria-live="polite">
       <ol className="obs-overlay-stack" aria-label="Latest translated comments">
-        {rows.map((row) => (
-          <li key={row.id} className="obs-overlay-card">
-            <div className="obs-overlay-card-header">
-              <strong>{resolveCommentTranslatorAuthorDisplayName({ row, policy: authorDisplayNamePolicy })}</strong>
-              {row.badgeLabel ? <span className="obs-overlay-badge">{row.badgeLabel}</span> : null}
-              {row.purchaseLabel ? <span className="obs-overlay-purchase">{row.purchaseLabel}</span> : null}
-            </div>
-            <p className="obs-overlay-translation">{row.translatedText}</p>
-            {row.originalText ? (
-              <details className="obs-overlay-original">
-                <summary>Original</summary>
-                <p>{row.originalText}</p>
-              </details>
-            ) : null}
-            <p className="obs-overlay-source">{row.sourceAttributionLabel}</p>
-          </li>
-        ))}
+        {rows.map((row) => {
+          const priority = readCommentTranslatorProjectedPriority(row.priority);
+          return (
+            <li key={row.id} data-priority-category={priority.category} className="obs-overlay-card">
+              <div className="obs-overlay-card-header">
+                <strong>{resolveCommentTranslatorAuthorDisplayName({ row, policy: authorDisplayNamePolicy })}</strong>
+                {priority.badgeLabel || row.badgeLabel ? (
+                  <span className="obs-overlay-badge">{priority.badgeLabel ?? row.badgeLabel}</span>
+                ) : null}
+                {row.purchaseLabel ? <span className="obs-overlay-purchase">{row.purchaseLabel}</span> : null}
+              </div>
+              <p className="obs-overlay-translation">{row.translatedText}</p>
+              {row.originalText ? (
+                <details className="obs-overlay-original">
+                  <summary>Original</summary>
+                  <p>{row.originalText}</p>
+                </details>
+              ) : null}
+              <p className="obs-overlay-source">{row.sourceAttributionLabel}</p>
+            </li>
+          );
+        })}
       </ol>
     </main>
   );

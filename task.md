@@ -6,13 +6,13 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0 | Comment Translator Creator closed beta | C1-C8はmerge・integration verified。C9 custom dictionary minimumはlocal implementation / focused verification済みで、draft PR review / merge承認待ち。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md` |
+| P0 | Comment Translator Creator closed beta | C1-C9はmerge・integration verified。C10 priority display polishはlocal implementation / focused verification済みで、width QAは依存関係未導入・local server不在のため未実施。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md` |
 | Completed | Comment Translator Free public beta | Google OAuth approval、login-only activation、final release declaration、final production/main-domain smokeまで完了し、`public_release_capable=yes`。 | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md` and `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
 | P1 | 配信カンペボード | PR #660とdelete-dialog follow-up PR #663は`main`へmerge済み。MVPは完了し、post-MVP開発候補はactive authorityで継続する。 | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
 | Workflow | New-tool preview development | Task PRs target a tool-specific preview/integration branch; promotion to `main` remains separately approval-gated. | `docs/active/TOOL_PREVIEW_DEVELOPMENT_WORKFLOW.md` |
 
 - Current priority: P0 Creator closed beta.
-- C1-C8 are merged / integration verified; C9 custom dictionary minimum is locally implemented and focused verification is complete, while draft PR review / merge remain approval-gated.
+- C1-C9 are merged / integration verified; C10 priority display polish is locally implemented and focused verification is complete, while width QA is blocked by missing dependencies and no local server.
 - P1 Prompt Board is MVP-complete and remains post-MVP work: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`.
 
 ## Current Premises
@@ -37,7 +37,8 @@
 - C6 is merged through PR #673 at exact integration commit `05104fc2d4c6730be6aae772708a10cb2b39d2d6`; C6 head `60729f844b099d687e8c28ae794d38398d5a31ad` is contained in integration and both trees are `9090e9af7d2f20a1258eca5e2840895cb7e35c8b`. Authenticated safe-feed browser QA remains separately approval-gated.
 - C7 is merged through PR #674 at exact integration commit `0307b5542c8ac9957370533228ec02893bd48c27`; C7 head `23369de66fe75d4068c923334b09712ef0bd9831` is contained in integration.
 - C8 is merged through PR #675 at exact integration commit `1ec79ca222149626670ec6692c19356bc56bb2c6`; C8 head `b2bfc5e52ef529a626440334654738a1b4c0e799` is contained as the second merge parent and both trees are `5e06baefd75b8a00010581956953cb6547debff9`.
-- C9 locally adds authenticated owner-only server CRUD for at most 30 language-scoped terms, a service-role-only durable store/migration, optimistic stale-write rejection, deterministic effective dictionary versioning, and C4 `glossaryTerms` / `glossaryVersion` cache integration. It adds no UI or API and does not execute providers during CRUD. C10-C11 remain later slices and C12 is final QA.
+- C9 adds authenticated owner-only server CRUD for at most 30 language-scoped terms, a service-role-only durable store/migration, optimistic stale-write rejection, deterministic effective dictionary versioning, and C4 `glossaryTerms` / `glossaryVersion` cache integration. PR #676 is merged and integration verified at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; C9 head `10b48d524901c54e4c0402c05709d95bdfe92792` is contained in integration.
+- C10 locally adds one browser-safe priority classification seam with deterministic `Super Chat -> Super Sticker -> owner -> moderator -> member -> standard` precedence, fail-safe malformed metadata handling, Creator and moderator Priority filters, and shared Creator/OBS/moderator category badges without adding an API or authority surface. C11 remains later and C12 is final QA.
 - Free Azure translation route remains current; Creator/Paid routes to an OpenAI mini model first with Azure fallback only for recoverable provider errors.
 
 ## Account Limits / Entitlement Control
@@ -62,7 +63,7 @@ Do not perform live/external operations without same-thread ready preflight, san
 - C5 merge / integration verification is complete through PR #672 at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8`; remote migration apply remains separately approval-gated.
 - C5/C6/C7/C8 remote migration apply and deployed authenticated-feed browser verification remain separate approval-gated steps.
 - C8 merge is complete at `1ec79ca222149626670ec6692c19356bc56bb2c6`; Cloudflare configuration, deploy, activation, and any live token/session operation remain separate approval-gated steps.
-- C9 remote migration apply, production persistence, PR review, and merge remain separate approval-gated steps.
+- C9 merge / integration verification is complete through PR #676 at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; remote migration apply and production persistence remain separately approval-gated.
 - Out of scope: Stripe mutation.
 - Out of scope: Supabase mutation.
 - Out of scope: provider mutation.
@@ -127,8 +128,8 @@ These items stay visible but are not current release blockers unless explicitly 
 | C6 | OBS overlay UI route | merged / integration verified at `05104fc2d4c6730be6aae772708a10cb2b39d2d6`; authenticated feed QA pending / gated |
 | C7 | Moderator share token runtime | merged / integration verified at `0307b5542c8ac9957370533228ec02893bd48c27` |
 | C8 | Moderator share UI route | merged / integration verified at `1ec79ca222149626670ec6692c19356bc56bb2c6`; authenticated feed QA pending / gated |
-| C9 | Custom dictionary minimum | local implementation / focused verification complete; draft PR review / merge approval pending |
-| C10 | Priority display polish | pending |
+| C9 | Custom dictionary minimum | merged / integration verified at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb` |
+| C10 | Priority display polish | local implementation / focused verification complete; width QA blocked by missing dependencies and no local server |
 | C11 | Simple 7-day history | pending |
 | C12 | Creator closed beta final QA | pending |
 

@@ -21,8 +21,8 @@ const creatorRows = [
   "| C6 | OBS overlay UI route | merged / integration verified at `05104fc2d4c6730be6aae772708a10cb2b39d2d6`; authenticated feed QA pending / gated |",
   "| C7 | Moderator share token runtime | merged / integration verified at `0307b5542c8ac9957370533228ec02893bd48c27` |",
   "| C8 | Moderator share UI route | merged / integration verified at `1ec79ca222149626670ec6692c19356bc56bb2c6`; authenticated feed QA pending / gated |",
-  "| C9 | Custom dictionary minimum | local implementation / focused verification complete; draft PR review / merge approval pending |",
-  "| C10 | Priority display polish | pending |",
+  "| C9 | Custom dictionary minimum | merged / integration verified at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb` |",
+  "| C10 | Priority display polish | local implementation / focused verification complete; width QA blocked by missing dependencies and no local server |",
   "| C11 | Simple 7-day history | pending |",
   "| C12 | Creator closed beta final QA | pending |",
 ];
@@ -46,7 +46,7 @@ const publicAfterP1Rows = [
 
 const taskPriorityLines = [
   "- Current priority: P0 Creator closed beta.",
-  "- C1-C8 are merged / integration verified; C9 custom dictionary minimum is locally implemented and focused verification is complete, while draft PR review / merge remain approval-gated.",
+  "- C1-C9 are merged / integration verified; C10 priority display polish is locally implemented and focused verification is complete, while width QA is blocked by missing dependencies and no local server.",
   "- P1 Prompt Board is MVP-complete and remains post-MVP work: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`.",
 ];
 
@@ -64,6 +64,7 @@ const taskC1BoundaryLines = [
   "- C2 merge / integration verification is complete through PR #670 at `4486c180f68369d6620b9f8f3df33518b7cadc38`; Stripe live action and activation remain separate approval-gated steps.",
   "- C4 merge / integration verification is complete through PR #671 at `fa0d5582a296c2164bd3945c37cbec746315f357`; provider live execution remains separately approval-gated.",
   "- C5 merge / integration verification is complete through PR #672 at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8`; remote migration apply remains separately approval-gated.",
+  "- C9 merge / integration verification is complete through PR #676 at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; remote migration apply and production persistence remain separately approval-gated.",
 ];
 
 const creatorC1BoundaryLines = [
@@ -72,6 +73,7 @@ const creatorC1BoundaryLines = [
   "- C2 merge / integration verification is complete through PR #670 at `4486c180f68369d6620b9f8f3df33518b7cadc38`; live Stripe action and activation remain approval-gated.",
   "- C4 is merged / integration verified through PR #671 at `fa0d5582a296c2164bd3945c37cbec746315f357`; provider live execution remains approval-gated.",
   "- C5 merge / integration verification is complete through PR #672 at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8`; remote migration apply remains approval-gated.",
+  "- C9 merge / integration verification is complete through PR #676 at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; remote migration apply and production persistence remain approval-gated.",
 ];
 
 const historicalPromptBoardCheckpointMarker =
@@ -141,6 +143,9 @@ function run() {
   assertLinesExactOnce(creator, sharedBoundaryLines);
   assertLinesExactOnce(task, taskC1BoundaryLines);
   assertLinesExactOnce(creator, creatorC1BoundaryLines);
+  assert.match(creator, /^## C10 Acceptance Boundary$/m);
+  assert.match(creator, /comment translator creator C10 priority display contract passed/);
+  assert.match(creator, /Super Chat -> Super Sticker -> owner -> moderator -> member -> standard/);
 
   assert.match(promptBoard, /MVP対象外/);
   assert.match(promptBoard, /Implementation Task Order/);

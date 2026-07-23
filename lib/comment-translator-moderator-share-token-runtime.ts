@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createHash, randomBytes } from "node:crypto";
+import { resolveCommentTranslatorModeratorShareTokenPrivateAuthorization } from "./comment-translator-moderator-share-token-private-authorization";
 import type { YouTubeOAuthCredentialStatusCallerAuthorization } from "./comment-translator-youtube-credential-status-boundary";
 import {
   commentTranslatorModeratorShareScope,
@@ -14,6 +15,11 @@ import {
   type CommentTranslatorModeratorShareTokenUnavailableResult,
   type CommentTranslatorModeratorShareTokenValidationResult
 } from "./comment-translator-moderator-share-token-types";
+
+export {
+  resolveCommentTranslatorModeratorShareTokenPrivateAuthorization,
+  validateCommentTranslatorModeratorShareTokenPrivateAuthorization
+} from "./comment-translator-moderator-share-token-private-authorization";
 
 export const commentTranslatorModeratorShareTokenContract = {
   implementationStage: "creator-closed-beta-c7-moderator-share-token-runtime",
@@ -141,30 +147,15 @@ export async function validateCommentTranslatorModeratorShareToken({
   readonly tokenStore: CommentTranslatorModeratorShareTokenStore | null;
   readonly nowMs: number;
 }): Promise<CommentTranslatorModeratorShareTokenValidationResult> {
-  if (!isOpaqueToken(presentedToken)) return denied("invalid-token", false);
-  if (!tokenStore) return denied("moderator-share-unavailable", true);
-  try {
-    const record = await tokenStore.readByDigest({
-      tokenDigest: digestToken(presentedToken),
-      scope: commentTranslatorModeratorShareScope
-    });
-    if (!record || record.scope !== commentTranslatorModeratorShareScope || record.revokedAtIso ||
-        Date.parse(record.expiresAtIso) <= nowMs) {
-      return denied("invalid-token", false);
-    }
-    const session = await sessionAuthority.readCurrentForOwner(record.ownerUserId);
-    if (session.status === "unavailable") {
-      return session.reason === "session-authority-unavailable"
-        ? denied("moderator-share-unavailable", true)
-        : denied("invalid-token", false);
-    }
-    if (session.sessionReferenceId !== record.sessionReferenceId || session.expiresAtMs <= nowMs) {
-      return denied("invalid-token", false);
-    }
-    return { status: "authorized", scope: commentTranslatorModeratorShareScope, access: "read-only" };
-  } catch {
-    return denied("moderator-share-unavailable", true);
-  }
+  const result = await resolveCommentTranslatorModeratorShareTokenPrivateAuthorization({
+    presentedToken,
+    sessionAuthority,
+    tokenStore,
+    nowMs
+  });
+  return result.status === "authorized"
+    ? { status: "authorized", scope: commentTranslatorModeratorShareScope, access: "read-only" }
+    : result;
 }
 
 function authorizedOwner(authorization: YouTubeOAuthCredentialStatusCallerAuthorization): string | null {
@@ -181,10 +172,6 @@ function isCurrentRecord(
     record.sessionReferenceId === sessionReferenceId && !record.revokedAtIso && Date.parse(record.expiresAtIso) > nowMs;
 }
 
-function isOpaqueToken(value: string): boolean {
-  return /^[A-Za-z0-9_-]{43}$/.test(value);
-}
-
 function digestToken(token: string): string {
   return createHash("sha256").update(token, "utf8").digest("hex");
 }
@@ -194,11 +181,4 @@ function unavailable(
   retryable: boolean
 ): CommentTranslatorModeratorShareTokenUnavailableResult {
   return { status: "unavailable", reason, retryable };
-}
-
-function denied(
-  reason: Extract<CommentTranslatorModeratorShareTokenValidationResult, { status: "denied" }>["reason"],
-  retryable: boolean
-): Extract<CommentTranslatorModeratorShareTokenValidationResult, { status: "denied" }> {
-  return { status: "denied", reason, retryable };
 }

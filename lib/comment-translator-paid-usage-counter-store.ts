@@ -28,7 +28,7 @@ type PaidUsageDbRow = {
 type SupabaseError = { readonly code?: string; readonly message?: string } | null;
 type SupabaseSingleResult = { readonly data: PaidUsageDbRow | null; readonly error: SupabaseError };
 type SupabaseRpcResult = { readonly data: string | null; readonly error: SupabaseError };
-type SupabaseQuery = PromiseLike<SupabaseSingleResult> & {
+type SupabaseQuery = {
   readonly select: (columns: typeof commentTranslatorPaidUsageCounterContract.trustedSelectColumns) => SupabaseQuery;
   readonly eq: (
     column: "billing_user_reference_id" | "current_period_end",
@@ -90,7 +90,10 @@ export function createTrustedCommentTranslatorPaidUsageSupabaseStore({
   readonly env?: Partial<Record<CommentTranslatorPaidUsageCounterStoreFactoryEnvName, string | undefined>>;
   readonly createSupabaseClient?: (url: string, serviceRoleKey: string) => CommentTranslatorPaidUsageSupabaseClient;
 } = {}): CommentTranslatorPaidUsageCounterStoreFactoryResult {
-  const trustedEnv = env ?? process.env;
+  const trustedEnv = env ?? {
+    ["NEXT_PUBLIC_SUPABASE_URL"]: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    ["SUPABASE_SERVICE_ROLE_KEY"]: process.env.SUPABASE_SERVICE_ROLE_KEY
+  };
   const url = readTrustedEnv(trustedEnv, "NEXT_PUBLIC_SUPABASE_URL");
   const serviceRoleKey = readTrustedEnv(trustedEnv, "SUPABASE_SERVICE_ROLE_KEY");
   const missingEnvReferences: CommentTranslatorPaidUsageCounterStoreFactoryEnvName[] = [];
@@ -197,10 +200,43 @@ function createTrustedSupabaseServiceRoleClient(
   const client = createClient(url, serviceRoleKey, { auth: { persistSession: false, autoRefreshToken: false } });
   return {
     from(tableName) {
-      return client.from(tableName);
+      let selectedColumns = commentTranslatorPaidUsageCounterContract.trustedSelectColumns;
+      let billingUserReferenceId = "";
+      let currentPeriodEnd = "";
+      const query: SupabaseQuery = {
+        select(columns) {
+          selectedColumns = columns;
+          return query;
+        },
+        eq(column, value) {
+          if (column === "billing_user_reference_id") {
+            billingUserReferenceId = value;
+          } else {
+            currentPeriodEnd = value;
+          }
+          return query;
+        },
+        async single() {
+          const result = await client
+            .from(tableName)
+            .select(selectedColumns)
+            .eq("billing_user_reference_id", billingUserReferenceId)
+            .eq("current_period_end", currentPeriodEnd)
+            .single();
+          return {
+            data: result.data,
+            error: result.error ? { code: result.error.code, message: result.error.message } : null
+          };
+        }
+      };
+      return query;
     },
     async rpc(functionName, params) {
-      return client.rpc(functionName, params);
+      const result = await client.rpc(functionName, params);
+      return {
+        data: typeof result.data === "string" ? result.data : null,
+        error: result.error ? { code: result.error.code, message: result.error.message } : null
+      };
     }
   };
 }

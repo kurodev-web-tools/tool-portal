@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import fs from "node:fs";
+import { registerHooks } from "node:module";
 import path from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 const root = process.cwd();
 const storePath = "lib/comment-translator-paid-entitlement-store.ts";
@@ -51,6 +53,17 @@ for (const fragment of [
   assert.match(migrationSource, new RegExp(fragment.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i"));
 }
 
+registerHooks({
+  resolve(specifier, context, nextResolve) {
+    if (specifier === "server-only") return { shortCircuit: true, url: "data:text/javascript,export{}" };
+    if (specifier.startsWith(".") && context.parentURL?.startsWith("file:")) {
+      const candidate = `${fileURLToPath(new URL(specifier, context.parentURL))}.ts`;
+      if (fs.existsSync(candidate)) return { shortCircuit: true, url: pathToFileURL(candidate).href };
+    }
+    return nextResolve(specifier, context);
+  }
+});
+
 const storeModule = await import("../lib/comment-translator-paid-entitlement-store.ts");
 const testStoreModule = await import("../lib/comment-translator-paid-entitlement-test-store.ts");
 const billingModule = await import("../lib/comment-translator-billing-runtime.ts");
@@ -60,6 +73,12 @@ process.env.COMMENT_TRANSLATOR_PRIVATE_LAUNCH_ALLOWED_USER_HASHES = [
   "server-only-owner-value",
   "different-server-only-owner"
 ].map((ownerUserId) => createHash("sha256").update(ownerUserId).digest("hex")).join(",");
+
+const webhookEnv = {
+  STRIPE_WEBHOOK_SECRET: "present-for-test-only",
+  COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_creator_paid",
+  COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_BILLING_ACCESS: "enabled-reviewed"
+};
 
 const billingUserReferenceId = billingModule.createCommentTranslatorBillingUserReference({
   status: "authorized",
@@ -99,10 +118,7 @@ const incompleteStore = testStoreModule.createInMemoryCommentTranslatorPaidEntit
 const incompleteWebhook = await billingModule.readCommentTranslatorStripeWebhookResult({
   payload: "{}",
   signature: "signed-test-payload",
-  env: {
-    STRIPE_WEBHOOK_SECRET: "present-for-test-only",
-    COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_creator_paid"
-  },
+  env: webhookEnv,
   verifier: {
     constructEvent: async () => ({
       eventReferenceId: "evt_incomplete",
@@ -126,10 +142,7 @@ assert.deepEqual(incompleteWebhook, {
 const missingBillingReferences = await billingModule.readCommentTranslatorStripeWebhookResult({
   payload: "{}",
   signature: "signed-test-payload",
-  env: {
-    STRIPE_WEBHOOK_SECRET: "present-for-test-only",
-    COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_creator_paid"
-  },
+  env: webhookEnv,
   verifier: {
     constructEvent: async () => ({
       eventReferenceId: "evt_missing_references",
@@ -165,10 +178,7 @@ await expiredActiveStore.persistVerifiedBillingEvidence({
 const expiredActiveWebhook = await billingModule.readCommentTranslatorStripeWebhookResult({
   payload: "{}",
   signature: "signed-test-payload",
-  env: {
-    STRIPE_WEBHOOK_SECRET: "present-for-test-only",
-    COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_creator_paid"
-  },
+  env: webhookEnv,
   verifier: {
     constructEvent: async () => ({
       eventReferenceId: "evt_expired_active",
@@ -204,10 +214,7 @@ assert.equal(expiredActiveSnapshot.billingState, "paid-inactive");
 const activeWebhook = await billingModule.readCommentTranslatorStripeWebhookResult({
   payload: "{}",
   signature: "signed-test-payload",
-  env: {
-    STRIPE_WEBHOOK_SECRET: "present-for-test-only",
-    COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_creator_paid"
-  },
+  env: webhookEnv,
   verifier: {
     constructEvent: async () => ({
       eventReferenceId: "evt_active",
@@ -248,10 +255,7 @@ assert.equal(activeSnapshot.billingState, "paid-active");
 const canceledWebhook = await billingModule.readCommentTranslatorStripeWebhookResult({
   payload: "{}",
   signature: "signed-test-payload",
-  env: {
-    STRIPE_WEBHOOK_SECRET: "present-for-test-only",
-    COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_creator_paid"
-  },
+  env: webhookEnv,
   verifier: {
     constructEvent: async () => ({
       eventReferenceId: "evt_canceled",
@@ -276,10 +280,7 @@ assert.deepEqual(canceledWebhook, {
 const staleReplay = await billingModule.readCommentTranslatorStripeWebhookResult({
   payload: "{}",
   signature: "signed-test-payload",
-  env: {
-    STRIPE_WEBHOOK_SECRET: "present-for-test-only",
-    COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_creator_paid"
-  },
+  env: webhookEnv,
   verifier: {
     constructEvent: async () => ({
       eventReferenceId: "evt_active_replay",
@@ -364,10 +365,7 @@ assert.equal(unreadableSnapshot.billingState, "paid-inactive");
 const unexpectedPrice = await billingModule.readCommentTranslatorStripeWebhookResult({
   payload: "{}",
   signature: "signed-test-payload",
-  env: {
-    STRIPE_WEBHOOK_SECRET: "present-for-test-only",
-    COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_creator_paid"
-  },
+  env: webhookEnv,
   verifier: {
     constructEvent: async () => ({
       eventReferenceId: "evt_unexpected_price",

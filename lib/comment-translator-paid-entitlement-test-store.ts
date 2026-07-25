@@ -13,7 +13,7 @@ export function createInMemoryCommentTranslatorPaidEntitlementStoreForTests(): C
       return records.get(reference) ?? null;
     },
     async readByCustomerReference(reference) {
-      return [...records.values()].find((record) => record.customerReferenceId === reference) ?? null;
+      return Array.from(records.values()).find((record) => record.customerReferenceId === reference) ?? null;
     },
     async persistVerifiedBillingEvidence(evidence) {
       const existing = records.get(evidence.billingUserReferenceId);

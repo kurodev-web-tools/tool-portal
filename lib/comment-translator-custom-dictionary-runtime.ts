@@ -20,7 +20,7 @@ const maxTermLength = 80;
 const maxReplacementLength = 120;
 const maxNoteLength = 240;
 const entryIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const forbiddenControlCharacterPattern = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/u;
+const forbiddenControlCharacterPattern = /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f]/;
 
 type ParsedDictionaryEntry = Omit<CommentTranslatorCustomDictionaryEntryWrite, "entryId" | "createdAtIso" | "updatedAtIso">;
 
@@ -189,7 +189,7 @@ function parseEntry(input: CommentTranslatorCustomDictionaryInput): ParsedDictio
     !isTargetLanguage(input.targetLanguage) || input.sourceLanguage === input.targetLanguage) return null;
   return {
     term,
-    normalizedTerm: term.normalize("NFKC").toLocaleLowerCase().replace(/\s+/gu, " "),
+    normalizedTerm: term.normalize("NFKC").toLocaleLowerCase().replace(/\s+/g, " "),
     replacement,
     note,
     sourceLanguage: input.sourceLanguage,
@@ -198,14 +198,14 @@ function parseEntry(input: CommentTranslatorCustomDictionaryInput): ParsedDictio
 }
 
 function parseRequiredText(value: string, maxLength: number): string | null {
-  const normalized = value.normalize("NFKC").trim().replace(/\s+/gu, " ");
+  const normalized = value.normalize("NFKC").trim().replace(/\s+/g, " ");
   if (!normalized || forbiddenControlCharacterPattern.test(normalized) || Array.from(normalized).length > maxLength) return null;
   return normalized;
 }
 
 function parseNote(value: string | null | undefined): string | null | undefined {
   if (value === null || value === undefined || !value.trim()) return null;
-  const sanitized = value.normalize("NFKC").replace(/[\u0000-\u001f\u007f-\u009f\s]+/gu, " ").trim();
+  const sanitized = value.normalize("NFKC").replace(/[\u0000-\u001f\u007f-\u009f\s]+/g, " ").trim();
   if (Array.from(sanitized).length > maxNoteLength) return undefined;
   return sanitized || null;
 }

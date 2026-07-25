@@ -78,7 +78,7 @@ assert.match(bridgeSource, /persistCommentTranslatorCreatorHistorySnapshot/);
 assert.match(bridgeSource, /creatorHistoryAccess/);
 assert.match(
   translationExecutionSource,
-  /creatorHistoryAccess:\s*request\.usage\.plan === "paid" \? "paid-active" : "unavailable"/
+  /creatorHistoryAccess:\s*request\.usage\.planEntitlement\.plan === "paid" \? "paid-active" : "unavailable"/
 );
 assert.match(toolDisconnectSource, /cleanupCommentTranslatorCreatorHistoryForOwner/);
 assert.match(toolDisconnectSource, /oauth-disconnect/);

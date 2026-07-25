@@ -75,7 +75,10 @@ export function createTrustedCommentTranslatorCustomDictionarySupabaseStore({
   readonly env?: Partial<Record<CommentTranslatorCustomDictionaryStoreFactoryEnvName, string | undefined>>;
   readonly createSupabaseClient?: (url: string, serviceRoleKey: string) => CommentTranslatorCustomDictionarySupabaseClient;
 } = {}): CommentTranslatorCustomDictionaryStoreFactoryResult {
-  const trustedEnv = env ?? process.env;
+  const trustedEnv = env ?? {
+    ["NEXT_PUBLIC_SUPABASE_URL"]: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    ["SUPABASE_SERVICE_ROLE_KEY"]: process.env.SUPABASE_SERVICE_ROLE_KEY
+  };
   const url = readTrustedEnv(trustedEnv, "NEXT_PUBLIC_SUPABASE_URL");
   const serviceRoleKey = readTrustedEnv(trustedEnv, "SUPABASE_SERVICE_ROLE_KEY");
   const missingEnvReferences: CommentTranslatorCustomDictionaryStoreFactoryEnvName[] = [];
@@ -118,10 +121,10 @@ export function createCommentTranslatorCustomDictionarySupabaseStore({
     },
     async updateEntry({ ownerUserId, entryId, expectedUpdatedAtIso, entry }) {
       return runMutation(supabase, "update_comment_translator_custom_dictionary_entry", {
+        ...entryParams(entry),
         p_owner_user_id: ownerUserId,
         p_entry_id: entryId,
-        p_expected_updated_at: expectedUpdatedAtIso,
-        ...entryParams(entry)
+        p_expected_updated_at: expectedUpdatedAtIso
       });
     },
     async deleteEntry({ ownerUserId, entryId, expectedUpdatedAtIso }) {

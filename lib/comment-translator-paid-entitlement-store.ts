@@ -37,7 +37,7 @@ type SupabaseRpcResult = {
   readonly error: { readonly code?: string; readonly message?: string } | null;
 };
 
-type SupabaseFilterQuery = PromiseLike<SupabaseSingleResult> & {
+type SupabaseFilterQuery = {
   readonly eq: (column: "billing_user_reference_id" | "stripe_customer_reference_id", value: string) => SupabaseFilterQuery;
   readonly single: () => Promise<SupabaseSingleResult>;
 };
@@ -88,7 +88,10 @@ export function createTrustedCommentTranslatorPaidEntitlementSupabaseStore({
   readonly createSupabaseClient?: (url: string, serviceRoleKey: string) => CommentTranslatorPaidEntitlementSupabaseClient;
   readonly nowIso?: () => string;
 } = {}): CommentTranslatorPaidEntitlementStoreFactoryResult {
-  const trustedEnv = env ?? process.env;
+  const trustedEnv = env ?? {
+    ["NEXT_PUBLIC_SUPABASE_URL"]: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    ["SUPABASE_SERVICE_ROLE_KEY"]: process.env.SUPABASE_SERVICE_ROLE_KEY
+  };
   const url = readTrustedEnv(trustedEnv, "NEXT_PUBLIC_SUPABASE_URL");
   const serviceRoleKey = readTrustedEnv(trustedEnv, "SUPABASE_SERVICE_ROLE_KEY");
   const missingEnvReferences: CommentTranslatorPaidEntitlementStoreFactoryEnvName[] = [];
@@ -227,10 +230,40 @@ function createTrustedSupabaseServiceRoleClient(
   });
   return {
     from(tableName) {
-      return client.from(tableName);
+      let selectedColumns = commentTranslatorPaidEntitlementStoreContract.trustedSelectColumns;
+      let filterColumn: "billing_user_reference_id" | "stripe_customer_reference_id" = "billing_user_reference_id";
+      let filterValue = "";
+      const filterQuery: SupabaseFilterQuery = {
+        eq(column, value) {
+          filterColumn = column;
+          filterValue = value;
+          return filterQuery;
+        },
+        async single() {
+          const result = await client
+            .from(tableName)
+            .select(selectedColumns)
+            .eq(filterColumn, filterValue)
+            .single();
+          return {
+            data: result.data,
+            error: result.error ? { code: result.error.code, message: result.error.message } : null
+          };
+        }
+      };
+      return {
+        select(columns) {
+          selectedColumns = columns;
+          return filterQuery;
+        }
+      };
     },
     async rpc(functionName, params) {
-      return client.rpc(functionName, params);
+      const result = await client.rpc(functionName, params);
+      return {
+        data: typeof result.data === "boolean" ? result.data : null,
+        error: result.error ? { code: result.error.code, message: result.error.message } : null
+      };
     }
   };
 }

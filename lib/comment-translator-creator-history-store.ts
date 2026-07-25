@@ -47,7 +47,10 @@ export function createTrustedCommentTranslatorCreatorHistoryStore({
   ) => CommentTranslatorCreatorHistorySupabaseClient;
   readonly nowIso?: () => string;
 } = {}): CommentTranslatorCreatorHistoryStoreFactoryResult {
-  const trustedEnv = env ?? process.env;
+  const trustedEnv = env ?? {
+    ["NEXT_PUBLIC_SUPABASE_URL"]: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    ["SUPABASE_SERVICE_ROLE_KEY"]: process.env.SUPABASE_SERVICE_ROLE_KEY
+  };
   const url = readTrustedEnv(trustedEnv, "NEXT_PUBLIC_SUPABASE_URL");
   const serviceRoleKey = readTrustedEnv(trustedEnv, "SUPABASE_SERVICE_ROLE_KEY");
   const missingEnvReferences: CommentTranslatorCreatorHistoryStoreFactoryEnvName[] = [];
@@ -123,7 +126,7 @@ export function createInMemoryCommentTranslatorCreatorHistoryStoreForTests(): Co
       rowsByOwnerAndSession.set(toStoreKey(request.ownerUserId, request.sessionReferenceId), request);
     },
     async readHistorySince({ ownerUserId, cutoffIso, nowIso }) {
-      return [...rowsByOwnerAndSession.values()]
+      return Array.from(rowsByOwnerAndSession.values())
         .filter(
           (row) =>
             row.ownerUserId === ownerUserId &&
@@ -133,14 +136,14 @@ export function createInMemoryCommentTranslatorCreatorHistoryStoreForTests(): Co
         .sort((left, right) => right.recordedAtIso.localeCompare(left.recordedAtIso));
     },
     async deleteExpiredForOwner({ ownerUserId, cutoffIso }) {
-      for (const [key, row] of rowsByOwnerAndSession) {
+      for (const [key, row] of Array.from(rowsByOwnerAndSession.entries())) {
         if (row.ownerUserId === ownerUserId && row.recordedAtIso < cutoffIso) {
           rowsByOwnerAndSession.delete(key);
         }
       }
     },
     async deleteAllForOwner({ ownerUserId }) {
-      for (const [key, row] of rowsByOwnerAndSession) {
+      for (const [key, row] of Array.from(rowsByOwnerAndSession.entries())) {
         if (row.ownerUserId === ownerUserId) rowsByOwnerAndSession.delete(key);
       }
     }

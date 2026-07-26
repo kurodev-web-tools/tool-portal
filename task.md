@@ -43,6 +43,7 @@
 - C12 PR #679 is merged / integration verified at `097f369a47564b7a44d211c212580f993eddc71b`; C12 head `e93bfb77dc2017fd4a15e99e075f7e419c14a94d` is contained in integration.
 - CP1 local readiness is complete through `docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_LAUNCH_READINESS_PREFLIGHT.md`. Five evidence lanes, 11 ordered stages, 29 independent approval units, and the later six-surface width sequence are defined without running external operations.
 - A separately approved CP1 follow-up from integration revision `19eaa0fe0d52c4563ae1957d994c679d0b4bd0dc` adds source for one preview/integration-only, side-effect-free reference-presence GET route. Deploy, Worker invocation, configuration changes, billing activation, CP2, `main` promotion, and public paid launch remain separate approval gates.
+- CP1-S2 C3 readiness distinguishes the trigger-internal entitlement-sync reference from the direct service-role usage-apply reference. Approved sanitized catalog evidence confirms the direct execution reference, reviewed trigger binding, and revoked direct client execution; no grant remediation was required or performed. Store behavior evidence remains separately approval-gated.
 - Free Azure translation route remains current; Creator/Paid routes to an OpenAI mini model first with Azure fallback only for recoverable provider errors.
 
 ## Account Limits / Entitlement Control

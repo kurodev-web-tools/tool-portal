@@ -9,6 +9,10 @@ cp1_c12_containment_status=verified
 cp1_new_public_api_status=preview-readiness-route-source-approved
 cp1_reference_presence_endpoint_base=19eaa0fe0d52c4563ae1957d994c679d0b4bd0dc
 cp1_reference_presence_endpoint_status=source-only-not-deployed
+cp1_c3_entitlement_sync_execution_mode=trigger-internal-no-direct-service-role-grant
+cp1_c3_usage_apply_execution_mode=direct-service-role-execute
+cp1_c3_remote_trigger_binding_status=confirmed
+cp1_c3_remote_client_execute_revoke_status=confirmed
 cp1_cloudflare_change_status=not-run
 cp1_remote_mutation_status=not-run-approval-gated
 cp1_stripe_action_status=not-run-approval-gated
@@ -97,6 +101,10 @@ The repository migration order is fixed by the reviewed sources:
 For each item: confirm exact target and migration identity, review rollback owner, obtain its exact approval unit, apply only that migration, capture status/count only, run its separately approved readiness check, and stop. A successful local migration contract or earlier migration does not prove the next item or authorize a remote query.
 
 Store readiness must preserve service-role-only access, RLS/revoked client access, server-derived owner/session authority, digest-only capability storage, and fail-closed unreadable/unconfigured behavior. A presence check is not a write/read smoke; a write/read smoke is not authenticated browser proof.
+
+For C3, the reviewed `entitlement-sync reference` is trigger-internal and is not a direct service-role execution surface. Its remote readiness criterion is confirmed trigger binding plus revoked direct client execution, not a new service-role `EXECUTE` grant. The reviewed `usage-apply reference` is the direct service-role execution surface and retains the service-role `EXECUTE` requirement. Do not repair the trigger-internal reference by widening direct execution authority.
+
+Approved sanitized C3 evidence confirms the direct service-role execution reference, the reviewed trigger binding, and revoked direct client execution for the trigger-internal reference. C3 therefore requires no grant remediation for this readiness check. No schema/data mutation, function invocation, table-row read, retry, or write/read smoke was performed, and later store behavior evidence remains separately approval-gated.
 
 ## Separate Approval Units
 

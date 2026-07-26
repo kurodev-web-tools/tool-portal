@@ -10,6 +10,8 @@ const boardPath =
   "docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md";
 const taskPath = "task.md";
 const integrationBase = "097f369a47564b7a44d211c212580f993eddc71b";
+const referencePresenceEndpointBase =
+  "19eaa0fe0d52c4563ae1957d994c679d0b4bd0dc";
 const c12Head = "e93bfb77dc2017fd4a15e99e075f7e419c14a94d";
 
 const expectedLanes = new Map([
@@ -80,7 +82,9 @@ const requiredStatusLabels = [
   "creator_public_paid_launch_readiness_status=blocked-approval-gated",
   `cp1_integration_base=${integrationBase}`,
   "cp1_c12_containment_status=verified",
-  "cp1_new_public_api_status=not-added",
+  "cp1_new_public_api_status=preview-readiness-route-source-approved",
+  `cp1_reference_presence_endpoint_base=${referencePresenceEndpointBase}`,
+  "cp1_reference_presence_endpoint_status=source-only-not-deployed",
   "cp1_cloudflare_change_status=not-run",
   "cp1_remote_mutation_status=not-run-approval-gated",
   "cp1_stripe_action_status=not-run-approval-gated",
@@ -199,7 +203,10 @@ const allowedChangedFiles = new Set([
   readinessPath,
   boardPath,
   taskPath,
+  "app/api/comment-translator/creator-paid/readiness/route.ts",
+  "lib/comment-translator-creator-paid-readiness.ts",
   "scripts/comment-translator-creator-cp1-paid-launch-readiness-contract.mjs",
+  "scripts/comment-translator-creator-cp1-reference-presence-route-contract.mjs",
   "scripts/comment-translator-creator-c12-final-qa-readiness-contract.mjs",
   "scripts/comment-translator-task-board-creator-roadmap-contract.mjs",
 ]);

@@ -42,6 +42,7 @@
 - C11 is merged through PR #678 at exact integration commit `d1ce9b0d063f65bac968c85f3242398be4b8317f`; C11 head `4bf598f7fca3f21175de7b3aeda0d001121b376b` is contained in integration. It adds authenticated, server-derived paid-active Creator-only seven-day browser-safe history, service-role-only durable snapshots, exact instant-based cutoff reads, owner-scoped cleanup readiness, strict deleted tombstones, and C10 priority preservation.
 - C12 PR #679 is merged / integration verified at `097f369a47564b7a44d211c212580f993eddc71b`; C12 head `e93bfb77dc2017fd4a15e99e075f7e419c14a94d` is contained in integration.
 - CP1 local readiness is complete through `docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_LAUNCH_READINESS_PREFLIGHT.md`. Five evidence lanes, 11 ordered stages, 29 independent approval units, and the later six-surface width sequence are defined without running external operations.
+- A separately approved CP1 follow-up from integration revision `19eaa0fe0d52c4563ae1957d994c679d0b4bd0dc` adds source for one preview/integration-only, side-effect-free reference-presence GET route. Deploy, Worker invocation, configuration changes, billing activation, CP2, `main` promotion, and public paid launch remain separate approval gates.
 - Free Azure translation route remains current; Creator/Paid routes to an OpenAI mini model first with Azure fallback only for recoverable provider errors.
 
 ## Account Limits / Entitlement Control

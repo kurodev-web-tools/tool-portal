@@ -6,7 +6,9 @@ cp1_local_readiness_status=complete
 creator_public_paid_launch_readiness_status=blocked-approval-gated
 cp1_integration_base=097f369a47564b7a44d211c212580f993eddc71b
 cp1_c12_containment_status=verified
-cp1_new_public_api_status=not-added
+cp1_new_public_api_status=preview-readiness-route-source-approved
+cp1_reference_presence_endpoint_base=19eaa0fe0d52c4563ae1957d994c679d0b4bd0dc
+cp1_reference_presence_endpoint_status=source-only-not-deployed
 cp1_cloudflare_change_status=not-run
 cp1_remote_mutation_status=not-run-approval-gated
 cp1_stripe_action_status=not-run-approval-gated
@@ -33,7 +35,7 @@ CP1 prepares reviewable approval surfaces. It does not prove that Creator Paid i
 
 CP1 is docs/contracts/readiness only. Existing authenticated server actions and routes remain authoritative.
 
-CP1 does not add or authorize a public/deployed API, route, Worker binding, edge configuration, Cloudflare setting, parallel backend surface, browser authority, or demonstration UI. If a later proof appears to require any such surface, stop and request a separate design and approval instead of extending CP1.
+The original CP1 slice did not add or authorize a public/deployed API, route, Worker binding, edge configuration, Cloudflare setting, parallel backend surface, browser authority, or demonstration UI. Following separate approval bound to integration revision `19eaa0fe0d52c4563ae1957d994c679d0b4bd0dc`, this follow-up may add one preview/integration-only GET route for reference-presence readiness. The route may inspect property existence only, returns reference names with `present` / `missing` / `unreviewed` and counts, and treats a missing `COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_BILLING_ACCESS` reference as the normal inactive state. It must not inspect values, call external services, access Stripe/provider/Supabase/OAuth/token/session/cookie state, deploy, invoke a Worker, change configuration, activate billing, flip CP2, promote to `main`, or authorize public paid launch.
 
 The following remain outside CP1 and require later exact approval: remote Supabase reads or mutations, migration apply, deployed store smoke, Stripe Product/Price/Checkout/Portal/webhook work, provider or YouTube execution, token/session operations, authenticated browser QA, deploy/upload, activation, CP2, promotion to `main`, public access change, and Creator public paid launch.
 
@@ -193,7 +195,7 @@ unchecked_scope_status=recorded
 Abort immediately and keep later stages blocked if:
 
 - the intended revision does not contain the reviewed C12 state or differs from the approved deployed revision;
-- a new public/deployed API, route, Worker binding, Cloudflare configuration, backend surface, or browser authority appears necessary;
+- any public/deployed API, route, Worker binding, Cloudflare configuration, backend surface, or browser authority beyond the separately approved preview/integration-only reference-presence GET route appears necessary;
 - the exact approval unit, target label, operator reference presence, sanitized output review, or rollback owner is missing;
 - migration identity/order/policy differs from reviewed source, a partial apply is observed, or an unapproved remote query/mutation would be required;
 - output contains or requires a secret, OAuth value, token/cookie, owner/provider/channel/target identifier, live target identifier, raw provider payload/comment, private author/session reference, cleanup/retention key, billing identifier, private URL, prompt, or provider response;
@@ -238,4 +240,4 @@ unchecked_scope_status=recorded
 
 CP1 local readiness is complete when its focused contract and allowed local verification pass. Creator public paid launch readiness remains blocked / approval-gated because every remote, deployed, billing, provider, token, cleanup, authenticated browser, and release-owner lane is intentionally unexecuted.
 
-No runtime/UI fix is justified by CP1 evidence. The next safe action after review is commit/push/Draft PR approval for this docs/contracts slice. Any external proof requires a new same-thread exact preflight, sanitized output review, and explicit approval for one approval unit only.
+No runtime/UI change beyond the separately approved preview/integration-only reference-presence GET route is justified by CP1 evidence. This endpoint source may proceed through commit/push/Draft PR review, but deploy and its first Worker invocation remain separate approval units. Any other external proof requires a new same-thread exact preflight, sanitized output review, and explicit approval for one approval unit only.

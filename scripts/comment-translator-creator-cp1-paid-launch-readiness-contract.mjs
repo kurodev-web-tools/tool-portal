@@ -4,12 +4,14 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const readinessPath =
-  "docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_LAUNCH_READINESS_PREFLIGHT.md";
-const boardPath =
-  "docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md";
+const readinessPath = "docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_LAUNCH_READINESS_PREFLIGHT.md";
+const boardPath = "docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md";
 const taskPath = "task.md";
 const integrationBase = "097f369a47564b7a44d211c212580f993eddc71b";
+const c1FailClosedReadFollowupBase =
+  "09ada36691185be9775940ce653952901bfc64d8";
+const c1MigrationIdentitySha256 =
+  "c124851854a4f914e9c1ddb92016684a8fb77ebdc2d55ac8bc6684a389ce2877";
 const referencePresenceEndpointBase =
   "19eaa0fe0d52c4563ae1957d994c679d0b4bd0dc";
 const c12Head = "e93bfb77dc2017fd4a15e99e075f7e419c14a94d";
@@ -37,6 +39,8 @@ const expectedStages = new Map([
 ]);
 
 const requiredApprovalUnits = [
+  "CP1-A-TARGET-DISCOVERY-C1-PREVIEW",
+  "CP1-A-TARGET-MAP-C1-SOLE-ACTIVE",
   "CP1-A-MIG-C1",
   "CP1-A-MIG-C3",
   "CP1-A-MIG-C5",
@@ -46,6 +50,8 @@ const requiredApprovalUnits = [
   "CP1-A-MIG-C9",
   "CP1-A-MIG-C11",
   "CP1-A-STORE-READINESS",
+  "CP1-A-STORE-READINESS-C1-FAIL-CLOSED-READ",
+  "CP1-A-C1-ADAPTER-RUNTIME-DISCOVERY",
   "CP1-A-STORE-WRITE-READ",
   "CP1-A-STRIPE-PRODUCT-PRICE",
   "CP1-A-STRIPE-CHECKOUT",
@@ -81,6 +87,17 @@ const requiredStatusLabels = [
   "cp1_local_readiness_status=complete",
   "creator_public_paid_launch_readiness_status=blocked-approval-gated",
   `cp1_integration_base=${integrationBase}`,
+  `cp1_c1_fail_closed_read_followup_base=${c1FailClosedReadFollowupBase}`,
+  `cp1_c1_migration_identity_sha256=${c1MigrationIdentitySha256}`,
+  "cp1_c1_target_discovery_approval_status=consumed",
+  "cp1_c1_target_discovery_execution_status=blocked-zero-candidate",
+  "cp1_c1_target_mapping_status=resolved-operator-confirmed-sole-active",
+  "cp1_c1_sole_active_mapping_approval_status=consumed",
+  "cp1_c1_sole_active_mapping_execution_status=pass",
+  "cp1_c1_migration_approval_status=consumed",
+  "cp1_c1_migration_execution_status=pass",
+  "cp1_c1_fail_closed_read_approval_status=consumed",
+  "cp1_c1_fail_closed_read_execution_status=blocked-adapter-execution-unavailable",
   "cp1_c12_containment_status=verified",
   "cp1_new_public_api_status=preview-readiness-route-source-approved",
   `cp1_reference_presence_endpoint_base=${referencePresenceEndpointBase}`,
@@ -151,6 +168,10 @@ execFileSync("git", ["merge-base", "--is-ancestor", integrationBase, "HEAD"], {
   cwd: root,
   stdio: "ignore",
 });
+execFileSync("git", ["merge-base", "--is-ancestor", c1FailClosedReadFollowupBase, "HEAD"], {
+  cwd: root,
+  stdio: "ignore",
+});
 execFileSync("git", ["merge-base", "--is-ancestor", c12Head, "HEAD"], {
   cwd: root,
   stdio: "ignore",
@@ -182,9 +203,35 @@ assert.match(readiness, /abort_status/);
 assert.match(readiness, /rollback_status/);
 assert.match(readiness, /unchecked_scope_status/);
 assert.match(readiness, /CP2/);
+assert.match(readiness, /^## CP1-S1A C1 Preview Target Discovery Ready Preflight$/m);
+assert.match(readiness, /action_label=list-and-resolve-c1-preview-target-once/);
+assert.match(readiness, /list_attempt_count=0 \| 1/);
+assert.match(readiness, /preview_candidate_count=<count>/);
+assert.match(readiness, /^## CP1-S1B C1 Sole Active Target Mapping Execution Record$/m);
+assert.match(readiness, /action_label=relist-and-map-sole-active-c1-preview-once/);
+assert.match(readiness, /^## CP1-S1 C1 Migration Apply Execution Record$/m);
+assert.match(readiness, /action_label=apply-reviewed-c1-migration-once-after-source-handoff/);
+assert.match(readiness, /target_label=approved-creator-paid-preview-c1-store/);
+assert.match(
+  readiness,
+  new RegExp(`^migration_identity_sha256=${c1MigrationIdentitySha256}$`, "m"),
+);
+assert.match(readiness, /migration_attempt_count=0 \| 1/);
+assert.match(readiness, /migration_apply_count=0 \| 1/);
+assert.match(readiness, /^## CP1-S2 C1 Fail-Closed Read Blocked Execution Record$/m);
+assert.match(readiness, /action_label=c1-missing-record-fail-closed-read-after-c1-apply/);
+assert.match(readiness, /^## CP1-S2A C1 Adapter Runtime Source Discovery Blocked Execution Record[\s\S]*?action_label=discover-existing-c1-adapter-runtime-source-once-after-transport-decoder-fix[\s\S]*?approval_status=consumed[\s\S]*?discovery_attempt_count=1[\s\S]*?required_input_count=2[\s\S]*?available_input_count=0[\s\S]*?eligible_runtime_source_count=0[\s\S]*?execution_status=aborted[\s\S]*?abort_status=triggered-public-client-side-source[\s\S]*?unchecked_scope_status=recorded/m);
+assert.match(readiness, /target_label=approved-creator-paid-preview-c1-store/);
+assert.match(readiness, /effective_plan=Free/);
+assert.match(readiness, /paid_access=inactive/);
+assert.match(
+  readiness,
+  /Remote\/deployed unreadable-state behavior: not-run \/ approval-gated/,
+);
 
 assert.match(board, new RegExp(`C12[\\s\\S]*${integrationBase}`));
 assert.match(board, /^## CP1 Acceptance Boundary$/m);
+assert.match(board, /33 independent approval units/);
 assert.match(
   board,
   /\| CP1 \| Creator paid launch readiness \| local readiness complete; external evidence blocked \/ approval-gated \|/,
@@ -211,6 +258,8 @@ const allowedChangedFiles = new Set([
   "lib/comment-translator-creator-paid-readiness.ts",
   "scripts/comment-translator-creator-cp1-paid-launch-readiness-contract.mjs",
   "scripts/comment-translator-creator-cp1-reference-presence-route-contract.mjs",
+  "scripts/comment-translator-creator-c1-runtime-role-classifier.mjs",
+  "scripts/comment-translator-creator-c1-runtime-role-classifier-contract.mjs",
   "scripts/comment-translator-creator-c12-final-qa-readiness-contract.mjs",
   "scripts/comment-translator-task-board-creator-roadmap-contract.mjs",
 ]);

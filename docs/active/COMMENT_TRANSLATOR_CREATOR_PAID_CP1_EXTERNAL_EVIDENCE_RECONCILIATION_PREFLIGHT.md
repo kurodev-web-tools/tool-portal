@@ -159,3 +159,68 @@ trigger_internal_direct_revoke_count=1
 This proves the reviewed C3 structural boundary at the approved target. It does not prove row behavior, exactly-once mutation behavior, signed-period reset behavior, deployed application wiring, or authenticated Paid behavior. No table row, owner reference, billing reference, event reference, counter value, secret, credential, URL, project metadata, or raw connector output was read or recorded.
 
 The next ordered unit is `CP1-A-MIG-C5`. It requires a fresh exact-base/path/blob/hash check, current opaque target binding, rollback owner, sanitized output reviewer, and a single-migration-only apply mechanism. This follow-up authorizes no later migration or store behavior operation. C1 remains `disconnected-fail-closed`.
+
+## CP1-A-MIG-C5 Apply And Post-Apply Structural Readiness Follow-Up
+
+Status: complete for migration apply and structural readiness only.
+
+This follow-up supersedes only the preceding `CP1-A-MIG-C5` next-unit recommendation. The C3 follow-up remains the durable record for C3 and is not reinterpreted by this section.
+
+```text
+execution_recorded_at=2026-07-28T23:33:02+09:00
+reviewed_base=f81dd09a07a20576231ae192c2df7e31f3c46568
+approval_id=CP1-A-MIG-C5
+structural_readiness_retry_approval_id=CP1-A-MIG-C5-STRUCTURAL-READINESS-RETRY-1
+target_label=operator-confirmed-sole-active
+migration_path=supabase/migrations/20260722002000_comment_translator_obs_overlay_tokens.sql
+canonical_git_blob=bb165c31568e6e4a4f6ec238471294fb61365e60
+canonical_git_blob_sha256=acda5042f1e5cea3fe2103a7816aa395f94422a141359bcda5c04f2fe5a87478
+rollback_owner_label=creator-paid-release-owner
+sanitized_output_reviewer_label=creator-paid-sanitized-output-reviewer
+migration_attempt_count=1
+migration_apply_count=1
+migration_status=applied
+transaction_status=committed
+initial_structural_query_attempt_count=2
+initial_structural_readiness_status=aborted-reducer-unavailable
+synthetic_fixture_count=6
+synthetic_fixture_pass_count=6
+structural_readiness_retry_query_attempt_count=1
+structural_query_attempt_count=3
+structural_readiness_status=pass
+row_data_read_count=0
+post_apply_mutation_count=0
+execution_status=pass
+sanitized_output_review_status=pass
+abort_status=not-triggered
+rollback_status=not-run
+next_ordered_approval_unit=CP1-A-MIG-C6
+production_wiring_status=disconnected-fail-closed
+```
+
+The current thread performed one authenticated control-plane project list and reduced it to exactly `1 accessible / 1 active`. The private target identifier remained only in trusted transient state under `operator-confirmed-sole-active`. The exact reviewed Git blob bytes were applied through one `apply_migration` operation, one transaction, and one attempt. No migration history inspection, bundle apply, second migration, retry, repair, rollback, or cleanup ran.
+
+The first two catalog-only structural attempts returned nested envelopes that the reducer could not interpret. They stopped without exposing raw output or reading row data. A separately approved retry first passed `6/6` synthetic nested-envelope fixtures with zero remote operations, then used one catalog-only query to reduce the unchanged C5 predicates:
+
+```text
+table_present_count=1
+expected_column_present_count=10
+target_table_total_column_count=10
+rls_enabled_count=1
+service_role_table_authority_count=1
+client_table_revoke_count=1
+service_role_policy_count=1
+required_constraint_count=8
+required_index_count=3
+function_present_count=2
+security_definer_text_function_count=2
+fixed_search_path_count=2
+service_role_function_execute_count=2
+client_function_revoke_count=2
+table_comment_count=1
+digest_column_comment_count=1
+```
+
+This proves only the reviewed C5 table/column/type/nullability/constraint/index/RLS/policy/function/search-path/grant/revoke/comment structure at the approved target. It does not prove row behavior, token issue/read/rotate/revoke/expiry/replay, store write/read behavior, authenticated capability behavior, browser behavior, or deployed application wiring. No database row, customer value, owner/session reference, token or digest value, secret, credential, project identifier, URL, organization, region, or raw connector response was displayed or recorded.
+
+The next ordered migration unit is `CP1-A-MIG-C6`. It requires a new exact approval, fresh reviewed base/path/blob/hash evidence, current target binding, rollback owner, sanitized output reviewer, and a single-migration-only operation. No C6 or later migration, store smoke, token action, deploy, activation, CP2, promotion, or public paid launch is authorized by this record. C1 remains `disconnected-fail-closed`, with `0/7` candidate proofs and `0` eligible candidates until a new exact byte-only source/attestation or separately approved guarantee change and residual-risk acceptance exists.

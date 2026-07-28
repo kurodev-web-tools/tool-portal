@@ -100,6 +100,11 @@ cp1_c1_merged_artifact_local_verification_approval_status=consumed
 cp1_c1_merged_artifact_local_verification_execution_status=pass
 cp1_c1_adapter_read_consumer_local_verification_status=pass
 cp1_c1_ephemeral_entitlement_bridge_local_verification_status=pass
+cp1_c1_process_isolation_preflight_status=local-synthetic-pass-not-adopted
+cp1_c1_process_isolation_guarantee_decision=retain-buffer-zero-fill-do-not-replace-with-exit-containment
+cp1_c1_process_isolation_unverified_lifetime_status=ipc-runtime-os-sdk-unverified
+cp1_c1_process_isolation_recommendation=retain-disconnected-until-zeroizable-client-boundary-proven
+cp1_c1_process_isolation_explicit_approval_status=absent-required-for-guarantee-change
 cp1_c12_containment_status=verified
 cp1_new_public_api_status=preview-readiness-route-source-approved
 cp1_reference_presence_endpoint_base=19eaa0fe0d52c4563ae1957d994c679d0b4bd0dc
@@ -134,6 +139,7 @@ CP1 prepares reviewable approval surfaces. It does not prove that Creator Paid i
 - PR #686 is merged at the current fetched integration tip `1570003959d6de8154a492d231dcfafa5a30c688`; runner head `f711d81cb582d76231db683434d43807c0281240` is contained in integration and the wrapper, runner, and contract artifacts are tracked.
 - PR #687 is merged at the current fetched integration tip `945efbcb5bf8053288bf4a8326ff3e21e00d116f`; reviewed head `5c37104fe19d9e77bf2d7d6061bbcb4b020806cb` is contained in integration. This is the fixed base for the local synthetic-only adapter/read consumer seam.
 - PR #688 is merged at the current fetched integration tip `b4409937b4ef637f3218c6d24e45a32ef20920ce`; reviewed head `d6cf6e119b9fd987330e3ede53e536ed2c7ddd5d` is contained in integration. This is the fixed base for the local synthetic-only ephemeral-input to C1 factory/store/read bridge characterization.
+- PR #690 is merged at the current fetched integration tip `4bd5dd09c4501a666bfc961104f3280bd66b8117`; reviewed head `c0f749ca5a6dc5ed5b8dab63b3c722a68835df6e` is contained in integration. This is the fixed base for the C1 process-isolation ownership-model decision preflight.
 - The C12 fixed comparison remains the CP1 baseline: `18 pass / 9 dependency-blocked / 3 known historical / 0 unexpected`.
 - `node_modules` is absent. CP1 does not install dependencies or reinterpret missing dependency-backed checks as regressions.
 - C1-C12 local contracts, migration sources, and existing authenticated server actions/routes remain the authority. No concrete runtime or UI blocker was proven during CP1 discovery.
@@ -3889,6 +3895,66 @@ remote_read_attempt_count=0
 ### Fixed Fail-Closed Decision
 
 The production constructor remains disconnected. No inert constructor implementation is added because the ownership seam is not established, and no real constructor, client, adapter, store, read, query, RPC, or network operation ran. Progress requires an explicit design decision approving a process-isolation ownership model with its IPC and teardown guarantees, or a reviewed client boundary that accepts zeroizable byte ownership without unprovable immutable copies.
+
+## CP1-S2AT C1 Process-Isolation Ownership-Model Decision Preflight
+
+PR #690 is merged at integration commit `4bd5dd09c4501a666bfc961104f3280bd66b8117`; reviewed head `c0f749ca5a6dc5ed5b8dab63b3c722a68835df6e` is contained in integration. Starting from that exact compatibility blocker, this preflight adds only a repository-local inert/synthetic-only child-process characterization and this decision record. It adds no production import, handler, route, binding, service adapter, SDK initialization, or deployed surface.
+
+```text
+approval_id=not-applicable-local-decision-preflight
+reviewed_revision=4bd5dd09c4501a666bfc961104f3280bd66b8117
+target_label=local-c1-single-use-child-process-ownership-model
+action_label=characterize-inert-process-boundary-and-fix-decision
+execution_status=pass
+process_isolation_preflight_status=local-synthetic-pass-not-adopted
+production_wiring_status=disconnected-fail-closed
+guarantee_decision=retain-buffer-zero-fill-do-not-replace-with-exit-containment
+unverified_lifetime_status=ipc-runtime-os-sdk-unverified
+recommended_model=retain-disconnected-until-zeroizable-client-boundary-proven
+explicit_approval_status=absent-required-for-guarantee-change
+```
+
+### Proven Repository Process Boundary
+
+- Each first execution owns two mutable Buffers in the parent, starts one child, attempts one process-boundary transfer, completes at most one IPC write, and zero-fills both original parent Buffers.
+- The child accepts one Buffer pair, attempts inert construction once, and attempts the inert read zero or one time. Available and missing each use `1 construction / 1 read`; construction error uses `1 / 0`; read error and stop during read use `1 / 1`.
+- Normal available/missing completion exits with a fixed sanitized `pass` result. Construction/read error and stop during read exit with a fixed sanitized `fail-closed` result. Result fields contain only status labels and lifecycle counts.
+- A synchronous spawn failure and an emitted child-process error without an `exit` event each settle to a fixed sanitized `fail-closed` result with zero child construction/read attempts. They do not claim an observed child exit. IPC write failure follows the same bounded fail-closed rule.
+- The child zero-fills its received mutable Buffers on the repository-controlled normal, construction/read-error, and stop paths before disconnect or exit. Its deliberately created immutable string copies cannot be zero-filled.
+- An in-flight repeat is suppressed separately with zero additional spawn/transfer/write/construction/read attempts and `postExitRepeatSuppressionCount=0`; it is never reported as post-exit evidence.
+- A repeat after `not-started`, spawn error, IPC error, or emitted child error without `exit` is classified as settled-without-exit suppression with zero additional attempts and `postExitRepeatSuppressionCount=0`.
+- After the child exit is observed, each controller rejects its second execution with `0 spawn / 0 transfer / 0 write / 0 construction / 0 read`, one repeat suppression, and no late success.
+
+### Proof Classification
+
+| Layer | What this preflight proves | What remains unproved |
+| --- | --- | --- |
+| Repository | Parent ownership, one child spawn, bounded transfer/write, exact inert construction/read attempt counts, parent/child Buffer zero-fill calls, deterministic fail-closed construction/read-error and stop handling, fixed spawn/IPC error settlement without an exit claim, observed child exit for completed child lifecycles, fixed sanitized output, and distinct in-flight / settled-without-exit / post-exit repeat suppression. | Production wiring, real constructor/client/store/read behavior, or zeroization of immutable copies. |
+| Node/V8 runtime | The tested Node runtime can deliver the bounded synthetic IPC message and report child exit under the contract scenarios. | Number and lifetime of serialization, channel, queue, decoded string, GC, or other runtime-internal copies; physical erasure timing. |
+| OS | The parent observes that the child process exits after normal, construction/read-error, or stop handling. A spawn/error event without `exit` is classified separately and is not exit evidence. | Physical page, pipe, kernel-buffer, crash-dump, swap, or allocator cleanup and reuse timing. |
+| SDK | No SDK constructor or client is loaded or invoked. | Constructor retention, nested copies, auth/header storage, request lifetime, GC interaction, and teardown clearing. Installed SDK source is absent and dependency installation is not approved. |
+
+### Ownership-Model Comparison And Recommendation
+
+Fixed comparison: same-process is rejected because immutable copies survive Buffer zero-fill; child-process proves bounded repository lifecycle and exit containment but not IPC/V8/runtime/OS/SDK copy erasure; zeroizable-client boundary is the recommended design direction but is not present or proven.
+
+| Candidate | Current evidence | Decision |
+| --- | --- | --- |
+| Same-process Buffer-to-string constructor | Repository proof shows two immutable normalized string copies survive source Buffer zero-fill; SDK lifetime remains unknown. | Reject as a replacement for the current guarantee. |
+| Single-use child process | Repository lifecycle and exit containment are locally proven, but IPC/V8/OS/SDK copy erasure is not. Adopting it would change the guarantee from zero-fill ownership to exit containment with unverified internal copies. | Do not adopt without explicit residual-risk and guarantee-change approval. |
+| Zeroizable-client boundary | A client that accepts transferred zeroizable bytes and proves no retained immutable strings could preserve the intended ownership guarantee. No such boundary is present or proven in the current repository/SDK. | Recommended design direction; retain disconnected fail-closed wiring until this boundary is code-backed. |
+
+The fixed recommendation is to keep the production constructor disconnected and preserve the existing Buffer zero-fill guarantee. The child-process model is useful only as evidence of repository-controlled single-use lifecycle and exit containment; it does not replace or supplement the current guarantee unless the user explicitly accepts the weaker, differently scoped guarantee below.
+
+### Exact Approval Required To Change The Guarantee
+
+No approval is present in this preflight. If the user chooses the process-isolation residual-risk model, the exact required approval text is:
+
+```text
+承認します。C1 の現行保証を「runner が保持する全入力 Buffer の zero-fill」から「repository-owned parent/child Buffer の zero-fillとsingle-use child-process exit containment。IPC/V8/runtime/OS/SDK内部 copy の消去・teardownは未証明の残余リスクとして受容」へ変更し、process-isolation model をproduction wiring設計候補として採用することを承認します。production wiring、real constructor/client/read、dependency install、remote operation、deploy/activation/CP2/public paid launchはこの承認に含めません。
+```
+
+Until that exact approval is provided, `process_isolation_preflight_status=local-synthetic-pass-not-adopted` and `production_wiring_status=disconnected-fail-closed` remain authoritative.
 
 ## Entitlement, Usage, Provider, And Capability Proof Rules
 

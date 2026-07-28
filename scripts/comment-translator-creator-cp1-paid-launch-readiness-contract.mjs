@@ -18,6 +18,10 @@ const c1EphemeralEntitlementBridgeBase =
   "b4409937b4ef637f3218c6d24e45a32ef20920ce";
 const c1ProductionConstructorCompatibilityBase =
   "2888bb1a60fdd6851688e3e7b323a40b3c21869c";
+const c1ProcessIsolationDecisionBase =
+  "4bd5dd09c4501a666bfc961104f3280bd66b8117";
+const c1ProcessIsolationDecisionHead =
+  "c0f749ca5a6dc5ed5b8dab63b3c722a68835df6e";
 const c1EphemeralRunnerWrapperSha256 =
   "f79a7f1777e9d412bbaaffefd0c0535101a6652bd6b13cb90174cdc1a23e2a2d";
 const c1EphemeralRunnerSha256 =
@@ -33,6 +37,10 @@ const c1ProductionConstructorCompatibilityContractPath = path.join(
   root,
   "scripts/comment-translator-creator-c1-production-constructor-compatibility-contract.mjs",
 );
+const c1ProcessIsolationPreflightContractPath = path.join(
+  root,
+  "scripts/comment-translator-creator-c1-process-isolation-preflight-contract.mjs",
+);
 
 const expectedLanes = new Map([
   ["LOCAL-DETERMINISTIC", "locally-verified"],
@@ -43,6 +51,10 @@ const expectedLanes = new Map([
 ]);
 
 execFileSync(process.execPath, [c1ProductionConstructorCompatibilityContractPath], {
+  cwd: root,
+  stdio: "pipe",
+});
+execFileSync(process.execPath, [c1ProcessIsolationPreflightContractPath], {
   cwd: root,
   stdio: "pipe",
 });
@@ -1951,6 +1963,28 @@ for (const source of [readiness, board, task]) {
     source,
     /^(?:- )?required_design_decision=approve-process-isolation-ownership-model-or-zeroizable-client-boundary$/m,
   );
+  assert.match(source, new RegExp(c1ProcessIsolationDecisionBase));
+  assert.match(source, new RegExp(c1ProcessIsolationDecisionHead));
+  assert.match(
+    source,
+    /process_isolation_preflight_status=local-synthetic-pass-not-adopted/,
+  );
+  assert.match(
+    source,
+    /process_isolation_guarantee_decision=retain-buffer-zero-fill-do-not-replace-with-exit-containment/,
+  );
+  assert.match(
+    source,
+    /process_isolation_unverified_lifetime_status=ipc-runtime-os-sdk-unverified/,
+  );
+  assert.match(
+    source,
+    /process_isolation_recommendation=retain-disconnected-until-zeroizable-client-boundary-proven/,
+  );
+  assert.match(
+    source,
+    /process_isolation_explicit_approval_status=absent-required-for-guarantee-change/,
+  );
 }
 assert.match(
   readiness,
@@ -1996,6 +2030,8 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-creator-c1-runtime-role-classifier.mjs",
   "scripts/comment-translator-creator-c1-runtime-role-classifier-contract.mjs",
   "scripts/comment-translator-creator-c1-production-constructor-compatibility-contract.mjs",
+  "scripts/comment-translator-creator-c1-process-isolation-preflight.mjs",
+  "scripts/comment-translator-creator-c1-process-isolation-preflight-contract.mjs",
   "scripts/comment-translator-creator-c12-final-qa-readiness-contract.mjs",
   "scripts/comment-translator-task-board-creator-roadmap-contract.mjs",
 ]);

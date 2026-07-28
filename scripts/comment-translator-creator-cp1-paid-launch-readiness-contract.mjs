@@ -3,6 +3,7 @@ import { execFileSync, execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
 
+// allow: SIZE_OK - this executable is the single comprehensive CP1 authority ledger.
 const root = process.cwd();
 const readinessPath = "docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_LAUNCH_READINESS_PREFLIGHT.md";
 const boardPath = "docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md";
@@ -61,6 +62,10 @@ const c1ZeroizableClientCandidateSourcePreflightPath = path.join(
   root,
   "scripts/comment-translator-creator-c1-zeroizable-client-candidate-source-preflight.mjs",
 );
+const c1GuaranteeGovernanceDecisionContractPath = path.join(
+  root,
+  "scripts/comment-translator-creator-c1-guarantee-governance-decision-preflight-contract.mjs",
+);
 
 const expectedLanes = new Map([
   ["LOCAL-DETERMINISTIC", "locally-verified"],
@@ -94,6 +99,10 @@ execFileSync(
     stdio: "pipe",
   },
 );
+execFileSync(process.execPath, [c1GuaranteeGovernanceDecisionContractPath], {
+  cwd: root,
+  stdio: "pipe",
+});
 const c1ZeroizableClientCandidateSourceOutput = execFileSync(
   process.execPath,
   [c1ZeroizableClientCandidateSourcePreflightPath],
@@ -2111,6 +2120,22 @@ for (const source of [readiness, board, task]) {
     source,
     /zeroizable_client_candidate_source_approval_status=consumed-feasibility-synthetic-only/,
   );
+  assert.match(
+    source,
+    /c1_guarantee_governance_preflight_status=local-decision-pass-review-ready/,
+  );
+  assert.match(
+    source,
+    /c1_guarantee_governance_route_count=3/,
+  );
+  assert.match(
+    source,
+    /c1_guarantee_governance_recommendation=operator-provided-exact-source-revision-wait/,
+  );
+  assert.match(
+    source,
+    /c1_guarantee_governance_process_isolation_risk_acceptance_status=absent-not-in-this-approval/,
+  );
 }
 assert.match(
   readiness,
@@ -2157,7 +2182,7 @@ assert.match(
   /No production adoption approval exists/,
 );
 const zeroizableClientCandidateSourceSection = readiness.match(
-  /^## CP1-S2AW C1 Zeroizable-Client Production Candidate Source Feasibility Preflight$([\s\S]*?)^## Entitlement, Usage, Provider, And Capability Proof Rules$/m,
+  /^## CP1-S2AW C1 Zeroizable-Client Production Candidate Source Feasibility Preflight$([\s\S]*?)^## CP1-S2AX C1 Guarantee-Governance Decision Preflight$/m,
 )?.[1];
 assert.ok(zeroizableClientCandidateSourceSection);
 assert.match(
@@ -2183,9 +2208,9 @@ assert.match(
   /No candidate has source-backed proof of synchronous abort read quiescence, synchronous full-stack dispose acknowledgement, or complete downstream zeroization/,
 );
 assert.ok(
-  zeroizableClientCandidateSourceSection.includes(
-    c1ZeroizableClientCandidateSourceOutput,
-  ),
+  zeroizableClientCandidateSourceSection
+    .replace(/\r\n/g, "\n")
+    .includes(c1ZeroizableClientCandidateSourceOutput.replace(/\r\n/g, "\n")),
 );
 assert.match(
   readiness,
@@ -2240,6 +2265,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-creator-c1-zeroizable-client-api-preflight-contract.mjs",
   "scripts/comment-translator-creator-c1-zeroizable-client-candidate-source-preflight.mjs",
   "scripts/comment-translator-creator-c1-zeroizable-client-candidate-source-preflight-contract.mjs",
+  "scripts/comment-translator-creator-c1-guarantee-governance-decision-preflight-contract.mjs",
   "scripts/comment-translator-creator-c12-final-qa-readiness-contract.mjs",
   "scripts/comment-translator-task-board-creator-roadmap-contract.mjs",
 ]);

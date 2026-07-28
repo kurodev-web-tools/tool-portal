@@ -12,6 +12,18 @@
 - PR #691 is merged at `340d6b0ec719e1e871205a03d48cda295f07068b`; reviewed head `60b0ec43f8fa4722b2830e8f99535348146e46f4` is contained in integration. The C1 single-use child-process decision preflight is locally GREEN with inert/synthetic-only construction/read, bounded parent transfer/write, deterministic construction/read-error and stop exit, fixed spawn/IPC error fail-closed handling, fixed sanitized results, and distinct in-flight / settled-without-exit / post-exit repeat suppression. It proves repository lifecycle counts and observed process exit only where an actual child reached an exit event; IPC/V8/runtime/OS cleanup and SDK internal retention/teardown remain unverified, so it is not adopted and production wiring stays disconnected.
 - PR #692 is merged at `622a4804bfd42293ea6305d960b01e0cf7e35ba0`; reviewed head `6f09c2ca334bfac0d9187215aca0279efff575da` is contained in integration. It fixes the zeroizable-client boundary direction as repository-only synthetic evidence and does not adopt a production client.
 - PR #693 is merged at `3ec35af019576bf199d8893c5fd856c87575d103`; reviewed head `e1f48e0cd6d0eeb94e4546b5c2d5c20487354e61` is contained in integration. The approved source-backed candidate feasibility preflight classifies four locally enumerable candidate classes with zero eligible and four rejected. It adds no production import, wiring, real constructor/read/input, dependency, or transport.
+- PR #694 is merged at `9d64995dd30fe560a44cf4cf82a3cc67cf00b8d0`; reviewed candidate-audit head `0c3309d63a992decb083c95ce1ddffbd9fcadb4f` is contained in integration. No later integration commit or operator-provided exact source/revision is present, so the four-class candidate audit is not repeated. The governance decision selects exact source/revision waiting while preserving the current guarantee and disconnected production wiring.
+- c1_guarantee_governance_base=9d64995dd30fe560a44cf4cf82a3cc67cf00b8d0
+- c1_guarantee_governance_preflight_status=local-decision-pass-review-ready
+- c1_guarantee_governance_route_count=3
+- c1_guarantee_governance_recommendation=operator-provided-exact-source-revision-wait
+- c1_guarantee_governance_current_guarantee=retained-buffer-zero-fill
+- c1_guarantee_governance_exact_source_status=absent
+- c1_guarantee_governance_repeat_candidate_audit_status=prohibited-no-new-exact-source
+- c1_guarantee_governance_process_isolation_risk_acceptance_status=absent-not-in-this-approval
+- c1_guarantee_governance_next_approval_unit=single-source-bound-full-stack-feasibility-audit-after-prerequisites
+- c1_guarantee_governance_approval_status=consumed-local-decision-preflight-only
+- c1_guarantee_governance_production_adoption_approval_status=absent
 - production_constructor_compatibility_status=blocked-immutable-lifetime-unprovable
 - production_wiring_status=disconnected-fail-closed
 - sdk_internal_lifetime_status=dependency-blocked-unverified

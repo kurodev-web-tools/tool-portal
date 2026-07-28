@@ -128,6 +128,18 @@ cp1_c1_zeroizable_client_candidate_source_version_binding=supabase-js-2.106.2-un
 cp1_c1_zeroizable_client_candidate_source_unverified_scope=node-v8-native-transport-os-sdk-internals
 cp1_c1_zeroizable_client_candidate_source_approval_status=consumed-feasibility-synthetic-only
 cp1_c1_zeroizable_client_candidate_source_production_adoption_approval_status=absent-required-after-full-stack-proof
+c1_guarantee_governance_base=9d64995dd30fe560a44cf4cf82a3cc67cf00b8d0
+c1_guarantee_governance_preflight_status=local-decision-pass-review-ready
+c1_guarantee_governance_route_count=3
+c1_guarantee_governance_recommendation=operator-provided-exact-source-revision-wait
+c1_guarantee_governance_current_guarantee=retained-buffer-zero-fill
+c1_guarantee_governance_exact_source_status=absent
+c1_guarantee_governance_repeat_candidate_audit_status=prohibited-no-new-exact-source
+c1_guarantee_governance_process_isolation_risk_acceptance_status=absent-not-in-this-approval
+c1_guarantee_governance_next_approval_unit=single-source-bound-full-stack-feasibility-audit-after-prerequisites
+c1_guarantee_governance_approval_status=consumed-local-decision-preflight-only
+c1_guarantee_governance_production_adoption_approval_status=absent
+production_wiring_status=disconnected-fail-closed
 cp1_c12_containment_status=verified
 cp1_new_public_api_status=preview-readiness-route-source-approved
 cp1_reference_presence_endpoint_base=19eaa0fe0d52c4563ae1957d994c679d0b4bd0dc
@@ -4291,6 +4303,101 @@ No next candidate audit is executable until one operator-provided candidate sour
 ```text
 承認します。C1 zeroizable-client production candidate source follow-upとして、operatorがrepository内に事前配置しexact revision/hashを提示した単一のadapter/client/transport sourceだけを対象に、production wiring、real input/constructor/readを追加しないsource-backed full-stack feasibility auditとinert/synthetic-only API compatibility preflightを開始することを承認します。source download、dependency install、network/remote operation、現行production SDK/clientの採用、秘密入力、auth/session、deploy/activation/CP2/public paid launchはこの承認に含めません。candidate source、revision/hash、Node/V8/native/OS対応sourceのいずれかが欠ける場合は実行せずproductionをdisconnected-fail-closedに維持します。
 ```
+
+## CP1-S2AX C1 Guarantee-Governance Decision Preflight
+
+PR #694 is merged at `9d64995dd30fe560a44cf4cf82a3cc67cf00b8d0`; reviewed candidate-audit head `0c3309d63a992decb083c95ce1ddffbd9fcadb4f` is contained in integration. The isolated worktree started clean at that exact merge and no later integration commit or operator-provided exact source/revision appeared. The PR #694 result remains `4 candidate classes / 0 eligible / 4 rejected`; this preflight does not repeat that audit.
+
+```text
+c1_guarantee_governance_base=9d64995dd30fe560a44cf4cf82a3cc67cf00b8d0
+c1_guarantee_governance_preflight_status=local-decision-pass-review-ready
+c1_guarantee_governance_route_count=3
+c1_guarantee_governance_recommendation=operator-provided-exact-source-revision-wait
+c1_guarantee_governance_current_guarantee=retained-buffer-zero-fill
+c1_guarantee_governance_exact_source_status=absent
+c1_guarantee_governance_repeat_candidate_audit_status=prohibited-no-new-exact-source
+c1_guarantee_governance_process_isolation_risk_acceptance_status=absent-not-in-this-approval
+c1_guarantee_governance_next_approval_unit=single-source-bound-full-stack-feasibility-audit-after-prerequisites
+c1_guarantee_governance_approval_status=consumed-local-decision-preflight-only
+c1_guarantee_governance_production_adoption_approval_status=absent
+production_wiring_status=disconnected-fail-closed
+```
+
+### Fixed Three-Route Decision
+
+| Route | Security guarantee | Creator paid readiness and evidence | Reversibility, rollback, and abort | Next single approval unit |
+| --- | --- | --- | --- | --- |
+| Retain disconnected under the current guarantee | Preserve runner-owned Buffer zero-fill and do not send production input into an unproved constructor, SDK, or transport. | Production paid-entitlement read remains unavailable/fail-closed; no new proof is required to hold. | Immediate status quo. Abort on any unapproved production wiring or guarantee change. | None while holding disconnected. |
+| Wait for one operator-provided exact source/revision | **Selected.** Preserve the current guarantee and disconnected wiring while waiting; do not repeat the four-class audit. | Paid readiness stays blocked until one locally present source is bound to an exact revision/hash and proves all seven full-stack conditions. | Reject or withdraw the candidate and remain disconnected. Abort on missing identity, immutable secret copies, incomplete mutable registration, unbounded retention, missing synchronous quiescence/dispose acknowledgement, or incomplete downstream zeroization. | One source-bound full-stack feasibility audit after every prerequisite exists. |
+| Accept process-isolation residual risk and change the guarantee | Change to repository-owned parent/child Buffer zero-fill plus single-use exit containment while explicitly accepting unproved IPC/V8/native/OS/SDK copy erasure and teardown. | This creates only a later production design candidate; it does not itself wire production or make Creator paid ready. | Before adoption, retain disconnected. After adoption, rollback requires disconnect plus a separately approved guarantee restoration. Abort without exact, unambiguous residual-risk acceptance or if the accepted scope drifts. | One explicit process-isolation guarantee-change decision. |
+
+```text
+route_id=retain-disconnected-current-guarantee
+recommendation_status=not-selected-status-quo
+security_guarantee=current-buffer-zero-fill-no-production-wiring
+creator_paid_readiness_impact=blocked-paid-entitlement-production-read
+evidence_prerequisite=none-for-hold
+reversibility=immediate-status-quo
+abort_condition=abort-on-unapproved-wiring-or-guarantee-change
+next_approval_unit=none-hold-disconnected
+repository_scope=proven-buffer-zero-fill-and-disconnected
+node_v8_scope=not-entered-by-c1-production-wiring
+ipc_native_transport_scope=not-entered
+os_scope=not-entered
+sdk_client_scope=disconnected-unverified
+```
+
+```text
+route_id=operator-provided-exact-source-revision-wait
+recommendation_status=selected
+security_guarantee=current-buffer-zero-fill-no-production-wiring
+creator_paid_readiness_impact=blocked-until-one-candidate-proves-full-stack
+evidence_prerequisite=single-operator-provided-source-exact-revision-hash-and-full-stack-proof
+reversibility=candidate-reject-or-withdraw-to-disconnected
+abort_condition=missing-source-or-revision-hash-or-any-seven-proof-failure
+next_approval_unit=single-source-bound-full-stack-feasibility-audit-after-prerequisites
+repository_scope=proof-required-copy-free-complete-registry
+node_v8_scope=proof-required-no-hidden-or-immutable-retention
+ipc_native_transport_scope=proof-required-bounded-quiescent-zeroized
+os_scope=proof-required-complete-zeroization-attestation
+sdk_client_scope=proof-required-source-review-and-synchronous-dispose-ack
+```
+
+```text
+route_id=accept-process-isolation-residual-risk-and-change-guarantee
+recommendation_status=not-selected
+security_guarantee=changed-to-parent-child-buffer-zero-fill-and-exit-containment
+creator_paid_readiness_impact=design-candidate-only-production-still-disconnected
+evidence_prerequisite=explicit-residual-risk-and-guarantee-change-approval
+reversibility=disconnect-and-separate-guarantee-restoration
+abort_condition=absent-or-ambiguous-risk-acceptance-or-scope-drift
+next_approval_unit=explicit-process-isolation-guarantee-change-decision
+repository_scope=proven-bounded-lifecycle-and-observed-exit
+node_v8_scope=accepted-risk-unverified-copy-erasure
+ipc_native_transport_scope=accepted-risk-unverified-copy-erasure
+os_scope=accepted-risk-unverified-copy-erasure
+sdk_client_scope=accepted-risk-unverified-retention-teardown
+```
+
+### Layer Boundary And Recommendation
+
+Repository proof is sufficient only for the existing Buffer ownership/zero-fill seams, the synthetic zeroizable lifecycle, and the bounded child-process lifecycle. Node/V8 allocation and immutable retention, IPC/native transport copies and quiescence, OS buffers/persistence, and SDK/client retention/teardown remain unproved. The selected source-wait route requires positive proof at every layer; the process-isolation route would instead classify those same gaps as explicitly accepted residual risk.
+
+The sole recommendation is `operator-provided-exact-source-revision-wait`. Operationally this means retaining the disconnected route until a source appears, not weakening the proof gate and not treating waiting as production readiness. The next candidate audit remains non-executable while source or exact revision/hash is absent.
+
+### Consumed Approval And Verbatim Future Approvals
+
+The approval consumed for this section authorizes only the local governance decision contract and authority updates. It does not accept process-isolation residual risk, change the guarantee, acquire source, run another candidate audit, adopt or wire production, execute a real constructor/client/read, install dependencies, change package metadata, access remote/auth/session state, or authorize commit, push, PR, merge, deploy, activation, CP2, or public paid launch.
+
+```text
+承認します。C1 guarantee-governance decision preflightとして、base revision 9d64995dd30fe560a44cf4cf82a3cc67cf00b8d0に固定した現在のisolated worktreeで、PR #694の4 candidate classes / 0 eligible / 4 rejected結果を基点に、同じcandidate auditを繰り返さず、「現行保証のままproduction disconnected継続」「operator-provided exact source/revision提供待ち」「process-isolationの未証明残余リスクを明示受容して保証変更」の3進路を固定比較し、exact source/revision提供待ちを唯一の推奨進路、待機中のproduction_wiring_statusをdisconnected-fail-closedとして記録するreview-ready local governance decision preflight diffの作成を承認します。
+
+必要な場合に限りinert/synthetic decision contractを1件追加し、scripts/comment-translator-creator-cp1-paid-launch-readiness-contract.mjs、task.md、docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_LAUNCH_READINESS_PREFLIGHT.md、docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.mdを最小更新してください。PR #689からPR #694のfocused contracts、opaque runner full contract、CP1 readiness、Creator roadmap、利用可能なsyntax/diagnostics、git diff --check、changed-file・secret/sanitization・guarantee-language consistency audit、最終semantic reviewまで実行し、review-ready local diffまたは具体的なfail-closed blockerで停止してください。
+
+この承認はcandidate source取得・download・network lookup、dependency install、manifest/lockfile変更、production import/wiring、real input/constructor/client/read、auth/session、remote operation、保証変更または残余リスク受容、commit、push、PR、merge、deploy、activation、CP2、public paid launchを含みません。
+```
+
+The already-fixed future approval for one operator-provided exact source/revision remains the only next C1 evidence unit after its prerequisites exist. The separate verbatim process-isolation approval in CP1-S2AT remains required before any residual risk is accepted or the guarantee changes. Neither approval is inferred from this preflight.
 
 ## Entitlement, Usage, Provider, And Capability Proof Rules
 

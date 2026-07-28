@@ -6,6 +6,8 @@ import path from "node:path";
 // allow: SIZE_OK - this executable is the single comprehensive CP1 authority ledger.
 const root = process.cwd();
 const readinessPath = "docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_LAUNCH_READINESS_PREFLIGHT.md";
+const externalEvidenceReconciliationPath =
+  "docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_CP1_EXTERNAL_EVIDENCE_RECONCILIATION_PREFLIGHT.md";
 const boardPath = "docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md";
 const taskPath = "task.md";
 const integrationBase = "097f369a47564b7a44d211c212580f993eddc71b";
@@ -618,8 +620,36 @@ function changedFiles() {
 
 assert.ok(fs.existsSync(path.join(root, readinessPath)));
 const readiness = read(readinessPath);
+const externalEvidenceReconciliation = read(externalEvidenceReconciliationPath);
 const board = read(boardPath);
 const task = read(taskPath);
+
+assert.match(
+  externalEvidenceReconciliation,
+  /^reconciliation_base=e7015f0f97ad128477566e27551d6cd2f5ba6890$/m,
+);
+assert.match(
+  externalEvidenceReconciliation,
+  /^recommended_next_approval_unit=CP1-A-MIG-C3$/m,
+);
+assert.match(
+  externalEvidenceReconciliation,
+  /^production_wiring_status=disconnected-fail-closed$/m,
+);
+for (let stage = 1; stage <= 8; stage += 1) {
+  assert.match(
+    externalEvidenceReconciliation,
+    new RegExp(`^\\| CP1-S${stage} `, "m"),
+  );
+}
+assert.match(
+  externalEvidenceReconciliation,
+  /canonical Git-blob byte SHA-256 `665f184b1bff8dfbcc3e69e7d9c7170113191dfcbd32aa8e2c6b312242efbfe5`/,
+);
+assert.match(
+  externalEvidenceReconciliation,
+  /The only recommended next approval unit is `CP1-A-MIG-C3`/,
+);
 
 execFileSync("git", ["merge-base", "--is-ancestor", integrationBase, "HEAD"], {
   cwd: root,
@@ -2265,6 +2295,7 @@ assert.match(
 
 for (const [label, source] of [
   [readinessPath, readiness],
+  [externalEvidenceReconciliationPath, externalEvidenceReconciliation],
   [boardPath, board],
   [taskPath, task],
 ]) {
@@ -2273,6 +2304,7 @@ for (const [label, source] of [
 
 const allowedChangedFiles = new Set([
   readinessPath,
+  externalEvidenceReconciliationPath,
   boardPath,
   taskPath,
   "app/api/comment-translator/creator-paid/readiness/route.ts",

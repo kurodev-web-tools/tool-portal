@@ -215,7 +215,7 @@ Local source inspection confirms the following reference names are the existing 
 
 ## Staged Approval Sequence
 
-Stages are ordered. A later stage cannot repair or waive a failed earlier stage. CP1-S1 through CP1-S10 are prepared but not run.
+Stages are ordered. A later stage cannot repair or waive a failed earlier stage. CP1-S1 through CP1-S10 remain approval-gated except for the exact consumed units recorded below. In particular, `CP1-A-MIG-C1` is consumed/pass; that result does not authorize or prove any later migration, post-apply readiness check, or stage.
 
 | Stage ID | Stage | Status | Entry and exit boundary |
 | --- | --- | --- | --- |
@@ -4596,7 +4596,7 @@ CP1 performs no rollback. Later rollback is separately approved and bounded by t
 
 unchecked_scope_status=recorded
 
-- C1/C3/C5/C6/C7/C8/C9/C11 remote migration apply and remote schema state: not-run / approval-gated.
+- C1 migration apply is consumed/pass for the reviewed identity, while its remote post-apply schema/policy/grant/function state remains not-run / approval-gated. C3/C5/C6/C7/C8/C9/C11 migration apply and remote schema state remain not-run / approval-gated.
 - Remote/deployed store presence, policy, fail-closed, write/read, cleanup, and production persistence: not-run / approval-gated.
 - The local C1 adapter/read consumer and ephemeral-input factory/store/read bridge seams are synthetic-only verified. The production constructor remains disconnected because its immutable string inputs cannot preserve the current Buffer zero-fill guarantee. Runtime-input values, real adapter/client initialization, and remote/deployed execution remain separately approval-gated.
 - Stripe Product/Price existence or mutation, Checkout, Portal, webhook registration/delivery, subscription state change, and billing mutation: not-run / approval-gated.

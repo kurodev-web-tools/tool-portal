@@ -82,7 +82,7 @@ const creatorC1BoundaryLines = [
   "- C9 merge / integration verification is complete through PR #676 at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; remote migration apply and production persistence remain approval-gated.",
   "- C11 merge / integration verification is complete through PR #678 at `d1ce9b0d063f65bac968c85f3242398be4b8317f`; remote migration apply, production persistence, and authenticated browser history verification remain approval-gated.",
   "- C12 is merged / integration verified through PR #679 at `097f369a47564b7a44d211c212580f993eddc71b`; C12 head `e93bfb77dc2017fd4a15e99e075f7e419c14a94d` is contained in integration.",
-  "- CP1 local readiness is complete. Its 29 external-operation approval units remain not-run / separately approval-gated; deploy, activation, CP2, promotion to `main`, and public paid launch remain out of CP1.",
+  "- CP1 local readiness is complete. Its 71 independent approval units remain consumed, ready-not-approved, or not-run as recorded by the active authority; deploy, activation, CP2, promotion to `main`, and public paid launch remain out of CP1.",
 ];
 
 const historicalPromptBoardCheckpointMarker =
@@ -174,6 +174,129 @@ function run() {
     creatorPaidLaunchReadiness,
     /^creator_public_paid_launch_readiness_status=blocked-approval-gated$/m
   );
+  assert.match(creatorPaidLaunchReadiness, /71 independent approval units/);
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_local_driver_pipeline_preflight_execution_status=pass$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_runner_fixture_identity_design_retry_3_approval_status=consumed$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_local_driver_artifact_read_command_diagnosis_approval_status=consumed$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_local_driver_command_construction_synthetic_design_approval_status=consumed$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_local_driver_command_construction_synthetic_execution_preflight_approval_status=consumed$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_runner_fixture_identity_design_retry_4_approval_status=consumed$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_explicit_artifact_path_binding_design_approval_status=consumed$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_runner_fixture_identity_design_retry_5_approval_status=consumed$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_repository_local_artifact_path_resolution_approval_status=consumed$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_artifact_path_filename_predicate_diagnosis_approval_status=consumed$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_goal_bound_hash_first_fixture_identity_approval_status=consumed$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_goal_bound_hash_first_fixture_identity_retry_1_approval_status=consumed$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_goal_bound_hash_first_fixture_identity_retry_2_approval_status=consumed$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_goal_bound_hash_first_fixture_identity_retry_3_approval_status=consumed$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_goal_bound_hash_first_fixture_identity_retry_4_approval_status=consumed$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_goal_bound_hash_first_fixture_identity_retry_4_execution_status=aborted-canonical-byte-source-no-match$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_goal_bound_historical_blob_fixture_identity_retry_5_approval_status=consumed$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_goal_bound_historical_blob_fixture_identity_retry_5_execution_status=aborted-historical-byte-source-no-match$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_goal_bound_original_untracked_fixture_identity_retry_6_approval_status=consumed$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_goal_bound_original_untracked_fixture_identity_retry_6_execution_status=aborted-fixture-expectation-identity-ambiguity$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_goal_bound_structure_reducer_fixture_identity_retry_7_approval_status=consumed$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_goal_bound_structure_reducer_fixture_identity_retry_7_execution_status=aborted-fixture-expectation-identity-ambiguity$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_goal_bound_assert_match_argument_reducer_fixture_identity_retry_8_approval_status=consumed$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_goal_bound_assert_match_argument_reducer_fixture_identity_retry_8_execution_status=aborted-assert-match-binding-ambiguity$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_goal_bound_ordered_regex_window_fixture_identity_retry_9_approval_status=consumed$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_goal_bound_ordered_regex_window_fixture_identity_retry_9_execution_status=aborted-synthetic-reducer-failure$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_goal_bound_ordered_regex_window_fixture_identity_retry_10_approval_status=consumed$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_goal_bound_ordered_regex_window_fixture_identity_retry_10_execution_status=aborted-ordered-regex-window-ambiguity$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_goal_bound_hash_min_static_invariant_fixture_identity_approval_status=consumed$/m
+  );
+  assert.match(
+    creatorPaidLaunchReadiness,
+    /^cp1_c1_goal_bound_hash_min_static_invariant_fixture_identity_execution_status=pass$/m
+  );
+  assert.match(creator, /71 independent approval units/);
+  assert.match(task, /71 independent approval units/);
 
   assert.match(promptBoard, /MVP対象外/);
   assert.match(promptBoard, /Implementation Task Order/);

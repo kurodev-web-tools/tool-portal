@@ -117,6 +117,7 @@ C1 is accepted only when all of the following are verified:
 - `comment_translator_creator_c3_paid_usage_counter_contract=pass` verifies concurrent duplicate counting exactly once, signed-period rollover to zero, old/future timestamp rejection, entitlement downgrade, incomplete/unreadable entitlement and usage state, missing-counter fail-closed behavior, and sanitized output.
 - The local migration defines service-role-only `comment_translator_paid_usage_counters` and private deduplication events plus an entitlement-triggered reset and entitlement-gated atomic RPC.
 - PR #669 is merged into `codex/comment-translator-free-public-beta-integration` at `5fc3cca2730a58f35279098ec0b2f5c804ce0076`; the integration tree matches C3 head `85fa39896f63e223463a85000eb8e02f538754d4`, and the focused C3 and Creator authority contracts pass at that merged tree.
+- `CP1-A-MIG-C3` is consumed/pass at reviewed base `d47db7b79b06a569fcb1a5393d6c3094b9867e90`: one migration attempt, one applied committed transaction, and no retry or rollback. The post-apply structural readiness query passed all reviewed table/column/RLS/policy/function/trigger/grant predicates after one reducer-only retry, with zero row-data reads and zero post-apply mutations. Store write/read behavior remains not-run / separately approval-gated.
 - No UI files changed, so browser / width QA is not applicable to C3.
 
 ## C2 Acceptance Boundary
@@ -379,7 +380,7 @@ C1 is accepted only when all of the following are verified:
 | --- | --- | --- |
 | C1 | Durable paid entitlement store | merged / integration verified at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995` |
 | C2 | Stripe live Checkout / Portal / webhook closed-beta gate | merged / integration verified at `4486c180f68369d6620b9f8f3df33518b7cadc38` |
-| C3 | Paid usage and monthly reset | merged / integration verified at `5fc3cca2730a58f35279098ec0b2f5c804ce0076` |
+| C3 | Paid usage and monthly reset | merged / integration verified; migration applied and structural readiness pass |
 | C4 | AI natural translation provider route | merged / integration verified at `fa0d5582a296c2164bd3945c37cbec746315f357` |
 | C5 | OBS overlay token runtime | merged / integration verified at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8` |
 | C6 | OBS overlay UI route | merged / integration verified at `05104fc2d4c6730be6aae772708a10cb2b39d2d6`; authenticated feed QA pending / gated |
@@ -416,7 +417,7 @@ C1 is accepted only when all of the following are verified:
 This authority is a task board only. Every gated operation requires a separate, same-thread preflight and explicit approval.
 
 - C1 is merged / integration verified at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995`; remote migration apply remains approval-gated.
-- C3 is merged / integration verified through PR #669 at `5fc3cca2730a58f35279098ec0b2f5c804ce0076`; remote migration apply remains approval-gated.
+- C3 is merged / integration verified through PR #669 at `5fc3cca2730a58f35279098ec0b2f5c804ce0076`; `CP1-A-MIG-C3` apply and structural readiness are complete, while store write/read behavior remains approval-gated.
 - C2 merge / integration verification is complete through PR #670 at `4486c180f68369d6620b9f8f3df33518b7cadc38`; live Stripe action and activation remain approval-gated.
 - C4 is merged / integration verified through PR #671 at `fa0d5582a296c2164bd3945c37cbec746315f357`; provider live execution remains approval-gated.
 - C5 merge / integration verification is complete through PR #672 at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8`; remote migration apply remains approval-gated.

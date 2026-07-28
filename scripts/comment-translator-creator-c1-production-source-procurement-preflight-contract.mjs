@@ -140,6 +140,7 @@ const allowedChangedPaths = new Set([
   contractPath,
   cp1ContractPath,
   "scripts/comment-translator-creator-c1-guarantee-governance-decision-preflight-contract.mjs",
+  "scripts/comment-translator-task-board-creator-roadmap-contract.mjs",
   ...researchPaths,
 ]);
 const changedPaths = execFileSync(

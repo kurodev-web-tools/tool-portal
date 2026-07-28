@@ -108,3 +108,54 @@ No automatic rollback is authorized. On blocked/failed/aborted/already-applied/p
 ## Review Decision
 
 The reconciliation is review-ready at `e7015f0f97ad128477566e27551d6cd2f5ba6890`. The only recommended next approval unit is `CP1-A-MIG-C3`. C1 remains closed under the PR #696 boundary, and no later CP1 unit is authorized by this record.
+
+## CP1-A-MIG-C3 Post-Apply Structural Readiness Follow-Up
+
+Status: complete for migration apply and structural readiness only.
+
+This follow-up supersedes only the original preflight's `CP1-A-MIG-C3` next-unit recommendation. The original base/status block and approval text remain historical records of what that earlier preflight did and did not execute.
+
+```text
+reviewed_base=d47db7b79b06a569fcb1a5393d6c3094b9867e90
+approval_id=CP1-A-MIG-C3
+target_label=operator-confirmed-sole-active
+migration_path=supabase/migrations/20260722001000_comment_translator_paid_usage_counters.sql
+canonical_git_blob=fefecc358f8bb5f92828e9421bf3bc1a6aecf45c
+canonical_git_blob_sha256=665f184b1bff8dfbcc3e69e7d9c7170113191dfcbd32aa8e2c6b312242efbfe5
+migration_attempt_count=1
+migration_apply_count=1
+migration_status=applied
+transaction_status=committed
+structural_query_attempt_count=2
+structural_readiness_status=pass
+row_data_read_count=0
+post_apply_mutation_count=0
+sanitized_output_review_status=pass
+next_ordered_approval_unit=CP1-A-MIG-C5
+production_wiring_status=disconnected-fail-closed
+```
+
+The approved opaque target was freshly rebound after one sanitized control-plane list with exactly `1 accessible / 1 active`; its private identifier remained only in trusted transient execution state. The reviewed Git blob bytes were applied once through the single-migration operation. No bundle apply, second migration attempt, retry, inspection, repair, rollback, cleanup, or later migration ran.
+
+The first post-apply catalog query returned a nested result envelope that the local sanitizer could not reduce and stopped without exposing raw output. A reducer-only retry evaluated the unchanged predicates and passed:
+
+```text
+table_present_count=2
+expected_column_present_count=16
+target_table_total_column_count=16
+rls_enabled_count=2
+service_role_table_authority_count=2
+client_table_revoke_count=2
+service_role_policy_count=2
+function_present_count=2
+security_definer_count=2
+fixed_search_path_count=2
+trigger_binding_count=1
+usage_apply_service_execute_count=1
+usage_apply_client_revoke_count=1
+trigger_internal_direct_revoke_count=1
+```
+
+This proves the reviewed C3 structural boundary at the approved target. It does not prove row behavior, exactly-once mutation behavior, signed-period reset behavior, deployed application wiring, or authenticated Paid behavior. No table row, owner reference, billing reference, event reference, counter value, secret, credential, URL, project metadata, or raw connector output was read or recorded.
+
+The next ordered unit is `CP1-A-MIG-C5`. It requires a fresh exact-base/path/blob/hash check, current opaque target binding, rollback owner, sanitized output reviewer, and a single-migration-only apply mechanism. This follow-up authorizes no later migration or store behavior operation. C1 remains `disconnected-fail-closed`.

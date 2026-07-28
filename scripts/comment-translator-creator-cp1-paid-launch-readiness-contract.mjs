@@ -14,6 +14,8 @@ const c1RuntimeRoleClassificationFollowupBase =
   "dd698bf093615c1741e25b73b37761a68804c45b";
 const c1AdapterReadConsumerBase =
   "945efbcb5bf8053288bf4a8326ff3e21e00d116f";
+const c1EphemeralEntitlementBridgeBase =
+  "b4409937b4ef637f3218c6d24e45a32ef20920ce";
 const c1EphemeralRunnerWrapperSha256 =
   "f79a7f1777e9d412bbaaffefd0c0535101a6652bd6b13cb90174cdc1a23e2a2d";
 const c1EphemeralRunnerSha256 =
@@ -1802,7 +1804,10 @@ assert.match(
 );
 assert.match(
   readiness,
-  new RegExp(`^cp1_c1_post_merge_authority_base=${c1AdapterReadConsumerBase}$`, "m"),
+  new RegExp(
+    `^cp1_c1_post_merge_authority_base=${c1EphemeralEntitlementBridgeBase}$`,
+    "m",
+  ),
 );
 assert.match(
   readiness,
@@ -1857,7 +1862,7 @@ assert.match(
   /^cp1_c1_adapter_read_consumer_local_verification_status=pass$/m,
 );
 const adapterReadConsumerSection = readiness.match(
-  /^## CP1-S2AQ C1 Adapter\/Read Consumer Local Verification Record$([\s\S]*?)^## Entitlement, Usage, Provider, And Capability Proof Rules$/m,
+  /^## CP1-S2AQ C1 Adapter\/Read Consumer Local Verification Record$([\s\S]*?)^## CP1-S2AR C1 Ephemeral Input To Paid Entitlement Boundary Bridge Local Verification Record$/m,
 )?.[1];
 assert.ok(adapterReadConsumerSection);
 assert.match(
@@ -1875,6 +1880,42 @@ assert.match(
 assert.match(
   adapterReadConsumerSection,
   /No real adapter\/client initialization, remote read\/query\/RPC/,
+);
+assert.match(
+  readiness,
+  /^cp1_c1_post_merge_authority_base=b4409937b4ef637f3218c6d24e45a32ef20920ce$/m,
+);
+assert.match(
+  readiness,
+  /^cp1_c1_ephemeral_entitlement_bridge_local_verification_status=pass$/m,
+);
+const ephemeralEntitlementBridgeSection = readiness.match(
+  /^## CP1-S2AR C1 Ephemeral Input To Paid Entitlement Boundary Bridge Local Verification Record$([\s\S]*?)^## Entitlement, Usage, Provider, And Capability Proof Rules$/m,
+)?.[1];
+assert.ok(ephemeralEntitlementBridgeSection);
+assert.match(
+  ephemeralEntitlementBridgeSection,
+  new RegExp(`reviewed_revision=${c1EphemeralEntitlementBridgeBase}`),
+);
+assert.match(
+  ephemeralEntitlementBridgeSection,
+  /bridge_status=implemented-local-synthetic-only/,
+);
+assert.match(
+  ephemeralEntitlementBridgeSection,
+  /production_wiring_status=blocked-nonzeroizable-immutable-string-copy/,
+);
+assert.match(
+  ephemeralEntitlementBridgeSection,
+  /red_contract_status=pass-expected-missing-bridge[\s\S]*green_fixture_count=10[\s\S]*green_fixture_pass_count=10[\s\S]*green_fixture_fail_count=0[\s\S]*complete_available_factory_count=1[\s\S]*complete_available_client_count=1[\s\S]*complete_available_read_count=1[\s\S]*complete_missing_factory_count=1[\s\S]*complete_missing_client_count=1[\s\S]*complete_missing_read_count=1[\s\S]*incomplete_source_attempt_count=0[\s\S]*missing_source_attempt_count=0[\s\S]*factory_unavailable_read_count=0[\s\S]*factory_error_read_count=0[\s\S]*read_error_read_count=1[\s\S]*repeat_additional_attempt_count=0[\s\S]*stop_during_factory_additional_read_count=0[\s\S]*stop_during_read_success_count=0[\s\S]*stop_during_factory_prompt_settlement_count=1[\s\S]*stop_during_read_prompt_settlement_count=1[\s\S]*sanitized_result_field_count=4/,
+);
+assert.match(
+  ephemeralEntitlementBridgeSection,
+  /passes the original Buffer references without decoding or copying them/,
+);
+assert.match(
+  ephemeralEntitlementBridgeSection,
+  /No real constructor\/client initialization, adapter\/service invocation/,
 );
 assert.match(readiness, /effective_plan=Free/);
 assert.match(readiness, /paid_access=inactive/);
@@ -1919,6 +1960,8 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-task-board-creator-roadmap-contract.mjs",
 ]);
 const approvedRunnerFiles = new Set([
+  "scripts/comment-translator-creator-c1-ephemeral-entitlement-bridge.mjs",
+  "scripts/comment-translator-creator-c1-ephemeral-entitlement-bridge-contract.mjs",
   "scripts/comment-translator-creator-c1-ephemeral-runner.mjs",
   "scripts/comment-translator-creator-c1-ephemeral-runner.ps1",
   "scripts/comment-translator-creator-c1-ephemeral-runner-contract.mjs",

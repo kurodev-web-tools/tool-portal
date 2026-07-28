@@ -2,19 +2,24 @@ import { createServer } from "node:net";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 
+export { createPaidEntitlementReadBridge } from "./comment-translator-creator-c1-ephemeral-entitlement-bridge.mjs";
+
 export const CONTROL_PIPE_NAME =
   "comment-translator-creator-c1-ephemeral-runner-v1";
 
 const CONTROL_PIPE_PATH = `\\\\.\\pipe\\${CONTROL_PIPE_NAME}`;
 const MAX_INPUT_BYTES = 4096;
 const MAX_CONTROL_BYTES = 32;
+const READ_ABORTED = Symbol("read-aborted");
 
 export function createEphemeralState({ readAdapter = null } = {}) {
   let heldInputs = null;
   let terminated = false;
   let readStarted = false;
+  const readAbortController = new AbortController();
 
   function wipe() {
+    readAbortController.abort();
     if (heldInputs !== null) {
       for (const input of heldInputs) {
         input.fill(0);
@@ -78,12 +83,40 @@ export function createEphemeralState({ readAdapter = null } = {}) {
 
       readStarted = true;
       try {
-        await readAdapter(heldInputs[0], heldInputs[1]);
+        const resultStatus = await Promise.race([
+          readAdapter(
+            heldInputs[0],
+            heldInputs[1],
+            readAbortController.signal,
+          ),
+          new Promise((resolveAbort) => {
+            if (readAbortController.signal.aborted) {
+              resolveAbort(READ_ABORTED);
+              return;
+            }
+            readAbortController.signal.addEventListener(
+              "abort",
+              () => resolveAbort(READ_ABORTED),
+              { once: true },
+            );
+          }),
+        ]);
+        if (
+          resultStatus === READ_ABORTED ||
+          terminated ||
+          readAbortController.signal.aborted ||
+          (resultStatus !== "available" && resultStatus !== "missing")
+        ) {
+          return createReadExecutionResult({
+            sourceStatus: "complete",
+            readAttemptCount: 1,
+          });
+        }
         return Object.freeze({
           executionStatus: "pass",
           sourceStatus: "complete",
           readAttemptCount: 1,
-          resultStatus: "available",
+          resultStatus,
         });
       } catch {
         return createReadExecutionResult({

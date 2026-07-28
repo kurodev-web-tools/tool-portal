@@ -95,6 +95,9 @@ cp1_c1_goal_bound_ordered_regex_window_fixture_identity_retry_10_approval_status
 cp1_c1_goal_bound_ordered_regex_window_fixture_identity_retry_10_execution_status=aborted-ordered-regex-window-ambiguity
 cp1_c1_goal_bound_hash_min_static_invariant_fixture_identity_approval_status=consumed
 cp1_c1_goal_bound_hash_min_static_invariant_fixture_identity_execution_status=pass
+cp1_c1_post_merge_authority_base=1570003959d6de8154a492d231dcfafa5a30c688
+cp1_c1_merged_artifact_local_verification_approval_status=consumed
+cp1_c1_merged_artifact_local_verification_execution_status=pass
 cp1_c12_containment_status=verified
 cp1_new_public_api_status=preview-readiness-route-source-approved
 cp1_reference_presence_endpoint_base=19eaa0fe0d52c4563ae1957d994c679d0b4bd0dc
@@ -125,6 +128,8 @@ CP1 prepares reviewable approval surfaces. It does not prove that Creator Paid i
 - PR #683 confirms that the reviewed C3 entitlement-sync reference is trigger-internal, so no direct service-role grant remediation was required or performed. The direct usage-apply reference, trigger binding, and revoked direct client execution remain confirmed.
 - PR #684 is merged and the current fetched integration tip for the runtime-role classification follow-up is exactly `dd698bf093615c1741e25b73b37761a68804c45b`.
 - PR #684 adds the synthetic-only C1 runtime-role classifier harness with exactly 14 sanitized output fields. Actual-authority classification, runtime-source presence/value/validity/provisioning, client initialization, adapter invocation, fixture construction, and remote/deployed behavior remain unchecked / separately approval-gated.
+- PR #685 is merged at `49b4eb66da6b88197311adc3be80070a845ab2bc`, publishing the S2AO fixture-identity authority.
+- PR #686 is merged at the current fetched integration tip `1570003959d6de8154a492d231dcfafa5a30c688`; runner head `f711d81cb582d76231db683434d43807c0281240` is contained in integration and the wrapper, runner, and contract artifacts are tracked.
 - The C12 fixed comparison remains the CP1 baseline: `18 pass / 9 dependency-blocked / 3 known historical / 0 unexpected`.
 - `node_modules` is absent. CP1 does not install dependencies or reinterpret missing dependency-backed checks as regressions.
 - C1-C12 local contracts, migration sources, and existing authenticated server actions/routes remain the authority. No concrete runtime or UI blocker was proven during CP1 discovery.
@@ -203,7 +208,7 @@ Approved sanitized C3 evidence confirms the direct service-role execution refere
 ## Separate Approval Units
 
 Each row is an independent authorization unit. Approval for one row does not cover any other row, retry, rollback, cleanup, deploy, or evidence expansion.
-The active authority defines 71 independent approval units after recording S2AD as consumed/aborted before nested Git Bash or artifact access, S2AE as consumed/aborted at syntax-only preflight before actual-driver execution, S2AF as consumed/aborted after the one compiled-driver invocation returned a sanitized nested-command failure, S2AG as consumed/aborted after the syntax-passed transient driver found zero unique reviewed-hash matches and was deleted, S2AH as consumed/aborted after the canonical working-tree/index byte-source procedure found no reviewed-hash match and the transient driver was deleted, S2AI as consumed/aborted after the reviewed-revision ancestor tracked-blob procedure found no reviewed-hash match and the transient driver was deleted, S2AJ as consumed/aborted after original S2H untracked artifact recovery achieved three hash matches but could not uniquely reduce the fixed-wrapper expectation identity, S2AK as consumed/aborted after the structure-reducer retry again bound all three reviewed hashes but did not reduce the fixed-wrapper expectation identity to one ordinal, S2AL as consumed/aborted after the balanced `assert.match` argument reducer again bound all three reviewed hashes but did not produce one canonical expectation binding, S2AM as consumed/aborted at the five-shape ordered-regex synthetic gate before artifact access, S2AN as consumed/aborted after the corrected synthetic gate and three reviewed hash matches because the ordered-regex candidate set remained ambiguous, and S2AO as consumed/pass after retaining runtime remediation ordinal 4 and selecting the lexicographically smallest negative SHA-256 from three valid static-invariant candidates.
+The active authority defines 72 independent approval units after recording S2AD as consumed/aborted before nested Git Bash or artifact access, S2AE as consumed/aborted at syntax-only preflight before actual-driver execution, S2AF as consumed/aborted after the one compiled-driver invocation returned a sanitized nested-command failure, S2AG as consumed/aborted after the syntax-passed transient driver found zero unique reviewed-hash matches and was deleted, S2AH as consumed/aborted after the canonical working-tree/index byte-source procedure found no reviewed-hash match and the transient driver was deleted, S2AI as consumed/aborted after the reviewed-revision ancestor tracked-blob procedure found no reviewed-hash match and the transient driver was deleted, S2AJ as consumed/aborted after original S2H untracked artifact recovery achieved three hash matches but could not uniquely reduce the fixed-wrapper expectation identity, S2AK as consumed/aborted after the structure-reducer retry again bound all three reviewed hashes but did not reduce the fixed-wrapper expectation identity to one ordinal, S2AL as consumed/aborted after the balanced `assert.match` argument reducer again bound all three reviewed hashes but did not produce one canonical expectation binding, S2AM as consumed/aborted at the five-shape ordered-regex synthetic gate before artifact access, S2AN as consumed/aborted after the corrected synthetic gate and three reviewed hash matches because the ordered-regex candidate set remained ambiguous, S2AO as consumed/pass after retaining runtime remediation ordinal 4 and selecting the lexicographically smallest negative SHA-256 from three valid static-invariant candidates, and S2AP as consumed/pass after binding the merged Git blobs to all three reviewed hashes, executing the deterministic fixture verifier once, and executing the committed wrapper full-contract once.
 
 | Approval ID | Exact operation | Evidence and rollback boundary |
 | --- | --- | --- |
@@ -258,6 +263,7 @@ The active authority defines 71 independent approval units after recording S2AD 
 | CP1-A-C1-OPAQUE-RUNNER-GOAL-BOUND-ORDERED-REGEX-WINDOW-AND-FIXTURE-IDENTITY-DESIGN-RETRY-9 | Validate ordered six-regex windows, recover the original S2H hash-bound artifacts, and design one deterministic fixture-pair identity | One transient driver, one syntax-gated direct Git Bash invocation, five synthetic reducer fixtures, at most three untracked artifact reads/hashes after the synthetic gate, and mandatory deletion; no fixture/verifier/full-contract execution, dependency installation, artifact change, runner control, client, adapter, or remote action. |
 | CP1-A-C1-OPAQUE-RUNNER-GOAL-BOUND-ORDERED-REGEX-WINDOW-AND-FIXTURE-IDENTITY-DESIGN-RETRY-10 | Retry ordered six-regex window design after correcting the synthetic ambiguity assertion | One transient driver, one syntax-gated direct Git Bash invocation, corrected five-shape synthetic gate, exactly three untracked artifact reads/hashes after the gate, and mandatory deletion; no fixture/verifier/full-contract execution, dependency installation, artifact change, runner control, client, adapter, or remote action. |
 | CP1-A-C1-OPAQUE-RUNNER-GOAL-BOUND-RUNTIME-ORDINAL-AND-HASH-MIN-STATIC-INVARIANT-FIXTURE-IDENTITY-DESIGN | Retain runtime remediation ordinal 4 and design one deterministic fixture-pair identity from the hash-min static-invariant candidate | Exactly three reviewed artifact reads/hashes, three static-invariant candidates, one same-length ASCII sentinel transform, and one fixed14 reduction; no fixture/verifier/full-contract execution, artifact change, runner control, client, adapter, or remote action. |
+| CP1-A-C1-OPAQUE-RUNNER-MERGED-ARTIFACT-LOCAL-VERIFICATION-CLOSEOUT | Bind merged runner artifacts, verify the deterministic fixture pair once, and run the committed local wrapper full-contract once | Merged Git blobs only for reviewed hashes and fixture reconstruction; synthetic/non-sensitive contract inputs only; no artifact change, real input, adapter/read consumer, remote action, dependency install, deploy, or release action. |
 | CP1-A-STORE-WRITE-READ | Bounded deployed store write/read proof | Surface/status/count only; cleanup requires another approval. |
 | CP1-A-STRIPE-PRODUCT-PRICE | Product/Price presence or exact approved mutation | Reference-presence/status only; keep activation closed. |
 | CP1-A-STRIPE-CHECKOUT | One authenticated Checkout proof | Route/status only; do not record redirects or billing identifiers. |
@@ -1439,7 +1445,7 @@ action_label=start-and-provision-hash-bound-c1-ephemeral-runner-once
 approval_status=consumed
 execution_status=aborted
 runner_preflight_status=verified-not-running
-runner_artifact_tracking_status=untracked-hash-bound
+runner_artifact_tracking_status=merged-hash-bound
 runner_wrapper_sha256=f79a7f1777e9d412bbaaffefd0c0535101a6652bd6b13cb90174cdc1a23e2a2d
 runner_source_sha256=e31c058284296853b1a5b71d3b113cadca35a82741825deac3aa48d254a9ab61
 runner_contract_sha256=c1d083365f2b23189449f203e12ab19ce7874d90c719305d6f66b5060e4fae23
@@ -3708,7 +3714,55 @@ abort_status=not-triggered
 unchecked_scope_status=recorded
 ```
 
-S2AO is consumed/pass and completes the goal-bound deterministic fixture-pair identity design. Fixture/verifier/full-contract execution, artifact remediation, runner control, client/adapter/remote action, and publication remain separately gated and not-run.
+S2AO is consumed/pass and completes the goal-bound deterministic fixture-pair identity design. Its then-current fixture/verifier/full-contract and publication status is superseded by the S2AP post-merge closeout record below.
+
+## CP1-S2AP C1 Merged-Artifact Local Verification Closeout Consumed Pass Record
+
+S2AP synchronized post-merge authority for PR #685 and PR #686, bound the three tracked merged artifacts to their reviewed SHA-256 values, executed the S2AO deterministic positive/negative fixture verifier exactly once, and then executed the committed local runner full-contract exactly once through the repository-defined PowerShell wrapper entrypoint.
+
+approval_id=CP1-A-C1-OPAQUE-RUNNER-MERGED-ARTIFACT-LOCAL-VERIFICATION-CLOSEOUT
+reviewed_revision=1570003959d6de8154a492d231dcfafa5a30c688
+runner_head_revision=f711d81cb582d76231db683434d43807c0281240
+target_label=merged-c1-opaque-runner-artifacts-and-local-contract
+action_label=verify-merged-hashes-fixture-pair-and-wrapper-full-contract-once
+canonical_operation_label=replace-hash-min-static-invariant-span-with-fixed-bang-sentinel
+runner_wrapper_sha256=f79a7f1777e9d412bbaaffefd0c0535101a6652bd6b13cb90174cdc1a23e2a2d
+runner_source_sha256=e31c058284296853b1a5b71d3b113cadca35a82741825deac3aa48d254a9ab61
+runner_contract_sha256=c1d083365f2b23189449f203e12ab19ce7874d90c719305d6f66b5060e4fae23
+artifact_byte_source=merged-git-blob-canonical-lf
+approval_status=consumed
+execution_status=pass
+runner_full_contract_status=pass
+adapter_read_execution_consumer_status=not-implemented
+
+### Exact One-Time Outcome
+
+- The first transient driver launch stopped at local syntax parsing before artifact access, hash comparison, fixture construction, or verifier execution. It consumed no fixture-verifier execution.
+- The corrected working-tree hash gate then aborted with `0/3` matches before fixture construction or verifier execution because the Windows checkout expanded LF to CRLF. A count-only byte-source diagnosis bound all three reviewed hashes to both the merged Git blobs and their identical canonical LF bytes; no raw source, fixture span, or intermediate buffer was emitted or retained.
+- The actual deterministic positive/negative verifier executed exactly once against the hash-bound merged Git blobs. Runtime remediation ordinal 4 remained authoritative, three valid static-invariant candidates were reconstructed, the lexicographically smallest negative SHA-256 was selected, and the recorded S2AO negative and pair identities matched.
+- After the hash and fixture gates passed, the committed local full-contract executed exactly once with synthetic/non-sensitive inputs. It exercised the repository-defined PowerShell wrapper entrypoint and passed.
+- The wrapper, runner, and contract artifacts were not changed. No persistent fixture, raw source/span, command envelope, IPC content, credential, token, cookie, private payload, runner start, held runtime input, adapter/read consumer, client initialization, remote read/query/RPC, mutation, deploy, or release action occurred.
+
+Only these 14 fields were recorded in this exact order:
+
+```text
+design_attempt_count=1
+artifact_hash_match_count=3
+runner_control_action_count=0
+remediated_expectation_ordinal=4
+negative_fixture_transform_count=1
+negative_fixture_sha256=27c258f6f081164f6ad8b4978b8007a89d7cea6df79054586498572db1975297
+fixture_pair_identity_sha256=b015d75b881b169e2fb3aad6cca8da77792d54ee47c839e3a5e9a6e15f7457e5
+fixture_pair_uniqueness_status=unique
+verifier_execution_status=pass
+artifact_change_status=not-run
+execution_status=pass
+sanitized_output_review_status=pass
+abort_status=not-triggered
+unchecked_scope_status=recorded
+```
+
+S2AP is consumed/pass and closes merged-artifact local verification. The next C1 goal is a separate fail-closed adapter/read execution consumer. Real credentials, client initialization against a real service, adapter invocation, remote read/query/RPC, external action, mutation, migration, provider/billing/OAuth operation, deploy, CP2, promotion, and public paid launch remain not-run / separately approval-gated.
 
 ## Entitlement, Usage, Provider, And Capability Proof Rules
 

@@ -13,12 +13,15 @@ const boardPath =
 const taskPath = "task.md";
 const contractPath =
   "scripts/comment-translator-creator-c1-guarantee-governance-decision-preflight-contract.mjs";
+const sourceProcurementResearchPrefix =
+  "docs/archive/2026-07-28-c1-production-source-procurement-ulw-research/";
 const allowedChangedPaths = new Set([
   readinessPath,
   boardPath,
   taskPath,
   contractPath,
   "scripts/comment-translator-creator-cp1-paid-launch-readiness-contract.mjs",
+  "scripts/comment-translator-creator-c1-production-source-procurement-preflight-contract.mjs",
 ]);
 
 for (const revision of [baseRevision, candidateAuditHead]) {
@@ -164,7 +167,12 @@ const changedPaths = execFileSync(
   .filter(Boolean)
   .map((line) => line.slice(3).trim());
 for (const changedPath of changedPaths) {
-  assert.equal(allowedChangedPaths.has(changedPath), true, changedPath);
+  assert.equal(
+    allowedChangedPaths.has(changedPath) ||
+      changedPath.startsWith(sourceProcurementResearchPrefix),
+    true,
+    changedPath,
+  );
 }
 assert.equal(
   execFileSync(

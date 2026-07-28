@@ -112,6 +112,14 @@ cp1_c1_zeroizable_client_boundary_decision=retain-disconnected-fail-closed
 cp1_c1_zeroizable_client_boundary_required_api=exclusive-zeroizable-byte-ownership-copy-free-construction-read-explicit-dispose-ack
 cp1_c1_zeroizable_client_boundary_unverified_scope=node-v8-transport-os-sdk-internals
 cp1_c1_zeroizable_client_boundary_explicit_approval_status=absent-required-for-production-api-change
+cp1_c1_zeroizable_client_api_preflight_status=local-synthetic-pass-not-adopted
+cp1_c1_zeroizable_client_api_repository_contract_status=pass
+cp1_c1_zeroizable_client_api_production_candidate_status=absent-unverified
+cp1_c1_zeroizable_client_api_decision=retain-disconnected-fail-closed
+cp1_c1_zeroizable_client_api_required_shape=opaque-disjoint-ownership-synchronous-mutable-registry-single-read-synchronous-dispose-ack
+cp1_c1_zeroizable_client_api_unverified_scope=node-v8-unregistered-allocation-transport-os-sdk-internals
+cp1_c1_zeroizable_client_api_preflight_approval_status=consumed-design-synthetic-only
+cp1_c1_zeroizable_client_api_production_adoption_approval_status=absent-required-after-full-stack-proof
 cp1_c12_containment_status=verified
 cp1_new_public_api_status=preview-readiness-route-source-approved
 cp1_reference_presence_endpoint_base=19eaa0fe0d52c4563ae1957d994c679d0b4bd0dc
@@ -148,6 +156,7 @@ CP1 prepares reviewable approval surfaces. It does not prove that Creator Paid i
 - PR #688 is merged at the current fetched integration tip `b4409937b4ef637f3218c6d24e45a32ef20920ce`; reviewed head `d6cf6e119b9fd987330e3ede53e536ed2c7ddd5d` is contained in integration. This is the fixed base for the local synthetic-only ephemeral-input to C1 factory/store/read bridge characterization.
 - PR #690 is merged at integration commit `4bd5dd09c4501a666bfc961104f3280bd66b8117`; reviewed head `c0f749ca5a6dc5ed5b8dab63b3c722a68835df6e` is contained in integration. This is the fixed production-constructor compatibility blocker used by the later decision preflights.
 - PR #691 is merged at the current fetched integration tip `340d6b0ec719e1e871205a03d48cda295f07068b`; reviewed head `60b0ec43f8fa4722b2830e8f99535348146e46f4` is contained in integration. This is the fixed merged process-isolation non-adoption decision and the base for the zeroizable-client boundary preflight.
+- PR #692 is merged at the current fetched integration tip `622a4804bfd42293ea6305d960b01e0cf7e35ba0`; reviewed head `6f09c2ca334bfac0d9187215aca0279efff575da` is contained in integration. This is the fixed merged zeroizable-client boundary decision and the base for the adapter/client API design preflight.
 - The C12 fixed comparison remains the CP1 baseline: `18 pass / 9 dependency-blocked / 3 known historical / 0 unexpected`.
 - `node_modules` is absent. CP1 does not install dependencies or reinterpret missing dependency-backed checks as regressions.
 - C1-C12 local contracts, migration sources, and existing authenticated server actions/routes remain the authority. No concrete runtime or UI blocker was proven during CP1 discovery.
@@ -4048,6 +4057,97 @@ No approval is present. The exact approval required for a separately bounded ada
 ```
 
 Until that exact approval is provided, `zeroizable_client_boundary_preflight_status=local-synthetic-pass-not-adopted`, `zeroizable_client_boundary_production_api_status=absent-unverified`, and `production_wiring_status=disconnected-fail-closed` remain authoritative.
+
+## CP1-S2AV C1 Zeroizable-Client Adapter/Client API Design And Synthetic Implementation Preflight
+
+PR #692 is merged at `622a4804bfd42293ea6305d960b01e0cf7e35ba0`; reviewed head `6f09c2ca334bfac0d9187215aca0279efff575da` is contained in integration. The exact S2AU approval text was explicitly supplied in the current task and is consumed only for this local adapter/client API design and inert synthetic implementation. This preflight adds no production import, handler, route, binding, service adapter, network client, SDK initialization, real input, or deployed surface.
+
+```text
+approval_id=explicit-consumed-zeroizable-client-api-design-synthetic-only
+base_revision=622a4804bfd42293ea6305d960b01e0cf7e35ba0
+candidate_revision=working-tree-uncommitted-review-ready-local-diff
+target_label=local-c1-zeroizable-client-api-contract
+action_label=define-opaque-byte-ownership-and-prove-inert-lifecycle
+execution_status=pass
+zeroizable_client_api_preflight_status=local-synthetic-pass-not-adopted
+zeroizable_client_api_repository_contract_status=pass
+zeroizable_client_api_production_candidate_status=absent-unverified
+zeroizable_client_api_decision=retain-disconnected-fail-closed
+zeroizable_client_api_required_shape=opaque-disjoint-ownership-synchronous-mutable-registry-single-read-synchronous-dispose-ack
+zeroizable_client_api_unverified_scope=node-v8-unregistered-allocation-transport-os-sdk-internals
+zeroizable_client_api_preflight_approval_status=consumed-design-synthetic-only
+zeroizable_client_api_production_adoption_approval_status=absent-required-after-full-stack-proof
+```
+
+### Focused RED/GREEN Outcome
+
+```text
+red_contract_status=pass-expected-missing-implementation-and-boundary-regressions
+green_fixture_count=20
+green_fixture_pass_count=20
+green_fixture_fail_count=0
+disjoint_or_overlap_rejection_fixture_count=2
+synchronous_factory_rejection_fixture_count=2
+successful_available_registered_factory_read_dispose_count=3/1/1/1
+successful_missing_registered_factory_read_dispose_count=3/1/1/1
+factory_error_fixture_count=2
+factory_unavailable_fixture_count=4
+read_error_fixture_count=1
+dispose_error_or_unverified_fixture_count=5
+getter_boundary_error_fixture_count=2
+dispose_reentrant_stop_suppression_count=1
+registered_internal_zero_fill_fixture_count=12
+registered_internal_zero_fill_pass_count=12
+stop_during_pending_read_prompt_settlement_count=1
+late_success_suppression_count=1
+post_stop_late_mutation_rezero_fill_count=1
+in_flight_repeat_suppression_count=1
+post_settlement_repeat_suppression_count=1
+maximum_factory_read_dispose_attempt_count=1/1/1
+sanitized_result_field_count=15
+```
+
+### Proven Repository API Contract
+
+1. Two non-empty Buffers must be disjoint and non-overlapping. Invalid aliasing is rejected and zero-filled before an ownership token exists.
+2. The repository exposes only one frozen opaque ownership token. It contains no enumerable Buffer field. The token can bind to one controller and its client transfer can reveal the two exact original Buffer references once only.
+3. The synchronous factory receives one frozen zeroization registry and no secret bytes. Every client-owned mutable Buffer must be registered synchronously before factory return; overlapping, late, empty, or non-Buffer registration is rejected. The registry closes before read.
+4. The client receives the original Buffers only through one `read` transfer and one `AbortSignal`. Repository source creates no immutable secret string, decode, URL, authorization value, or serialization copy.
+5. The client performs at most one read. Available and missing can settle `pass` only after synchronous `dispose()` returns the fixed `zeroized` acknowledgement, its owned and zero-filled counts equal the complete registry count, and every registered Buffer is observed zero-filled.
+6. Factory/read/dispose error, throwing client or acknowledgement getter, invalid or asynchronous factory, asynchronous/unverified dispose, and stop remain fixed sanitized `fail-closed`. When acknowledgement is absent or invalid, the repository zeroizes every registered Buffer before settlement.
+7. Stop aborts one pending read, makes reentrant stop during dispose inactive, synchronously disposes and verifies or fallback-zeroizes the registry, and settles without waiting for the pending read value. That value is classified as suppressed, cannot change the result, and triggers a defensive repository re-zero-fill if it later settles after attempting to rewrite an owned Buffer.
+8. In-flight and post-settlement repeats each perform zero additional factory/read/dispose attempts, zero-fill the newly supplied owned Buffers, and return a fixed sanitized suppression result.
+9. The implementation remains under `scripts/` and is absent from `app`, `components`, and `lib`.
+
+### Proof Classification And Missing Conditions
+
+| Layer | Proven here | Not proven / production requirement |
+| --- | --- | --- |
+| Repository | Opaque single-use token, disjoint source Buffers, secret-free synchronous factory argument, complete synthetic mutable registry, exact-reference one-time read transfer, one factory/read/dispose bound, prompt stop settlement, getter-error containment, dispose reentrancy suppression, all registered Buffer zero-fill, post-stop late-settlement re-zero-fill, synchronous acknowledgement before success, late/repeat suppression, and fixed 15-field output. | JavaScript cannot revoke a Buffer reference already transferred to a client or prevent external aliases held outside this API. A production adapter must make the ownership boundary authoritative, make synchronous dispose acknowledgement attest quiescence as well as zeroization, and remove every alternate string/client path. |
+| Node/V8 | The tested Node process enforces this JavaScript state machine and observes `Buffer.fill(0)` for all registered synthetic Buffers. | Hidden runtime allocations, immutable conversions, GC retention, backing-store reuse, or enforcement that a client creates no unregistered allocation. |
+| Transport | No transport is constructed or invoked. | A reviewed byte-only transport with no URL/header/auth/request serialization into immutable storage, complete mutable registration, bounded stop, and zeroization acknowledgement. |
+| OS | Nothing beyond local process execution is claimed. | Native allocation, kernel buffer, pipe/socket queue, crash dump, swap, allocator, and physical erasure behavior. |
+| SDK/client | Only an injected inert client is exercised. The current production SDK/client is not loaded or adopted. | A reviewable implementation whose factory/read/dispose internals forbid immutable retention and dynamic/unregistered mutable allocation and whose acknowledgement covers every downstream layer. |
+
+The registry proves all buffers registered by the synthetic client, not that an arbitrary client registers every allocation. The synchronous factory/dispose shape is therefore a required review seam, not proof of a future implementation. The repository defensively re-zero-fills registered buffers when a stopped read later settles, but JavaScript cannot revoke the transferred Buffer references; a production dispose acknowledgement must therefore attest that read activity is quiescent and cannot write again. If a client needs asynchronous construction/disposal, allocates after the registry closes, creates an immutable value, or cannot attest quiescence and every downstream mutable allocation, it does not satisfy this guarantee.
+
+### Fixed Comparison, Recommendation, And Required Production Change
+
+Fixed comparison: same-process production construction is rejected because two immutable normalized strings survive source Buffer zero-fill; child-process remains not adopted because exit containment does not prove IPC/V8/runtime/OS/SDK erasure; PR #692 proves a repository zeroization lifecycle direction; this API preflight additionally defines an opaque disjoint ownership token, synchronous complete mutable registry, exact-reference single read, prompt stop, synchronous dispose acknowledgement, and fallback zero-fill, but still proves no production client or downstream layer.
+
+The required production adapter/client change is the exact API shape recorded above. Construction receives only a zeroization registry, every mutable allocation is registered synchronously, read takes the opaque ownership once without decode/copy, no allocation or immutable conversion occurs after registration closes, stop does not wait for a pending result, and synchronous dispose acknowledges read quiescence plus all registered/downstream zeroization before any success result settles. The implementation and every downstream layer must be source-reviewable.
+
+The fixed recommendation remains `zeroizable_client_api_decision=retain-disconnected-fail-closed`. No current SDK/client is a positive candidate, no production wiring is added, and the C1 Buffer zero-fill guarantee is unchanged.
+
+### Consumed Approval And Future Approval Boundary
+
+The following exact approval is consumed for this design and synthetic implementation only:
+
+```text
+承認します。C1 の現行 Buffer zero-fill 保証を維持する zeroizable-client boundary 候補として、exclusive mutable-byte ownership、immutable string copy を伴わない construction/read、bounded stop/error termination、全内部 mutable byte の zero-fill と明示 dispose acknowledgement、late success/repeat suppressionを必須条件とする adapter/client API 変更の設計・synthetic implementation preflight を開始することを承認します。現行 production SDK/client の採用、production wiring、real input/constructor/read、dependency install、network/remote operation、deploy/activation/CP2/public paid launchはこの承認に含めません。
+```
+
+No production adoption approval exists. A later approval cannot be prepared as positive adoption evidence until an actual adapter/client/transport implementation is identified, bound to an exact reviewed revision, and audited across repository, Node/V8, native/transport, OS, and SDK/client allocation and retention behavior. Production wiring, real execution, dependency installation, network/remote operation, deploy, activation, CP2, and public paid launch each remain separately approval-gated.
 
 ## Entitlement, Usage, Provider, And Capability Proof Rules
 

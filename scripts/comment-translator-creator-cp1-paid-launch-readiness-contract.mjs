@@ -650,6 +650,46 @@ assert.match(
   externalEvidenceReconciliation,
   /The only recommended next approval unit is `CP1-A-MIG-C3`/,
 );
+for (const marker of [
+  /^reviewed_base=d47db7b79b06a569fcb1a5393d6c3094b9867e90$/m,
+  /^migration_attempt_count=1$/m,
+  /^migration_apply_count=1$/m,
+  /^migration_status=applied$/m,
+  /^transaction_status=committed$/m,
+  /^structural_query_attempt_count=2$/m,
+  /^structural_readiness_status=pass$/m,
+  /^row_data_read_count=0$/m,
+  /^post_apply_mutation_count=0$/m,
+  /^next_ordered_approval_unit=CP1-A-MIG-C5$/m,
+  /^production_wiring_status=disconnected-fail-closed$/m,
+  /^table_present_count=2$/m,
+  /^expected_column_present_count=16$/m,
+  /^rls_enabled_count=2$/m,
+  /^service_role_policy_count=2$/m,
+  /^function_present_count=2$/m,
+  /^trigger_binding_count=1$/m,
+  /^usage_apply_service_execute_count=1$/m,
+  /^usage_apply_client_revoke_count=1$/m,
+  /^trigger_internal_direct_revoke_count=1$/m,
+]) {
+  assert.match(externalEvidenceReconciliation, marker);
+}
+assert.match(
+  readiness,
+  /^cp1_c3_structural_readiness_status=pass$/m,
+);
+assert.match(
+  readiness,
+  /^cp1_next_ordered_migration_approval_unit=CP1-A-MIG-C5$/m,
+);
+assert.match(
+  task,
+  /CP1-A-MIG-C3` is consumed\/pass[\s\S]*next ordered unit is `CP1-A-MIG-C5`/,
+);
+assert.match(
+  board,
+  /CP1-A-MIG-C3` is consumed\/pass[\s\S]*zero row-data reads and zero post-apply mutations/,
+);
 
 execFileSync("git", ["merge-base", "--is-ancestor", integrationBase, "HEAD"], {
   cwd: root,

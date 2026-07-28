@@ -71,7 +71,7 @@
 - c1_guarantee_governance_approval_status=consumed-local-decision-preflight-only
 - c1_guarantee_governance_production_adoption_approval_status=absent
 - C1 production source procurement is fixed at PR #695 integration tip `d206ff2c07cc10aeb701d0d2034a29b17f58d42b`. One new node-libcurl/libcurl Windows native envelope was researched from official metadata only and rejected with `0/7` proofs established; no PR #694 candidate class was re-audited, no archive was downloaded, and no dependency or production path was executed.
-- CP1 remaining external-evidence reconciliation is review-ready at PR #696 merge commit `e7015f0f97ad128477566e27551d6cd2f5ba6890` in `docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_CP1_EXTERNAL_EVIDENCE_RECONCILIATION_PREFLIGHT.md`. C1 remains `disconnected-fail-closed`; the sole recommended next approval unit is the C1-independent ordered migration unit `CP1-A-MIG-C3`, with fresh target binding, rollback owner, exact canonical Git-blob identity, and sanitized output review required before any separately approved apply.
+- CP1 remaining external-evidence reconciliation is current through PR #697 merge commit `d47db7b79b06a569fcb1a5393d6c3094b9867e90`. `CP1-A-MIG-C3` is consumed/pass with one applied committed transaction, and its post-apply structural readiness is pass after two sanitized read-only catalog attempts (`0` row-data reads / `0` post-apply mutations); durable evidence is appended to `docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_CP1_EXTERNAL_EVIDENCE_RECONCILIATION_PREFLIGHT.md`. The next ordered unit is `CP1-A-MIG-C5`. C1 remains `disconnected-fail-closed`.
 - c1_source_procurement_base=d206ff2c07cc10aeb701d0d2034a29b17f58d42b
 - c1_source_procurement_preflight_status=blocked-no-feasible-full-stack-candidate
 - c1_source_procurement_candidate_envelope_count=1
@@ -163,7 +163,7 @@
 Do not perform live/external operations without same-thread ready preflight, sanitized output review, and exact explicit approval.
 
 - C1 merge / integration verification is complete at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995`; remote migration apply and production data access remain approval-gated and were not run.
-- C3 merge / integration verification is complete through PR #669 at `5fc3cca2730a58f35279098ec0b2f5c804ce0076`; remote migration apply remains approval-gated.
+- C3 merge / integration verification is complete through PR #669 at `5fc3cca2730a58f35279098ec0b2f5c804ce0076`; `CP1-A-MIG-C3` apply and post-apply structural readiness are complete, while store write/read behavior remains approval-gated.
 - C2 merge / integration verification is complete through PR #670 at `4486c180f68369d6620b9f8f3df33518b7cadc38`; Stripe live action and activation remain separate approval-gated steps.
 - C4 merge / integration verification is complete through PR #671 at `fa0d5582a296c2164bd3945c37cbec746315f357`; provider live execution remains separately approval-gated.
 - C5 merge / integration verification is complete through PR #672 at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8`; remote migration apply remains separately approval-gated.
@@ -234,7 +234,7 @@ These items stay visible but are not current release blockers unless explicitly 
 | --- | --- | --- |
 | C1 | Durable paid entitlement store | merged / integration verified at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995` |
 | C2 | Stripe live Checkout / Portal / webhook closed-beta gate | merged / integration verified at `4486c180f68369d6620b9f8f3df33518b7cadc38` |
-| C3 | Paid usage and monthly reset | merged / integration verified at `5fc3cca2730a58f35279098ec0b2f5c804ce0076` |
+| C3 | Paid usage and monthly reset | merged / integration verified; migration applied and structural readiness pass |
 | C4 | AI natural translation provider route | merged / integration verified at `fa0d5582a296c2164bd3945c37cbec746315f357` |
 | C5 | OBS overlay token runtime | merged / integration verified at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8` |
 | C6 | OBS overlay UI route | merged / integration verified at `05104fc2d4c6730be6aae772708a10cb2b39d2d6`; authenticated feed QA pending / gated |

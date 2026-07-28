@@ -25,6 +25,7 @@ const allowedChangedPaths = new Set([
   contractPath,
   "scripts/comment-translator-creator-cp1-paid-launch-readiness-contract.mjs",
   "scripts/comment-translator-creator-c1-production-source-procurement-preflight-contract.mjs",
+  "scripts/comment-translator-task-board-creator-roadmap-contract.mjs",
 ]);
 
 for (const revision of [baseRevision, candidateAuditHead]) {

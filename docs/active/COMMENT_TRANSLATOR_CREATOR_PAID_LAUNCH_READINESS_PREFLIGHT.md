@@ -4,6 +4,10 @@ Status: CP1 Creator paid launch readiness / preflight only.
 
 cp1_local_readiness_status=complete
 creator_public_paid_launch_readiness_status=blocked-approval-gated
+cp1_c3_migration_approval_status=consumed
+cp1_c3_migration_execution_status=pass
+cp1_c3_structural_readiness_status=pass
+cp1_next_ordered_migration_approval_unit=CP1-A-MIG-C5
 cp1_integration_base=097f369a47564b7a44d211c212580f993eddc71b
 cp1_c1_fail_closed_read_followup_base=09ada36691185be9775940ce653952901bfc64d8
 cp1_c1_runtime_role_classification_followup_base=dd698bf093615c1741e25b73b37761a68804c45b
@@ -168,6 +172,7 @@ CP1 prepares reviewable approval surfaces. It does not prove that Creator Paid i
 - C12 head `e93bfb77dc2017fd4a15e99e075f7e419c14a94d` is contained in that integration state.
 - PR #683 is merged and the fetched integration tip for this C1 follow-up is exactly `09ada36691185be9775940ce653952901bfc64d8`.
 - PR #683 confirms that the reviewed C3 entitlement-sync reference is trigger-internal, so no direct service-role grant remediation was required or performed. The direct usage-apply reference, trigger binding, and revoked direct client execution remain confirmed.
+- At reviewed base `d47db7b79b06a569fcb1a5393d6c3094b9867e90`, `CP1-A-MIG-C3` completed with one applied committed transaction. Its post-apply structural readiness passed the reviewed table/column/RLS/policy/function/trigger/grant predicates after one reducer-only retry, with zero row-data reads and zero post-apply mutations. The follow-up section in `docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_CP1_EXTERNAL_EVIDENCE_RECONCILIATION_PREFLIGHT.md` is the durable sanitized evidence record. Store write/read behavior remains separately approval-gated.
 - PR #684 is merged and the current fetched integration tip for the runtime-role classification follow-up is exactly `dd698bf093615c1741e25b73b37761a68804c45b`.
 - PR #684 adds the synthetic-only C1 runtime-role classifier harness with exactly 14 sanitized output fields. Actual-authority classification, runtime-source presence/value/validity/provisioning, client initialization, adapter invocation, fixture construction, and remote/deployed behavior remain unchecked / separately approval-gated.
 - PR #685 is merged at `49b4eb66da6b88197311adc3be80070a845ab2bc`, publishing the S2AO fixture-identity authority.

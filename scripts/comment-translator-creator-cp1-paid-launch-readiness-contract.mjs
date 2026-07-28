@@ -680,15 +680,64 @@ assert.match(
 );
 assert.match(
   readiness,
-  /^cp1_next_ordered_migration_approval_unit=CP1-A-MIG-C5$/m,
+  /^cp1_next_ordered_migration_approval_unit=CP1-A-MIG-C6$/m,
 );
 assert.match(
   task,
-  /CP1-A-MIG-C3` is consumed\/pass[\s\S]*next ordered unit is `CP1-A-MIG-C5`/,
+  /CP1-A-MIG-C3` and `CP1-A-MIG-C5` are consumed\/pass[\s\S]*next ordered unit is `CP1-A-MIG-C6`/,
 );
 assert.match(
   board,
   /CP1-A-MIG-C3` is consumed\/pass[\s\S]*zero row-data reads and zero post-apply mutations/,
+);
+for (const marker of [
+  /^execution_recorded_at=2026-07-28T23:33:02\+09:00$/m,
+  /^reviewed_base=f81dd09a07a20576231ae192c2df7e31f3c46568$/m,
+  /^approval_id=CP1-A-MIG-C5$/m,
+  /^structural_readiness_retry_approval_id=CP1-A-MIG-C5-STRUCTURAL-READINESS-RETRY-1$/m,
+  /^canonical_git_blob=bb165c31568e6e4a4f6ec238471294fb61365e60$/m,
+  /^canonical_git_blob_sha256=acda5042f1e5cea3fe2103a7816aa395f94422a141359bcda5c04f2fe5a87478$/m,
+  /^migration_attempt_count=1$/m,
+  /^migration_apply_count=1$/m,
+  /^migration_status=applied$/m,
+  /^transaction_status=committed$/m,
+  /^initial_structural_query_attempt_count=2$/m,
+  /^synthetic_fixture_pass_count=6$/m,
+  /^structural_readiness_retry_query_attempt_count=1$/m,
+  /^structural_query_attempt_count=3$/m,
+  /^structural_readiness_status=pass$/m,
+  /^row_data_read_count=0$/m,
+  /^post_apply_mutation_count=0$/m,
+  /^next_ordered_approval_unit=CP1-A-MIG-C6$/m,
+  /^table_present_count=1$/m,
+  /^expected_column_present_count=10$/m,
+  /^target_table_total_column_count=10$/m,
+  /^rls_enabled_count=1$/m,
+  /^service_role_policy_count=1$/m,
+  /^required_constraint_count=8$/m,
+  /^required_index_count=3$/m,
+  /^function_present_count=2$/m,
+  /^security_definer_text_function_count=2$/m,
+  /^fixed_search_path_count=2$/m,
+  /^service_role_function_execute_count=2$/m,
+  /^client_function_revoke_count=2$/m,
+]) {
+  assert.match(externalEvidenceReconciliation, marker);
+}
+for (const marker of [
+  /^cp1_c5_migration_approval_status=consumed$/m,
+  /^cp1_c5_migration_execution_status=pass$/m,
+  /^cp1_c5_structural_readiness_status=pass$/m,
+]) {
+  assert.match(readiness, marker);
+}
+assert.match(
+  task,
+  /CP1-A-MIG-C5` are consumed\/pass[\s\S]*next ordered unit is `CP1-A-MIG-C6`/,
+);
+assert.match(
+  board,
+  /CP1-A-MIG-C5` is consumed\/pass[\s\S]*zero row-data reads and zero post-apply mutations/,
 );
 
 execFileSync("git", ["merge-base", "--is-ancestor", integrationBase, "HEAD"], {

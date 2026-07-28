@@ -120,6 +120,14 @@ cp1_c1_zeroizable_client_api_required_shape=opaque-disjoint-ownership-synchronou
 cp1_c1_zeroizable_client_api_unverified_scope=node-v8-unregistered-allocation-transport-os-sdk-internals
 cp1_c1_zeroizable_client_api_preflight_approval_status=consumed-design-synthetic-only
 cp1_c1_zeroizable_client_api_production_adoption_approval_status=absent-required-after-full-stack-proof
+cp1_c1_zeroizable_client_candidate_source_preflight_status=local-source-audit-pass-not-adopted
+cp1_c1_zeroizable_client_candidate_source_inventory_status=4-classified-0-eligible-4-rejected
+cp1_c1_zeroizable_client_candidate_source_decision=retain-disconnected-fail-closed
+cp1_c1_zeroizable_client_candidate_source_required_proof=complete-source-review-immutable-copy-free-complete-mutable-registry-bounded-retention-synchronous-read-quiescence-synchronous-dispose-ack-complete-downstream-zeroization
+cp1_c1_zeroizable_client_candidate_source_version_binding=supabase-js-2.106.2-undici-7.24.8-node-fetch-2.7.0-ws-8.20.1-node-v22.22.2
+cp1_c1_zeroizable_client_candidate_source_unverified_scope=node-v8-native-transport-os-sdk-internals
+cp1_c1_zeroizable_client_candidate_source_approval_status=consumed-feasibility-synthetic-only
+cp1_c1_zeroizable_client_candidate_source_production_adoption_approval_status=absent-required-after-full-stack-proof
 cp1_c12_containment_status=verified
 cp1_new_public_api_status=preview-readiness-route-source-approved
 cp1_reference_presence_endpoint_base=19eaa0fe0d52c4563ae1957d994c679d0b4bd0dc
@@ -4148,6 +4156,141 @@ The following exact approval is consumed for this design and synthetic implement
 ```
 
 No production adoption approval exists. A later approval cannot be prepared as positive adoption evidence until an actual adapter/client/transport implementation is identified, bound to an exact reviewed revision, and audited across repository, Node/V8, native/transport, OS, and SDK/client allocation and retention behavior. Production wiring, real execution, dependency installation, network/remote operation, deploy, activation, CP2, and public paid launch each remain separately approval-gated.
+
+## CP1-S2AW C1 Zeroizable-Client Production Candidate Source Feasibility Preflight
+
+PR #693 is merged at `3ec35af019576bf199d8893c5fd856c87575d103`; reviewed head `e1f48e0cd6d0eeb94e4546b5c2d5c20487354e61` is contained in integration. The isolated worktree began clean at that exact integration tip. This approved follow-up reads only repository source, package/lock metadata, locally present dependency source, and Node-bundled JavaScript source. It adds no production import, handler, route, binding, adapter, transport, SDK/client, real input, constructor, read, auth/session, or remote operation.
+
+```text
+base_revision=3ec35af019576bf199d8893c5fd856c87575d103
+reviewed_api_head=e1f48e0cd6d0eeb94e4546b5c2d5c20487354e61
+candidate_revision=working-tree-uncommitted-review-ready-local-diff
+target_label=local-c1-zeroizable-client-candidate-source
+action_label=classify-local-source-backed-production-candidates
+execution_status=pass
+zeroizable_client_candidate_source_preflight_status=local-source-audit-pass-not-adopted
+zeroizable_client_candidate_source_inventory_status=4-classified-0-eligible-4-rejected
+zeroizable_client_candidate_source_decision=retain-disconnected-fail-closed
+zeroizable_client_candidate_source_required_proof=complete-source-review-immutable-copy-free-complete-mutable-registry-bounded-retention-synchronous-read-quiescence-synchronous-dispose-ack-complete-downstream-zeroization
+zeroizable_client_candidate_source_version_binding=supabase-js-2.106.2-undici-7.24.8-node-fetch-2.7.0-ws-8.20.1-node-v22.22.2
+zeroizable_client_candidate_source_unverified_scope=node-v8-native-transport-os-sdk-internals
+zeroizable_client_candidate_source_approval_status=consumed-feasibility-synthetic-only
+zeroizable_client_candidate_source_production_adoption_approval_status=absent-required-after-full-stack-proof
+production_wiring_status=disconnected-fail-closed
+```
+
+### Focused RED/GREEN And Sanitized Output
+
+The focused contract was first run with the implementation absent and failed only at `candidate source preflight implementation exists`. GREEN then verifies one complete seven-proof fixture is eligible, each of seven independently missing proofs is rejected, the actual local inventory is fixed, production source has no import of the preflight, and output contains only fixed status, count, version, and decision labels.
+
+```text
+red_contract_status=pass-expected-missing-implementation
+green_proof_gate_fixture_count=8
+green_local_inventory_fixture_count=1
+green_fixture_pass_count=9
+green_fixture_fail_count=0
+candidate_class_count=4
+eligible_candidate_count=0
+rejected_candidate_count=4
+sanitized_result_field_count=27
+production_import_count=0
+real_constructor_attempt_count=0
+real_client_call_count=0
+remote_read_attempt_count=0
+```
+
+The inert executable output is fixed as:
+
+```text
+execution_status=pass
+preflight_status=local-source-audit-pass-not-adopted
+candidate_class_count=4
+eligible_candidate_count=0
+rejected_candidate_count=4
+current_sdk_version=2.106.2
+current_sdk_status=rejected-source-absent-and-immutable-construction
+lockfile_alternative_version_binding=undici@7.24.8,node-fetch@2.7.0,ws@8.20.1
+lockfile_alternative_status=rejected-source-absent
+node_runtime_version_binding=node@v22.22.2,v8@12.4.254.21-node.39,uv@1.51.0,openssl@3.5.5
+node_builtin_transport_status=rejected-immutable-header-and-unregistered-native-retention
+custom_boundary_revision_binding=pr693-head-e1f48e0cd6d0eeb94e4546b5c2d5c20487354e61
+custom_boundary_status=rejected-repository-only-no-transport
+same_process_decision=rejected-immutable-copy
+child_process_decision=not-adopted-exit-containment-only
+zeroizable_client_decision=recommended-direction-no-production-candidate
+repository_proof_status=pass-synthetic-only
+node_v8_proof_status=partial-js-hidden-allocation-unverified
+native_transport_proof_status=unverified
+os_proof_status=unverified
+sdk_client_proof_status=source-absent-unverified
+abort_read_quiescence_status=unverified-no-synchronous-quiescence-attestation
+synchronous_dispose_acknowledgement_status=unverified-no-full-stack-acknowledgement
+downstream_zeroization_status=unverified
+production_wiring_status=disconnected-fail-closed
+production_adoption_approval_status=absent-required-after-full-stack-proof
+sanitized_result_field_count=27
+```
+
+### Exact Candidate And Revision/Version Inventory
+
+| Candidate class | Exact local binding and availability | Source-backed lifecycle evidence | Decision |
+| --- | --- | --- | --- |
+| Current production SDK/client | `@supabase/supabase-js@2.106.2` is lock-bound; its installed source directory is absent. Repository production source is present at PR #693 merge `3ec35af019576bf199d8893c5fd856c87575d103`. | The repository performs two immutable `.trim()` normalizations and passes URL/key strings to `createClient`. The source Buffer can be zero-filled, but the immutable constructor copies and all unavailable SDK internals cannot be. | Rejected: source absent and immutable construction is incompatible with the current guarantee. |
+| Lockfile-only alternatives | `undici@7.24.8`, `node-fetch@2.7.0`, and `ws@8.20.1` are lock-bound; all three installed source directories are absent. | Version metadata proves no construction, header, request, buffer, retention, abort, dispose, or zeroization behavior. | Rejected: reviewable source is absent. |
+| Node built-in HTTP/fetch/net/TLS | Runtime-bound to `node@v22.22.2`, `v8@12.4.254.21-node.39`, `uv@1.51.0`, and `openssl@3.5.5`; bundled JavaScript sources are locally present. | Reviewed JavaScript concatenates header names/values into an immutable string, retains Buffer references through writable/write-request state, and transfers them through a native write boundary. Bundled JavaScript does not expose complete V8, libuv, OpenSSL, kernel, allocator, socket-queue, or physical-erasure behavior. | Rejected: immutable header creation plus unregistered native/OS retention and no synchronous full-stack acknowledgement. |
+| Custom byte-only boundary | PR #693 reviewed head `e1f48e0cd6d0eeb94e4546b5c2d5c20487354e61`; exactly three repository/synthetic API source files are present, with zero production imports and no transport import. | It proves disjoint Buffer ownership, a synchronous synthetic registry, exact-reference single read, abort ordering, synchronous synthetic dispose acknowledgement, fallback zero-fill, and repeat suppression. It constructs no URL/header/auth/request/native transport and therefore proves none of those downstream layers. | Rejected as a production candidate: repository-only contract with no adapter/client/transport implementation. |
+
+### Candidate Lifecycle Map
+
+The required lifecycle is fixed as:
+
+```text
+repository Buffer ownership
+-> construction
+-> URL/header/auth/request serialization
+-> native/transport buffers
+-> read
+-> abort/stop
+-> read quiescence
+-> synchronous dispose acknowledgement
+-> all-downstream zeroization
+-> settlement
+```
+
+- Current production SDK/client stops at construction: repository-owned bytes become immutable normalized strings before the unavailable SDK source can be reviewed.
+- Lockfile-only alternatives stop before construction: metadata without source cannot establish any lifecycle step.
+- Node built-in transport reaches header/request buffering and native write, but those steps introduce immutable and unregistered retention. Abort/destroy is not a synchronous attestation that pending JavaScript, native, TLS, or kernel reads/writes are quiescent and zeroized.
+- Custom byte-only boundary proves only the repository/synthetic portion through settlement. Because no transport exists, it cannot bridge the required downstream lifecycle.
+
+### Layer Proof And Gap Matrix
+
+The comparison order is fixed as Repository -> Node/V8 -> native transport -> OS -> SDK/client.
+
+| Layer | Proven in this preflight | Immutable copy / allocation / retention gap | Quiescence, acknowledgement, and zeroization gap |
+| --- | --- | --- | --- |
+| Repository | PR #693 contract, exact source identity, four candidate classes, package/runtime revision binding, complete seven-proof rejection gate, and zero production imports. | Current factory has two immutable constructor copies. The synthetic registry covers only explicitly registered Buffers. | Repository fallback zero-fill and synthetic acknowledgement do not attest downstream quiescence. |
+| Node/V8 | Exact Node/V8 runtime binding and selected bundled JavaScript source behavior. | Hidden V8 allocations, immutable values, GC retention, backing-store aliases/reuse, and enforcement against unregistered allocation remain unproven. | No API synchronously attests that all runtime reads/writes are quiescent and erased. |
+| Native transport | The JavaScript-to-native write boundary and retained write-request Buffer reference are observed. | libuv/OpenSSL/native allocator/TLS record/socket queue copies are not registered by the PR #693 registry and their complete source is not part of the candidate. | Abort/destroy/close is not a synchronous zeroization acknowledgement for every native allocation. |
+| OS | Exact host class is Windows x64 at the audited runtime. No stronger erasure claim is made. | Kernel buffers, socket queues, allocator behavior, swap, crash dumps, and physical persistence are outside repository control. | No OS acknowledgement proves all downstream bytes quiescent and zeroized before settlement. |
+| SDK/client | Exact lock versions and source presence/absence are classified. | Current and lockfile-alternative SDK/client source is absent; internal URL/auth/header/request copies, pools, retries, caches, and teardown retention are unreviewable. | No candidate dispose acknowledgement covers SDK/client plus every downstream layer. |
+
+No candidate has source-backed proof of synchronous abort read quiescence, synchronous full-stack dispose acknowledgement, or complete downstream zeroization. Any immutable secret copy, dynamic/unregistered mutable allocation, unbounded retention, asynchronous/unverified disposal, missing source, or incomplete downstream acknowledgement rejects the candidate.
+
+### Fixed Comparison And Recommendation
+
+Same-process remains rejected because its two immutable constructor strings survive repository Buffer zero-fill. Child-process remains not adopted because bounded repository transfer and observed process exit establish containment, not IPC/V8/native/OS/SDK erasure. Zeroizable-client remains the recommended API direction because PR #693 fixes the required ownership and acknowledgement seam, but no real candidate implements and proves that seam across every downstream layer.
+
+The fixed decision is `zeroizable_client_candidate_source_decision=retain-disconnected-fail-closed`. The four candidate classes yield `0 eligible / 4 rejected`; no SDK/client or transport is adopted, and the current C1 Buffer zero-fill guarantee is unchanged.
+
+### Consumed Approval And Next Explicit Approval
+
+The exact approval supplied for this source audit is consumed only for the local source-backed feasibility audit and inert/synthetic decision preflight. It does not authorize source download, dependency installation, production adoption/wiring, real input/constructor/read, auth/session, network/remote operation, deploy, activation, CP2, or public paid launch.
+
+No next candidate audit is executable until one operator-provided candidate source is locally present and bound to an exact revision/hash. After those prerequisites exist, the exact approval required is:
+
+```text
+承認します。C1 zeroizable-client production candidate source follow-upとして、operatorがrepository内に事前配置しexact revision/hashを提示した単一のadapter/client/transport sourceだけを対象に、production wiring、real input/constructor/readを追加しないsource-backed full-stack feasibility auditとinert/synthetic-only API compatibility preflightを開始することを承認します。source download、dependency install、network/remote operation、現行production SDK/clientの採用、秘密入力、auth/session、deploy/activation/CP2/public paid launchはこの承認に含めません。candidate source、revision/hash、Node/V8/native/OS対応sourceのいずれかが欠ける場合は実行せずproductionをdisconnected-fail-closedに維持します。
+```
 
 ## Entitlement, Usage, Provider, And Capability Proof Rules
 

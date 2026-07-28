@@ -22,6 +22,10 @@ const c1ProcessIsolationDecisionBase =
   "340d6b0ec719e1e871205a03d48cda295f07068b";
 const c1ProcessIsolationDecisionHead =
   "60b0ec43f8fa4722b2830e8f99535348146e46f4";
+const c1ZeroizableClientApiHead =
+  "e1f48e0cd6d0eeb94e4546b5c2d5c20487354e61";
+const c1ZeroizableClientApiMerge =
+  "3ec35af019576bf199d8893c5fd856c87575d103";
 const c1EphemeralRunnerWrapperSha256 =
   "f79a7f1777e9d412bbaaffefd0c0535101a6652bd6b13cb90174cdc1a23e2a2d";
 const c1EphemeralRunnerSha256 =
@@ -49,6 +53,14 @@ const c1ZeroizableClientApiPreflightContractPath = path.join(
   root,
   "scripts/comment-translator-creator-c1-zeroizable-client-api-preflight-contract.mjs",
 );
+const c1ZeroizableClientCandidateSourcePreflightContractPath = path.join(
+  root,
+  "scripts/comment-translator-creator-c1-zeroizable-client-candidate-source-preflight-contract.mjs",
+);
+const c1ZeroizableClientCandidateSourcePreflightPath = path.join(
+  root,
+  "scripts/comment-translator-creator-c1-zeroizable-client-candidate-source-preflight.mjs",
+);
 
 const expectedLanes = new Map([
   ["LOCAL-DETERMINISTIC", "locally-verified"],
@@ -74,6 +86,22 @@ execFileSync(process.execPath, [c1ZeroizableClientApiPreflightContractPath], {
   cwd: root,
   stdio: "pipe",
 });
+execFileSync(
+  process.execPath,
+  [c1ZeroizableClientCandidateSourcePreflightContractPath],
+  {
+    cwd: root,
+    stdio: "pipe",
+  },
+);
+const c1ZeroizableClientCandidateSourceOutput = execFileSync(
+  process.execPath,
+  [c1ZeroizableClientCandidateSourcePreflightPath],
+  {
+    cwd: root,
+    encoding: "utf8",
+  },
+).trim();
 
 const expectedStages = new Map([
   ["CP1-S0", "locally-verified"],
@@ -2061,6 +2089,28 @@ for (const source of [readiness, board, task]) {
     source,
     /zeroizable_client_api_production_adoption_approval_status=absent-required-after-full-stack-proof/,
   );
+  assert.match(source, new RegExp(c1ZeroizableClientApiHead));
+  assert.match(source, new RegExp(c1ZeroizableClientApiMerge));
+  assert.match(
+    source,
+    /zeroizable_client_candidate_source_preflight_status=local-source-audit-pass-not-adopted/,
+  );
+  assert.match(
+    source,
+    /zeroizable_client_candidate_source_inventory_status=4-classified-0-eligible-4-rejected/,
+  );
+  assert.match(
+    source,
+    /zeroizable_client_candidate_source_decision=retain-disconnected-fail-closed/,
+  );
+  assert.match(
+    source,
+    /zeroizable_client_candidate_source_unverified_scope=node-v8-native-transport-os-sdk-internals/,
+  );
+  assert.match(
+    source,
+    /zeroizable_client_candidate_source_approval_status=consumed-feasibility-synthetic-only/,
+  );
 }
 assert.match(
   readiness,
@@ -2087,7 +2137,7 @@ assert.match(
   /They do not prove an elapsed-time bound when a client ignores abort/,
 );
 const zeroizableClientApiSection = readiness.match(
-  /^## CP1-S2AV C1 Zeroizable-Client Adapter\/Client API Design And Synthetic Implementation Preflight$([\s\S]*?)^## Entitlement, Usage, Provider, And Capability Proof Rules$/m,
+  /^## CP1-S2AV C1 Zeroizable-Client Adapter\/Client API Design And Synthetic Implementation Preflight$([\s\S]*?)^## CP1-S2AW C1 Zeroizable-Client Production Candidate Source Feasibility Preflight$/m,
 )?.[1];
 assert.ok(zeroizableClientApiSection);
 assert.match(
@@ -2105,6 +2155,37 @@ assert.match(
 assert.match(
   zeroizableClientApiSection,
   /No production adoption approval exists/,
+);
+const zeroizableClientCandidateSourceSection = readiness.match(
+  /^## CP1-S2AW C1 Zeroizable-Client Production Candidate Source Feasibility Preflight$([\s\S]*?)^## Entitlement, Usage, Provider, And Capability Proof Rules$/m,
+)?.[1];
+assert.ok(zeroizableClientCandidateSourceSection);
+assert.match(
+  zeroizableClientCandidateSourceSection,
+  new RegExp(
+    `PR #693 is merged at \\\`${c1ZeroizableClientApiMerge}\\\`[\\s\\S]*reviewed head \\\`${c1ZeroizableClientApiHead}\\\``,
+  ),
+);
+assert.match(
+  zeroizableClientCandidateSourceSection,
+  /candidate_class_count=4[\s\S]*eligible_candidate_count=0[\s\S]*rejected_candidate_count=4[\s\S]*sanitized_result_field_count=27/,
+);
+assert.match(
+  zeroizableClientCandidateSourceSection,
+  /Current production SDK\/client[\s\S]*Lockfile-only alternatives[\s\S]*Node built-in HTTP\/fetch\/net\/TLS[\s\S]*Custom byte-only boundary/,
+);
+assert.match(
+  zeroizableClientCandidateSourceSection,
+  /Repository -> Node\/V8 -> native transport -> OS -> SDK\/client/,
+);
+assert.match(
+  zeroizableClientCandidateSourceSection,
+  /No candidate has source-backed proof of synchronous abort read quiescence, synchronous full-stack dispose acknowledgement, or complete downstream zeroization/,
+);
+assert.ok(
+  zeroizableClientCandidateSourceSection.includes(
+    c1ZeroizableClientCandidateSourceOutput,
+  ),
 );
 assert.match(
   readiness,
@@ -2157,6 +2238,8 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-creator-c1-zeroizable-client-api-preflight.mjs",
   "scripts/comment-translator-creator-c1-zeroizable-client-api-preflight-ownership.mjs",
   "scripts/comment-translator-creator-c1-zeroizable-client-api-preflight-contract.mjs",
+  "scripts/comment-translator-creator-c1-zeroizable-client-candidate-source-preflight.mjs",
+  "scripts/comment-translator-creator-c1-zeroizable-client-candidate-source-preflight-contract.mjs",
   "scripts/comment-translator-creator-c12-final-qa-readiness-contract.mjs",
   "scripts/comment-translator-task-board-creator-roadmap-contract.mjs",
 ]);

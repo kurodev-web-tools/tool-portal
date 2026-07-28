@@ -89,7 +89,7 @@ async function verifyBoundedReadConsumer() {
       successReadCount += 1;
       assert.equal(first, successFirst);
       assert.equal(second, successSecond);
-      return { ignoredAdapterValue: "synthetic-non-sensitive" };
+      return "available";
     },
   });
   successState.hold(successFirst, successSecond);

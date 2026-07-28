@@ -323,8 +323,28 @@ function run() {
     /production_wiring_status=blocked-nonzeroizable-immutable-string-copy/
   );
   assert.match(creatorPaidLaunchReadiness, /external_evidence_status=unchanged-blocked-approval-gated/);
-  assert.match(creator, /PR #688 is merged at current integration tip `b4409937b4ef637f3218c6d24e45a32ef20920ce`/);
-  assert.match(task, /PR #688 is merged at current integration tip `b4409937b4ef637f3218c6d24e45a32ef20920ce`/);
+  for (const source of [creator, task, creatorPaidLaunchReadiness]) {
+    assert.match(
+      source,
+      /PR #689 is merged at `2888bb1a60fdd6851688e3e7b323a40b3c21869c`/,
+    );
+    assert.match(
+      source,
+      /^(?:- )?production_constructor_compatibility_status=blocked-immutable-lifetime-unprovable$/m,
+    );
+    assert.match(
+      source,
+      /^(?:- )?production_wiring_status=disconnected-fail-closed$/m,
+    );
+    assert.match(
+      source,
+      /^(?:- )?sdk_internal_lifetime_status=dependency-blocked-unverified$/m,
+    );
+    assert.match(
+      source,
+      /^(?:- )?required_design_decision=approve-process-isolation-ownership-model-or-zeroizable-client-boundary$/m,
+    );
+  }
   assert.match(creator, /72 independent approval units/);
   assert.match(task, /72 independent approval units/);
 

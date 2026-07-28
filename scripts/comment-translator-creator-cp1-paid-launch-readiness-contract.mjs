@@ -45,6 +45,10 @@ const c1ZeroizableClientBoundaryPreflightContractPath = path.join(
   root,
   "scripts/comment-translator-creator-c1-zeroizable-client-boundary-preflight-contract.mjs",
 );
+const c1ZeroizableClientApiPreflightContractPath = path.join(
+  root,
+  "scripts/comment-translator-creator-c1-zeroizable-client-api-preflight-contract.mjs",
+);
 
 const expectedLanes = new Map([
   ["LOCAL-DETERMINISTIC", "locally-verified"],
@@ -63,6 +67,10 @@ execFileSync(process.execPath, [c1ProcessIsolationPreflightContractPath], {
   stdio: "pipe",
 });
 execFileSync(process.execPath, [c1ZeroizableClientBoundaryPreflightContractPath], {
+  cwd: root,
+  stdio: "pipe",
+});
+execFileSync(process.execPath, [c1ZeroizableClientApiPreflightContractPath], {
   cwd: root,
   stdio: "pipe",
 });
@@ -2021,6 +2029,38 @@ for (const source of [readiness, board, task]) {
     source,
     /zeroizable_client_boundary_explicit_approval_status=absent-required-for-production-api-change/,
   );
+  assert.match(
+    source,
+    /zeroizable_client_api_preflight_status=local-synthetic-pass-not-adopted/,
+  );
+  assert.match(
+    source,
+    /zeroizable_client_api_repository_contract_status=pass/,
+  );
+  assert.match(
+    source,
+    /zeroizable_client_api_production_candidate_status=absent-unverified/,
+  );
+  assert.match(
+    source,
+    /zeroizable_client_api_decision=retain-disconnected-fail-closed/,
+  );
+  assert.match(
+    source,
+    /zeroizable_client_api_required_shape=opaque-disjoint-ownership-synchronous-mutable-registry-single-read-synchronous-dispose-ack/,
+  );
+  assert.match(
+    source,
+    /zeroizable_client_api_unverified_scope=node-v8-unregistered-allocation-transport-os-sdk-internals/,
+  );
+  assert.match(
+    source,
+    /zeroizable_client_api_preflight_approval_status=consumed-design-synthetic-only/,
+  );
+  assert.match(
+    source,
+    /zeroizable_client_api_production_adoption_approval_status=absent-required-after-full-stack-proof/,
+  );
 }
 assert.match(
   readiness,
@@ -2045,6 +2085,26 @@ assert.match(
 assert.match(
   zeroizableClientBoundarySection,
   /They do not prove an elapsed-time bound when a client ignores abort/,
+);
+const zeroizableClientApiSection = readiness.match(
+  /^## CP1-S2AV C1 Zeroizable-Client Adapter\/Client API Design And Synthetic Implementation Preflight$([\s\S]*?)^## Entitlement, Usage, Provider, And Capability Proof Rules$/m,
+)?.[1];
+assert.ok(zeroizableClientApiSection);
+assert.match(
+  zeroizableClientApiSection,
+  /base_revision=622a4804bfd42293ea6305d960b01e0cf7e35ba0[\s\S]*candidate_revision=working-tree-uncommitted-review-ready-local-diff/,
+);
+assert.match(
+  zeroizableClientApiSection,
+  /green_fixture_count=20[\s\S]*green_fixture_pass_count=20[\s\S]*green_fixture_fail_count=0[\s\S]*getter_boundary_error_fixture_count=2[\s\S]*dispose_reentrant_stop_suppression_count=1[\s\S]*registered_internal_zero_fill_fixture_count=12[\s\S]*registered_internal_zero_fill_pass_count=12[\s\S]*post_stop_late_mutation_rezero_fill_count=1[\s\S]*maximum_factory_read_dispose_attempt_count=1\/1\/1[\s\S]*sanitized_result_field_count=15/,
+);
+assert.match(
+  zeroizableClientApiSection,
+  /The registry proves all buffers registered by the synthetic client, not that an arbitrary client registers every allocation/,
+);
+assert.match(
+  zeroizableClientApiSection,
+  /No production adoption approval exists/,
 );
 assert.match(
   readiness,
@@ -2094,6 +2154,9 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-creator-c1-process-isolation-preflight-contract.mjs",
   "scripts/comment-translator-creator-c1-zeroizable-client-boundary-preflight.mjs",
   "scripts/comment-translator-creator-c1-zeroizable-client-boundary-preflight-contract.mjs",
+  "scripts/comment-translator-creator-c1-zeroizable-client-api-preflight.mjs",
+  "scripts/comment-translator-creator-c1-zeroizable-client-api-preflight-ownership.mjs",
+  "scripts/comment-translator-creator-c1-zeroizable-client-api-preflight-contract.mjs",
   "scripts/comment-translator-creator-c12-final-qa-readiness-contract.mjs",
   "scripts/comment-translator-task-board-creator-roadmap-contract.mjs",
 ]);

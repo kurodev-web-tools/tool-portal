@@ -10,7 +10,10 @@ cp1_c3_structural_readiness_status=pass
 cp1_c5_migration_approval_status=consumed
 cp1_c5_migration_execution_status=pass
 cp1_c5_structural_readiness_status=pass
-cp1_next_ordered_migration_approval_unit=CP1-A-MIG-C6
+cp1_c6_migration_approval_status=consumed
+cp1_c6_migration_execution_status=pass
+cp1_c6_structural_readiness_status=pass
+cp1_next_ordered_migration_approval_unit=CP1-A-MIG-C7
 cp1_integration_base=097f369a47564b7a44d211c212580f993eddc71b
 cp1_c1_fail_closed_read_followup_base=09ada36691185be9775940ce653952901bfc64d8
 cp1_c1_runtime_role_classification_followup_base=dd698bf093615c1741e25b73b37761a68804c45b
@@ -177,6 +180,7 @@ CP1 prepares reviewable approval surfaces. It does not prove that Creator Paid i
 - PR #683 confirms that the reviewed C3 entitlement-sync reference is trigger-internal, so no direct service-role grant remediation was required or performed. The direct usage-apply reference, trigger binding, and revoked direct client execution remain confirmed.
 - At reviewed base `d47db7b79b06a569fcb1a5393d6c3094b9867e90`, `CP1-A-MIG-C3` completed with one applied committed transaction. Its post-apply structural readiness passed the reviewed table/column/RLS/policy/function/trigger/grant predicates after one reducer-only retry, with zero row-data reads and zero post-apply mutations. The follow-up section in `docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_CP1_EXTERNAL_EVIDENCE_RECONCILIATION_PREFLIGHT.md` is the durable sanitized evidence record. Store write/read behavior remains separately approval-gated.
 - At reviewed base `f81dd09a07a20576231ae192c2df7e31f3c46568`, `CP1-A-MIG-C5` completed with one applied committed transaction. After two fail-closed envelope-reduction attempts, the separately approved structural-readiness retry passed `6/6` synthetic reducer fixtures and one catalog-only query covering the reviewed table/column/type/nullability/constraint/index/RLS/policy/function/search-path/grant/revoke/comment predicates, with zero row-data reads and zero post-apply mutations. The follow-up section in `docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_CP1_EXTERNAL_EVIDENCE_RECONCILIATION_PREFLIGHT.md` is the durable sanitized evidence record. Store behavior and token behavior remain separately approval-gated.
+- At reviewed base `eeb4a9620014ab81b45f7bf0e0575992d90735ad`, `CP1-A-MIG-C6` completed with one applied committed transaction. Its completing structural-readiness unit passed `6/6` exact-payload synthetic reducer fixtures and one catalog-only query covering the reviewed table/column/type/nullability/constraint/index/RLS/policy/grant/revoke/comment predicates and function absence, with zero row-data reads and zero post-apply mutations. Earlier bounded attempts stopped fail closed on reducer or predicate mismatches. The follow-up section in `docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_CP1_EXTERNAL_EVIDENCE_RECONCILIATION_PREFLIGHT.md` is the durable sanitized evidence record. Store behavior, token behavior, redemption, and authenticated browser behavior remain separately approval-gated.
 - PR #684 is merged and the current fetched integration tip for the runtime-role classification follow-up is exactly `dd698bf093615c1741e25b73b37761a68804c45b`.
 - PR #684 adds the synthetic-only C1 runtime-role classifier harness with exactly 14 sanitized output fields. Actual-authority classification, runtime-source presence/value/validity/provisioning, client initialization, adapter invocation, fixture construction, and remote/deployed behavior remain unchecked / separately approval-gated.
 - PR #685 is merged at `49b4eb66da6b88197311adc3be80070a845ab2bc`, publishing the S2AO fixture-identity authority.
@@ -4605,7 +4609,7 @@ CP1 performs no rollback. Later rollback is separately approved and bounded by t
 
 unchecked_scope_status=recorded
 
-- C1 migration apply is consumed/pass for the reviewed identity, while its remote post-apply schema/policy/grant/function state remains not-run / approval-gated. C3 and C5 migration apply plus their bounded post-apply structural readiness are consumed/pass. C6/C7/C8/C9/C11 migration apply and remote schema state remain not-run / approval-gated.
+- C1 migration apply is consumed/pass for the reviewed identity, while its remote post-apply schema/policy/grant/function state remains not-run / approval-gated. C3, C5, and C6 migration apply plus their bounded post-apply structural readiness are consumed/pass. C7/C8/C9/C11 migration apply and remote schema state remain not-run / approval-gated.
 - Remote/deployed store presence, policy, fail-closed, write/read, cleanup, and production persistence: not-run / approval-gated.
 - The local C1 adapter/read consumer and ephemeral-input factory/store/read bridge seams are synthetic-only verified. The production constructor remains disconnected because its immutable string inputs cannot preserve the current Buffer zero-fill guarantee. Runtime-input values, real adapter/client initialization, and remote/deployed execution remain separately approval-gated.
 - Stripe Product/Price existence or mutation, Checkout, Portal, webhook registration/delivery, subscription state change, and billing mutation: not-run / approval-gated.

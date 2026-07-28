@@ -71,7 +71,7 @@
 - c1_guarantee_governance_approval_status=consumed-local-decision-preflight-only
 - c1_guarantee_governance_production_adoption_approval_status=absent
 - C1 production source procurement is fixed at PR #695 integration tip `d206ff2c07cc10aeb701d0d2034a29b17f58d42b`. One new node-libcurl/libcurl Windows native envelope was researched from official metadata only and rejected with `0/7` proofs established; no PR #694 candidate class was re-audited, no archive was downloaded, and no dependency or production path was executed.
-- CP1 remaining external-evidence reconciliation is current through reviewed base `f81dd09a07a20576231ae192c2df7e31f3c46568`. `CP1-A-MIG-C3` and `CP1-A-MIG-C5` are consumed/pass. C5 completed one applied committed transaction, then passed post-apply structural readiness after `6/6` synthetic reducer fixtures and one separately approved catalog-only retry (`0` row-data reads / `0` post-apply mutations); durable evidence is appended to `docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_CP1_EXTERNAL_EVIDENCE_RECONCILIATION_PREFLIGHT.md`. The next ordered unit is `CP1-A-MIG-C6`. C1 remains `disconnected-fail-closed`.
+- CP1 remaining external-evidence reconciliation is current through reviewed base `eeb4a9620014ab81b45f7bf0e0575992d90735ad`. `CP1-A-MIG-C3`, `CP1-A-MIG-C5`, and `CP1-A-MIG-C6` are consumed/pass. C6 completed one applied committed transaction, then passed post-apply structural readiness after `6/6` exact-payload synthetic reducer fixtures and one completing catalog-only query (`0` row-data reads / `0` post-apply mutations); earlier bounded attempts stopped fail closed on reducer or predicate mismatches. Durable evidence is appended to `docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_CP1_EXTERNAL_EVIDENCE_RECONCILIATION_PREFLIGHT.md`. The next ordered unit is `CP1-A-MIG-C7`. C1 remains `disconnected-fail-closed`.
 - c1_source_procurement_base=d206ff2c07cc10aeb701d0d2034a29b17f58d42b
 - c1_source_procurement_preflight_status=blocked-no-feasible-full-stack-candidate
 - c1_source_procurement_candidate_envelope_count=1
@@ -167,7 +167,8 @@ Do not perform live/external operations without same-thread ready preflight, san
 - C2 merge / integration verification is complete through PR #670 at `4486c180f68369d6620b9f8f3df33518b7cadc38`; Stripe live action and activation remain separate approval-gated steps.
 - C4 merge / integration verification is complete through PR #671 at `fa0d5582a296c2164bd3945c37cbec746315f357`; provider live execution remains separately approval-gated.
 - C5 merge / integration verification is complete through PR #672 at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8`; `CP1-A-MIG-C5` apply and post-apply structural readiness are complete, while store/token behavior remains separately approval-gated.
-- C6/C7/C8 remote migration apply and deployed authenticated-feed browser verification remain separate approval-gated steps.
+- C6 merge / integration verification is complete through PR #673 at `05104fc2d4c6730be6aae772708a10cb2b39d2d6`; `CP1-A-MIG-C6` apply and post-apply structural readiness are complete, while store/redemption/authenticated-browser behavior remains separately approval-gated.
+- C7/C8 remote migration apply and deployed authenticated-feed browser verification remain separate approval-gated steps.
 - C8 merge is complete at `1ec79ca222149626670ec6692c19356bc56bb2c6`; Cloudflare configuration, deploy, activation, and any live token/session operation remain separate approval-gated steps.
 - C9 merge / integration verification is complete through PR #676 at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; remote migration apply and production persistence remain separately approval-gated.
 - C10 merge / integration verification is complete through PR #677 at `c0ac7152687dc0c91470037ec164fda57d7f4259`.
@@ -237,7 +238,7 @@ These items stay visible but are not current release blockers unless explicitly 
 | C3 | Paid usage and monthly reset | merged / integration verified; migration applied and structural readiness pass |
 | C4 | AI natural translation provider route | merged / integration verified at `fa0d5582a296c2164bd3945c37cbec746315f357` |
 | C5 | OBS overlay token runtime | merged / integration verified; migration applied and structural readiness pass |
-| C6 | OBS overlay UI route | merged / integration verified at `05104fc2d4c6730be6aae772708a10cb2b39d2d6`; authenticated feed QA pending / gated |
+| C6 | OBS overlay UI route | merged / integration verified; migration applied and structural readiness pass; authenticated feed QA pending / gated |
 | C7 | Moderator share token runtime | merged / integration verified at `0307b5542c8ac9957370533228ec02893bd48c27` |
 | C8 | Moderator share UI route | merged / integration verified at `1ec79ca222149626670ec6692c19356bc56bb2c6`; authenticated feed QA pending / gated |
 | C9 | Custom dictionary minimum | merged / integration verified at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb` |

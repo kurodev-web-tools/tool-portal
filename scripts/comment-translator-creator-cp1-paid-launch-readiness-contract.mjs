@@ -16,6 +16,8 @@ const c1AdapterReadConsumerBase =
   "945efbcb5bf8053288bf4a8326ff3e21e00d116f";
 const c1EphemeralEntitlementBridgeBase =
   "b4409937b4ef637f3218c6d24e45a32ef20920ce";
+const c1ProductionConstructorCompatibilityBase =
+  "2888bb1a60fdd6851688e3e7b323a40b3c21869c";
 const c1EphemeralRunnerWrapperSha256 =
   "f79a7f1777e9d412bbaaffefd0c0535101a6652bd6b13cb90174cdc1a23e2a2d";
 const c1EphemeralRunnerSha256 =
@@ -27,6 +29,10 @@ const c1MigrationIdentitySha256 =
 const referencePresenceEndpointBase =
   "19eaa0fe0d52c4563ae1957d994c679d0b4bd0dc";
 const c12Head = "e93bfb77dc2017fd4a15e99e075f7e419c14a94d";
+const c1ProductionConstructorCompatibilityContractPath = path.join(
+  root,
+  "scripts/comment-translator-creator-c1-production-constructor-compatibility-contract.mjs",
+);
 
 const expectedLanes = new Map([
   ["LOCAL-DETERMINISTIC", "locally-verified"],
@@ -35,6 +41,11 @@ const expectedLanes = new Map([
   ["AUTHENTICATED-BROWSER", "approval-gated"],
   ["RELEASE-OWNER", "approval-gated"],
 ]);
+
+execFileSync(process.execPath, [c1ProductionConstructorCompatibilityContractPath], {
+  cwd: root,
+  stdio: "pipe",
+});
 
 const expectedStages = new Map([
   ["CP1-S0", "locally-verified"],
@@ -1917,6 +1928,34 @@ assert.match(
   ephemeralEntitlementBridgeSection,
   /No real constructor\/client initialization, adapter\/service invocation/,
 );
+assert.match(
+  readiness,
+  new RegExp(
+    `PR #689 is merged at \`${c1ProductionConstructorCompatibilityBase}\``,
+  ),
+);
+for (const source of [readiness, board, task]) {
+  assert.match(
+    source,
+    /^(?:- )?production_constructor_compatibility_status=blocked-immutable-lifetime-unprovable$/m,
+  );
+  assert.match(
+    source,
+    /^(?:- )?production_wiring_status=disconnected-fail-closed$/m,
+  );
+  assert.match(
+    source,
+    /^(?:- )?sdk_internal_lifetime_status=dependency-blocked-unverified$/m,
+  );
+  assert.match(
+    source,
+    /^(?:- )?required_design_decision=approve-process-isolation-ownership-model-or-zeroizable-client-boundary$/m,
+  );
+}
+assert.match(
+  readiness,
+  /repository_normalization_count=2[\s\S]*repository_constructor_argument_count=2[\s\S]*synthetic_buffer_zero_fill_count=1[\s\S]*synthetic_immutable_copy_survival_count=2[\s\S]*real_constructor_attempt_count=0[\s\S]*real_client_call_count=0[\s\S]*remote_read_attempt_count=0/,
+);
 assert.match(readiness, /effective_plan=Free/);
 assert.match(readiness, /paid_access=inactive/);
 assert.match(
@@ -1956,6 +1995,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-creator-cp1-reference-presence-route-contract.mjs",
   "scripts/comment-translator-creator-c1-runtime-role-classifier.mjs",
   "scripts/comment-translator-creator-c1-runtime-role-classifier-contract.mjs",
+  "scripts/comment-translator-creator-c1-production-constructor-compatibility-contract.mjs",
   "scripts/comment-translator-creator-c12-final-qa-readiness-contract.mjs",
   "scripts/comment-translator-task-board-creator-roadmap-contract.mjs",
 ]);

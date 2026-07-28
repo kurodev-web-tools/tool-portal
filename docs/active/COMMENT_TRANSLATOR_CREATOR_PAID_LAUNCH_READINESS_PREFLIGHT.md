@@ -3848,6 +3848,48 @@ sanitized_result_field_count=4
 - The real C1 constructor path remains disconnected. Its current boundary trims string inputs and passes immutable strings to the service client constructor; decoding the held Buffers would create copies that the runner cannot zero-fill. This local seam therefore characterizes the existing factory/store/read contract without weakening the previously verified ephemeral lifetime guarantee.
 - No real constructor/client initialization, adapter/service invocation, runtime input, query reference, remote read/query/RPC, network call, authentication/session work, mutation, migration, provider/billing/OAuth operation, deploy, activation, CP2, promotion, or public launch occurred.
 
+## CP1-S2AS C1 Production Constructor Compatibility Characterization And Blocker
+
+PR #689 is merged at `2888bb1a60fdd6851688e3e7b323a40b3c21869c`; reviewed head `05178a973dbec207a1082d79ff31816dd4bfd9ea` is contained in integration. This local synthetic-only characterization preserves the merged bridge and runner without production wiring.
+
+```text
+production_constructor_compatibility_status=blocked-immutable-lifetime-unprovable
+production_wiring_status=disconnected-fail-closed
+sdk_internal_lifetime_status=dependency-blocked-unverified
+required_design_decision=approve-process-isolation-ownership-model-or-zeroizable-client-boundary
+repository_normalization_count=2
+repository_constructor_argument_count=2
+synthetic_buffer_zero_fill_count=1
+synthetic_immutable_copy_survival_count=2
+real_constructor_attempt_count=0
+real_client_call_count=0
+remote_read_attempt_count=0
+```
+
+### Proven Repository Boundary
+
+1. The runner owns two mutable Buffers and the existing stop/error path zero-fills those original Buffers.
+2. The merged bridge forwards the same Buffer references to one bounded injected factory attempt and performs at most one bounded store read.
+3. The production factory accepts strings, normalizes both with `trim()`, and passes the two resulting immutable strings to the service-client constructor.
+4. The synthetic characterization demonstrates that zero-filling the source Buffer does not clear either the decoded string or its normalized string copy.
+5. The billing runtime obtains the default store through this production factory and then performs the entitlement read. No production runtime path accepts the runner-owned Buffers directly.
+
+### Unverified Third-Party Boundary
+
+- The lockfile identifies the reviewed SDK package version, but `node_modules` and installed SDK source are absent in this worktree. Dependency installation is not approved.
+- SDK constructor retention, nested client construction, header/auth storage, further string copying, garbage-collection timing, and teardown clearing are therefore unverified.
+- Repository injection proves only that the factory hands two immutable strings across the constructor boundary. It cannot prove the lifetime or number of copies after that boundary.
+
+### Considered Ownership Seams
+
+- Same-process decode and constructor injection: rejected because immutable copies outlive Buffer zero-fill for an unbounded garbage-collection interval.
+- Decode only inside a child process and terminate after one read: not adopted because IPC/runtime decoding introduces process-owned copies whose buffers, strings, SDK retention, teardown ordering, and OS/runtime cleanup are not covered by the approved same-process Buffer guarantee.
+- Change the client boundary to accept zeroizable bytes without internal string retention: potentially compatible, but the current client contract does not provide or prove this capability.
+
+### Fixed Fail-Closed Decision
+
+The production constructor remains disconnected. No inert constructor implementation is added because the ownership seam is not established, and no real constructor, client, adapter, store, read, query, RPC, or network operation ran. Progress requires an explicit design decision approving a process-isolation ownership model with its IPC and teardown guarantees, or a reviewed client boundary that accepts zeroizable byte ownership without unprovable immutable copies.
+
 ## Entitlement, Usage, Provider, And Capability Proof Rules
 
 - Paid-active requires signed supported billing evidence, future signed period, authenticated owner binding, exact activation/allowlist authority, and readable durable C1 state.

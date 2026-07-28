@@ -58,6 +58,8 @@
 - `CP1-A-TARGET-MAP-C1-SOLE-ACTIVE` is consumed with sanitized result `1 accessible / 1 active`, mapping resolved, and execution pass. The opaque identifier is held only in trusted transient execution state; no project metadata, query, mutation, or migration apply was output or run.
 - Free Azure translation route remains current; Creator/Paid routes to an OpenAI mini model first with Azure fallback only for recoverable provider errors.
 
+- CP1-S2C adds a Windows operator-controlled local runner that captures two runtime inputs through non-echoing TTY prompts, holds them only inside one long-running Node process, exposes only fixed wrapper actions for presence / sanitized status / stop, and wipes the held buffers on termination. No runtime input value or raw input name is written or retained outside process memory; client initialization, adapter invocation, fixture construction, remote access, query/RPC, authentication/session work, Worker invocation, configuration changes, and deploy remain not-run / separately approval-gated.
+
 ## Account Limits / Entitlement Control
 
 - Per-account judgment is server-owned: authenticated caller authorization binds work to the owner account, and browser-readable output must not expose owner ids, provider channel ids, provider target metadata, liveChatId, OAuth values, tokens, or billing identifiers.

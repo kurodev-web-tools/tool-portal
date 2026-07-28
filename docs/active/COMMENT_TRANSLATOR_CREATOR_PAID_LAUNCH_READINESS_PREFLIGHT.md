@@ -95,9 +95,10 @@ cp1_c1_goal_bound_ordered_regex_window_fixture_identity_retry_10_approval_status
 cp1_c1_goal_bound_ordered_regex_window_fixture_identity_retry_10_execution_status=aborted-ordered-regex-window-ambiguity
 cp1_c1_goal_bound_hash_min_static_invariant_fixture_identity_approval_status=consumed
 cp1_c1_goal_bound_hash_min_static_invariant_fixture_identity_execution_status=pass
-cp1_c1_post_merge_authority_base=1570003959d6de8154a492d231dcfafa5a30c688
+cp1_c1_post_merge_authority_base=945efbcb5bf8053288bf4a8326ff3e21e00d116f
 cp1_c1_merged_artifact_local_verification_approval_status=consumed
 cp1_c1_merged_artifact_local_verification_execution_status=pass
+cp1_c1_adapter_read_consumer_local_verification_status=pass
 cp1_c12_containment_status=verified
 cp1_new_public_api_status=preview-readiness-route-source-approved
 cp1_reference_presence_endpoint_base=19eaa0fe0d52c4563ae1957d994c679d0b4bd0dc
@@ -130,6 +131,7 @@ CP1 prepares reviewable approval surfaces. It does not prove that Creator Paid i
 - PR #684 adds the synthetic-only C1 runtime-role classifier harness with exactly 14 sanitized output fields. Actual-authority classification, runtime-source presence/value/validity/provisioning, client initialization, adapter invocation, fixture construction, and remote/deployed behavior remain unchecked / separately approval-gated.
 - PR #685 is merged at `49b4eb66da6b88197311adc3be80070a845ab2bc`, publishing the S2AO fixture-identity authority.
 - PR #686 is merged at the current fetched integration tip `1570003959d6de8154a492d231dcfafa5a30c688`; runner head `f711d81cb582d76231db683434d43807c0281240` is contained in integration and the wrapper, runner, and contract artifacts are tracked.
+- PR #687 is merged at the current fetched integration tip `945efbcb5bf8053288bf4a8326ff3e21e00d116f`; reviewed head `5c37104fe19d9e77bf2d7d6061bbcb4b020806cb` is contained in integration. This is the fixed base for the local synthetic-only adapter/read consumer seam.
 - The C12 fixed comparison remains the CP1 baseline: `18 pass / 9 dependency-blocked / 3 known historical / 0 unexpected`.
 - `node_modules` is absent. CP1 does not install dependencies or reinterpret missing dependency-backed checks as regressions.
 - C1-C12 local contracts, migration sources, and existing authenticated server actions/routes remain the authority. No concrete runtime or UI blocker was proven during CP1 discovery.
@@ -3764,6 +3766,39 @@ unchecked_scope_status=recorded
 
 S2AP is consumed/pass and closes merged-artifact local verification. The next C1 goal is a separate fail-closed adapter/read execution consumer. Real credentials, client initialization against a real service, adapter invocation, remote read/query/RPC, external action, mutation, migration, provider/billing/OAuth operation, deploy, CP2, promotion, and public paid launch remain not-run / separately approval-gated.
 
+## CP1-S2AQ C1 Adapter/Read Consumer Local Verification Record
+
+Starting from PR #687 merge commit `945efbcb5bf8053288bf4a8326ff3e21e00d116f`, S2AQ adds one dependency-injected, single-use consumer seam inside the existing process-owned ephemeral runner. The fixed wrapper adds only the `read` control. Direct wrapper startup has no adapter injection and therefore returns a sanitized zero-attempt fail-closed result; synthetic contracts inject the adapter in the same Node process.
+
+approval_id=not-applicable-local
+reviewed_revision=945efbcb5bf8053288bf4a8326ff3e21e00d116f
+target_label=local-c1-ephemeral-adapter-read-consumer
+action_label=verify-single-use-synthetic-adapter-read-consumer
+execution_status=pass
+adapter_read_execution_consumer_status=implemented-local-synthetic-only
+external_evidence_status=unchanged-blocked-approval-gated
+
+### Focused RED/GREEN Outcome
+
+```text
+red_contract_status=pass-expected-missing-consumer
+green_fixture_count=4
+green_fixture_pass_count=4
+green_fixture_fail_count=0
+successful_read_attempt_count=1
+fail_closed_read_attempt_count=1
+zero_attempt_fixture_count=2
+repeat_read_suppression_count=1
+sanitized_result_field_count=4
+```
+
+- The complete-source fixture performs exactly one synthetic read and returns only `executionStatus`, `sourceStatus`, `readAttemptCount`, and `resultStatus`.
+- The incomplete-source and missing-adapter fixtures perform zero reads and fail closed.
+- The adapter-error fixture performs one read and fails closed without returning the error or adapter result.
+- A second read on the successful state is suppressed with zero additional attempts.
+- Held inputs remain Buffers owned by the runner process and are wiped by the existing termination path. The consumer does not log, echo, serialize, persist, or return input values, adapter results, or errors.
+- No real adapter/client initialization, remote read/query/RPC, network call, authentication/session work, mutation, migration, provider/billing/OAuth operation, deploy, activation, CP2, promotion, or public launch occurred.
+
 ## Entitlement, Usage, Provider, And Capability Proof Rules
 
 - Paid-active requires signed supported billing evidence, future signed period, authenticated owner binding, exact activation/allowlist authority, and readable durable C1 state.
@@ -3855,7 +3890,7 @@ unchecked_scope_status=recorded
 
 - C1/C3/C5/C6/C7/C8/C9/C11 remote migration apply and remote schema state: not-run / approval-gated.
 - Remote/deployed store presence, policy, fail-closed, write/read, cleanup, and production persistence: not-run / approval-gated.
-- C1 actual-authority runtime-role classification is prepared but not-run. Runtime-input presence/value/validity/provisioning and adapter/client/remote execution remain separately approval-gated.
+- The local C1 adapter/read consumer seam is synthetic-only verified. Runtime-input values, real adapter/client initialization, and remote/deployed execution remain separately approval-gated.
 - Stripe Product/Price existence or mutation, Checkout, Portal, webhook registration/delivery, subscription state change, and billing mutation: not-run / approval-gated.
 - Production paid-active/inactive/fail-closed entitlement evidence: not-run / approval-gated.
 - Paid usage persistence, actual signed-period rollover, provider-account cost posture, and configured soft/hard limit observation: not-run / approval-gated.

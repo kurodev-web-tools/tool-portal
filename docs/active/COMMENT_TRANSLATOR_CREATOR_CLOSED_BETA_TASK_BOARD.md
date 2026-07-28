@@ -79,7 +79,7 @@
 - C9 is merged through PR #676 at exact integration commit `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; C9 head `10b48d524901c54e4c0402c05709d95bdfe92792` is contained in integration.
 - C10 is merged through PR #677 at exact integration commit `c0ac7152687dc0c91470037ec164fda57d7f4259`; C10 head `834284011252782d98139072c7a183c854f9302a` is contained in integration.
 - C11 is merged through PR #678 at exact integration commit `d1ce9b0d063f65bac968c85f3242398be4b8317f`; C11 head `4bf598f7fca3f21175de7b3aeda0d001121b376b` is contained in integration.
-- C2 live activation, C4 live provider execution, and C8 remote migration apply remain separately approval-gated. `CP1-A-MIG-C7` apply and structural readiness are complete.
+- C2 live activation, C4 live provider execution, and C9 remote migration apply remain separately approval-gated. `CP1-A-MIG-C7` and `CP1-A-MIG-C8` apply and structural readiness are complete.
 - C6 authenticated safe-feed rendering, C8 browser rendering, and C11 authenticated history rendering remain unchecked and approval-gated. CP1 preserves those gates without treating local, planned, or reference-presence evidence as live proof.
 - P1 Prompt Board is MVP-complete and remains post-MVP work: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`.
 - PRs target `codex/comment-translator-free-public-beta-integration` from short-lived feature branches.
@@ -227,7 +227,7 @@ C1 is accepted only when all of the following are verified:
 - `comment translator creator C8 moderator share HTTP transport contract passed` invokes the actual route module and verifies body parsing, 303 token-free redirect, no-store response, success cookie attributes, failure cookie expiry, and absence of non-POST method exports without installing dependencies.
 - Focused C7 runtime/store contracts remain green after adding the private server-only authorization seam; the existing public C7 result stays sanitized.
 - Node syntax checks pass for changed `.ts` server files. Full ESLint, TypeScript, Next build, and 390/820/1280/1920 browser QA are unavailable in this worktree because `node_modules` is absent and dependency installation was not approved.
-- The local C8 migration was reviewed only as repository source. Remote migration apply, production persistence, authenticated/live-token QA, Cloudflare changes, deploy, and activation were not run.
+- `CP1-A-MIG-C8` is consumed/pass at reviewed base `39989805e20880556ecabd0a55405f417a3653d1`: one migration attempt, one applied committed transaction, no reapply, and no rollback. The initial catalog-only query stopped because its connector envelope could not be reduced. The separately approved retry passed `6/6` marker-local reducer fixtures and one completing catalog-only query covering all 19 reviewed C8 table/column/type/nullability/default/constraint/index/RLS/policy/function-absence/grant/revoke/comment predicates, with zero row-data reads and zero post-apply mutations. Store behavior, redemption, token/session actions, authenticated browser behavior, Cloudflare changes, deploy, and activation remain not-run / separately approval-gated.
 - PR #675 is merged into `codex/comment-translator-free-public-beta-integration` at `1ec79ca222149626670ec6692c19356bc56bb2c6`; C8 head `b2bfc5e52ef529a626440334654738a1b4c0e799` is its second parent and both commits resolve to tree `5e06baefd75b8a00010581956953cb6547debff9`.
 
 ## C9 Acceptance Boundary
@@ -425,8 +425,8 @@ This authority is a task board only. Every gated operation requires a separate, 
 - C4 is merged / integration verified through PR #671 at `fa0d5582a296c2164bd3945c37cbec746315f357`; provider live execution remains approval-gated.
 - C5 merge / integration verification is complete through PR #672 at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8`; `CP1-A-MIG-C5` apply and structural readiness are complete, while store/token behavior remains approval-gated.
 - C6 merge / integration verification is complete through PR #673 at `05104fc2d4c6730be6aae772708a10cb2b39d2d6`; `CP1-A-MIG-C6` apply and structural readiness are complete, while store/redemption/authenticated-browser behavior remains approval-gated.
-- C7 merge / integration verification is complete through PR #674 at `0307b5542c8ac9957370533228ec02893bd48c27`; `CP1-A-MIG-C7` apply and structural readiness are complete, while token/store/browser behavior remains approval-gated. C8 remote migration apply and deployed authenticated-feed browser verification remain approval-gated.
-- C8 merge is complete at `1ec79ca222149626670ec6692c19356bc56bb2c6`; Cloudflare configuration, deploy, activation, and any live token/session operation remain approval-gated.
+- C7 merge / integration verification is complete through PR #674 at `0307b5542c8ac9957370533228ec02893bd48c27`; `CP1-A-MIG-C7` apply and structural readiness are complete, while token/store/browser behavior remains approval-gated.
+- C8 merge is complete at `1ec79ca222149626670ec6692c19356bc56bb2c6`; `CP1-A-MIG-C8` apply and structural readiness are complete, while store/redemption/authenticated-browser behavior, Cloudflare configuration, deploy, activation, and any live token/session operation remain approval-gated.
 - C9 merge / integration verification is complete through PR #676 at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; remote migration apply and production persistence remain approval-gated.
 - C10 merge / integration verification is complete through PR #677 at `c0ac7152687dc0c91470037ec164fda57d7f4259`.
 - C11 merge / integration verification is complete through PR #678 at `d1ce9b0d063f65bac968c85f3242398be4b8317f`; remote migration apply, production persistence, and authenticated browser history verification remain approval-gated.

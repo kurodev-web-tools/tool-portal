@@ -85,6 +85,7 @@ const requiredApprovalUnits = [
   "CP1-A-C1-OPAQUE-RUNNER-GOAL-BOUND-ORDERED-REGEX-WINDOW-AND-FIXTURE-IDENTITY-DESIGN-RETRY-9",
   "CP1-A-C1-OPAQUE-RUNNER-GOAL-BOUND-ORDERED-REGEX-WINDOW-AND-FIXTURE-IDENTITY-DESIGN-RETRY-10",
   "CP1-A-C1-OPAQUE-RUNNER-GOAL-BOUND-RUNTIME-ORDINAL-AND-HASH-MIN-STATIC-INVARIANT-FIXTURE-IDENTITY-DESIGN",
+  "CP1-A-C1-OPAQUE-RUNNER-MERGED-ARTIFACT-LOCAL-VERIFICATION-CLOSEOUT",
   "CP1-A-STORE-WRITE-READ",
   "CP1-A-STRIPE-PRODUCT-PRICE",
   "CP1-A-STRIPE-CHECKOUT",
@@ -736,7 +737,7 @@ assert.match(
   new RegExp(`^runner_contract_sha256=${c1EphemeralRunnerContractSha256}$`, "m"),
 );
 assert.match(readiness, /runner_preflight_status=verified-not-running/);
-assert.match(readiness, /runner_artifact_tracking_status=untracked-hash-bound/);
+assert.match(readiness, /runner_artifact_tracking_status=merged-hash-bound/);
 const opaqueRunnerProvisioningSection = readiness.match(
   /^## CP1-S2H C1 Hash-Bound Opaque Ephemeral Runner Provisioning Consumed Execution Record$([\s\S]*?)^## Entitlement, Usage, Provider, And Capability Proof Rules$/m,
 )?.[1];
@@ -1761,7 +1762,7 @@ assert.match(
   /design_attempt_count=1[\s\S]*artifact_hash_match_count=3[\s\S]*runner_control_action_count=0[\s\S]*remediated_expectation_ordinal=unconfirmed[\s\S]*negative_fixture_transform_count=0[\s\S]*negative_fixture_sha256=not-run[\s\S]*fixture_pair_identity_sha256=not-run[\s\S]*fixture_pair_uniqueness_status=not-run[\s\S]*verifier_execution_status=not-run[\s\S]*artifact_change_status=not-run[\s\S]*execution_status=aborted[\s\S]*sanitized_output_review_status=pass[\s\S]*abort_status=triggered-ordered-regex-window-ambiguity[\s\S]*unchecked_scope_status=recorded/,
 );
 const hashMinStaticInvariantFixtureIdentitySection = readiness.match(
-  /^## CP1-S2AO C1 Runtime Ordinal And Hash-Min Static-Invariant Fixture-Identity Design Consumed Pass Record$([\s\S]*?)^## Entitlement, Usage, Provider, And Capability Proof Rules$/m,
+  /^## CP1-S2AO C1 Runtime Ordinal And Hash-Min Static-Invariant Fixture-Identity Design Consumed Pass Record$([\s\S]*?)^## CP1-S2AP C1 Merged-Artifact Local Verification Closeout Consumed Pass Record$/m,
 )?.[1];
 assert.ok(hashMinStaticInvariantFixtureIdentitySection);
 assert.match(
@@ -1797,6 +1798,58 @@ assert.match(
   readiness,
   /^cp1_c1_goal_bound_hash_min_static_invariant_fixture_identity_execution_status=pass$/m,
 );
+assert.match(
+  readiness,
+  /^cp1_c1_post_merge_authority_base=1570003959d6de8154a492d231dcfafa5a30c688$/m,
+);
+assert.match(
+  readiness,
+  /^cp1_c1_merged_artifact_local_verification_approval_status=consumed$/m,
+);
+assert.match(
+  readiness,
+  /^cp1_c1_merged_artifact_local_verification_execution_status=pass$/m,
+);
+const mergedArtifactLocalVerificationSection = readiness.match(
+  /^## CP1-S2AP C1 Merged-Artifact Local Verification Closeout Consumed Pass Record$([\s\S]*?)^## Entitlement, Usage, Provider, And Capability Proof Rules$/m,
+)?.[1];
+assert.ok(mergedArtifactLocalVerificationSection);
+assert.match(
+  mergedArtifactLocalVerificationSection,
+  /approval_id=CP1-A-C1-OPAQUE-RUNNER-MERGED-ARTIFACT-LOCAL-VERIFICATION-CLOSEOUT/,
+);
+assert.match(
+  mergedArtifactLocalVerificationSection,
+  /reviewed_revision=1570003959d6de8154a492d231dcfafa5a30c688/,
+);
+assert.match(
+  mergedArtifactLocalVerificationSection,
+  /runner_head_revision=f711d81cb582d76231db683434d43807c0281240/,
+);
+assert.match(
+  mergedArtifactLocalVerificationSection,
+  /artifact_byte_source=merged-git-blob-canonical-lf/,
+);
+assert.match(mergedArtifactLocalVerificationSection, /runner_full_contract_status=pass/);
+assert.match(
+  mergedArtifactLocalVerificationSection,
+  /adapter_read_execution_consumer_status=not-implemented/,
+);
+const mergedArtifactLocalVerificationOutput =
+  mergedArtifactLocalVerificationSection.match(
+    /Only these 14 fields were recorded in this exact order:\r?\n\r?\n```text\r?\n([\s\S]*?)\r?\n```/,
+  )?.[1];
+assert.ok(mergedArtifactLocalVerificationOutput);
+assert.deepEqual(
+  mergedArtifactLocalVerificationOutput
+    .split(/\r?\n/)
+    .map((line) => line.slice(0, line.indexOf("="))),
+  expectedRunnerContractRemediationFixtureIdentityDesignOutputKeys,
+);
+assert.match(
+  mergedArtifactLocalVerificationSection,
+  /design_attempt_count=1[\s\S]*artifact_hash_match_count=3[\s\S]*runner_control_action_count=0[\s\S]*remediated_expectation_ordinal=4[\s\S]*negative_fixture_transform_count=1[\s\S]*negative_fixture_sha256=27c258f6f081164f6ad8b4978b8007a89d7cea6df79054586498572db1975297[\s\S]*fixture_pair_identity_sha256=b015d75b881b169e2fb3aad6cca8da77792d54ee47c839e3a5e9a6e15f7457e5[\s\S]*fixture_pair_uniqueness_status=unique[\s\S]*verifier_execution_status=pass[\s\S]*artifact_change_status=not-run[\s\S]*execution_status=pass[\s\S]*sanitized_output_review_status=pass[\s\S]*abort_status=not-triggered[\s\S]*unchecked_scope_status=recorded/,
+);
 assert.match(readiness, /effective_plan=Free/);
 assert.match(readiness, /paid_access=inactive/);
 assert.match(
@@ -1806,8 +1859,8 @@ assert.match(
 
 assert.match(board, new RegExp(`C12[\\s\\S]*${integrationBase}`));
 assert.match(board, /^## CP1 Acceptance Boundary$/m);
-assert.match(board, /71 independent approval units/);
-assert.match(task, /71 independent approval units/);
+assert.match(board, /72 independent approval units/);
+assert.match(task, /72 independent approval units/);
 assert.match(
   board,
   /\| CP1 \| Creator paid launch readiness \| local readiness complete; external evidence blocked \/ approval-gated \|/,

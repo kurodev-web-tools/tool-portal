@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("start", "presence", "status", "stop")]
+    [ValidateSet("start", "presence", "status", "read", "stop")]
     [string]$Action = "status"
 )
 
@@ -58,6 +58,7 @@ try {
     switch ($Action) {
         "presence" { Write-Output "input_presence=unavailable" }
         "status" { Write-Output "runner_status=not-running" }
+        "read" { Write-Output "execution_status=fail-closed source_status=unavailable read_attempt_count=0 result_status=unavailable" }
         "stop" { Write-Output "termination_status=not-running" }
     }
     exit 1
@@ -76,6 +77,7 @@ try {
 $expectedResponse = switch ($Action) {
     "presence" { "input_presence=complete" }
     "status" { "runner_status=held-idle" }
+    "read" { "execution_status=fail-closed source_status=complete read_attempt_count=0 result_status=unavailable" }
     "stop" { "termination_status=stopping" }
 }
 

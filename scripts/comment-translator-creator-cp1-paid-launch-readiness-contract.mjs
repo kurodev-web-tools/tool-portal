@@ -12,6 +12,8 @@ const c1FailClosedReadFollowupBase =
   "09ada36691185be9775940ce653952901bfc64d8";
 const c1RuntimeRoleClassificationFollowupBase =
   "dd698bf093615c1741e25b73b37761a68804c45b";
+const c1AdapterReadConsumerBase =
+  "945efbcb5bf8053288bf4a8326ff3e21e00d116f";
 const c1EphemeralRunnerWrapperSha256 =
   "f79a7f1777e9d412bbaaffefd0c0535101a6652bd6b13cb90174cdc1a23e2a2d";
 const c1EphemeralRunnerSha256 =
@@ -1800,7 +1802,7 @@ assert.match(
 );
 assert.match(
   readiness,
-  /^cp1_c1_post_merge_authority_base=1570003959d6de8154a492d231dcfafa5a30c688$/m,
+  new RegExp(`^cp1_c1_post_merge_authority_base=${c1AdapterReadConsumerBase}$`, "m"),
 );
 assert.match(
   readiness,
@@ -1811,7 +1813,7 @@ assert.match(
   /^cp1_c1_merged_artifact_local_verification_execution_status=pass$/m,
 );
 const mergedArtifactLocalVerificationSection = readiness.match(
-  /^## CP1-S2AP C1 Merged-Artifact Local Verification Closeout Consumed Pass Record$([\s\S]*?)^## Entitlement, Usage, Provider, And Capability Proof Rules$/m,
+  /^## CP1-S2AP C1 Merged-Artifact Local Verification Closeout Consumed Pass Record$([\s\S]*?)^## CP1-S2AQ C1 Adapter\/Read Consumer Local Verification Record$/m,
 )?.[1];
 assert.ok(mergedArtifactLocalVerificationSection);
 assert.match(
@@ -1849,6 +1851,30 @@ assert.deepEqual(
 assert.match(
   mergedArtifactLocalVerificationSection,
   /design_attempt_count=1[\s\S]*artifact_hash_match_count=3[\s\S]*runner_control_action_count=0[\s\S]*remediated_expectation_ordinal=4[\s\S]*negative_fixture_transform_count=1[\s\S]*negative_fixture_sha256=27c258f6f081164f6ad8b4978b8007a89d7cea6df79054586498572db1975297[\s\S]*fixture_pair_identity_sha256=b015d75b881b169e2fb3aad6cca8da77792d54ee47c839e3a5e9a6e15f7457e5[\s\S]*fixture_pair_uniqueness_status=unique[\s\S]*verifier_execution_status=pass[\s\S]*artifact_change_status=not-run[\s\S]*execution_status=pass[\s\S]*sanitized_output_review_status=pass[\s\S]*abort_status=not-triggered[\s\S]*unchecked_scope_status=recorded/,
+);
+assert.match(
+  readiness,
+  /^cp1_c1_adapter_read_consumer_local_verification_status=pass$/m,
+);
+const adapterReadConsumerSection = readiness.match(
+  /^## CP1-S2AQ C1 Adapter\/Read Consumer Local Verification Record$([\s\S]*?)^## Entitlement, Usage, Provider, And Capability Proof Rules$/m,
+)?.[1];
+assert.ok(adapterReadConsumerSection);
+assert.match(
+  adapterReadConsumerSection,
+  new RegExp(`reviewed_revision=${c1AdapterReadConsumerBase}`),
+);
+assert.match(
+  adapterReadConsumerSection,
+  /adapter_read_execution_consumer_status=implemented-local-synthetic-only/,
+);
+assert.match(
+  adapterReadConsumerSection,
+  /red_contract_status=pass-expected-missing-consumer[\s\S]*green_fixture_count=4[\s\S]*green_fixture_pass_count=4[\s\S]*green_fixture_fail_count=0[\s\S]*successful_read_attempt_count=1[\s\S]*fail_closed_read_attempt_count=1[\s\S]*zero_attempt_fixture_count=2[\s\S]*repeat_read_suppression_count=1[\s\S]*sanitized_result_field_count=4/,
+);
+assert.match(
+  adapterReadConsumerSection,
+  /No real adapter\/client initialization, remote read\/query\/RPC/,
 );
 assert.match(readiness, /effective_plan=Free/);
 assert.match(readiness, /paid_access=inactive/);

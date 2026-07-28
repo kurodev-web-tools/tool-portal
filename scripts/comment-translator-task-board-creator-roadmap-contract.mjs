@@ -305,13 +305,17 @@ function run() {
   );
   assert.match(
     creatorPaidLaunchReadiness,
-    /^cp1_c1_post_merge_authority_base=1570003959d6de8154a492d231dcfafa5a30c688$/m
+    /^cp1_c1_post_merge_authority_base=945efbcb5bf8053288bf4a8326ff3e21e00d116f$/m
   );
   assert.match(creatorPaidLaunchReadiness, /runner_full_contract_status=pass/);
   assert.match(
     creatorPaidLaunchReadiness,
-    /adapter_read_execution_consumer_status=not-implemented/
+    /adapter_read_execution_consumer_status=implemented-local-synthetic-only/
   );
+  assert.match(creatorPaidLaunchReadiness, /green_fixture_pass_count=4/);
+  assert.match(creatorPaidLaunchReadiness, /external_evidence_status=unchanged-blocked-approval-gated/);
+  assert.match(creator, /PR #687 is merged at current integration tip `945efbcb5bf8053288bf4a8326ff3e21e00d116f`/);
+  assert.match(task, /PR #687 is merged at current integration tip `945efbcb5bf8053288bf4a8326ff3e21e00d116f`/);
   assert.match(creator, /72 independent approval units/);
   assert.match(task, /72 independent approval units/);
 

@@ -9,9 +9,10 @@ const CONTROL_PIPE_PATH = `\\\\.\\pipe\\${CONTROL_PIPE_NAME}`;
 const MAX_INPUT_BYTES = 4096;
 const MAX_CONTROL_BYTES = 32;
 
-export function createEphemeralState() {
+export function createEphemeralState({ readAdapter = null } = {}) {
   let heldInputs = null;
   let terminated = false;
+  let readStarted = false;
 
   function wipe() {
     if (heldInputs !== null) {
@@ -60,8 +61,58 @@ export function createEphemeralState() {
       }
     },
 
+    async executeRead() {
+      if (terminated || heldInputs === null) {
+        return createReadExecutionResult({
+          sourceStatus: "incomplete",
+          readAttemptCount: 0,
+        });
+      }
+
+      if (readStarted || typeof readAdapter !== "function") {
+        return createReadExecutionResult({
+          sourceStatus: "complete",
+          readAttemptCount: 0,
+        });
+      }
+
+      readStarted = true;
+      try {
+        await readAdapter(heldInputs[0], heldInputs[1]);
+        return Object.freeze({
+          executionStatus: "pass",
+          sourceStatus: "complete",
+          readAttemptCount: 1,
+          resultStatus: "available",
+        });
+      } catch {
+        return createReadExecutionResult({
+          sourceStatus: "complete",
+          readAttemptCount: 1,
+        });
+      }
+    },
+
     wipe,
   });
+}
+
+function createReadExecutionResult({ sourceStatus, readAttemptCount }) {
+  return Object.freeze({
+    executionStatus: "fail-closed",
+    sourceStatus,
+    readAttemptCount,
+    resultStatus: "unavailable",
+  });
+}
+
+function formatReadExecutionResult(result) {
+  return [
+    `execution_status=${result.executionStatus}`,
+    `source_status=${result.sourceStatus}`,
+    `read_attempt_count=${result.readAttemptCount}`,
+    `result_status=${result.resultStatus}`,
+  ].join(" ");
 }
 
 export function readHiddenInput({ input, output, prompt }) {
@@ -155,7 +206,7 @@ function handleControlConnection(connection, state, stopRunner) {
     connection.end("control_status=rejected\n");
   }
 
-  connection.on("data", (chunk) => {
+  connection.on("data", async (chunk) => {
     if (handled) {
       return;
     }
@@ -165,7 +216,10 @@ function handleControlConnection(connection, state, stopRunner) {
         const command = decodeControlRequest(request.subarray(0, length));
         request.fill(0);
         handled = true;
-        const response = state.control(command);
+        const response =
+          command === "read"
+            ? formatReadExecutionResult(await state.executeRead())
+            : state.control(command);
         connection.end(`${response}\n`, () => {
           if (command === "stop") {
             stopRunner();
@@ -190,8 +244,8 @@ function handleControlConnection(connection, state, stopRunner) {
   });
 }
 
-async function run() {
-  const state = createEphemeralState();
+export async function run({ readAdapter = null } = {}) {
+  const state = createEphemeralState({ readAdapter });
   let first = null;
   let second = null;
 

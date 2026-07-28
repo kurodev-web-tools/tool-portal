@@ -80,6 +80,99 @@ function verifyHeldStateAndTermination() {
   assert.equal(state.control("status"), "runner_status=terminated");
 }
 
+async function verifyBoundedReadConsumer() {
+  const successFirst = Buffer.alloc(4, 0x61);
+  const successSecond = Buffer.alloc(5, 0x62);
+  let successReadCount = 0;
+  const successState = createEphemeralState({
+    readAdapter: async (first, second) => {
+      successReadCount += 1;
+      assert.equal(first, successFirst);
+      assert.equal(second, successSecond);
+      return { ignoredAdapterValue: "synthetic-non-sensitive" };
+    },
+  });
+  successState.hold(successFirst, successSecond);
+
+  const successResult = await successState.executeRead();
+
+  assert.deepEqual(successResult, {
+    executionStatus: "pass",
+    sourceStatus: "complete",
+    readAttemptCount: 1,
+    resultStatus: "available",
+  });
+  assert.equal(successReadCount, 1);
+  assert.doesNotMatch(
+    JSON.stringify(successResult),
+    /synthetic-non-sensitive|aaaa|bbbbb/,
+  );
+  assert.deepEqual(await successState.executeRead(), {
+    executionStatus: "fail-closed",
+    sourceStatus: "complete",
+    readAttemptCount: 0,
+    resultStatus: "unavailable",
+  });
+  assert.equal(successReadCount, 1);
+  successState.wipe();
+
+  let incompleteReadCount = 0;
+  const incompleteState = createEphemeralState({
+    readAdapter: async () => {
+      incompleteReadCount += 1;
+      return {};
+    },
+  });
+
+  assert.deepEqual(await incompleteState.executeRead(), {
+    executionStatus: "fail-closed",
+    sourceStatus: "incomplete",
+    readAttemptCount: 0,
+    resultStatus: "unavailable",
+  });
+  assert.equal(incompleteReadCount, 0);
+  incompleteState.wipe();
+
+  const missingAdapterFirst = Buffer.alloc(4, 0x63);
+  const missingAdapterSecond = Buffer.alloc(5, 0x64);
+  const missingAdapterState = createEphemeralState();
+  missingAdapterState.hold(missingAdapterFirst, missingAdapterSecond);
+
+  assert.deepEqual(await missingAdapterState.executeRead(), {
+    executionStatus: "fail-closed",
+    sourceStatus: "complete",
+    readAttemptCount: 0,
+    resultStatus: "unavailable",
+  });
+  missingAdapterState.wipe();
+
+  const errorFirst = Buffer.alloc(4, 0x65);
+  const errorSecond = Buffer.alloc(5, 0x66);
+  let errorReadCount = 0;
+  const errorState = createEphemeralState({
+    readAdapter: async () => {
+      errorReadCount += 1;
+      throw new Error("synthetic-adapter-error");
+    },
+  });
+  errorState.hold(errorFirst, errorSecond);
+
+  const errorResult = await errorState.executeRead();
+
+  assert.deepEqual(errorResult, {
+    executionStatus: "fail-closed",
+    sourceStatus: "complete",
+    readAttemptCount: 1,
+    resultStatus: "unavailable",
+  });
+  assert.equal(errorReadCount, 1);
+  assert.doesNotMatch(
+    JSON.stringify(errorResult),
+    /synthetic-adapter-error|eeee|ffff/,
+  );
+  errorState.wipe();
+}
+
 function verifyWindowsControlLine() {
   const request = Buffer.from([0x70, 0x72, 0x65, 0x73, 0x65, 0x6e, 0x63, 0x65, 0x0d]);
 
@@ -94,7 +187,7 @@ async function verifyFixedWrapper() {
   );
   const wrapperSource = await readFile(wrapperUrl, "utf8");
 
-  assert.match(wrapperSource, /ValidateSet\("start", "presence", "status", "stop"\)/);
+  assert.match(wrapperSource, /ValidateSet\("start", "presence", "status", "read", "stop"\)/);
   assert.match(wrapperSource, /NamedPipeClientStream/);
   assert.match(wrapperSource, /Start-Process/);
   assert.doesNotMatch(wrapperSource, /Write-Host/);
@@ -118,6 +211,26 @@ async function verifyFixedWrapper() {
   assert.equal(absentStatus.status, 1);
   assert.equal(absentStatus.stdout.trim(), "runner_status=not-running");
   assert.equal(absentStatus.stderr, "");
+
+  const absentRead = spawnSync(
+    "powershell.exe",
+    [
+      "-NoProfile",
+      "-ExecutionPolicy",
+      "Bypass",
+      "-File",
+      fileURLToPath(wrapperUrl),
+      "read",
+    ],
+    { encoding: "utf8" },
+  );
+
+  assert.equal(absentRead.status, 1);
+  assert.equal(
+    absentRead.stdout.trim(),
+    "execution_status=fail-closed source_status=unavailable read_attempt_count=0 result_status=unavailable",
+  );
+  assert.equal(absentRead.stderr, "");
 }
 
 assert.equal(
@@ -126,6 +239,7 @@ assert.equal(
 );
 await verifyHiddenInput();
 verifyHeldStateAndTermination();
+await verifyBoundedReadConsumer();
 verifyWindowsControlLine();
 await verifyFixedWrapper();
 

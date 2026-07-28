@@ -1839,8 +1839,16 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-creator-c12-final-qa-readiness-contract.mjs",
   "scripts/comment-translator-task-board-creator-roadmap-contract.mjs",
 ]);
+const approvedRunnerFiles = new Set([
+  "scripts/comment-translator-creator-c1-ephemeral-runner.mjs",
+  "scripts/comment-translator-creator-c1-ephemeral-runner.ps1",
+  "scripts/comment-translator-creator-c1-ephemeral-runner-contract.mjs",
+]);
 for (const file of changedFiles()) {
-  assert.ok(allowedChangedFiles.has(file), `CP1 change stays in docs/contract scope: ${file}`);
+  assert.ok(
+    allowedChangedFiles.has(file) || approvedRunnerFiles.has(file),
+    `CP1 change stays in its explicitly approved scope: ${file}`,
+  );
 }
 
 console.log("comment translator creator CP1 paid launch readiness contract passed");

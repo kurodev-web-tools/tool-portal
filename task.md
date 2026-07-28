@@ -71,6 +71,7 @@
 - c1_guarantee_governance_approval_status=consumed-local-decision-preflight-only
 - c1_guarantee_governance_production_adoption_approval_status=absent
 - C1 production source procurement is fixed at PR #695 integration tip `d206ff2c07cc10aeb701d0d2034a29b17f58d42b`. One new node-libcurl/libcurl Windows native envelope was researched from official metadata only and rejected with `0/7` proofs established; no PR #694 candidate class was re-audited, no archive was downloaded, and no dependency or production path was executed.
+- CP1 remaining external-evidence reconciliation is review-ready at PR #696 merge commit `e7015f0f97ad128477566e27551d6cd2f5ba6890` in `docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_CP1_EXTERNAL_EVIDENCE_RECONCILIATION_PREFLIGHT.md`. C1 remains `disconnected-fail-closed`; the sole recommended next approval unit is the C1-independent ordered migration unit `CP1-A-MIG-C3`, with fresh target binding, rollback owner, exact canonical Git-blob identity, and sanitized output review required before any separately approved apply.
 - c1_source_procurement_base=d206ff2c07cc10aeb701d0d2034a29b17f58d42b
 - c1_source_procurement_preflight_status=blocked-no-feasible-full-stack-candidate
 - c1_source_procurement_candidate_envelope_count=1

@@ -11,6 +11,8 @@ const readinessPath =
 const boardPath =
   "docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md";
 const taskPath = "task.md";
+const externalEvidenceReconciliationPath =
+  "docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_CP1_EXTERNAL_EVIDENCE_RECONCILIATION_PREFLIGHT.md";
 const contractPath =
   "scripts/comment-translator-creator-c1-production-source-procurement-preflight-contract.mjs";
 const cp1ContractPath =
@@ -132,6 +134,7 @@ for (const proof of proofBlocks) {
 
 const allowedChangedPaths = new Set([
   readinessPath,
+  externalEvidenceReconciliationPath,
   boardPath,
   taskPath,
   contractPath,

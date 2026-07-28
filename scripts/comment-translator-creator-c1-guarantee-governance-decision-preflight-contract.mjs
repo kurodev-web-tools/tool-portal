@@ -11,12 +11,15 @@ const readinessPath =
 const boardPath =
   "docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md";
 const taskPath = "task.md";
+const externalEvidenceReconciliationPath =
+  "docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_CP1_EXTERNAL_EVIDENCE_RECONCILIATION_PREFLIGHT.md";
 const contractPath =
   "scripts/comment-translator-creator-c1-guarantee-governance-decision-preflight-contract.mjs";
 const sourceProcurementResearchPrefix =
   "docs/archive/2026-07-28-c1-production-source-procurement-ulw-research/";
 const allowedChangedPaths = new Set([
   readinessPath,
+  externalEvidenceReconciliationPath,
   boardPath,
   taskPath,
   contractPath,

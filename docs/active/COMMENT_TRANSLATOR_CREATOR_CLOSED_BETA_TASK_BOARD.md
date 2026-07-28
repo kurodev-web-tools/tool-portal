@@ -79,7 +79,7 @@
 - C9 is merged through PR #676 at exact integration commit `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; C9 head `10b48d524901c54e4c0402c05709d95bdfe92792` is contained in integration.
 - C10 is merged through PR #677 at exact integration commit `c0ac7152687dc0c91470037ec164fda57d7f4259`; C10 head `834284011252782d98139072c7a183c854f9302a` is contained in integration.
 - C11 is merged through PR #678 at exact integration commit `d1ce9b0d063f65bac968c85f3242398be4b8317f`; C11 head `4bf598f7fca3f21175de7b3aeda0d001121b376b` is contained in integration.
-- C2 live activation, C4 live provider execution, and C6/C7/C8 remote migration apply remain separately approval-gated.
+- C2 live activation, C4 live provider execution, and C7/C8 remote migration apply remain separately approval-gated.
 - C6 authenticated safe-feed rendering, C8 browser rendering, and C11 authenticated history rendering remain unchecked and approval-gated. CP1 preserves those gates without treating local, planned, or reference-presence evidence as live proof.
 - P1 Prompt Board is MVP-complete and remains post-MVP work: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`.
 - PRs target `codex/comment-translator-free-public-beta-integration` from short-lived feature branches.
@@ -186,10 +186,11 @@ C1 is accepted only when all of the following are verified:
 
 - `comment translator creator C6 OBS overlay route contract passed` verifies POST-only redemption, stable no-token URL handling, digest-only browser-session persistence, C5-backed authorization on every read, rotation/revocation/replay rejection, sanitized unavailable output, safe display names, role/priority/Super Chat projection, original-text disclosure, source attribution, and service-role-only schema policy.
 - Focused C5 runtime and durable-store contracts remain green after the private server-only authorization seam was added. The existing browser-safe public C5 validation result remains sanitized.
-- The local C6 migration defines service-role-only `comment_translator_obs_overlay_browser_sessions`, a unique capability digest, one current row per owner, RLS, and revoked anon/authenticated access. Remote migration apply was not run.
+- The local C6 migration defines service-role-only `comment_translator_obs_overlay_browser_sessions`, a unique capability digest, one current row per owner, RLS, and revoked anon/authenticated access. At PR #673 verification time, remote migration apply was not run; the later bounded CP1 apply and structural evidence are recorded below.
+- `CP1-A-MIG-C6` is consumed/pass at reviewed base `eeb4a9620014ab81b45f7bf0e0575992d90735ad`: one migration attempt, one applied committed transaction, and no reapply or rollback. Its completing structural-readiness unit passed `6/6` exact-payload synthetic reducer fixtures and one catalog-only query covering all reviewed C6 structure predicates, with zero row-data reads and zero post-apply mutations. Earlier bounded attempts stopped fail closed on reducer or predicate mismatches. Store behavior, token behavior, redemption, and authenticated safe-feed rendering remain not-run / separately approval-gated.
 - An explicitly approved `npm ci` restored locked dependencies. Changed-file ESLint passes, and the production build compiles before the repository-wide TypeScript phase stops on pre-existing C1/C3 Supabase structural-type errors; C6 and directly consumed C5 store type errors were resolved without weakening their contracts.
 - The actual local route returned a sanitized fail-closed view at 1280x720 and 1920x1080. Both canvases verified transparent computed `html`/`body` backgrounds, no horizontal overflow, an empty password credential input, stable URL with no credential, empty local/session storage, no token/private identifier material in visible DOM or screenshots, and no browser console warning/error.
-- Authenticated safe-feed rendering remains unchecked because the local C5/C6 migrations were not applied and no real token/session/feed operation was authorized. This check may follow the approved PR merge and separately approved environment readiness.
+- At PR #673 verification time, authenticated safe-feed rendering was unchecked because the local C5/C6 migrations were not applied. Their later bounded applies do not establish browser behavior, and no real token/session/feed operation has been authorized, so authenticated safe-feed rendering remains unchecked and separately approval-gated.
 - PR #673 is merged into `codex/comment-translator-free-public-beta-integration` at `05104fc2d4c6730be6aae772708a10cb2b39d2d6`; C6 head `60729f844b099d687e8c28ae794d38398d5a31ad` is contained in integration and both commits resolve to tree `9090e9af7d2f20a1258eca5e2840895cb7e35c8b`.
 
 ## C7 Acceptance Boundary
@@ -295,10 +296,10 @@ C1 is accepted only when all of the following are verified:
 - Local C2 fixtures do not establish live Product/Price interval, billing cadence, trial policy, webhook destination, Customer mapping values, or production configuration; C3 continues to follow only signed period-boundary advances.
 - C4 does not infer an OpenAI model, provider pricing/token multiplier, budget amount, billing cadence, or production value. Operator-owned server environment values and provider-account caps remain required before any separately approved live/provider smoke.
 - Dependency-backed contracts, ESLint, TypeScript, build, and browser QA remain blocked in this worktree by missing `node_modules`; installation was not approved. Three dependency-free historical contracts retain known stale provider-fixture, task-history, and feed-owner assertions and remain baseline limitations.
-- C5 migration apply and structural readiness are complete, while C5 store/token behavior remains unverified and separately approval-gated. C6-C9 and C11 remote migration apply and production persistence remain unverified and separately approval-gated. Until each remaining reviewed migration is applied, its deployed store remains unavailable and fails closed.
+- C5 and C6 migration apply and structural readiness are complete, while their store/token/redemption/authenticated-browser behavior remains unverified and separately approval-gated. C7-C9 and C11 remote migration apply and production persistence remain unverified and separately approval-gated. Until each remaining reviewed migration is applied, its deployed store remains unavailable and fails closed.
 - C11 browser-visible files changed, but width QA at `390 / 820 / 1024 / 1280 / 1366px` is blocked because dependencies and a local server are absent. C6/C8 authenticated/live-token browser QA remains separately approval-gated and was not run.
 - C11 is merged / integration verified at `d1ce9b0d063f65bac968c85f3242398be4b8317f`; C11 head `4bf598f7fca3f21175de7b3aeda0d001121b376b` is contained in integration.
-- C12 final QA owns the task-specific readiness matrix. C6-C9/C11 remote migration apply, C5 store/token behavior, C6/C8/C11 authenticated browser QA, and all Stripe/provider/live operations remain separate approval gates.
+- C12 final QA owns the task-specific readiness matrix. C7-C9/C11 remote migration apply, C5/C6 store/token/redemption behavior, C6/C8/C11 authenticated browser QA, and all Stripe/provider/live operations remain separate approval gates.
 
 ## C12 Acceptance Boundary
 
@@ -384,7 +385,7 @@ C1 is accepted only when all of the following are verified:
 | C3 | Paid usage and monthly reset | merged / integration verified; migration applied and structural readiness pass |
 | C4 | AI natural translation provider route | merged / integration verified at `fa0d5582a296c2164bd3945c37cbec746315f357` |
 | C5 | OBS overlay token runtime | merged / integration verified; migration applied and structural readiness pass |
-| C6 | OBS overlay UI route | merged / integration verified at `05104fc2d4c6730be6aae772708a10cb2b39d2d6`; authenticated feed QA pending / gated |
+| C6 | OBS overlay UI route | merged / integration verified; migration applied and structural readiness pass; authenticated feed QA pending / gated |
 | C7 | Moderator share token runtime | merged / integration verified at `0307b5542c8ac9957370533228ec02893bd48c27` |
 | C8 | Moderator share UI route | merged / integration verified at `1ec79ca222149626670ec6692c19356bc56bb2c6`; authenticated feed QA pending / gated |
 | C9 | Custom dictionary minimum | merged / integration verified at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb` |
@@ -422,7 +423,8 @@ This authority is a task board only. Every gated operation requires a separate, 
 - C2 merge / integration verification is complete through PR #670 at `4486c180f68369d6620b9f8f3df33518b7cadc38`; live Stripe action and activation remain approval-gated.
 - C4 is merged / integration verified through PR #671 at `fa0d5582a296c2164bd3945c37cbec746315f357`; provider live execution remains approval-gated.
 - C5 merge / integration verification is complete through PR #672 at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8`; `CP1-A-MIG-C5` apply and structural readiness are complete, while store/token behavior remains approval-gated.
-- C6/C7/C8 remote migration apply and deployed authenticated-feed browser verification remain approval-gated.
+- C6 merge / integration verification is complete through PR #673 at `05104fc2d4c6730be6aae772708a10cb2b39d2d6`; `CP1-A-MIG-C6` apply and structural readiness are complete, while store/redemption/authenticated-browser behavior remains approval-gated.
+- C7/C8 remote migration apply and deployed authenticated-feed browser verification remain approval-gated.
 - C8 merge is complete at `1ec79ca222149626670ec6692c19356bc56bb2c6`; Cloudflare configuration, deploy, activation, and any live token/session operation remain approval-gated.
 - C9 merge / integration verification is complete through PR #676 at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; remote migration apply and production persistence remain approval-gated.
 - C10 merge / integration verification is complete through PR #677 at `c0ac7152687dc0c91470037ec164fda57d7f4259`.

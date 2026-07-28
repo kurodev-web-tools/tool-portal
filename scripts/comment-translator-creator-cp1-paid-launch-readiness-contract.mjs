@@ -66,6 +66,10 @@ const c1GuaranteeGovernanceDecisionContractPath = path.join(
   root,
   "scripts/comment-translator-creator-c1-guarantee-governance-decision-preflight-contract.mjs",
 );
+const c1ProductionSourceProcurementContractPath = path.join(
+  root,
+  "scripts/comment-translator-creator-c1-production-source-procurement-preflight-contract.mjs",
+);
 
 const expectedLanes = new Map([
   ["LOCAL-DETERMINISTIC", "locally-verified"],
@@ -100,6 +104,10 @@ execFileSync(
   },
 );
 execFileSync(process.execPath, [c1GuaranteeGovernanceDecisionContractPath], {
+  cwd: root,
+  stdio: "pipe",
+});
+execFileSync(process.execPath, [c1ProductionSourceProcurementContractPath], {
   cwd: root,
   stdio: "pipe",
 });
@@ -2136,6 +2144,24 @@ for (const source of [readiness, board, task]) {
     source,
     /c1_guarantee_governance_process_isolation_risk_acceptance_status=absent-not-in-this-approval/,
   );
+  assert.match(
+    source,
+    /c1_source_procurement_preflight_status=blocked-no-feasible-full-stack-candidate/,
+  );
+  assert.match(
+    source,
+    /c1_source_procurement_candidate_envelope_count=1/,
+  );
+  assert.match(
+    source,
+    /c1_source_procurement_candidate_id=node-libcurl-v5\.1\.2-libcurl-8\.17\.0-win32-x64-node-v127/,
+  );
+  assert.match(source, /c1_source_procurement_eligible_candidate_count=0/);
+  assert.match(source, /c1_source_procurement_proven_proof_count=0/);
+  assert.match(
+    source,
+    /c1_source_procurement_residual_risk_acceptance_status=absent-not-in-this-approval/,
+  );
 }
 assert.match(
   readiness,
@@ -2266,9 +2292,12 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-creator-c1-zeroizable-client-candidate-source-preflight.mjs",
   "scripts/comment-translator-creator-c1-zeroizable-client-candidate-source-preflight-contract.mjs",
   "scripts/comment-translator-creator-c1-guarantee-governance-decision-preflight-contract.mjs",
+  "scripts/comment-translator-creator-c1-production-source-procurement-preflight-contract.mjs",
   "scripts/comment-translator-creator-c12-final-qa-readiness-contract.mjs",
   "scripts/comment-translator-task-board-creator-roadmap-contract.mjs",
 ]);
+const sourceProcurementResearchPrefix =
+  "docs/archive/2026-07-28-c1-production-source-procurement-ulw-research/";
 const approvedRunnerFiles = new Set([
   "scripts/comment-translator-creator-c1-ephemeral-entitlement-bridge.mjs",
   "scripts/comment-translator-creator-c1-ephemeral-entitlement-bridge-contract.mjs",
@@ -2278,7 +2307,9 @@ const approvedRunnerFiles = new Set([
 ]);
 for (const file of changedFiles()) {
   assert.ok(
-    allowedChangedFiles.has(file) || approvedRunnerFiles.has(file),
+    allowedChangedFiles.has(file) ||
+      approvedRunnerFiles.has(file) ||
+      file.startsWith(sourceProcurementResearchPrefix),
     `CP1 change stays in its explicitly approved scope: ${file}`,
   );
 }

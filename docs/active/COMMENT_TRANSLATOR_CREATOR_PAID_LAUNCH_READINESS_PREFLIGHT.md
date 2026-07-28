@@ -4399,6 +4399,114 @@ The approval consumed for this section authorizes only the local governance deci
 
 The already-fixed future approval for one operator-provided exact source/revision remains the only next C1 evidence unit after its prerequisites exist. The separate verbatim process-isolation approval in CP1-S2AT remains required before any residual risk is accepted or the guarantee changes. Neither approval is inferred from this preflight.
 
+## CP1-S2AY C1 Production Source Procurement Preflight
+
+This preflight starts at merged PR #695 integration tip `d206ff2c07cc10aeb701d0d2034a29b17f58d42b`. It does not repeat the four candidate classes rejected by PR #694. Read-only official repository, registry, runtime, curl/OpenSSL, and Microsoft sources were used to narrow the new envelope to one candidate: the Windows x64 Node ABI v127 prebuilt path for `node-libcurl@5.1.2`, backed by libcurl `8.17.0`. No archive was downloaded, no dependency was installed, and no constructor, client, read, auth/session, or remote operation ran.
+
+```text
+c1_source_procurement_base=d206ff2c07cc10aeb701d0d2034a29b17f58d42b
+c1_source_procurement_preflight_status=blocked-no-feasible-full-stack-candidate
+c1_source_procurement_candidate_envelope_count=1
+c1_source_procurement_candidate_id=node-libcurl-v5.1.2-libcurl-8.17.0-win32-x64-node-v127
+c1_source_procurement_candidate_commit=1e0bbefa8062043b34e89a7f04897304d7a7ffe7
+c1_source_procurement_candidate_tag=v5.1.2
+c1_source_procurement_tag_signature_status=unsigned-rejection-evidence-only-not-acquisition-authority
+c1_source_procurement_eligible_candidate_count=0
+c1_source_procurement_required_proof_count=7
+c1_source_procurement_proven_proof_count=0
+c1_source_procurement_pr694_repeat_audit_status=not-run
+c1_source_procurement_network_scope=official-metadata-read-only
+c1_source_procurement_transitive_source_closure_status=incomplete-no-sbom-or-license-closure
+c1_source_procurement_runtime_binding=node-v127-node22-v8-12.4-napi10-win32-x64
+c1_source_procurement_source_archive_download_status=not-run-not-approved
+c1_source_procurement_dependency_install_status=not-run-not-approved
+c1_source_procurement_guarantee_change_status=not-run-not-approved
+c1_source_procurement_residual_risk_acceptance_status=absent-not-in-this-approval
+c1_source_procurement_acquisition_procedure=future-rejection-evidence-preservation-only
+c1_source_procurement_rollback=discard-separate-evidence-worktree-retain-disconnected
+c1_source_procurement_evidence_preservation_abort_condition=revision-or-checksum-mismatch-or-new-provenance-discrepancy
+c1_source_procurement_eligibility_reject_condition=any-seven-proof-gap
+c1_source_procurement_final_blocker=missing-byte-only-api-and-full-stack-lifecycle-zeroization-attestation
+c1_source_procurement_next_approval_unit=none-no-feasible-source-acquisition
+production_wiring_status=disconnected-fail-closed
+```
+
+### Exact Candidate Identity And Supply Scope
+
+```text
+c1_source_candidate_id=node-libcurl-v5.1.2-libcurl-8.17.0-win32-x64-node-v127
+repository_url=https://github.com/JCMais/node-libcurl
+exact_tag=v5.1.2
+exact_commit=1e0bbefa8062043b34e89a7f04897304d7a7ffe7
+npm_source_archive=https://registry.npmjs.org/node-libcurl/-/node-libcurl-5.1.2.tgz
+npm_source_archive_integrity=sha512-lpPIQu7JqYhrlDbd3esuHyQ9lusvSReQfkpLRw7S80NdJ8hFBRlqHgwQ8RHUIf2JLaAmdUazj26sw0KR+5YsbQ==
+win32_x64_node_v127_asset_sha256=da05a3b1e51503a2df33f442cfa430926b386018647a37ebcfcd8a7d6c2a74e5
+package_license=MIT
+candidate_status=rejected-full-stack-proof-incomplete
+```
+
+The npm registry also publishes SHA-1 `cc81637a3f73eef5e9fc81e8959ac5be12a85fc5` and SLSA-provenance metadata for the package tarball. The annotated Git tag object is `dc4e6c9ee8be85140a7bf94b0a0327e139a0a13d` and is unsigned; it resolves to the exact commit above. The prebuilt asset is `node_libcurl-v5.1.2-node-v127-win32-x64-unknown.tar.gz`, size `2882536`, with the recorded GitHub release digest.
+
+The pinned package is MIT and requires Node `>=22.14`. Its package dependencies are `@mapbox/node-pre-gyp@2.0.3`, `env-paths@2.2.0`, `node-addon-api@8.5.0`, `node-gyp@12.3.0`, `npmlog@7.0.1`, `rimraf@5.0.5`, and `tslib@2.6.2`. The official native-build template selects libcurl `>=8.17.0` with brotli, c-ares, HTTP/2, HTTP/3, LDAP, GSASL, IDN, OpenSSL, SSH, SSPI, WebSockets, zstd, and curl tool features, against vcpkg baseline `50c0cb48a0cf2f6fc5c7b2c0d2bafbe26d0a7ca2`. The release documentation lists static native scope including OpenSSL `3.5.2`, zlib, brotli, zstd, libidn2, libssh2, nghttp2, ngtcp2, nghttp3, and OpenLDAP. No official SBOM or complete transitive source/license closure was found, so that list is an envelope, not a complete attestation of the selected binary.
+
+The runtime binding is Node 22 ABI v127. The locally available official Node `v22.22.2` metadata binds V8 `12.4.254.21` and N-API `10`; its source archive SHA-256 is `f4b9606f33aef725a77b6292460102b48b80902571a8bb94cd769837ee0577df`, and its Windows x64 zip SHA-256 is `7c93e9d92bf68c07182b471aa187e35ee6cd08ef0f24ab060dfff605fcc1c57c`. The candidate crosses Node/V8-managed Buffers and strings, a native addon, libcurl, OpenSSL, libuv/event-loop lifecycle, Winsock/kernel queues, Windows paging/crash-dump state, and the repository client/factory/read seams.
+
+### Seven-Proof Feasibility Decision
+
+```text
+c1_source_proof=completeSourceReview
+status=not-proven
+blocker=no-downloaded-source-complete-sbom-or-transitive-license-source-closure
+```
+
+```text
+c1_source_proof=immutableSecretCopyFree
+status=not-proven
+blocker=url-auth-header-and-postfields-apis-use-immutable-strings
+```
+
+```text
+c1_source_proof=completeMutableAllocationRegistry
+status=not-proven
+blocker=node-native-libcurl-openssl-allocator-and-kernel-allocations-are-not-completely-registered
+```
+
+```text
+c1_source_proof=boundedRetention
+status=not-proven
+blocker=libcurl-pause-protocol-cache-and-runtime-retention-have-no-complete-candidate-wide-bound
+```
+
+```text
+c1_source_proof=synchronousAbortReadQuiescence
+status=not-proven
+blocker=abort-listener-does-not-prove-native-cancel-and-cleanup-may-run-callbacks-or-leave-threads
+```
+
+```text
+c1_source_proof=synchronousDisposeAcknowledgement
+status=not-proven
+blocker=close-is-void-global-cleanup-need-not-wait-and-no-full-stack-acknowledgement-exists
+```
+
+```text
+c1_source_proof=completeDownstreamZeroization
+status=not-proven
+blocker=free-and-local-cleanse-primitives-do-not-cover-all-application-tls-allocator-kernel-pagefile-or-dump-copies
+```
+
+The candidate is not byte-only at the security boundary required by C1. Its documented URL and string-list options use JavaScript strings, POST fields commonly use strings, and its abort helper disposes an event listener rather than attesting native transfer cancellation. `curl_easy_cleanup` releases resources but can invoke callbacks and does not promise secure wiping. `curl_global_cleanup` need not wait for resolver threads. OpenSSL `SSL_OP_CLEANSE_PLAINTEXT` covers only OpenSSL-owned plaintext buffers and explicitly leaves application I/O buffers to the caller. Windows secure-zero primitives cover only the exact caller-provided block; Winsock queues, Schannel caches, pagefile state, and crash dumps are not synchronously attested as zeroized.
+
+Repository source also shows that production C1 remains string-based: the Supabase factory normalizes URL and service-role key strings, while the provider path constructs URL and Authorization header strings and uses async `fetch` without a disposal acknowledgement. Replacing only the Supabase factory would not cover OAuth callback, credential status, session/tool contexts, disconnect paths, token-material resolution, or YouTube provider reads.
+
+### Acquisition, Rollback, Abort, And Final Blocker
+
+If a later approval nevertheless requests preservation of rejection evidence for this candidate, the bounded sequence would be: download only the npm tarball and the named ABI v127 Windows asset; verify the exact SHA-512/SHA-256 values before extraction; fetch the exact `v5.1.2` commit tree plus every pinned transitive source and license into a new isolated evidence worktree; generate a complete SBOM; and stop before build, install, constructor, client, input, or read. The already-known unsigned tag is a recorded provenance limitation and is permitted only for rejection-evidence preservation; it is not production-acquisition authority. Revision or checksum mismatch, or a new provenance discrepancy, aborts evidence preservation. The known source/license closure, string boundary, allocation, retention, teardown, and zeroization gaps do not abort evidence preservation; each independently keeps production eligibility rejected. Rollback is to discard only that separately approved evidence worktree and retain disconnected production.
+
+No source-acquisition approval is recommended because official source already refutes or leaves unproved every one of the seven required predicates. The concrete blocker is the absence of an end-to-end byte-only API plus vendor/runtime/OS evidence for complete allocation registration, bounded retention, synchronous abort/read quiescence, synchronous dispose acknowledgement, and complete downstream zeroization. Obtaining the package sources cannot by itself cure those API and attestation gaps.
+
+This approval is consumed for read-only source procurement research and the local decision record only. It does not authorize archive download, dependency installation, manifest/lockfile change, production import/wiring, real input/constructor/client/read, auth/session, secret use, remote Supabase operation, guarantee change, residual-risk acceptance, commit, push, PR, deploy, activation, CP2, or public paid launch. The current guarantee remains retained Buffer zero-fill and `production_wiring_status=disconnected-fail-closed`.
+
 ## Entitlement, Usage, Provider, And Capability Proof Rules
 
 - Paid-active requires signed supported billing evidence, future signed period, authenticated owner binding, exact activation/allowlist authority, and readable durable C1 state.

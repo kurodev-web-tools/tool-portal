@@ -346,6 +346,32 @@ C1 is accepted only when all of the following are verified:
 - The C12 30-contract baseline remains `18 pass / 9 dependency-blocked / 3 known historical / 0 unexpected`. Missing `node_modules` remains a setup limitation; installation was not approved.
 - C1 now has a local synthetic-only adapter/read execution control seam. Real adapter/client initialization and remote/deployed read behavior remain blocked / separately approval-gated. `docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_LAUNCH_READINESS_PREFLIGHT.md` is the exact approval-sequencing authority.
 - CP1 local readiness is complete. Every external/deployed/browser/release-owner lane remains not-run / blocked / approval-gated.
+- C1 production source procurement starts from PR #695 integration tip `d206ff2c07cc10aeb701d0d2034a29b17f58d42b`. Official-source-only research narrowed one new node-libcurl/libcurl Windows native envelope and rejected it with `0/7` proofs established. No prior PR #694 candidate class was repeated and no archive, dependency, production constructor/client/read, or remote operation was used.
+- c1_source_procurement_base=d206ff2c07cc10aeb701d0d2034a29b17f58d42b
+- c1_source_procurement_preflight_status=blocked-no-feasible-full-stack-candidate
+- c1_source_procurement_candidate_envelope_count=1
+- c1_source_procurement_candidate_id=node-libcurl-v5.1.2-libcurl-8.17.0-win32-x64-node-v127
+- c1_source_procurement_candidate_commit=1e0bbefa8062043b34e89a7f04897304d7a7ffe7
+- c1_source_procurement_candidate_tag=v5.1.2
+- c1_source_procurement_tag_signature_status=unsigned-rejection-evidence-only-not-acquisition-authority
+- c1_source_procurement_eligible_candidate_count=0
+- c1_source_procurement_required_proof_count=7
+- c1_source_procurement_proven_proof_count=0
+- c1_source_procurement_pr694_repeat_audit_status=not-run
+- c1_source_procurement_network_scope=official-metadata-read-only
+- c1_source_procurement_transitive_source_closure_status=incomplete-no-sbom-or-license-closure
+- c1_source_procurement_runtime_binding=node-v127-node22-v8-12.4-napi10-win32-x64
+- c1_source_procurement_source_archive_download_status=not-run-not-approved
+- c1_source_procurement_dependency_install_status=not-run-not-approved
+- c1_source_procurement_guarantee_change_status=not-run-not-approved
+- c1_source_procurement_residual_risk_acceptance_status=absent-not-in-this-approval
+- c1_source_procurement_acquisition_procedure=future-rejection-evidence-preservation-only
+- c1_source_procurement_rollback=discard-separate-evidence-worktree-retain-disconnected
+- c1_source_procurement_evidence_preservation_abort_condition=revision-or-checksum-mismatch-or-new-provenance-discrepancy
+- c1_source_procurement_eligibility_reject_condition=any-seven-proof-gap
+- c1_source_procurement_final_blocker=missing-byte-only-api-and-full-stack-lifecycle-zeroization-attestation
+- c1_source_procurement_next_approval_unit=none-no-feasible-source-acquisition
+- production_wiring_status=disconnected-fail-closed
 
 ## Creator Closed Beta / Before Creator Public Paid
 

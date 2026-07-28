@@ -19,9 +19,9 @@ const c1EphemeralEntitlementBridgeBase =
 const c1ProductionConstructorCompatibilityBase =
   "2888bb1a60fdd6851688e3e7b323a40b3c21869c";
 const c1ProcessIsolationDecisionBase =
-  "4bd5dd09c4501a666bfc961104f3280bd66b8117";
+  "340d6b0ec719e1e871205a03d48cda295f07068b";
 const c1ProcessIsolationDecisionHead =
-  "c0f749ca5a6dc5ed5b8dab63b3c722a68835df6e";
+  "60b0ec43f8fa4722b2830e8f99535348146e46f4";
 const c1EphemeralRunnerWrapperSha256 =
   "f79a7f1777e9d412bbaaffefd0c0535101a6652bd6b13cb90174cdc1a23e2a2d";
 const c1EphemeralRunnerSha256 =
@@ -41,6 +41,10 @@ const c1ProcessIsolationPreflightContractPath = path.join(
   root,
   "scripts/comment-translator-creator-c1-process-isolation-preflight-contract.mjs",
 );
+const c1ZeroizableClientBoundaryPreflightContractPath = path.join(
+  root,
+  "scripts/comment-translator-creator-c1-zeroizable-client-boundary-preflight-contract.mjs",
+);
 
 const expectedLanes = new Map([
   ["LOCAL-DETERMINISTIC", "locally-verified"],
@@ -55,6 +59,10 @@ execFileSync(process.execPath, [c1ProductionConstructorCompatibilityContractPath
   stdio: "pipe",
 });
 execFileSync(process.execPath, [c1ProcessIsolationPreflightContractPath], {
+  cwd: root,
+  stdio: "pipe",
+});
+execFileSync(process.execPath, [c1ZeroizableClientBoundaryPreflightContractPath], {
   cwd: root,
   stdio: "pipe",
 });
@@ -1985,7 +1993,59 @@ for (const source of [readiness, board, task]) {
     source,
     /process_isolation_explicit_approval_status=absent-required-for-guarantee-change/,
   );
+  assert.match(
+    source,
+    /zeroizable_client_boundary_preflight_status=local-synthetic-pass-not-adopted/,
+  );
+  assert.match(
+    source,
+    /zeroizable_client_boundary_repository_contract_status=pass/,
+  );
+  assert.match(
+    source,
+    /zeroizable_client_boundary_production_api_status=absent-unverified/,
+  );
+  assert.match(
+    source,
+    /zeroizable_client_boundary_decision=retain-disconnected-fail-closed/,
+  );
+  assert.match(
+    source,
+    /zeroizable_client_boundary_required_api=exclusive-zeroizable-byte-ownership-copy-free-construction-read-explicit-dispose-ack/,
+  );
+  assert.match(
+    source,
+    /zeroizable_client_boundary_unverified_scope=node-v8-transport-os-sdk-internals/,
+  );
+  assert.match(
+    source,
+    /zeroizable_client_boundary_explicit_approval_status=absent-required-for-production-api-change/,
+  );
 }
+assert.match(
+  readiness,
+  /^cp1_c1_zeroizable_client_boundary_preflight_status=local-synthetic-pass-not-adopted$/m,
+);
+const zeroizableClientBoundarySection = readiness.match(
+  /^## CP1-S2AU C1 Zeroizable-Client Boundary Decision Preflight$([\s\S]*?)^## Entitlement, Usage, Provider, And Capability Proof Rules$/m,
+)?.[1];
+assert.ok(zeroizableClientBoundarySection);
+assert.match(
+  zeroizableClientBoundarySection,
+  new RegExp(`reviewed_revision=${c1ProcessIsolationDecisionBase}`),
+);
+assert.match(
+  zeroizableClientBoundarySection,
+  /red_contract_status=pass-expected-missing-implementation[\s\S]*green_fixture_count=13[\s\S]*green_fixture_pass_count=13[\s\S]*green_fixture_fail_count=0[\s\S]*successful_available_factory_read_dispose_count=1\/1\/1[\s\S]*successful_missing_factory_read_dispose_count=1\/1\/1[\s\S]*factory_error_factory_read_dispose_count=1\/0\/0[\s\S]*factory_unavailable_factory_read_dispose_count=1\/0\/0[\s\S]*read_error_factory_read_dispose_count=1\/1\/1[\s\S]*dispose_error_acknowledgement_count=0[\s\S]*dispose_unverified_fixture_count=2[\s\S]*dispose_unverified_acknowledgement_count=0[\s\S]*stop_during_factory_factory_read_dispose_count=1\/0\/1[\s\S]*stop_during_read_factory_read_dispose_count=1\/1\/1[\s\S]*stop_during_dispose_factory_read_dispose_count=1\/1\/1[\s\S]*stop_request_count=3[\s\S]*late_success_suppression_count=2[\s\S]*post_settlement_repeat_suppression_count=1[\s\S]*repository_buffer_zero_fill_count_per_settled_fixture=2[\s\S]*zero_fill_completion_count_per_settled_fixture=2[\s\S]*sanitized_result_field_count=12/,
+);
+assert.match(
+  zeroizableClientBoundarySection,
+  /A synthetic injected client proves only the repository contract above/,
+);
+assert.match(
+  zeroizableClientBoundarySection,
+  /They do not prove an elapsed-time bound when a client ignores abort/,
+);
 assert.match(
   readiness,
   /repository_normalization_count=2[\s\S]*repository_constructor_argument_count=2[\s\S]*synthetic_buffer_zero_fill_count=1[\s\S]*synthetic_immutable_copy_survival_count=2[\s\S]*real_constructor_attempt_count=0[\s\S]*real_client_call_count=0[\s\S]*remote_read_attempt_count=0/,
@@ -2032,6 +2092,8 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-creator-c1-production-constructor-compatibility-contract.mjs",
   "scripts/comment-translator-creator-c1-process-isolation-preflight.mjs",
   "scripts/comment-translator-creator-c1-process-isolation-preflight-contract.mjs",
+  "scripts/comment-translator-creator-c1-zeroizable-client-boundary-preflight.mjs",
+  "scripts/comment-translator-creator-c1-zeroizable-client-boundary-preflight-contract.mjs",
   "scripts/comment-translator-creator-c12-final-qa-readiness-contract.mjs",
   "scripts/comment-translator-task-board-creator-roadmap-contract.mjs",
 ]);

@@ -360,9 +360,9 @@ const authoritySources = [
   ),
 ];
 const requiredAuthorityMarkers = [
-  "PR #690 is merged at",
-  "4bd5dd09c4501a666bfc961104f3280bd66b8117",
-  "c0f749ca5a6dc5ed5b8dab63b3c722a68835df6e",
+  "PR #691 is merged at",
+  "340d6b0ec719e1e871205a03d48cda295f07068b",
+  "60b0ec43f8fa4722b2830e8f99535348146e46f4",
   "process_isolation_preflight_status=local-synthetic-pass-not-adopted",
   "process_isolation_guarantee_decision=retain-buffer-zero-fill-do-not-replace-with-exit-containment",
   "process_isolation_unverified_lifetime_status=ipc-runtime-os-sdk-unverified",

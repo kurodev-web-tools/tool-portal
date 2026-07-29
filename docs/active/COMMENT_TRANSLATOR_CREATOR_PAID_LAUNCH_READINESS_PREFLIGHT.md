@@ -4859,6 +4859,34 @@ deploy_activation_cp2_public_launch_count=0
 result_marker=C1_CLOUDFLARE_CONTAINER_RUNTIME_BOUNDARY_REVIEWABLE
 ```
 
+## CP1-S2BE C1 Cloudflare Container Image Execution Evidence
+
+`C1-CLOUDFLARE-CONTAINER-IMAGE-EXECUTION-EVIDENCE-1` is bound to clean isolated integration base `c7e320473da88d9fd3dc0354be27997912a5ef2c`, the merge commit for PR #711. The exact dependency remains `@cloudflare/containers@0.3.7`, the Dockerfile remains pinned to `node:22.22.2-bookworm-slim`, and the fixed image, Container, parent, and child entrypoints plus the Worker binding/migration configuration are unchanged.
+
+The focused pre-change boundary contract passed. Existing-runtime discovery then found zero Docker-compatible Windows CLIs, zero launchable engines, and zero installed WSL distributions. Current Cloudflare local-development documentation requires both a Docker-compatible CLI and Engine. Docker Desktop's official Windows path requires accepting its subscription agreement before first start. Podman's official Windows engine path requires a WSL or Hyper-V machine and documents administrator/restart prerequisites. Installing or starting either runtime would therefore cross this unit's no-license-interaction or no-administrator/reboot boundary.
+
+The unit stops before installation and records one sanitized blocker: `blocked-no-existing-engine-safe-install-requires-license-or-admin-restart`. No image was built, no Container was created or run, and no stop signal was sent. Consequently, exact Dockerfile/ENTRYPOINT execution; synthetic available/missing/unavailable and invalid-frame cases inside the image; observed parent/child exit and signal behavior inside the image; Container stdout-only sanitation; runtime argv/environment/log/storage/metadata exclusion; and retained-image rollback execution remain unproven rather than inferred from host-side Node contracts.
+
+The existing host-side focused contract still proves the fixed Dockerfile and entrypoint text, stdin-only three-input frame, parent/child Buffer zero-fill, available/missing/unavailable classification, child/parent exit validation, invalid-frame and error fail-closed behavior, fixed sanitized output shape, persistent attempt suppression, Worker bundle/config/binding/migration consistency, production-read disconnection, and retained-image requirement. It is not substituted for image execution proof. Free and paid-inactive behavior remains unchanged, and production paid reads remain disconnected.
+
+```text
+c1_cloudflare_container_image_execution_evidence_base=c7e320473da88d9fd3dc0354be27997912a5ef2c
+c1_cloudflare_container_image_execution_evidence_status=blocked-fail-closed
+c1_cloudflare_container_image_execution_evidence_blocker=blocked-no-existing-engine-safe-install-requires-license-or-admin-restart
+c1_cloudflare_container_runtime_cli_count=0
+c1_cloudflare_container_runtime_engine_count=0
+c1_cloudflare_container_wsl_distribution_count=0
+c1_cloudflare_container_runtime_install_count=0
+c1_cloudflare_container_image_build_count=0
+c1_cloudflare_container_run_count=0
+c1_cloudflare_container_stop_signal_count=0
+c1_cloudflare_container_production_read=disconnected-fail-closed
+real_constructor_client_durable_read_count=0
+remote_service_operation_count=0
+deploy_activation_cp2_public_launch_count=0
+result_marker=C1_CLOUDFLARE_CONTAINER_IMAGE_EXECUTION_EVIDENCE_BLOCKED
+```
+
 ## Entitlement, Usage, Provider, And Capability Proof Rules
 
 - Paid-active requires signed supported billing evidence, future signed period, authenticated owner binding, exact activation/allowlist authority, and readable durable C1 state.

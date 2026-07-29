@@ -2863,6 +2863,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-creator-c1-guarantee-governance-decision-preflight-contract.mjs",
   "scripts/comment-translator-creator-c1-production-source-procurement-preflight-contract.mjs",
   "scripts/comment-translator-creator-c1-cloudflare-container-runtime-boundary-contract.mjs",
+  "scripts/comment-translator-creator-c1-cloudflare-container-image-execution-evidence-contract.mjs",
   "cloudflare-worker.mjs",
   "cloudflare/comment-translator-c1-container.mjs",
   "containers/comment-translator-c1/Dockerfile",

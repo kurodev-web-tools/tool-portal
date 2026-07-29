@@ -678,17 +678,53 @@ assert.match(
   readiness,
   /^cp1_c3_structural_readiness_status=pass$/m,
 );
-assert.match(
-  readiness,
+for (const marker of [
   /^cp1_non_c1_store_write_read_approval_status=consumed$/m,
   /^cp1_non_c1_store_write_read_execution_status=pass$/m,
   /^cp1_non_c1_store_write_read_cleanup_status=pass$/m,
-  /^cp1_next_ordered_approval_unit=CP1-A-STRIPE-PRODUCT-PRICE$/m,
-);
+  /^cp1_stripe_product_price_approval_status=consumed$/m,
+  /^cp1_stripe_product_price_execution_status=pass$/m,
+  /^cp1_stripe_product_candidate_count=0$/m,
+  /^cp1_stripe_price_candidate_count=0$/m,
+  /^cp1_stripe_product_create_verified_count=1$/m,
+  /^cp1_stripe_price_create_verified_count=1$/m,
+  /^cp1_stripe_remote_read_attempt_count=2$/m,
+  /^cp1_stripe_mutation_attempt_count=2$/m,
+  /^cp1_stripe_retry_count=0$/m,
+  /^cp1_stripe_rollback_cleanup_count=0$/m,
+  /^cp1_stripe_sensitive_output_count=0$/m,
+  /^cp1_next_ordered_approval_unit=CP1-A-STRIPE-CHECKOUT$/m,
+]) {
+  assert.match(readiness, marker);
+}
 assert.match(
   task,
-  /`CP1-A-STORE-READINESS` and `CP1-A-STORE-WRITE-READ` are consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STRIPE-PRODUCT-PRICE`/,
+  /`CP1-A-STORE-READINESS`, `CP1-A-STORE-WRITE-READ`, and `CP1-A-STRIPE-PRODUCT-PRICE` are consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STRIPE-CHECKOUT`/,
 );
+for (const marker of [
+  /^approval_unit=CP1-A-STRIPE-PRODUCT-PRICE-AFTER-KEY-REMEDIATION-1$/m,
+  /^execution_status=PASS$/m,
+  /^result_marker=CP1_A_STRIPE_PRODUCT_PRICE_PASS$/m,
+  /^product_eligible_candidate_count=0$/m,
+  /^price_eligible_candidate_count=0$/m,
+  /^product_create_verified_count=1$/m,
+  /^price_create_verified_count=1$/m,
+  /^remote_attempt_count=4$/m,
+  /^remote_read_attempt_count=2$/m,
+  /^mutation_attempt_count=2$/m,
+  /^retry_count=0$/m,
+  /^rollback_cleanup_count=0$/m,
+  /^sensitive_output_count=0$/m,
+  /^private_identifier_output_count=0$/m,
+  /^configuration_binding_count=0$/m,
+  /^checkout_count=0$/m,
+  /^portal_count=0$/m,
+  /^webhook_count=0$/m,
+  /^billing_activation_count=0$/m,
+  /^next_ordered_approval_unit=CP1-A-STRIPE-CHECKOUT$/m,
+]) {
+  assert.match(externalEvidenceReconciliation, marker);
+}
 assert.match(
   board,
   /CP1-A-MIG-C3` is consumed\/pass[\s\S]*zero row-data reads and zero post-apply mutations/,
@@ -736,7 +772,7 @@ for (const marker of [
 }
 assert.match(
   task,
-  /`CP1-A-STORE-READINESS` and `CP1-A-STORE-WRITE-READ` are consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STRIPE-PRODUCT-PRICE`/,
+  /`CP1-A-STORE-READINESS`, `CP1-A-STORE-WRITE-READ`, and `CP1-A-STRIPE-PRODUCT-PRICE` are consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STRIPE-CHECKOUT`/,
 );
 assert.match(
   board,
@@ -792,7 +828,7 @@ for (const marker of [
 }
 assert.match(
   task,
-  /`CP1-A-STORE-READINESS` and `CP1-A-STORE-WRITE-READ` are consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STRIPE-PRODUCT-PRICE`/,
+  /`CP1-A-STORE-READINESS`, `CP1-A-STORE-WRITE-READ`, and `CP1-A-STRIPE-PRODUCT-PRICE` are consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STRIPE-CHECKOUT`/,
 );
 assert.match(
   board,
@@ -992,7 +1028,7 @@ for (const marker of [
   /^cp1_non_c1_store_write_read_approval_status=consumed$/m,
   /^cp1_non_c1_store_write_read_execution_status=pass$/m,
   /^cp1_non_c1_store_write_read_cleanup_status=pass$/m,
-  /^cp1_next_ordered_approval_unit=CP1-A-STRIPE-PRODUCT-PRICE$/m,
+  /^cp1_next_ordered_approval_unit=CP1-A-STRIPE-CHECKOUT$/m,
 ]) {
   assert.match(readiness, marker);
 }
@@ -1111,17 +1147,17 @@ for (const marker of [
   /^cp1_non_c1_store_write_read_approval_status=consumed$/m,
   /^cp1_non_c1_store_write_read_execution_status=pass$/m,
   /^cp1_non_c1_store_write_read_cleanup_status=pass$/m,
-  /^cp1_next_ordered_approval_unit=CP1-A-STRIPE-PRODUCT-PRICE$/m,
+  /^cp1_next_ordered_approval_unit=CP1-A-STRIPE-CHECKOUT$/m,
 ]) {
   assert.match(readiness, marker);
 }
 assert.match(
   task,
-  /`CP1-A-STORE-READINESS` and `CP1-A-STORE-WRITE-READ` are consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STRIPE-PRODUCT-PRICE`/,
+  /`CP1-A-STORE-READINESS`, `CP1-A-STORE-WRITE-READ`, and `CP1-A-STRIPE-PRODUCT-PRICE` are consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STRIPE-CHECKOUT`/,
 );
 assert.match(
   board,
-  /CP1-A-STORE-WRITE-READ` is consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STRIPE-PRODUCT-PRICE`/,
+  /CP1-A-STORE-WRITE-READ` is consumed\/pass[\s\S]*`CP1-A-STRIPE-PRODUCT-PRICE` is consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STRIPE-CHECKOUT`/,
 );
 for (const marker of [
   /^reviewed_base=1b3f32961834e79155961117de5b512998e883ec$/m,
@@ -2564,29 +2600,29 @@ for (const source of [readiness, board, task]) {
   );
   assert.match(
     source,
-    /^(?:- )?required_design_decision=approve-process-isolation-ownership-model-or-zeroizable-client-boundary$/m,
+    /^(?:- )?required_design_decision=consumed-process-isolation-guarantee-change$/m,
   );
   assert.match(source, new RegExp(c1ProcessIsolationDecisionBase));
   assert.match(source, new RegExp(c1ProcessIsolationDecisionHead));
   assert.match(
     source,
-    /process_isolation_preflight_status=local-synthetic-pass-not-adopted/,
+    /process_isolation_preflight_status=local-synthetic-pass-adopted-as-design-candidate-only/,
   );
   assert.match(
     source,
-    /process_isolation_guarantee_decision=retain-buffer-zero-fill-do-not-replace-with-exit-containment/,
+    /process_isolation_guarantee_decision=parent-child-buffer-zero-fill-and-single-use-exit-containment/,
   );
   assert.match(
     source,
-    /process_isolation_unverified_lifetime_status=ipc-runtime-os-sdk-unverified/,
+    /process_isolation_unverified_lifetime_status=accepted-residual-risk-ipc-v8-runtime-os-sdk-copy-erasure-teardown/,
   );
   assert.match(
     source,
-    /process_isolation_recommendation=retain-disconnected-until-zeroizable-client-boundary-proven/,
+    /process_isolation_recommendation=adopted-design-candidate-production-wiring-still-disconnected/,
   );
   assert.match(
     source,
-    /process_isolation_explicit_approval_status=absent-required-for-guarantee-change/,
+    /process_isolation_explicit_approval_status=consumed-exact-guarantee-change/,
   );
   assert.match(
     source,
@@ -2680,11 +2716,11 @@ for (const source of [readiness, board, task]) {
   );
   assert.match(
     source,
-    /c1_guarantee_governance_recommendation=operator-provided-exact-source-revision-wait/,
+    /c1_guarantee_governance_recommendation=accept-process-isolation-residual-risk-and-change-guarantee/,
   );
   assert.match(
     source,
-    /c1_guarantee_governance_process_isolation_risk_acceptance_status=absent-not-in-this-approval/,
+    /c1_guarantee_governance_process_isolation_risk_acceptance_status=consumed-exact-approval/,
   );
   assert.match(
     source,
@@ -2828,6 +2864,8 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-creator-c1-production-constructor-compatibility-contract.mjs",
   "scripts/comment-translator-creator-c1-process-isolation-preflight.mjs",
   "scripts/comment-translator-creator-c1-process-isolation-preflight-contract.mjs",
+  "scripts/comment-translator-creator-c1-process-isolation-production-wiring-design-preflight-contract.mjs",
+  "scripts/comment-translator-creator-c1-process-isolation-runtime-target-feasibility-contract.mjs",
   "scripts/comment-translator-creator-c1-zeroizable-client-boundary-preflight.mjs",
   "scripts/comment-translator-creator-c1-zeroizable-client-boundary-preflight-contract.mjs",
   "scripts/comment-translator-creator-c1-zeroizable-client-api-preflight.mjs",

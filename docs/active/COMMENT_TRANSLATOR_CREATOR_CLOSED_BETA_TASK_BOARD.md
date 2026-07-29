@@ -16,23 +16,53 @@
 - c1_guarantee_governance_base=9d64995dd30fe560a44cf4cf82a3cc67cf00b8d0
 - c1_guarantee_governance_preflight_status=local-decision-pass-review-ready
 - c1_guarantee_governance_route_count=3
-- c1_guarantee_governance_recommendation=operator-provided-exact-source-revision-wait
-- c1_guarantee_governance_current_guarantee=retained-buffer-zero-fill
+- c1_guarantee_governance_recommendation=accept-process-isolation-residual-risk-and-change-guarantee
+- c1_guarantee_governance_current_guarantee=parent-child-buffer-zero-fill-and-single-use-exit-containment
 - c1_guarantee_governance_exact_source_status=absent
 - c1_guarantee_governance_repeat_candidate_audit_status=prohibited-no-new-exact-source
-- c1_guarantee_governance_process_isolation_risk_acceptance_status=absent-not-in-this-approval
-- c1_guarantee_governance_next_approval_unit=single-source-bound-full-stack-feasibility-audit-after-prerequisites
-- c1_guarantee_governance_approval_status=consumed-local-decision-preflight-only
+- c1_guarantee_governance_process_isolation_risk_acceptance_status=consumed-exact-approval
+- c1_guarantee_governance_next_approval_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-SELECTION-1
+- c1_guarantee_governance_approval_status=consumed-exact-process-isolation-guarantee-change
 - c1_guarantee_governance_production_adoption_approval_status=absent
+- c1_process_isolation_wiring_design_approval_status=consumed
+- c1_process_isolation_wiring_design_execution_status=pass
+- c1_process_isolation_wiring_implementation_readiness_status=blocked-current-worker-nonfunctional-child-process
+- c1_process_isolation_wiring_parent_responsibility=authorize-derive-reference-own-three-input-buffers-spawn-once-validate-sanitized-result-wait-exit
+- c1_process_isolation_wiring_child_responsibility=construct-once-read-once-return-status-only-zero-fill-three-input-buffers-exit
+- c1_process_isolation_wiring_input_buffer_count=3
+- c1_process_isolation_wiring_result_shape=execution-status-result-status-termination-status-fixed-counts-only
+- c1_process_isolation_wiring_normal_boundary=parent-zero-fill-after-ipc-write-child-zero-fill-before-disconnect-parent-success-after-valid-result-and-observed-zero-exit
+- c1_process_isolation_wiring_error_boundary=zero-fill-owned-buffers-fail-closed-no-success-without-valid-result-and-observed-zero-exit
+- c1_process_isolation_wiring_stop_boundary=sigterm-child-zero-fill-exit-parent-zero-fill-fail-closed
+- c1_process_isolation_wiring_repeat_boundary=single-use-inflight-and-post-settlement-suppressed-late-success-ignored
+- c1_process_isolation_wiring_configuration_boundary=reference-names-only-next-public-supabase-url-and-supabase-service-role-key
+- c1_process_isolation_wiring_runtime_target=opennext-cloudflare-worker
+- c1_process_isolation_wiring_spawn_capability_status=blocked-workers-child-process-nonfunctional-stub
+- c1_process_isolation_wiring_rollback=retain-disconnected-remove-future-wiring-only-under-separate-approval
+- c1_process_isolation_wiring_abort=runtime-target-or-bundle-or-input-ownership-or-result-shape-mismatch
+- c1_process_isolation_wiring_next_implementation_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-SELECTION-1
+- c1_process_isolation_wiring_next_implementation_unit_status=blocked-prerequisite-authorized-process-capable-topology
+- c1_process_isolation_runtime_target_feasibility_approval_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-FEASIBILITY-1
+- c1_process_isolation_runtime_target_feasibility_approval_status=consumed-goal-authority
+- c1_process_isolation_runtime_target_feasibility_status=blocked-current-worker-no-functional-child-process
+- c1_process_isolation_runtime_target_current=opennext-cloudflare-worker
+- c1_process_isolation_runtime_target_worker_compatibility_date=2026-05-27
+- c1_process_isolation_runtime_target_worker_child_process_status=nonfunctional-stub
+- c1_process_isolation_runtime_target_required=process-capable-isolated-node-host
+- c1_process_isolation_runtime_target_alternative=separate-cloudflare-container-or-operator-node-service
+- c1_process_isolation_runtime_target_topology_authority_status=absent
+- c1_process_isolation_runtime_target_production_implementation_status=blocked-no-authorized-process-host
+- c1_process_isolation_runtime_target_next_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-SELECTION-1
+- C1 runtime-target feasibility is resolved fail-closed. The current OpenNext Cloudflare Worker exposes only the documented nonfunctional `node:child_process` stub; the repository has no approved process-capable Container or operator Node-service topology. Production source, configuration, dependency, binding, deployment, and activation remain unchanged.
 - production_constructor_compatibility_status=blocked-immutable-lifetime-unprovable
 - production_wiring_status=disconnected-fail-closed
 - sdk_internal_lifetime_status=dependency-blocked-unverified
-- required_design_decision=approve-process-isolation-ownership-model-or-zeroizable-client-boundary
-- process_isolation_preflight_status=local-synthetic-pass-not-adopted
-- process_isolation_guarantee_decision=retain-buffer-zero-fill-do-not-replace-with-exit-containment
-- process_isolation_unverified_lifetime_status=ipc-runtime-os-sdk-unverified
-- process_isolation_recommendation=retain-disconnected-until-zeroizable-client-boundary-proven
-- process_isolation_explicit_approval_status=absent-required-for-guarantee-change
+- required_design_decision=consumed-process-isolation-guarantee-change
+- process_isolation_preflight_status=local-synthetic-pass-adopted-as-design-candidate-only
+- process_isolation_guarantee_decision=parent-child-buffer-zero-fill-and-single-use-exit-containment
+- process_isolation_unverified_lifetime_status=accepted-residual-risk-ipc-v8-runtime-os-sdk-copy-erasure-teardown
+- process_isolation_recommendation=adopted-design-candidate-production-wiring-still-disconnected
+- process_isolation_explicit_approval_status=consumed-exact-guarantee-change
 - zeroizable_client_boundary_preflight_status=local-synthetic-pass-not-adopted
 - zeroizable_client_boundary_repository_contract_status=pass
 - zeroizable_client_boundary_production_api_status=absent-unverified
@@ -294,11 +324,12 @@ C1 is accepted only when all of the following are verified:
 ### Residual Risk And C12 Handoff
 
 - C1/C3/C5/C6/C7/C8/C9/C11 migration/readiness units ran only within their separately approved boundaries. All deployed store behavior, history row access, and production application data access remain not-run. Until an explicitly approved unit exists, the corresponding deployed behavior remains unavailable or fail-closed.
-- Stripe live Product, Price, Checkout, Portal, and webhook operations were not run. Local verifier fixtures are not live billing evidence.
-- Local C2 fixtures do not establish live Product/Price interval, billing cadence, trial policy, webhook destination, Customer mapping values, or production configuration; C3 continues to follow only signed period-boundary advances.
+- `CP1-A-STRIPE-PRODUCT-PRICE` is consumed/pass from the operator-returned sanitized live envelope: complete Product/Price duplicate scans found `0 / 0` eligible candidates, then exactly one Creator Product and one monthly `980 JPY` tax-inclusive Price were created and response-verified. The unit used `2` reads and `2` mutations with `0` retries, `0` rollback/cleanup, and `0` sensitive/private-identifier output.
+- The Product/Price proof does not establish or record a private Price reference, Checkout, Portal, webhook destination/delivery, Customer mapping, subscription/payment state, production configuration, or billing activation. C3 continues to follow only signed period-boundary advances.
+- The exact C1 process-isolation guarantee-change approval is consumed. The accepted design guarantee is repository-owned parent/child Buffer zero-fill plus single-use child-process exit containment; IPC/V8/runtime/OS/SDK copy erasure and teardown remain explicitly accepted residual risk. This is a design candidate only: `production_wiring_status=disconnected-fail-closed`, and no constructor, client, durable read, remote operation, dependency, deploy, activation, CP2, or public paid launch is authorized.
 - C4 does not infer an OpenAI model, provider pricing/token multiplier, budget amount, billing cadence, or production value. Operator-owned server environment values and provider-account caps remain required before any separately approved live/provider smoke.
 - Dependency-backed contracts, ESLint, TypeScript, build, and browser QA remain blocked in this worktree by missing `node_modules`; installation was not approved. Three dependency-free historical contracts retain known stale provider-fixture, task-history, and feed-owner assertions and remain baseline limitations.
-- C5 through C11 migration apply and structural readiness are complete. `CP1-A-STORE-READINESS` is consumed/pass for C3/C5/C6/C7/C8/C9/C11, with Data API exposure/client fail-closed and catalog RLS/service-role authority retained as separate boundaries. `CP1-A-STORE-WRITE-READ` is consumed/pass through the canonical C9 direct-table boundary with `0 preexisting / 1 write / 1 read / 1 exact cleanup / 0 residual / 0 row payload`; it does not establish token, redemption, dictionary CRUD/provider, history, authenticated-browser, or C1 behavior. The next ordered independent unit is `CP1-A-STRIPE-PRODUCT-PRICE`; no Stripe action ran.
+- C5 through C11 migration apply and structural readiness are complete. `CP1-A-STORE-READINESS` is consumed/pass for C3/C5/C6/C7/C8/C9/C11, with Data API exposure/client fail-closed and catalog RLS/service-role authority retained as separate boundaries. `CP1-A-STORE-WRITE-READ` is consumed/pass through the canonical C9 direct-table boundary with `0 preexisting / 1 write / 1 read / 1 exact cleanup / 0 residual / 0 row payload`; it does not establish token, redemption, dictionary CRUD/provider, history, authenticated-browser, or C1 behavior. `CP1-A-STRIPE-PRODUCT-PRICE` is consumed/pass. The next ordered independent unit is `CP1-A-STRIPE-CHECKOUT`, currently blocked pending separately approved live runtime reference-presence and C1 durable billing-state readiness.
 - C11 browser-visible files changed, but width QA at `390 / 820 / 1024 / 1280 / 1366px` is blocked because dependencies and a local server are absent. C6/C8 authenticated/live-token browser QA remains separately approval-gated and was not run.
 - C11 is merged / integration verified at `d1ce9b0d063f65bac968c85f3242398be4b8317f`; C11 head `4bf598f7fca3f21175de7b3aeda0d001121b376b` is contained in integration.
 - C12 final QA owns the task-specific readiness matrix. C5/C6 store/token/redemption behavior, C9 store/dictionary/provider behavior, C11 history persistence/read/expiry/cleanup behavior, C6/C8/C11 authenticated browser QA, and all Stripe/provider/live operations remain separate approval gates.

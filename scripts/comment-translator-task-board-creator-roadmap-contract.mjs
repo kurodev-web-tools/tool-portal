@@ -344,7 +344,7 @@ function run() {
     );
     assert.match(
       source,
-      /^(?:- )?required_design_decision=approve-process-isolation-ownership-model-or-zeroizable-client-boundary$/m,
+      /^(?:- )?required_design_decision=consumed-process-isolation-guarantee-change$/m,
     );
   }
   assert.match(creator, /72 independent approval units/);

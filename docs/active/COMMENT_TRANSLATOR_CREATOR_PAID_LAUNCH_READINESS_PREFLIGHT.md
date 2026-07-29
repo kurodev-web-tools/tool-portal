@@ -33,7 +33,18 @@ cp1_non_c1_client_fail_closed_status=pass
 cp1_non_c1_store_write_read_approval_status=consumed
 cp1_non_c1_store_write_read_execution_status=pass
 cp1_non_c1_store_write_read_cleanup_status=pass
-cp1_next_ordered_approval_unit=CP1-A-STRIPE-PRODUCT-PRICE
+cp1_stripe_product_price_approval_status=consumed
+cp1_stripe_product_price_execution_status=pass
+cp1_stripe_product_candidate_count=0
+cp1_stripe_price_candidate_count=0
+cp1_stripe_product_create_verified_count=1
+cp1_stripe_price_create_verified_count=1
+cp1_stripe_remote_read_attempt_count=2
+cp1_stripe_mutation_attempt_count=2
+cp1_stripe_retry_count=0
+cp1_stripe_rollback_cleanup_count=0
+cp1_stripe_sensitive_output_count=0
+cp1_next_ordered_approval_unit=CP1-A-STRIPE-CHECKOUT
 cp1_integration_base=097f369a47564b7a44d211c212580f993eddc71b
 cp1_c1_fail_closed_read_followup_base=09ada36691185be9775940ce653952901bfc64d8
 cp1_c1_runtime_role_classification_followup_base=dd698bf093615c1741e25b73b37761a68804c45b
@@ -130,11 +141,11 @@ cp1_c1_merged_artifact_local_verification_approval_status=consumed
 cp1_c1_merged_artifact_local_verification_execution_status=pass
 cp1_c1_adapter_read_consumer_local_verification_status=pass
 cp1_c1_ephemeral_entitlement_bridge_local_verification_status=pass
-cp1_c1_process_isolation_preflight_status=local-synthetic-pass-not-adopted
-cp1_c1_process_isolation_guarantee_decision=retain-buffer-zero-fill-do-not-replace-with-exit-containment
-cp1_c1_process_isolation_unverified_lifetime_status=ipc-runtime-os-sdk-unverified
-cp1_c1_process_isolation_recommendation=retain-disconnected-until-zeroizable-client-boundary-proven
-cp1_c1_process_isolation_explicit_approval_status=absent-required-for-guarantee-change
+cp1_c1_process_isolation_preflight_status=local-synthetic-pass-adopted-as-design-candidate-only
+cp1_c1_process_isolation_guarantee_decision=parent-child-buffer-zero-fill-and-single-use-exit-containment
+cp1_c1_process_isolation_unverified_lifetime_status=accepted-residual-risk-ipc-v8-runtime-os-sdk-copy-erasure-teardown
+cp1_c1_process_isolation_recommendation=adopted-design-candidate-production-wiring-still-disconnected
+cp1_c1_process_isolation_explicit_approval_status=consumed-exact-guarantee-change
 cp1_c1_zeroizable_client_boundary_preflight_status=local-synthetic-pass-not-adopted
 cp1_c1_zeroizable_client_boundary_repository_contract_status=pass
 cp1_c1_zeroizable_client_boundary_production_api_status=absent-unverified
@@ -161,14 +172,43 @@ cp1_c1_zeroizable_client_candidate_source_production_adoption_approval_status=ab
 c1_guarantee_governance_base=9d64995dd30fe560a44cf4cf82a3cc67cf00b8d0
 c1_guarantee_governance_preflight_status=local-decision-pass-review-ready
 c1_guarantee_governance_route_count=3
-c1_guarantee_governance_recommendation=operator-provided-exact-source-revision-wait
-c1_guarantee_governance_current_guarantee=retained-buffer-zero-fill
+c1_guarantee_governance_recommendation=accept-process-isolation-residual-risk-and-change-guarantee
+c1_guarantee_governance_current_guarantee=parent-child-buffer-zero-fill-and-single-use-exit-containment
 c1_guarantee_governance_exact_source_status=absent
 c1_guarantee_governance_repeat_candidate_audit_status=prohibited-no-new-exact-source
-c1_guarantee_governance_process_isolation_risk_acceptance_status=absent-not-in-this-approval
-c1_guarantee_governance_next_approval_unit=single-source-bound-full-stack-feasibility-audit-after-prerequisites
-c1_guarantee_governance_approval_status=consumed-local-decision-preflight-only
+c1_guarantee_governance_process_isolation_risk_acceptance_status=consumed-exact-approval
+c1_guarantee_governance_next_approval_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-SELECTION-1
+c1_guarantee_governance_approval_status=consumed-exact-process-isolation-guarantee-change
 c1_guarantee_governance_production_adoption_approval_status=absent
+c1_process_isolation_wiring_design_approval_status=consumed
+c1_process_isolation_wiring_design_execution_status=pass
+c1_process_isolation_wiring_implementation_readiness_status=blocked-current-worker-nonfunctional-child-process
+c1_process_isolation_wiring_parent_responsibility=authorize-derive-reference-own-three-input-buffers-spawn-once-validate-sanitized-result-wait-exit
+c1_process_isolation_wiring_child_responsibility=construct-once-read-once-return-status-only-zero-fill-three-input-buffers-exit
+c1_process_isolation_wiring_input_buffer_count=3
+c1_process_isolation_wiring_result_shape=execution-status-result-status-termination-status-fixed-counts-only
+c1_process_isolation_wiring_normal_boundary=parent-zero-fill-after-ipc-write-child-zero-fill-before-disconnect-parent-success-after-valid-result-and-observed-zero-exit
+c1_process_isolation_wiring_error_boundary=zero-fill-owned-buffers-fail-closed-no-success-without-valid-result-and-observed-zero-exit
+c1_process_isolation_wiring_stop_boundary=sigterm-child-zero-fill-exit-parent-zero-fill-fail-closed
+c1_process_isolation_wiring_repeat_boundary=single-use-inflight-and-post-settlement-suppressed-late-success-ignored
+c1_process_isolation_wiring_configuration_boundary=reference-names-only-next-public-supabase-url-and-supabase-service-role-key
+c1_process_isolation_wiring_runtime_target=opennext-cloudflare-worker
+c1_process_isolation_wiring_spawn_capability_status=blocked-workers-child-process-nonfunctional-stub
+c1_process_isolation_wiring_rollback=retain-disconnected-remove-future-wiring-only-under-separate-approval
+c1_process_isolation_wiring_abort=runtime-target-or-bundle-or-input-ownership-or-result-shape-mismatch
+c1_process_isolation_wiring_next_implementation_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-SELECTION-1
+c1_process_isolation_wiring_next_implementation_unit_status=blocked-prerequisite-authorized-process-capable-topology
+c1_process_isolation_runtime_target_feasibility_approval_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-FEASIBILITY-1
+c1_process_isolation_runtime_target_feasibility_approval_status=consumed-goal-authority
+c1_process_isolation_runtime_target_feasibility_status=blocked-current-worker-no-functional-child-process
+c1_process_isolation_runtime_target_current=opennext-cloudflare-worker
+c1_process_isolation_runtime_target_worker_compatibility_date=2026-05-27
+c1_process_isolation_runtime_target_worker_child_process_status=nonfunctional-stub
+c1_process_isolation_runtime_target_required=process-capable-isolated-node-host
+c1_process_isolation_runtime_target_alternative=separate-cloudflare-container-or-operator-node-service
+c1_process_isolation_runtime_target_topology_authority_status=absent
+c1_process_isolation_runtime_target_production_implementation_status=blocked-no-authorized-process-host
+c1_process_isolation_runtime_target_next_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-SELECTION-1
 production_wiring_status=disconnected-fail-closed
 cp1_c12_containment_status=verified
 cp1_new_public_api_status=preview-readiness-route-source-approved
@@ -4544,7 +4584,130 @@ If a later approval nevertheless requests preservation of rejection evidence for
 
 No source-acquisition approval is recommended because official source already refutes or leaves unproved every one of the seven required predicates. The concrete blocker is the absence of an end-to-end byte-only API plus vendor/runtime/OS evidence for complete allocation registration, bounded retention, synchronous abort/read quiescence, synchronous dispose acknowledgement, and complete downstream zeroization. Obtaining the package sources cannot by itself cure those API and attestation gaps.
 
-This approval is consumed for read-only source procurement research and the local decision record only. It does not authorize archive download, dependency installation, manifest/lockfile change, production import/wiring, real input/constructor/client/read, auth/session, secret use, remote Supabase operation, guarantee change, residual-risk acceptance, commit, push, PR, deploy, activation, CP2, or public paid launch. The current guarantee remains retained Buffer zero-fill and `production_wiring_status=disconnected-fail-closed`.
+This approval is consumed for read-only source procurement research and the local decision record only. It does not authorize archive download, dependency installation, manifest/lockfile change, production import/wiring, real input/constructor/client/read, auth/session, secret use, remote Supabase operation, guarantee change, residual-risk acceptance, commit, push, PR, deploy, activation, CP2, or public paid launch. At completion of that historical unit, the guarantee remained retained Buffer zero-fill and `production_wiring_status=disconnected-fail-closed`.
+
+## CP1-S2AZ C1 Process-Isolation Guarantee Change Decision
+
+The owner supplied the exact approval previously fixed by CP1-S2AT. This decision is bound to clean isolated integration base `d20add97f05fc4298043939049e8931c45b43500` and changes only the repository authority for the C1 design guarantee. It performs no production import or wiring, real constructor/client/read, dependency installation, authentication/session work, remote operation, deploy, activation, CP2, or public paid launch.
+
+```text
+approval_status=consumed-exact-process-isolation-guarantee-change
+required_design_decision=consumed-process-isolation-guarantee-change
+process_isolation_preflight_status=local-synthetic-pass-adopted-as-design-candidate-only
+process_isolation_guarantee_decision=parent-child-buffer-zero-fill-and-single-use-exit-containment
+process_isolation_unverified_lifetime_status=accepted-residual-risk-ipc-v8-runtime-os-sdk-copy-erasure-teardown
+process_isolation_recommendation=adopted-design-candidate-production-wiring-still-disconnected
+process_isolation_explicit_approval_status=consumed-exact-guarantee-change
+c1_guarantee_governance_recommendation=accept-process-isolation-residual-risk-and-change-guarantee
+c1_guarantee_governance_current_guarantee=parent-child-buffer-zero-fill-and-single-use-exit-containment
+c1_guarantee_governance_process_isolation_risk_acceptance_status=consumed-exact-approval
+c1_guarantee_governance_next_approval_unit=process-isolation-production-wiring-design-preflight
+c1_guarantee_governance_approval_status=consumed-exact-process-isolation-guarantee-change
+c1_guarantee_governance_production_adoption_approval_status=absent
+production_wiring_status=disconnected-fail-closed
+real_constructor_client_read_count=0
+dependency_install_count=0
+remote_operation_count=0
+deploy_activation_cp2_public_launch_count=0
+```
+
+The accepted guarantee covers zero-fill of repository-owned parent/child Buffers and containment by one single-use child-process exit. It does not claim erasure or teardown of copies inside IPC, V8/runtime, native or OS layers, or an SDK/client; those gaps are now explicitly accepted residual risk for the design candidate. The local synthetic preflight remains the evidence for bounded repository lifecycle and observed exit only.
+
+This approval does not adopt a production implementation. Production stays disconnected and paid entitlement reads remain fail-closed. The next C1 unit may only design the process-isolation production-wiring boundary under a new exact approval; implementation, real construction/read, secrets, dependencies, remote access, Checkout, configuration binding, deploy, activation, CP2, and public launch remain separately gated.
+
+## CP1-S2BA C1 Process-Isolation Production-Wiring Design Preflight
+
+`C1-PROCESS-ISOLATION-PRODUCTION-WIRING-DESIGN-PREFLIGHT-1` is consumed at exact base `d20add97f05fc4298043939049e8931c45b43500`. The review was repository-local and read-only for production source. It inspected the synthetic child-process lifecycle, the ephemeral factory/store/read bridge, the durable entitlement store, the billing snapshot and Checkout call path, and the production runtime configuration. No production source, configuration, dependency, secret, remote service, Stripe object, or deployed target was changed or invoked.
+
+### Current Runtime Constraint
+
+The repository production target is OpenNext for Cloudflare with `.open-next/worker.js` as the Wrangler entrypoint and `nodejs_compat` enabled. The repository contains no production process host, sidecar, service boundary, or deployed child-process entrypoint. The existing `node:child_process` seam is under `scripts/` and is intentionally synthetic-only. Repository evidence therefore does not establish that the current production target can spawn, supervise, bundle, or terminate a child process.
+
+The design preflight passes because the ownership and fail-closed contract can be fixed. Implementation readiness remains blocked because selecting or adding a process-capable production runtime would expand production topology and requires separate authority. `nodejs_compat` is not treated as proof of process-spawn capability.
+
+### Fixed Parent And Child Responsibilities
+
+The parent is the authorized server boundary. It derives the billing reference, creates exactly three mutable input Buffers for the endpoint reference, privileged server credential, and billing reference, spawns exactly one child, transfers the three Buffers once, zero-fills its owned Buffers after IPC write settlement, accepts only the fixed sanitized result shape, waits for observed child exit, and returns Paid evidence only after a valid result plus successful exit. It never returns or logs any input or private reference.
+
+The child owns the received three Buffers, creates at most one store/client, performs at most one `readByBillingUserReference`, reduces the record to `available`, `missing`, or `unavailable`, returns only sanitized status and fixed counts, zero-fills all three received Buffers, disconnects IPC, and exits. No row, identifier, URL, credential, request, response, error text, or client object crosses back to the parent.
+
+### Normal, Error, Stop, Repeat, And Late Boundaries
+
+- Normal success requires one valid sanitized result, child zero-fill before disconnect, parent zero-fill after IPC write settlement, and an observed zero exit. A message without exit, exit without a valid result, or a nonzero exit is never success.
+- Construction, read, invalid-message, IPC-write, spawn, and child-error paths zero-fill every repository-owned Buffer still reachable and return `unavailable`. A child error without an observed exit remains a distinct containment failure and cannot authorize retry or Paid.
+- Stop sends one termination request. The child zero-fills its three Buffers before exit; the parent zero-fills its three Buffers and returns fail-closed. No late success may replace the stop result.
+- The controller is single-use. In-flight, settled-without-exit, and post-exit repeats spawn no new child and perform no construction or read. Late success is ignored.
+
+### Configuration, Rollback, Abort, And Next Unit
+
+The configuration boundary records only the two existing reference names `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. Values remain server-owned and must not be displayed, persisted in evidence, placed in command arguments, or inherited broadly through a child environment. The billing reference is a third private Buffer input and is likewise never output.
+
+Rollback before implementation is the current state: keep production disconnected and make no change. A future implementation rollback may remove only the separately approved wiring and restore the disconnected factory path; it may not infer credential rotation, remote cleanup, Stripe rollback, data mutation, or deployment reversal. Abort on runtime-target mismatch, missing child bundling/entrypoint proof, additional input ownership, non-fixed output, repeat capability, missing observed exit, or any requirement to expose a private value.
+
+```text
+c1_process_isolation_wiring_design_approval_status=consumed
+c1_process_isolation_wiring_design_execution_status=pass
+c1_process_isolation_wiring_implementation_readiness_status=blocked-runtime-target-unproven
+c1_process_isolation_wiring_parent_responsibility=authorize-derive-reference-own-three-input-buffers-spawn-once-validate-sanitized-result-wait-exit
+c1_process_isolation_wiring_child_responsibility=construct-once-read-once-return-status-only-zero-fill-three-input-buffers-exit
+c1_process_isolation_wiring_input_buffer_count=3
+c1_process_isolation_wiring_result_shape=execution-status-result-status-termination-status-fixed-counts-only
+c1_process_isolation_wiring_normal_boundary=parent-zero-fill-after-ipc-write-child-zero-fill-before-disconnect-parent-success-after-valid-result-and-observed-zero-exit
+c1_process_isolation_wiring_error_boundary=zero-fill-owned-buffers-fail-closed-no-success-without-valid-result-and-observed-zero-exit
+c1_process_isolation_wiring_stop_boundary=sigterm-child-zero-fill-exit-parent-zero-fill-fail-closed
+c1_process_isolation_wiring_repeat_boundary=single-use-inflight-and-post-settlement-suppressed-late-success-ignored
+c1_process_isolation_wiring_configuration_boundary=reference-names-only-next-public-supabase-url-and-supabase-service-role-key
+c1_process_isolation_wiring_runtime_target=opennext-cloudflare-worker
+c1_process_isolation_wiring_spawn_capability_status=unproven-no-repository-production-process-host
+c1_process_isolation_wiring_rollback=retain-disconnected-remove-future-wiring-only-under-separate-approval
+c1_process_isolation_wiring_abort=runtime-target-or-bundle-or-input-ownership-or-result-shape-mismatch
+c1_process_isolation_wiring_next_implementation_unit=C1-PROCESS-ISOLATION-PRODUCTION-WIRING-IMPLEMENTATION-1
+c1_process_isolation_wiring_next_implementation_unit_status=blocked-prerequisite-process-capable-runtime-authority
+production_wiring_status=disconnected-fail-closed
+production_source_change_count=0
+dependency_install_count=0
+remote_operation_count=0
+stripe_operation_count=0
+configuration_binding_count=0
+checkout_portal_webhook_count=0
+deploy_activation_cp2_public_launch_count=0
+```
+
+The next single implementation unit is fixed as `C1-PROCESS-ISOLATION-PRODUCTION-WIRING-IMPLEMENTATION-1`, but it is non-executable until a separately approved runtime-target preflight proves a process-capable production host, exact child bundling and entrypoint ownership, private-input injection without command-line or broad environment exposure, and the same single-use/exit/sanitized-result contract. This design approval does not authorize that prerequisite or implementation.
+
+## CP1-S2BB C1 Process-Isolation Runtime-Target Feasibility
+
+The runtime-target feasibility review is fixed to exact base `d20add97f05fc4298043939049e8931c45b43500`. Repository configuration still targets the OpenNext Cloudflare Worker entrypoint `.open-next/worker.js`, compatibility date `2026-05-27`, and `nodejs_compat`. No Container declaration, Durable Object Container binding, image, Dockerfile, sidecar, or operator Node-service boundary exists.
+
+Cloudflare's current Node.js compatibility reference classifies `node:child_process` as a nonfunctional stub enabled for `nodejs_compat` dates on or after `2026-03-17`; import compatibility does not provide working `spawn`, `fork`, or process supervision. The current Worker date is after that threshold, so the existing synthetic `fork` seam cannot be adopted inside the Worker. Source: https://developers.cloudflare.com/workers/runtime-apis/nodejs/
+
+Cloudflare documents real process execution under the separate Containers runtime: a Worker controls a Container-backed Durable Object, the container runs in a Linux VM, and `this.ctx.container.exec()` starts a process inside a running Container. That is a production-topology, binding, image, dependency, and deployment decision, not an implicit capability of the current OpenNext Worker. Sources: https://developers.cloudflare.com/containers/ and https://developers.cloudflare.com/containers/execute-commands/
+
+Therefore the production wiring implementation is not merely unproven; it is blocked on the current Worker target. The accepted process-isolation guarantee remains usable only after selecting and authorizing a separate process-capable isolated Node host. The next single unit is `C1-PROCESS-ISOLATION-RUNTIME-TARGET-SELECTION-1`, which may compare a separate Cloudflare Container boundary with an operator-owned Node service, including secret injection, sanitized transport, lifecycle, cost/availability, rollback, and deployment ownership. It may not treat either alternative as selected or deployed without its own authority.
+
+```text
+c1_process_isolation_runtime_target_feasibility_approval_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-FEASIBILITY-1
+c1_process_isolation_runtime_target_feasibility_approval_status=consumed-goal-authority
+c1_process_isolation_runtime_target_feasibility_status=blocked-current-worker-no-functional-child-process
+c1_process_isolation_runtime_target_current=opennext-cloudflare-worker
+c1_process_isolation_runtime_target_worker_compatibility_date=2026-05-27
+c1_process_isolation_runtime_target_worker_child_process_status=nonfunctional-stub
+c1_process_isolation_runtime_target_required=process-capable-isolated-node-host
+c1_process_isolation_runtime_target_alternative=separate-cloudflare-container-or-operator-node-service
+c1_process_isolation_runtime_target_topology_authority_status=absent
+c1_process_isolation_runtime_target_production_implementation_status=blocked-no-authorized-process-host
+c1_process_isolation_runtime_target_next_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-SELECTION-1
+production_wiring_status=disconnected-fail-closed
+production_source_change_count=0
+production_configuration_change_count=0
+dependency_install_count=0
+configuration_binding_count=0
+remote_service_operation_count=0
+stripe_operation_count=0
+deploy_activation_cp2_public_launch_count=0
+official_documentation_read_count=3
+result_marker=C1_PROCESS_ISOLATION_RUNTIME_TARGET_BLOCKED
+```
 
 ## Entitlement, Usage, Provider, And Capability Proof Rules
 

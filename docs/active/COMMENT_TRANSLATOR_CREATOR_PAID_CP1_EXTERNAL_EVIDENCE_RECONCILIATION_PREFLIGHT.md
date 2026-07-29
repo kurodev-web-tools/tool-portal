@@ -52,7 +52,7 @@ The fixed classifications used below are:
 | Stage | Fixed classification | Existing repository evidence / authority | Stale or missing evidence | C1 relationship |
 | --- | --- | --- | --- | --- |
 | CP1-S1 remote migrations | `既に充足` for C1/C3/C5/C6/C7/C8/C9/C11 apply and C3/C5/C6/C7/C8/C9/C11 structural readiness; `C1と独立して実行可能` | Active readiness records confirm all eight ordered migration applies. C3/C5/C6/C7/C8/C9/C11 structural readiness passed with sanitized catalog/schema-only evidence. | No ordered migration apply remains. Migration history inspection, reapply, bundle apply, and later migrations remain outside the consumed units. | The completed C11 unit did not reopen the blocked C1 production adapter. Each migration remained one independently approved operation. |
-| CP1-S2 deployed stores | `既に充足` for local contracts and C3/C5/C6/C7/C8/C9/C11 structural presence only; `不足`; `C1 blocker依存`; `C1と独立して実行可能` for non-C1 behavior | C1 local adapter/read and bridge contracts pass; C3 direct-execution/trigger/revoke evidence is confirmed; C3/C5/C6/C7/C8/C9/C11 structural catalog evidence is complete; store contracts remain service-role-only and fail-closed locally. | C1 post-apply readiness/read is blocked by the disconnected production adapter. C3/C5/C6/C7/C8/C9/C11 deployed write/read/token/redemption/dictionary/history behavior remains not-run. | The C1 missing-record read is blocker-dependent. Non-C1 store checks are technically independent of reopening C1, but require their own exact approvals. |
+| CP1-S2 deployed stores | `既に充足` for local contracts, C3/C5/C6/C7/C8/C9/C11 structural presence, and non-C1 deployed readiness; `不足`; `C1 blocker依存`; `C1と独立して実行可能` for non-C1 behavior | C1 local adapter/read and bridge contracts pass; C3 direct-execution/trigger/revoke evidence is confirmed; C3/C5/C6/C7/C8/C9/C11 structural evidence is complete. `CP1-A-STORE-READINESS` separately proves Data API exposure/client fail-closed behavior and catalog RLS/service-role-only availability without row payload. | C1 post-apply readiness/read is blocked by the disconnected production adapter. C3/C5/C6/C7/C8/C9/C11 deployed write/read/token/redemption/dictionary/history behavior remains not-run. | The C1 missing-record read is blocker-dependent. Non-C1 behavior remains independent of reopening C1 but requires its own exact approval. |
 | CP1-S3 Stripe Product/Price/control plane | `不足`; `再確認が必要`; `C1と独立して実行可能` | `scripts/comment-translator-creator-c2-stripe-closed-beta-gate-contract.mjs` proves local fail-closed Stripe gating; the active readiness authority defines `CP1-A-STRIPE-PRODUCT-PRICE`. | Current Product/Price/reference presence, webhook control-plane state, exact account target, and rollback owner are absent. The preview/integration reference-presence route is source-only and not deployed. | Presence/control-plane proof does not require reopening C1, but S1/S2 ordering and exact Stripe approval remain mandatory. |
 | CP1-S4 Checkout/Portal/webhook/entitlement states | `不足`; `C1 blocker依存` | C2 local contract proves signed/unsigned/replay/fail-closed logic; units `CP1-A-STRIPE-CHECKOUT`, `CP1-A-STRIPE-PORTAL`, `CP1-A-STRIPE-WEBHOOK`, and `CP1-A-ENTITLEMENT-STATES` are defined. | No live Checkout, Portal, signed webhook delivery, paid-active, paid-inactive, or fail-closed production evidence exists. | A paid-active entitlement proof requires readable durable C1 state; the current production C1 path is disconnected. |
 | CP1-S5 paid usage reset/cost/limits | `既に充足` for local deterministic behavior only; `不足`; `C1 blocker依存` | `scripts/comment-translator-creator-c3-paid-usage-counter-contract.mjs` and C4 authority contracts prove local exactly-once, signed-period, replay, accounting, and stop rules. | No deployed C3 persistence, signed-period rollover, provider-account cost posture, or configured soft/hard stop evidence exists. | Paid usage proof requires readable C1 paid-active entitlement plus deployed C3 state. |
@@ -607,3 +607,76 @@ All 23 source-bound predicates and all 17 fixed counts matched exactly. This pro
 No database row, history message, translation, owner, provider, customer, secret, credential, project identifier, URL, organization, region, raw wrapper, raw text, field name, or raw connector response was displayed or recorded. No migration-history inspection, retry, reapply, repair, rollback, cleanup, or additional query/mutation ran.
 
 All ordered migration units are now consumed/pass. The next ordered independent unit is `CP1-A-STORE-READINESS`; it requires a new exact approval and does not inherit C11 authority. No store read/write, history behavior, cleanup, provider action, browser QA, deploy, activation, CP2, promotion, or public paid launch is authorized by this record. C1 remains `disconnected-fail-closed`, with `0/7` candidate proofs and `0` eligible candidates.
+
+## CP1-A-STORE-READINESS Non-C1 Deployed Readiness Follow-Up
+
+Status: complete for C3/C5/C6/C7/C8/C9/C11 deployed store readiness only.
+
+This follow-up supersedes only the preceding `CP1-A-STORE-READINESS` next-unit recommendation. It does not reinterpret the completed migration records or reopen C1.
+
+```text
+reviewed_base=76b4b8274bf7b12b142968853d7c7f89ebda01be
+approval_id=CP1-A-STORE-READINESS
+remote_free_reducer_retry_approval_id=CP1-A-STORE-READINESS-REMOTE-FREE-REDUCER-RETRY-1
+query_hash_calculation_approval_id=CP1-A-STORE-READINESS-QUERY-HASH-CALCULATION-1
+target_label=operator-confirmed-sole-active
+readiness_query_marker=CP1_NON_C1_STORE_READINESS_V3
+readiness_query_byte_count=9064
+readiness_query_sha256=5122ffbc29f57debd14a468a47c7dc5986dc05718ab8980a70202db89a7c7ce0
+remote_free_fixture_count=14
+remote_free_fixture_pass_count=14
+catalog_identifier_normalization_count=2
+surface_count=7
+adapter_read_surface_count=7
+expected_table_count=8
+table_present_count=8
+rls_enabled_count=8
+expected_policy_count=8
+service_role_policy_count=8
+client_policy_count=0
+service_role_table_select_count=8
+anon_table_select_count=0
+authenticated_table_select_count=0
+expected_direct_function_count=8
+direct_function_present_count=8
+service_role_function_execute_count=8
+anon_function_execute_count=0
+authenticated_function_execute_count=0
+trigger_function_present_count=1
+trigger_binding_count=1
+anon_trigger_function_execute_count=0
+authenticated_trigger_function_execute_count=0
+service_role_public_schema_usage_count=1
+catalog_source_bound_predicate_count=24
+data_api_exposure_evidence_count=1
+client_fail_closed_evidence_count=1
+total_evidence_predicate_count=26
+project_list_attempt_count=1
+accessible_project_count=1
+active_project_count=1
+data_api_control_plane_read_attempt_count=2
+data_api_request_attempt_count=1
+initial_readiness_query_attempt_count=2
+diagnostic_query_attempt_count=4
+completing_readiness_query_attempt_count=1
+row_payload_output_count=0
+mutation_count=0
+additional_query_required_count=0
+execution_status=pass
+sanitized_output_review_status=pass
+database_repair_status=not-run
+rollback_status=not-run
+database_cleanup_status=not-run
+next_ordered_approval_unit=CP1-A-STORE-WRITE-READ
+production_wiring_status=disconnected-fail-closed
+c1_candidate_proof_count=0/7
+c1_eligible_candidate_count=0
+```
+
+Canonical repository source fixed the non-C1 inventory at seven deployed store surfaces, seven adapter read surfaces, eight tables, eight direct functions, one trigger function/binding, and eight service-role policies. The first exact catalog query stopped fail closed because deployed PostgREST schema configuration was not observable through the inspected catalog/settings surfaces. Data API exposure was therefore proven through a separate actual Data API boundary request, while RLS, grants/revokes, service-role-only authority, function execution, and catalog presence remained a distinct catalog-query boundary.
+
+The second exact catalog query stopped fail closed on policy identity cardinality. Bounded fixed-count diagnostics identified only C6 and C8 policy identities as mismatched; canonical identifiers for those two surfaces exceed PostgreSQL's 63-byte identifier limit and the deployed catalog contains their deterministic truncated forms. The V3 query normalized exactly those two source identities, retained all marker/field/count/status/cardinality/row-payload/sensitive-output fail-closed checks, passed `14/14` remote-free fixtures, and then passed one completing catalog-only query. The completing composite evidence contains 24 catalog source-bound predicates plus one Data API exposure and one client fail-closed predicate.
+
+The Data API request returned no row payload and proved only that the target schema boundary was exposed while an unprivileged client remained fail closed. Catalog RLS/policy/grant/revoke evidence separately proved service-role-only availability. Neither boundary substitutes for the other. No database row, owner/session/token/reference, dictionary term, history message/translation, provider/customer value, project identifier, URL, organization, region, credential, secret, raw wrapper, raw text, or raw connector field was displayed or recorded.
+
+`CP1-A-STORE-READINESS` is consumed/pass. No store write/read behavior, token issue/redeem/revoke, dictionary CRUD, history row/backfill/read/expiry, OAuth/account cleanup, provider/browser action, repair, rollback, cleanup, deploy, activation, CP2, promotion, or public paid launch ran. The next ordered independent unit is `CP1-A-STORE-WRITE-READ`; it remains separately approval-gated and is not authorized by this record. C1 remains `disconnected-fail-closed`, with `0/7` candidate proofs and `0` eligible candidates.

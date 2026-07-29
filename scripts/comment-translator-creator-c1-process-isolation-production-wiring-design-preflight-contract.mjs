@@ -27,8 +27,8 @@ const requiredMarkers = [
   "c1_process_isolation_wiring_spawn_capability_status=blocked-workers-child-process-nonfunctional-stub",
   "c1_process_isolation_wiring_rollback=retain-disconnected-remove-future-wiring-only-under-separate-approval",
   "c1_process_isolation_wiring_abort=runtime-target-or-bundle-or-input-ownership-or-result-shape-mismatch",
-  "c1_process_isolation_wiring_next_implementation_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-SELECTION-1",
-  "c1_process_isolation_wiring_next_implementation_unit_status=blocked-prerequisite-authorized-process-capable-topology",
+  "c1_process_isolation_wiring_next_implementation_unit=C1-CLOUDFLARE-CONTAINER-RUNTIME-BOUNDARY-IMPLEMENTATION-1",
+  "c1_process_isolation_wiring_next_implementation_unit_status=blocked-separate-implementation-approval",
   "production_wiring_status=disconnected-fail-closed",
 ];
 

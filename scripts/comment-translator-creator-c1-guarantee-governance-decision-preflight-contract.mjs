@@ -19,6 +19,8 @@ const processIsolationWiringDesignContractPath =
   "scripts/comment-translator-creator-c1-process-isolation-production-wiring-design-preflight-contract.mjs";
 const processIsolationRuntimeTargetFeasibilityContractPath =
   "scripts/comment-translator-creator-c1-process-isolation-runtime-target-feasibility-contract.mjs";
+const processIsolationRuntimeTargetSelectionContractPath =
+  "scripts/comment-translator-creator-c1-process-isolation-runtime-target-selection-contract.mjs";
 const sourceProcurementResearchPrefix =
   "docs/archive/2026-07-28-c1-production-source-procurement-ulw-research/";
 const allowedChangedPaths = new Set([
@@ -29,6 +31,7 @@ const allowedChangedPaths = new Set([
   contractPath,
   processIsolationWiringDesignContractPath,
   processIsolationRuntimeTargetFeasibilityContractPath,
+  processIsolationRuntimeTargetSelectionContractPath,
   "scripts/comment-translator-creator-c1-process-isolation-preflight-contract.mjs",
   "scripts/comment-translator-creator-c1-production-constructor-compatibility-contract.mjs",
   "scripts/comment-translator-creator-cp1-paid-launch-readiness-contract.mjs",
@@ -65,7 +68,7 @@ const requiredGlobalMarkers = [
   "c1_guarantee_governance_exact_source_status=absent",
   "c1_guarantee_governance_repeat_candidate_audit_status=prohibited-no-new-exact-source",
   "c1_guarantee_governance_process_isolation_risk_acceptance_status=consumed-exact-approval",
-  "c1_guarantee_governance_next_approval_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-SELECTION-1",
+  "c1_guarantee_governance_next_approval_unit=C1-CLOUDFLARE-CONTAINER-RUNTIME-BOUNDARY-IMPLEMENTATION-1",
   "c1_guarantee_governance_approval_status=consumed-exact-process-isolation-guarantee-change",
   "c1_guarantee_governance_production_adoption_approval_status=absent",
   "production_wiring_status=disconnected-fail-closed",

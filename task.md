@@ -68,7 +68,7 @@
 - c1_guarantee_governance_exact_source_status=absent
 - c1_guarantee_governance_repeat_candidate_audit_status=prohibited-no-new-exact-source
 - c1_guarantee_governance_process_isolation_risk_acceptance_status=consumed-exact-approval
-- c1_guarantee_governance_next_approval_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-SELECTION-1
+- c1_guarantee_governance_next_approval_unit=C1-CLOUDFLARE-CONTAINER-RUNTIME-BOUNDARY-IMPLEMENTATION-1
 - c1_guarantee_governance_approval_status=consumed-exact-process-isolation-guarantee-change
 - c1_guarantee_governance_production_adoption_approval_status=absent
 - c1_process_isolation_wiring_design_approval_status=consumed
@@ -87,8 +87,8 @@
 - c1_process_isolation_wiring_spawn_capability_status=blocked-workers-child-process-nonfunctional-stub
 - c1_process_isolation_wiring_rollback=retain-disconnected-remove-future-wiring-only-under-separate-approval
 - c1_process_isolation_wiring_abort=runtime-target-or-bundle-or-input-ownership-or-result-shape-mismatch
-- c1_process_isolation_wiring_next_implementation_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-SELECTION-1
-- c1_process_isolation_wiring_next_implementation_unit_status=blocked-prerequisite-authorized-process-capable-topology
+- c1_process_isolation_wiring_next_implementation_unit=C1-CLOUDFLARE-CONTAINER-RUNTIME-BOUNDARY-IMPLEMENTATION-1
+- c1_process_isolation_wiring_next_implementation_unit_status=blocked-separate-implementation-approval
 - c1_process_isolation_runtime_target_feasibility_approval_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-FEASIBILITY-1
 - c1_process_isolation_runtime_target_feasibility_approval_status=consumed-goal-authority
 - c1_process_isolation_runtime_target_feasibility_status=blocked-current-worker-no-functional-child-process
@@ -97,10 +97,39 @@
 - c1_process_isolation_runtime_target_worker_child_process_status=nonfunctional-stub
 - c1_process_isolation_runtime_target_required=process-capable-isolated-node-host
 - c1_process_isolation_runtime_target_alternative=separate-cloudflare-container-or-operator-node-service
-- c1_process_isolation_runtime_target_topology_authority_status=absent
-- c1_process_isolation_runtime_target_production_implementation_status=blocked-no-authorized-process-host
-- c1_process_isolation_runtime_target_next_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-SELECTION-1
-- C1 runtime-target feasibility is now resolved fail-closed: the configured OpenNext Cloudflare Worker date enables only Cloudflare's nonfunctional `node:child_process` stub, while actual process execution belongs to a separate process-capable runtime such as Cloudflare Containers or an operator-owned Node service. No such topology, binding, dependency, or deployment authority exists in the repository, so production source remains unchanged and disconnected.
+- c1_process_isolation_runtime_target_topology_authority_status=selected-cloudflare-containers
+- c1_process_isolation_runtime_target_production_implementation_status=blocked-separate-implementation-approval
+- c1_process_isolation_runtime_target_next_unit=C1-CLOUDFLARE-CONTAINER-RUNTIME-BOUNDARY-IMPLEMENTATION-1
+- c1_process_isolation_runtime_target_selection_base=7365b9e2940acd34e1d9960f55e08041efa0e632
+- c1_process_isolation_runtime_target_selection_approval_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-SELECTION-1
+- c1_process_isolation_runtime_target_selection_status=selected-review-ready
+- c1_process_isolation_runtime_target_candidate_count=2
+- c1_process_isolation_runtime_target_selected_count=1
+- c1_process_isolation_runtime_target_selected=cloudflare-containers
+- c1_process_isolation_runtime_target_container_process_status=functional-exec-with-stdin-exitcode-and-kill
+- c1_process_isolation_runtime_target_container_availability=general-availability
+- c1_process_isolation_runtime_target_container_beta_status=not-beta
+- c1_process_isolation_runtime_target_container_sla=container-specific-public-sla-not-established
+- c1_process_isolation_runtime_target_container_cost_class=workers-paid-usage-based-container-durable-object-and-worker
+- c1_process_isolation_runtime_target_operator_node_service_status=rejected-no-approved-platform-topology
+- c1_process_isolation_runtime_target_parent_owner=container-single-use-node-parent
+- c1_process_isolation_runtime_target_child_owner=container-single-use-node-child
+- c1_process_isolation_runtime_target_secret_input=worker-to-container-rpc-byte-stream-to-parent-stdin-never-argv-or-environment
+- c1_process_isolation_runtime_target_transport=worker-container-durable-object-rpc-stream-in-fixed-sanitized-result-out
+- c1_process_isolation_runtime_target_lifecycle=durable-object-coordinates-one-exec-parent-coordinates-one-child-success-after-valid-result-and-observed-zero-exits
+- c1_process_isolation_runtime_target_repeat_boundary=inflight-and-post-settlement-suppressed-late-success-ignored
+- c1_process_isolation_runtime_target_stop_boundary=kill-parent-and-child-zero-fill-owned-buffers-observe-exits-fail-closed
+- c1_process_isolation_runtime_target_deployment_topology=opennext-worker-to-container-durable-object-binding-to-versioned-node-image
+- c1_process_isolation_runtime_target_rollback=keep-disconnected-until-separate-approval-then-revert-worker-version-with-image-retained
+- c1_process_isolation_runtime_target_abort=stream-ownership-or-exec-or-exit-observation-or-sanitized-shape-or-image-retention-mismatch
+- production_source_change_count=0
+- production_configuration_change_count=0
+- dependency_install_count=0
+- configuration_binding_count=0
+- remote_service_operation_count=0
+- deploy_activation_cp2_public_launch_count=0
+- result_marker=C1_PROCESS_ISOLATION_RUNTIME_TARGET_SELECTED
+- C1 runtime-target selection is review-ready at exact integration `7365b9e2940acd34e1d9960f55e08041efa0e632`: Cloudflare Containers is the sole selected target because the current GA platform supplies a Worker-controlled Durable Object boundary, real process `exec`, byte-stream stdin, exit observation, and termination control. An operator-owned Node service remains unselectable without an approved platform, SLA, cost, deployment, and rollback authority. Selection adds no production source, dependency, binding, image, configuration, deploy, activation, or remote operation; production stays disconnected and Free / paid-inactive behavior is unchanged.
 - C1 production source procurement is fixed at PR #695 integration tip `d206ff2c07cc10aeb701d0d2034a29b17f58d42b`. One new node-libcurl/libcurl Windows native envelope was researched from official metadata only and rejected with `0/7` proofs established; no PR #694 candidate class was re-audited, no archive was downloaded, and no dependency or production path was executed.
 - CP1 remaining external-evidence reconciliation is current through exact integration base `d20add97f05fc4298043939049e8931c45b43500`. `CP1-A-STORE-READINESS`, `CP1-A-STORE-WRITE-READ`, and `CP1-A-STRIPE-PRODUCT-PRICE` are consumed/pass. The operator-returned sanitized Stripe envelope records complete Product/Price duplicate scans with `0 / 0` eligible candidates, followed by exactly one verified live Creator Product and one verified live monthly `980 JPY` tax-inclusive Price creation; `2` reads, `2` mutations, `0` retries, `0` rollback/cleanup, and `0` sensitive/private-identifier output. No private Product/Price reference is repository authority. The next ordered independent unit is `CP1-A-STRIPE-CHECKOUT`, but it is not executable until separately approved readiness work proves the required live runtime reference presence and the C1 durable billing-state read boundary. The exact process-isolation guarantee-change approval is consumed: repository-owned parent/child Buffer zero-fill plus single-use child-process exit containment is now the C1 design guarantee, while IPC/V8/runtime/OS/SDK copy erasure and teardown remain accepted residual risk. Production wiring remains `disconnected-fail-closed`; Checkout, Portal, webhook, configuration binding, billing activation, deploy, and public launch remain not-run.
 - c1_source_procurement_base=d206ff2c07cc10aeb701d0d2034a29b17f58d42b

@@ -19,9 +19,9 @@ const requiredMarkers = [
   "c1_process_isolation_runtime_target_worker_child_process_status=nonfunctional-stub",
   "c1_process_isolation_runtime_target_required=process-capable-isolated-node-host",
   "c1_process_isolation_runtime_target_alternative=separate-cloudflare-container-or-operator-node-service",
-  "c1_process_isolation_runtime_target_topology_authority_status=absent",
-  "c1_process_isolation_runtime_target_production_implementation_status=blocked-no-authorized-process-host",
-  "c1_process_isolation_runtime_target_next_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-SELECTION-1",
+  "c1_process_isolation_runtime_target_topology_authority_status=selected-cloudflare-containers",
+  "c1_process_isolation_runtime_target_production_implementation_status=blocked-separate-implementation-approval",
+  "c1_process_isolation_runtime_target_next_unit=C1-CLOUDFLARE-CONTAINER-RUNTIME-BOUNDARY-IMPLEMENTATION-1",
   "production_wiring_status=disconnected-fail-closed",
 ];
 

@@ -51,14 +51,14 @@ The fixed classifications used below are:
 
 | Stage | Fixed classification | Existing repository evidence / authority | Stale or missing evidence | C1 relationship |
 | --- | --- | --- | --- | --- |
-| CP1-S1 remote migrations | `既に充足` for C1 apply and C3/C5/C6/C7/C8/C9 apply plus structural readiness; `不足`; `C1と独立して実行可能` | Active readiness records confirm the ordered C1/C3/C5/C6/C7/C8/C9 applies; C3/C5/C6/C7/C8/C9 structural readiness passed with sanitized catalog-only evidence. Fixed independent units remain `CP1-A-MIG-C1` through `CP1-A-MIG-C11`. | C11 apply is not-run. It still requires fresh exact approval, target binding, rollback owner, and sanitized output reviewer. | Applying C11 does not require reopening the blocked C1 production adapter. Stage order still requires one migration per approval and stop between migrations. |
-| CP1-S2 deployed stores | `既に充足` for local contracts and C3/C5/C6/C7/C8/C9 structural presence only; `不足`; `C1 blocker依存`; `C1と独立して実行可能` for non-C1 behavior | C1 local adapter/read and bridge contracts pass; C3 direct-execution/trigger/revoke evidence is confirmed; C3/C5/C6/C7/C8/C9 structural catalog evidence is complete; store contracts remain service-role-only and fail-closed locally. | C1 post-apply readiness/read is blocked by the disconnected production adapter. C3 behavior and all C5/C6/C7/C8/C9 deployed write/read/token/redemption/dictionary behavior remain not-run; C11 migration and behavior evidence are absent. | The C1 missing-record read is blocker-dependent. Non-C1 store checks are technically independent of reopening C1, but require their own exact approvals. |
+| CP1-S1 remote migrations | `既に充足` for C1/C3/C5/C6/C7/C8/C9/C11 apply and C3/C5/C6/C7/C8/C9/C11 structural readiness; `C1と独立して実行可能` | Active readiness records confirm all eight ordered migration applies. C3/C5/C6/C7/C8/C9/C11 structural readiness passed with sanitized catalog/schema-only evidence. | No ordered migration apply remains. Migration history inspection, reapply, bundle apply, and later migrations remain outside the consumed units. | The completed C11 unit did not reopen the blocked C1 production adapter. Each migration remained one independently approved operation. |
+| CP1-S2 deployed stores | `既に充足` for local contracts and C3/C5/C6/C7/C8/C9/C11 structural presence only; `不足`; `C1 blocker依存`; `C1と独立して実行可能` for non-C1 behavior | C1 local adapter/read and bridge contracts pass; C3 direct-execution/trigger/revoke evidence is confirmed; C3/C5/C6/C7/C8/C9/C11 structural catalog evidence is complete; store contracts remain service-role-only and fail-closed locally. | C1 post-apply readiness/read is blocked by the disconnected production adapter. C3/C5/C6/C7/C8/C9/C11 deployed write/read/token/redemption/dictionary/history behavior remains not-run. | The C1 missing-record read is blocker-dependent. Non-C1 store checks are technically independent of reopening C1, but require their own exact approvals. |
 | CP1-S3 Stripe Product/Price/control plane | `不足`; `再確認が必要`; `C1と独立して実行可能` | `scripts/comment-translator-creator-c2-stripe-closed-beta-gate-contract.mjs` proves local fail-closed Stripe gating; the active readiness authority defines `CP1-A-STRIPE-PRODUCT-PRICE`. | Current Product/Price/reference presence, webhook control-plane state, exact account target, and rollback owner are absent. The preview/integration reference-presence route is source-only and not deployed. | Presence/control-plane proof does not require reopening C1, but S1/S2 ordering and exact Stripe approval remain mandatory. |
 | CP1-S4 Checkout/Portal/webhook/entitlement states | `不足`; `C1 blocker依存` | C2 local contract proves signed/unsigned/replay/fail-closed logic; units `CP1-A-STRIPE-CHECKOUT`, `CP1-A-STRIPE-PORTAL`, `CP1-A-STRIPE-WEBHOOK`, and `CP1-A-ENTITLEMENT-STATES` are defined. | No live Checkout, Portal, signed webhook delivery, paid-active, paid-inactive, or fail-closed production evidence exists. | A paid-active entitlement proof requires readable durable C1 state; the current production C1 path is disconnected. |
 | CP1-S5 paid usage reset/cost/limits | `既に充足` for local deterministic behavior only; `不足`; `C1 blocker依存` | `scripts/comment-translator-creator-c3-paid-usage-counter-contract.mjs` and C4 authority contracts prove local exactly-once, signed-period, replay, accounting, and stop rules. | No deployed C3 persistence, signed-period rollover, provider-account cost posture, or configured soft/hard stop evidence exists. | Paid usage proof requires readable C1 paid-active entitlement plus deployed C3 state. |
 | CP1-S6 Paid provider/Azure/dictionary | `既に充足` for local routing and dictionary contracts only; `不足`; `C1 blocker依存` | C4 provider authority/route contracts and C9 dictionary store/runtime/provider-integration contracts define OpenAI-first, bounded recoverable Azure fallback, no policy/parse fallback, and effective-version behavior. | No live Paid provider call, Azure fallback, provider-account posture, or dictionary-influenced provider execution exists. | Paid provider execution requires readable C1 entitlement and C3 current-period state. |
 | CP1-S7 OBS/moderator capabilities | `既に充足` for local contracts and C5/C6/C7/C8 migration structure; `不足`; `C1と独立して実行可能` | C5/C6/C7/C8 migrations and structural readiness are complete. Their token, store, route, and transport contracts define digest-only storage, issue/use/revoke/expiry/replay, read-only projection, and cross-surface rejection. | Deployed issue/use/revoke/expiry/replay, redemption, non-empty display, and cross-surface rejection behavior remain absent. | Capability operations do not require reopening the C1 production adapter. They remain separately approval-gated. |
-| CP1-S8 C10/history/cleanup | `既に充足` for local C10/C11 contracts only; `不足`; `C1 blocker依存` for Paid history; `C1と独立して実行可能` for separately scoped cleanup mechanics | `scripts/comment-translator-creator-c10-priority-display-contract.mjs`, `scripts/comment-translator-creator-c11-history-contract.mjs`, and the C11 UI contract prove local preservation, cutoff, tombstone, and access rules. | C11 migration, production preservation, seven-day read/expiry, Free non-retention, OAuth cleanup, and account cleanup evidence are absent. | Paid history requires readable C1 paid-active state. OAuth/account cleanup mechanics are separate units but cannot substitute for the missing history proof or bypass stage order. |
+| CP1-S8 C10/history/cleanup | `既に充足` for local C10/C11 contracts and C11 structural presence only; `不足`; `C1 blocker依存` for Paid history; `C1と独立して実行可能` for separately scoped cleanup mechanics | `scripts/comment-translator-creator-c10-priority-display-contract.mjs`, `scripts/comment-translator-creator-c11-history-contract.mjs`, and the C11 UI contract prove local preservation, cutoff, tombstone, and access rules. The C11 migration and catalog/schema-only structural readiness are consumed/pass. | Production preservation, seven-day row read/expiry, Free non-retention, OAuth cleanup, and account cleanup evidence are absent. | Paid history requires readable C1 paid-active state. OAuth/account cleanup mechanics are separate units but cannot substitute for the missing history proof or bypass stage order. |
 
 ## Single Recommended Next Approval Unit
 
@@ -532,3 +532,78 @@ post_apply_mutation_count=0
 This proves only the reviewed C9 table's exact 10-column, 9-constraint, 3-index, RLS/policy/grant/revoke/comment structure and the three exact RPC signatures, return/language/security/search-path/grant/revoke attributes, plus 43 source-bound function-body predicates. Index structures were bound by `pg_index` primary/unique/key-count/predicate/expression attributes and `pg_attribute` positions rather than index names; function bodies were checked from `pg_proc`. It does not prove dictionary row content, store CRUD behavior, provider/cache behavior, browser behavior, or deployed application wiring. No database row, owner, term, replacement, note, provider value, secret, credential, project identifier, URL, organization, region, raw wrapper, raw text, field name, or raw connector response was displayed or recorded.
 
 The next ordered migration unit is `CP1-A-MIG-C11`. It requires a new exact approval and does not inherit C9 authority. No C11 or later migration, store smoke, provider action, browser QA, deploy, activation, CP2, promotion, or public paid launch is authorized by this record. C1 remains `disconnected-fail-closed`, with `0/7` candidate proofs and `0` eligible candidates.
+
+## CP1-A-MIG-C11 Apply And Post-Apply Structural Readiness Follow-Up
+
+Status: complete for migration apply and structural readiness only.
+
+This follow-up supersedes only the preceding `CP1-A-MIG-C11` next-unit recommendation. The earlier migration follow-ups remain their durable records and are not reinterpreted by this section.
+
+```text
+execution_recorded_at=2026-07-29T12:58:50+09:00
+reviewed_base=6bf0db74a1774b70e1bd95dc0ece9b7b4105080e
+approval_id=CP1-A-MIG-C11-RETRY-3
+payload_reducer_remediation_approval_id=CP1-A-MIG-C11-REMOTE-FREE-PAYLOAD-REDUCER-REMEDIATION-1
+target_label=operator-confirmed-sole-active
+migration_path=supabase/migrations/20260723003000_comment_translator_creator_history.sql
+canonical_git_blob=fb9e53f4dd1d8ddf9a6de63796b7c446051ed793
+canonical_git_blob_sha256=e1d0071176b5e99d0e4934f80480c57b18cbdaf28c46d3df931dc8fef1e75426
+migration_name=comment_translator_creator_history
+structural_query_sha256=f21d3edce436d9de7fc009e7cbd8983e2897364e4e48c97862db3dc887bd26b2
+structural_query_marker=CP1_C11_STRUCTURAL_READINESS_V2
+project_list_attempt_count=1
+accessible_project_count=1
+active_project_count=1
+migration_attempt_count=1
+migration_apply_count=1
+migration_reapply_count=0
+migration_status=applied
+transaction_status=committed
+payload_reducer_fixture_group_count=5
+payload_reducer_fixture_group_pass_count=5
+structural_predicate_count=23
+fixed_structural_count_field_count=17
+structural_query_attempt_count=1
+structural_readiness_status=pass
+row_data_read_count=0
+post_apply_mutation_count=0
+execution_status=pass
+sanitized_output_review_status=pass
+database_repair_status=not-run
+rollback_status=not-run
+database_cleanup_status=not-run
+next_ordered_approval_unit=CP1-A-STORE-READINESS
+production_wiring_status=disconnected-fail-closed
+```
+
+The original C11 preflight derived the exact base, migration path, Git blob, blob SHA-256, migration name, 23 source-bound predicates, and 17 fixed structural count fields from canonical repository source. The corrected V2 query fixed the catalog-only table-comment reducer before remote execution. `CP1-A-MIG-C11-REMOTE-FREE-PAYLOAD-REDUCER-REMEDIATION-1` then passed one remote-free attempt covering valid migration/query payloads plus missing, corrupt, and hash-mismatched payload rejection. `CP1-A-MIG-C11-RETRY-1` and `CP1-A-MIG-C11-RETRY-2` stopped before project discovery, migration apply, or structural query and performed no remote operation.
+
+Under `CP1-A-MIG-C11-RETRY-3`, one authenticated control-plane project list reduced to exactly `1 accessible / 1 active`; the private target identifier remained only in trusted transient state under `operator-confirmed-sole-active`. The exact canonical C11 bytes were applied through one `apply_migration` operation, one transaction, and one attempt. The migration was not reapplied.
+
+The single committed-success follow-up query was catalog/schema-only. It reduced marker `CP1_C11_STRUCTURAL_READINESS_V2` to the fixed counts:
+
+```text
+table_present_count=1
+expected_column_present_count=7
+target_table_total_column_count=7
+required_constraint_count=5
+target_table_total_constraint_count=5
+required_index_count=3
+target_table_total_index_count=3
+rls_enabled_count=1
+service_role_table_authority_count=1
+client_table_revoke_count=1
+service_role_policy_count=1
+target_table_total_policy_count=1
+table_comment_count=1
+required_column_comment_count=3
+target_table_total_column_comment_count=3
+row_data_read_count=0
+post_apply_mutation_count=0
+```
+
+All 23 source-bound predicates and all 17 fixed counts matched exactly. This proves only the reviewed C11 table's exact seven-column, five-constraint, three-index, RLS/policy/grant/revoke, table-comment, and three required column-comment structure. It does not prove history row content, backfill, persistence/read/expiry behavior, tombstone behavior, store CRUD, OAuth or account cleanup, provider behavior, browser behavior, or deployed application wiring.
+
+No database row, history message, translation, owner, provider, customer, secret, credential, project identifier, URL, organization, region, raw wrapper, raw text, field name, or raw connector response was displayed or recorded. No migration-history inspection, retry, reapply, repair, rollback, cleanup, or additional query/mutation ran.
+
+All ordered migration units are now consumed/pass. The next ordered independent unit is `CP1-A-STORE-READINESS`; it requires a new exact approval and does not inherit C11 authority. No store read/write, history behavior, cleanup, provider action, browser QA, deploy, activation, CP2, promotion, or public paid launch is authorized by this record. C1 remains `disconnected-fail-closed`, with `0/7` candidate proofs and `0` eligible candidates.

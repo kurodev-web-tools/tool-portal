@@ -79,7 +79,7 @@
 - C9 is merged through PR #676 at exact integration commit `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; C9 head `10b48d524901c54e4c0402c05709d95bdfe92792` is contained in integration.
 - C10 is merged through PR #677 at exact integration commit `c0ac7152687dc0c91470037ec164fda57d7f4259`; C10 head `834284011252782d98139072c7a183c854f9302a` is contained in integration.
 - C11 is merged through PR #678 at exact integration commit `d1ce9b0d063f65bac968c85f3242398be4b8317f`; C11 head `4bf598f7fca3f21175de7b3aeda0d001121b376b` is contained in integration.
-- C2 live activation and C4 live provider execution remain separately approval-gated. `CP1-A-MIG-C7`, `CP1-A-MIG-C8`, and `CP1-A-MIG-C9` apply and structural readiness are complete; C9 store CRUD, provider/cache behavior, browser behavior, and deployed wiring remain separately gated.
+- C2 live activation and C4 live provider execution remain separately approval-gated. `CP1-A-MIG-C7`, `CP1-A-MIG-C8`, `CP1-A-MIG-C9`, and `CP1-A-MIG-C11-RETRY-3` apply and structural readiness are complete; C9/C11 store behavior, provider/cache behavior, history read/expiry, cleanup, browser behavior, and deployed wiring remain separately gated.
 - C6 authenticated safe-feed rendering, C8 browser rendering, and C11 authenticated history rendering remain unchecked and approval-gated. CP1 preserves those gates without treating local, planned, or reference-presence evidence as live proof.
 - P1 Prompt Board is MVP-complete and remains post-MVP work: `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md`.
 - PRs target `codex/comment-translator-free-public-beta-integration` from short-lived feature branches.
@@ -289,19 +289,19 @@ C1 is accepted only when all of the following are verified:
 - A final read-only semantic re-audit confirmed the OAuth path, Creator-only access, exact timestamp boundary, store-construction fail-closed behavior, strict tombstone correlation, and React entry-key fixes with no remaining concrete finding.
 - The focused C1-C11, Creator authority, session/feed, retention/deletion, OAuth cleanup, provider-boundary, OBS Dock, and UI regression run has 18 passes out of 30 with no unexpected failure: nine checks are blocked by missing dependencies and three dependency-free historical contracts retain their pre-C11 stale assertions.
 - Changed server `.ts` and contract `.mjs` files pass dependency-free Node syntax checks. LSP, ESLint, TypeScript, production build, and real browser QA remain unavailable because dependencies are absent and installation was not approved.
-- Outside the separately approved and sanitized C1/C3/C5/C6/C7/C8/C9 migration/readiness units, no provider, polling, OAuth/YouTube, target lookup, live session, translation, Supabase remote query/mutation, Stripe, Cloudflare, deploy, activation, or production operation was run.
+- Outside the separately approved and sanitized C1/C3/C5/C6/C7/C8/C9/C11 migration/readiness units, no provider, polling, OAuth/YouTube, target lookup, live session, translation, history row read/backfill/expiry, store CRUD, cleanup, Stripe, Cloudflare, deploy, activation, or production application operation was run.
 
 ### Residual Risk And C12 Handoff
 
-- C1/C3/C5/C6/C7/C8/C9 migration/readiness units ran only within their separately approved boundaries; C11 and all deployed store behavior or production data access remain not-run. Until an explicitly approved unit exists, the corresponding deployed behavior remains unavailable or fail-closed.
+- C1/C3/C5/C6/C7/C8/C9/C11 migration/readiness units ran only within their separately approved boundaries. All deployed store behavior, history row access, and production application data access remain not-run. Until an explicitly approved unit exists, the corresponding deployed behavior remains unavailable or fail-closed.
 - Stripe live Product, Price, Checkout, Portal, and webhook operations were not run. Local verifier fixtures are not live billing evidence.
 - Local C2 fixtures do not establish live Product/Price interval, billing cadence, trial policy, webhook destination, Customer mapping values, or production configuration; C3 continues to follow only signed period-boundary advances.
 - C4 does not infer an OpenAI model, provider pricing/token multiplier, budget amount, billing cadence, or production value. Operator-owned server environment values and provider-account caps remain required before any separately approved live/provider smoke.
 - Dependency-backed contracts, ESLint, TypeScript, build, and browser QA remain blocked in this worktree by missing `node_modules`; installation was not approved. Three dependency-free historical contracts retain known stale provider-fixture, task-history, and feed-owner assertions and remain baseline limitations.
-- C5 through C9 migration apply and structural readiness are complete, while their store/token/redemption/dictionary/authenticated-browser behavior remains unverified and separately approval-gated. C11 remote migration apply and production persistence remain unverified and separately approval-gated. Until each remaining reviewed migration is applied, its deployed store remains unavailable and fails closed.
+- C5 through C11 migration apply and structural readiness are complete, while store/token/redemption/dictionary/history/authenticated-browser behavior remains unverified and separately approval-gated. C11 production persistence, history read/expiry, and cleanup remain not-run. The next ordered independent unit is `CP1-A-STORE-READINESS`; no deployed store behavior is inferred from structural presence.
 - C11 browser-visible files changed, but width QA at `390 / 820 / 1024 / 1280 / 1366px` is blocked because dependencies and a local server are absent. C6/C8 authenticated/live-token browser QA remains separately approval-gated and was not run.
 - C11 is merged / integration verified at `d1ce9b0d063f65bac968c85f3242398be4b8317f`; C11 head `4bf598f7fca3f21175de7b3aeda0d001121b376b` is contained in integration.
-- C12 final QA owns the task-specific readiness matrix. C11 remote migration apply, C5/C6 store/token/redemption behavior, C9 store/dictionary/provider behavior, C6/C8/C11 authenticated browser QA, and all Stripe/provider/live operations remain separate approval gates.
+- C12 final QA owns the task-specific readiness matrix. C5/C6 store/token/redemption behavior, C9 store/dictionary/provider behavior, C11 history persistence/read/expiry/cleanup behavior, C6/C8/C11 authenticated browser QA, and all Stripe/provider/live operations remain separate approval gates.
 
 ## C12 Acceptance Boundary
 
@@ -392,7 +392,7 @@ C1 is accepted only when all of the following are verified:
 | C8 | Moderator share UI route | merged / integration verified at `1ec79ca222149626670ec6692c19356bc56bb2c6`; authenticated feed QA pending / gated |
 | C9 | Custom dictionary minimum | merged / integration verified at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb` |
 | C10 | Priority display polish | merged / integration verified at `c0ac7152687dc0c91470037ec164fda57d7f4259` |
-| C11 | Simple 7-day history | merged / integration verified at `d1ce9b0d063f65bac968c85f3242398be4b8317f` |
+| C11 | Simple 7-day history | merged / integration verified; migration applied and structural readiness pass |
 | C12 | Creator closed beta final QA | local readiness complete; operational readiness blocked / approval-gated |
 
 ## Creator Public Paid Launch
@@ -430,7 +430,7 @@ This authority is a task board only. Every gated operation requires a separate, 
 - C8 merge is complete at `1ec79ca222149626670ec6692c19356bc56bb2c6`; `CP1-A-MIG-C8` apply and structural readiness are complete, while store/redemption/authenticated-browser behavior, Cloudflare configuration, deploy, activation, and any live token/session operation remain approval-gated.
 - C9 merge / integration verification is complete through PR #676 at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; remote migration apply and production persistence remain approval-gated.
 - C10 merge / integration verification is complete through PR #677 at `c0ac7152687dc0c91470037ec164fda57d7f4259`.
-- C11 merge / integration verification is complete through PR #678 at `d1ce9b0d063f65bac968c85f3242398be4b8317f`; remote migration apply, production persistence, and authenticated browser history verification remain approval-gated.
+- C11 merge / integration verification is complete through PR #678 at `d1ce9b0d063f65bac968c85f3242398be4b8317f`; remote migration apply and catalog/schema-only structural readiness are consumed/pass at reviewed base `6bf0db74a1774b70e1bd95dc0ece9b7b4105080e`. Production persistence, history row read/expiry, cleanup, and authenticated browser history verification remain separately approval-gated.
 - C12 is merged / integration verified through PR #679 at `097f369a47564b7a44d211c212580f993eddc71b`; C12 head `e93bfb77dc2017fd4a15e99e075f7e419c14a94d` is contained in integration.
 - CP1 local readiness is complete. Its 72 independent approval units remain consumed, ready-not-approved, or not-run as recorded by the active authority; deploy, activation, CP2, promotion to `main`, and public paid launch remain out of CP1.
 - Out of scope: Stripe mutation.

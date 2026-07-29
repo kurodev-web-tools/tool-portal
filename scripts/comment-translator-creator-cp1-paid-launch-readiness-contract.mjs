@@ -680,11 +680,11 @@ assert.match(
 );
 assert.match(
   readiness,
-  /^cp1_next_ordered_migration_approval_unit=CP1-A-MIG-C11$/m,
+  /^cp1_next_ordered_approval_unit=CP1-A-STORE-READINESS$/m,
 );
 assert.match(
   task,
-  /CP1-A-MIG-C3`, `CP1-A-MIG-C5`, `CP1-A-MIG-C6`, `CP1-A-MIG-C7`, `CP1-A-MIG-C8`, and `CP1-A-MIG-C9` are consumed\/pass[\s\S]*next ordered unit is `CP1-A-MIG-C11`/,
+  /CP1-A-MIG-C3`, `CP1-A-MIG-C5`, `CP1-A-MIG-C6`, `CP1-A-MIG-C7`, `CP1-A-MIG-C8`, `CP1-A-MIG-C9`, and `CP1-A-MIG-C11-RETRY-3` are consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STORE-READINESS`/,
 );
 assert.match(
   board,
@@ -733,7 +733,7 @@ for (const marker of [
 }
 assert.match(
   task,
-  /CP1-A-MIG-C5`, `CP1-A-MIG-C6`, `CP1-A-MIG-C7`, `CP1-A-MIG-C8`, and `CP1-A-MIG-C9` are consumed\/pass[\s\S]*next ordered unit is `CP1-A-MIG-C11`/,
+  /CP1-A-MIG-C5`, `CP1-A-MIG-C6`, `CP1-A-MIG-C7`, `CP1-A-MIG-C8`, `CP1-A-MIG-C9`, and `CP1-A-MIG-C11-RETRY-3` are consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STORE-READINESS`/,
 );
 assert.match(
   board,
@@ -789,7 +789,7 @@ for (const marker of [
 }
 assert.match(
   task,
-  /CP1-A-MIG-C6`, `CP1-A-MIG-C7`, `CP1-A-MIG-C8`, and `CP1-A-MIG-C9` are consumed\/pass[\s\S]*next ordered unit is `CP1-A-MIG-C11`/,
+  /CP1-A-MIG-C6`, `CP1-A-MIG-C7`, `CP1-A-MIG-C8`, `CP1-A-MIG-C9`, and `CP1-A-MIG-C11-RETRY-3` are consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STORE-READINESS`/,
 );
 assert.match(
   board,
@@ -983,13 +983,71 @@ for (const marker of [
   /^cp1_c9_migration_approval_status=consumed$/m,
   /^cp1_c9_migration_execution_status=pass$/m,
   /^cp1_c9_structural_readiness_status=pass$/m,
-  /^cp1_next_ordered_migration_approval_unit=CP1-A-MIG-C11$/m,
+  /^cp1_c11_migration_approval_status=consumed$/m,
+  /^cp1_c11_migration_execution_status=pass$/m,
+  /^cp1_c11_structural_readiness_status=pass$/m,
+  /^cp1_next_ordered_approval_unit=CP1-A-STORE-READINESS$/m,
 ]) {
   assert.match(readiness, marker);
 }
 assert.match(
   board,
   /CP1-A-MIG-C9` is consumed\/pass[\s\S]*zero row-data reads and zero post-apply mutations/,
+);
+for (const marker of [
+  /^reviewed_base=6bf0db74a1774b70e1bd95dc0ece9b7b4105080e$/m,
+  /^approval_id=CP1-A-MIG-C11-RETRY-3$/m,
+  /^payload_reducer_remediation_approval_id=CP1-A-MIG-C11-REMOTE-FREE-PAYLOAD-REDUCER-REMEDIATION-1$/m,
+  /^migration_path=supabase\/migrations\/20260723003000_comment_translator_creator_history\.sql$/m,
+  /^canonical_git_blob=fb9e53f4dd1d8ddf9a6de63796b7c446051ed793$/m,
+  /^canonical_git_blob_sha256=e1d0071176b5e99d0e4934f80480c57b18cbdaf28c46d3df931dc8fef1e75426$/m,
+  /^migration_name=comment_translator_creator_history$/m,
+  /^structural_query_sha256=f21d3edce436d9de7fc009e7cbd8983e2897364e4e48c97862db3dc887bd26b2$/m,
+  /^structural_query_marker=CP1_C11_STRUCTURAL_READINESS_V2$/m,
+  /^project_list_attempt_count=1$/m,
+  /^accessible_project_count=1$/m,
+  /^active_project_count=1$/m,
+  /^migration_attempt_count=1$/m,
+  /^migration_apply_count=1$/m,
+  /^migration_reapply_count=0$/m,
+  /^migration_status=applied$/m,
+  /^transaction_status=committed$/m,
+  /^payload_reducer_fixture_group_count=5$/m,
+  /^payload_reducer_fixture_group_pass_count=5$/m,
+  /^structural_predicate_count=23$/m,
+  /^fixed_structural_count_field_count=17$/m,
+  /^structural_query_attempt_count=1$/m,
+  /^structural_readiness_status=pass$/m,
+  /^row_data_read_count=0$/m,
+  /^post_apply_mutation_count=0$/m,
+  /^execution_status=pass$/m,
+  /^sanitized_output_review_status=pass$/m,
+  /^database_repair_status=not-run$/m,
+  /^rollback_status=not-run$/m,
+  /^database_cleanup_status=not-run$/m,
+  /^next_ordered_approval_unit=CP1-A-STORE-READINESS$/m,
+  /^production_wiring_status=disconnected-fail-closed$/m,
+  /^table_present_count=1$/m,
+  /^expected_column_present_count=7$/m,
+  /^target_table_total_column_count=7$/m,
+  /^required_constraint_count=5$/m,
+  /^target_table_total_constraint_count=5$/m,
+  /^required_index_count=3$/m,
+  /^target_table_total_index_count=3$/m,
+  /^rls_enabled_count=1$/m,
+  /^service_role_table_authority_count=1$/m,
+  /^client_table_revoke_count=1$/m,
+  /^service_role_policy_count=1$/m,
+  /^target_table_total_policy_count=1$/m,
+  /^table_comment_count=1$/m,
+  /^required_column_comment_count=3$/m,
+  /^target_table_total_column_comment_count=3$/m,
+]) {
+  assert.match(externalEvidenceReconciliation, marker);
+}
+assert.match(
+  board,
+  /CP1-A-MIG-C11-RETRY-3` apply and structural readiness are complete[\s\S]*history read\/expiry, cleanup, browser behavior, and deployed wiring remain separately gated/,
 );
 
 execFileSync("git", ["merge-base", "--is-ancestor", integrationBase, "HEAD"], {

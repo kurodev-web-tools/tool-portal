@@ -71,7 +71,7 @@
 - c1_guarantee_governance_approval_status=consumed-local-decision-preflight-only
 - c1_guarantee_governance_production_adoption_approval_status=absent
 - C1 production source procurement is fixed at PR #695 integration tip `d206ff2c07cc10aeb701d0d2034a29b17f58d42b`. One new node-libcurl/libcurl Windows native envelope was researched from official metadata only and rejected with `0/7` proofs established; no PR #694 candidate class was re-audited, no archive was downloaded, and no dependency or production path was executed.
-- CP1 remaining external-evidence reconciliation is current through reviewed base `1b17b9a603d5a2c182e801a3b102247a04328265`. `CP1-A-MIG-C3`, `CP1-A-MIG-C5`, `CP1-A-MIG-C6`, `CP1-A-MIG-C7`, `CP1-A-MIG-C8`, and `CP1-A-MIG-C9` are consumed/pass. C9 completed one applied committed transaction; its separately approved remote-free retry passed `6/6` marker-local reducer fixtures, followed by one catalog/schema-only query across all 22 reviewed structural count predicates and 43 function-body predicates (`0` row-data reads / `0` post-apply mutations). Durable evidence is appended to `docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_CP1_EXTERNAL_EVIDENCE_RECONCILIATION_PREFLIGHT.md`. The next ordered unit is `CP1-A-MIG-C11`. C1 remains `disconnected-fail-closed`.
+- CP1 remaining external-evidence reconciliation is current through reviewed base `6bf0db74a1774b70e1bd95dc0ece9b7b4105080e`. `CP1-A-MIG-C3`, `CP1-A-MIG-C5`, `CP1-A-MIG-C6`, `CP1-A-MIG-C7`, `CP1-A-MIG-C8`, `CP1-A-MIG-C9`, and `CP1-A-MIG-C11-RETRY-3` are consumed/pass. C11 completed one applied committed transaction with zero reapply after the approved remote-free payload reducer passed `5/5` fixture groups; one catalog/schema-only query then passed all 23 source-bound predicates and 17 fixed count fields (`0` row-data reads / `0` post-apply mutations). Durable sanitized evidence is appended to `docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_CP1_EXTERNAL_EVIDENCE_RECONCILIATION_PREFLIGHT.md`. All ordered migration units are complete; the next ordered independent unit is `CP1-A-STORE-READINESS`. C1 remains `disconnected-fail-closed`.
 - c1_source_procurement_base=d206ff2c07cc10aeb701d0d2034a29b17f58d42b
 - c1_source_procurement_preflight_status=blocked-no-feasible-full-stack-candidate
 - c1_source_procurement_candidate_envelope_count=1
@@ -172,7 +172,7 @@ Do not perform live/external operations without same-thread ready preflight, san
 - C8 merge is complete at `1ec79ca222149626670ec6692c19356bc56bb2c6`; Cloudflare configuration, deploy, activation, and any live token/session operation remain separate approval-gated steps.
 - C9 merge / integration verification is complete through PR #676 at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; remote migration apply and production persistence remain separately approval-gated.
 - C10 merge / integration verification is complete through PR #677 at `c0ac7152687dc0c91470037ec164fda57d7f4259`.
-- C11 merge / integration verification is complete through PR #678 at `d1ce9b0d063f65bac968c85f3242398be4b8317f`; remote migration apply, production persistence, and authenticated browser history verification remain separately approval-gated.
+- C11 merge / integration verification is complete through PR #678 at `d1ce9b0d063f65bac968c85f3242398be4b8317f`; remote migration apply and catalog/schema-only structural readiness are consumed/pass at reviewed base `6bf0db74a1774b70e1bd95dc0ece9b7b4105080e`. Production persistence, history row read/expiry, cleanup, and authenticated browser history verification remain separately approval-gated.
 - C12 merge / integration verification is complete through PR #679 at `097f369a47564b7a44d211c212580f993eddc71b`; C12 head `e93bfb77dc2017fd4a15e99e075f7e419c14a94d` is contained in integration.
 - CP1 local readiness is complete. Remote/deployed/billing/provider/token/cleanup/authenticated-browser operations each retain a separate approval unit; deploy, activation, CP2, promotion to `main`, and public paid launch remain out of scope / separately approval-gated.
 - Out of scope: Stripe mutation.
@@ -243,7 +243,7 @@ These items stay visible but are not current release blockers unless explicitly 
 | C8 | Moderator share UI route | merged / integration verified at `1ec79ca222149626670ec6692c19356bc56bb2c6`; authenticated feed QA pending / gated |
 | C9 | Custom dictionary minimum | merged / integration verified at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb` |
 | C10 | Priority display polish | merged / integration verified at `c0ac7152687dc0c91470037ec164fda57d7f4259` |
-| C11 | Simple 7-day history | merged / integration verified at `d1ce9b0d063f65bac968c85f3242398be4b8317f` |
+| C11 | Simple 7-day history | merged / integration verified; migration applied and structural readiness pass |
 | C12 | Creator closed beta final QA | local readiness complete; operational readiness blocked / approval-gated |
 
 ### Creator Public Paid Launch

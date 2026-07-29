@@ -680,3 +680,63 @@ The second exact catalog query stopped fail closed on policy identity cardinalit
 The Data API request returned no row payload and proved only that the target schema boundary was exposed while an unprivileged client remained fail closed. Catalog RLS/policy/grant/revoke evidence separately proved service-role-only availability. Neither boundary substitutes for the other. No database row, owner/session/token/reference, dictionary term, history message/translation, provider/customer value, project identifier, URL, organization, region, credential, secret, raw wrapper, raw text, or raw connector field was displayed or recorded.
 
 `CP1-A-STORE-READINESS` is consumed/pass. No store write/read behavior, token issue/redeem/revoke, dictionary CRUD, history row/backfill/read/expiry, OAuth/account cleanup, provider/browser action, repair, rollback, cleanup, deploy, activation, CP2, promotion, or public paid launch ran. The next ordered independent unit is `CP1-A-STORE-WRITE-READ`; it remains separately approval-gated and is not authorized by this record. C1 remains `disconnected-fail-closed`, with `0/7` candidate proofs and `0` eligible candidates.
+
+## CP1-A-STORE-WRITE-READ Bounded C9 Write/Read Follow-Up
+
+Status: complete for one canonical C9 direct-table write/read proof and its exact synthetic-state cleanup only.
+
+This follow-up supersedes only the preceding `CP1-A-STORE-WRITE-READ` next-unit recommendation. It does not reinterpret store readiness, reopen C1, or authorize another store behavior unit.
+
+```text
+execution_recorded_at=2026-07-29T16:05:08+09:00
+reviewed_base=1b3f32961834e79155961117de5b512998e883ec
+approval_id=CP1-A-STORE-WRITE-READ
+envelope_diagnosis_approval_id=CP1-A-STORE-WRITE-READ-ENVELOPE-DIAGNOSIS
+completing_retry_approval_id=CP1-A-STORE-WRITE-READ-RETRY-3
+target_label=operator-confirmed-sole-active
+proof_surface=C9-direct-table-boundary
+canonical_migration_path=supabase/migrations/20260723002000_comment_translator_custom_dictionary.sql
+canonical_migration_git_blob=9cab0491acf4aea8fbc88629909366f743667a01
+canonical_migration_sha256=f0bf014a4b2ea09af43e34f2a57b7f8458e59915511bb4ca3d2d81c3417325b4
+canonical_store_path=lib/comment-translator-custom-dictionary-store.ts
+canonical_store_git_blob=be782624978f2e8c8ba2c34812a2e5b251c18b13
+canonical_store_sha256=5a02f08cebe858fcecdec60fd5410bbd700a79bbd588f04a99180ea33e12ba2a
+proof_query_marker=CP1_A_STORE_WRITE_READ_V1
+remote_free_fixture_count=9
+remote_free_fixture_pass_count=9
+static_predicate_count=10
+static_predicate_pass_count=10
+total_project_list_attempt_count=14
+accessible_project_count=1
+active_project_count=1
+bounded_proof_sql_attempt_count=4
+non_mutating_diagnostic_sql_attempt_count=9
+prior_unreduced_proof_attempt_count=3
+project_list_attempt_count=1
+proof_sql_attempt_count=1
+preexisting_count=0
+write_count=1
+read_count=1
+cleanup_count=1
+residual_count=0
+mutation_count=2
+row_payload_output_count=0
+execution_status=pass
+sanitized_output_review_status=pass
+database_repair_status=not-run
+rollback_status=not-run
+next_ordered_approval_unit=CP1-A-STRIPE-PRODUCT-PRICE
+production_wiring_status=disconnected-fail-closed
+c1_candidate_proof_count=0/7
+c1_eligible_candidate_count=0
+```
+
+Canonical repository source uniquely selected the C9 custom-dictionary table as the smallest non-C1 store surface whose synthetic row required no existing entitlement, owner, session, token, reference, provider, customer, or history state. The proof used the migration's ten columns as one exact ownership predicate and the first source-ordered valid language pair, while generated values remained transient inside the SQL transaction and were never returned, displayed, or saved.
+
+The initial result could not be reduced to the exact PASS envelope. The separately approved envelope diagnosis and subsequent bounded non-mutating diagnostics established that the connector returns a description-wrapped, tagged JSON result for the final statement. A precise reducer then passed direct, tagged, double-encoded, zero-candidate, multiple-candidate, marker, count, numeric-type, and unexpected-field fixtures. Earlier proof attempts remained uncredited and fail closed; each proof shape enclosed its synthetic write/read/delete in one transaction, so SQL failure could not commit a partial synthetic row and SQL success completed the exact delete before commit. No repair, explicit rollback, broad cleanup, or same-operation blind retry ran.
+
+The completing attempt first passed `9/9` reducer fixtures and `10/10` source-bound static predicates. One authenticated control-plane project list reduced to exactly `1 accessible / 1 active`, followed by one SQL attempt. The transaction required zero exact-predicate preexisting rows, inserted one synthetic row, read exactly one matching row by all ten fields, deleted exactly that row, required zero residual rows, committed, and returned only the fixed `CP1_A_STORE_WRITE_READ_V1` marker, status, and counts.
+
+This proof does not invoke the C9 application CRUD functions or establish dictionary CRUD/provider-hook behavior. It does not issue, use, redeem, revoke, reissue, backfill, expire, disconnect, delete an account, call a provider, access a browser, deploy, activate, enter CP2, promote, or launch publicly. Data API exposure and catalog RLS/grant/revoke/service-role authority remain separate proof boundaries. No row payload, identifier, owner/session/token/reference, dictionary content, history content, provider/customer/private target metadata, project identifier, URL, organization, region, credential, secret, raw wrapper, raw text, or raw connector response was displayed or recorded.
+
+`CP1-A-STORE-WRITE-READ` and its exact cleanup sub-unit are consumed/pass. The next ordered independent unit is `CP1-A-STRIPE-PRODUCT-PRICE`; it remains separately approval-gated. C1 remains `disconnected-fail-closed`, with `0/7` candidate proofs and `0` eligible candidates.

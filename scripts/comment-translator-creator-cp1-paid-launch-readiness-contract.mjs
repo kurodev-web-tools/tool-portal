@@ -680,11 +680,14 @@ assert.match(
 );
 assert.match(
   readiness,
-  /^cp1_next_ordered_approval_unit=CP1-A-STORE-WRITE-READ$/m,
+  /^cp1_non_c1_store_write_read_approval_status=consumed$/m,
+  /^cp1_non_c1_store_write_read_execution_status=pass$/m,
+  /^cp1_non_c1_store_write_read_cleanup_status=pass$/m,
+  /^cp1_next_ordered_approval_unit=CP1-A-STRIPE-PRODUCT-PRICE$/m,
 );
 assert.match(
   task,
-  /CP1-A-MIG-C3`, `CP1-A-MIG-C5`, `CP1-A-MIG-C6`, `CP1-A-MIG-C7`, `CP1-A-MIG-C8`, `CP1-A-MIG-C9`, `CP1-A-MIG-C11-RETRY-3`, and `CP1-A-STORE-READINESS` are consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STORE-WRITE-READ`/,
+  /`CP1-A-STORE-READINESS` and `CP1-A-STORE-WRITE-READ` are consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STRIPE-PRODUCT-PRICE`/,
 );
 assert.match(
   board,
@@ -733,7 +736,7 @@ for (const marker of [
 }
 assert.match(
   task,
-  /CP1-A-MIG-C5`, `CP1-A-MIG-C6`, `CP1-A-MIG-C7`, `CP1-A-MIG-C8`, `CP1-A-MIG-C9`, `CP1-A-MIG-C11-RETRY-3`, and `CP1-A-STORE-READINESS` are consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STORE-WRITE-READ`/,
+  /`CP1-A-STORE-READINESS` and `CP1-A-STORE-WRITE-READ` are consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STRIPE-PRODUCT-PRICE`/,
 );
 assert.match(
   board,
@@ -789,7 +792,7 @@ for (const marker of [
 }
 assert.match(
   task,
-  /CP1-A-MIG-C6`, `CP1-A-MIG-C7`, `CP1-A-MIG-C8`, `CP1-A-MIG-C9`, `CP1-A-MIG-C11-RETRY-3`, and `CP1-A-STORE-READINESS` are consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STORE-WRITE-READ`/,
+  /`CP1-A-STORE-READINESS` and `CP1-A-STORE-WRITE-READ` are consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STRIPE-PRODUCT-PRICE`/,
 );
 assert.match(
   board,
@@ -986,7 +989,10 @@ for (const marker of [
   /^cp1_c11_migration_approval_status=consumed$/m,
   /^cp1_c11_migration_execution_status=pass$/m,
   /^cp1_c11_structural_readiness_status=pass$/m,
-  /^cp1_next_ordered_approval_unit=CP1-A-STORE-WRITE-READ$/m,
+  /^cp1_non_c1_store_write_read_approval_status=consumed$/m,
+  /^cp1_non_c1_store_write_read_execution_status=pass$/m,
+  /^cp1_non_c1_store_write_read_cleanup_status=pass$/m,
+  /^cp1_next_ordered_approval_unit=CP1-A-STRIPE-PRODUCT-PRICE$/m,
 ]) {
   assert.match(readiness, marker);
 }
@@ -1102,18 +1108,60 @@ for (const marker of [
   /^cp1_non_c1_data_api_exposure_status=pass$/m,
   /^cp1_non_c1_service_role_only_authority_status=pass$/m,
   /^cp1_non_c1_client_fail_closed_status=pass$/m,
-  /^cp1_next_ordered_approval_unit=CP1-A-STORE-WRITE-READ$/m,
+  /^cp1_non_c1_store_write_read_approval_status=consumed$/m,
+  /^cp1_non_c1_store_write_read_execution_status=pass$/m,
+  /^cp1_non_c1_store_write_read_cleanup_status=pass$/m,
+  /^cp1_next_ordered_approval_unit=CP1-A-STRIPE-PRODUCT-PRICE$/m,
 ]) {
   assert.match(readiness, marker);
 }
 assert.match(
   task,
-  /and `CP1-A-STORE-READINESS` are consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STORE-WRITE-READ`/,
+  /`CP1-A-STORE-READINESS` and `CP1-A-STORE-WRITE-READ` are consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STRIPE-PRODUCT-PRICE`/,
 );
 assert.match(
   board,
-  /CP1-A-STORE-READINESS` is consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STORE-WRITE-READ`/,
+  /CP1-A-STORE-WRITE-READ` is consumed\/pass[\s\S]*next ordered independent unit is `CP1-A-STRIPE-PRODUCT-PRICE`/,
 );
+for (const marker of [
+  /^reviewed_base=1b3f32961834e79155961117de5b512998e883ec$/m,
+  /^approval_id=CP1-A-STORE-WRITE-READ$/m,
+  /^envelope_diagnosis_approval_id=CP1-A-STORE-WRITE-READ-ENVELOPE-DIAGNOSIS$/m,
+  /^completing_retry_approval_id=CP1-A-STORE-WRITE-READ-RETRY-3$/m,
+  /^proof_surface=C9-direct-table-boundary$/m,
+  /^canonical_migration_sha256=f0bf014a4b2ea09af43e34f2a57b7f8458e59915511bb4ca3d2d81c3417325b4$/m,
+  /^canonical_store_sha256=5a02f08cebe858fcecdec60fd5410bbd700a79bbd588f04a99180ea33e12ba2a$/m,
+  /^proof_query_marker=CP1_A_STORE_WRITE_READ_V1$/m,
+  /^remote_free_fixture_count=9$/m,
+  /^remote_free_fixture_pass_count=9$/m,
+  /^static_predicate_count=10$/m,
+  /^static_predicate_pass_count=10$/m,
+  /^total_project_list_attempt_count=14$/m,
+  /^bounded_proof_sql_attempt_count=4$/m,
+  /^non_mutating_diagnostic_sql_attempt_count=9$/m,
+  /^prior_unreduced_proof_attempt_count=3$/m,
+  /^project_list_attempt_count=1$/m,
+  /^accessible_project_count=1$/m,
+  /^active_project_count=1$/m,
+  /^proof_sql_attempt_count=1$/m,
+  /^preexisting_count=0$/m,
+  /^write_count=1$/m,
+  /^read_count=1$/m,
+  /^cleanup_count=1$/m,
+  /^residual_count=0$/m,
+  /^mutation_count=2$/m,
+  /^row_payload_output_count=0$/m,
+  /^execution_status=pass$/m,
+  /^sanitized_output_review_status=pass$/m,
+  /^database_repair_status=not-run$/m,
+  /^rollback_status=not-run$/m,
+  /^next_ordered_approval_unit=CP1-A-STRIPE-PRODUCT-PRICE$/m,
+  /^production_wiring_status=disconnected-fail-closed$/m,
+  /^c1_candidate_proof_count=0\/7$/m,
+  /^c1_eligible_candidate_count=0$/m,
+]) {
+  assert.match(externalEvidenceReconciliation, marker);
+}
 
 execFileSync("git", ["merge-base", "--is-ancestor", integrationBase, "HEAD"], {
   cwd: root,

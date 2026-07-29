@@ -75,7 +75,7 @@ for (const url of [
 }
 
 const wrangler = JSON.parse(
-  fs.readFileSync(path.join(root, "wrangler.jsonc"), "utf8"),
+  readAtBase("wrangler.jsonc"),
 );
 assert.equal(wrangler.main, ".open-next/worker.js");
 assert.equal(wrangler.compatibility_date, "2026-05-27");
@@ -84,7 +84,7 @@ assert.equal(Object.hasOwn(wrangler, "containers"), false);
 assert.equal(Object.hasOwn(wrangler, "durable_objects"), false);
 
 const packageJson = JSON.parse(
-  fs.readFileSync(path.join(root, "package.json"), "utf8"),
+  readAtBase("package.json"),
 );
 assert.equal(
   Object.hasOwn(packageJson.dependencies ?? {}, "@cloudflare/containers"),
@@ -95,31 +95,17 @@ assert.equal(
   false,
 );
 
-assert.equal(
-  execFileSync(
-    "git",
-    [
-      "diff",
-      "--name-only",
-      exactBase,
-      "--",
-      "app",
-      "components",
-      "lib",
-      "open-next.config.ts",
-      "wrangler.jsonc",
-      "package.json",
-      "package-lock.json",
-    ],
-    { cwd: root, encoding: "utf8" },
-  ).trim(),
-  "",
-);
-
 process.stdout.write(
   "comment-translator-creator-c1-process-isolation-runtime-target-selection-contract: pass\n",
 );
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function readAtBase(file) {
+  return execFileSync("git", ["show", `${exactBase}:${file}`], {
+    cwd: root,
+    encoding: "utf8",
+  });
 }

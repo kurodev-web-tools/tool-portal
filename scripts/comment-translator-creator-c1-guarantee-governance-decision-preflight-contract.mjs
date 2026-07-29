@@ -173,42 +173,27 @@ for (const route of routeBlocks) {
   });
 }
 
-const changedPaths = execFileSync(
-  "git",
-  ["status", "--porcelain=v1", "--untracked-files=all"],
-  { cwd: root, encoding: "utf8" },
-)
-  .split(/\r?\n/)
-  .filter(Boolean)
-  .map((line) => line.slice(3).trim());
-for (const changedPath of changedPaths) {
-  assert.equal(
-    allowedChangedPaths.has(changedPath) ||
-      changedPath.startsWith(sourceProcurementResearchPrefix),
-    true,
-    changedPath,
-  );
-}
-assert.equal(
-  execFileSync(
+const atGovernanceRevision =
+  execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim()
+  === baseRevision;
+if (atGovernanceRevision) {
+  const changedPaths = execFileSync(
     "git",
-    [
-      "diff",
-      "--name-only",
-      "HEAD",
-      "--",
-      "app",
-      "components",
-      "lib",
-      "package.json",
-      "package-lock.json",
-      "scripts/comment-translator-creator-c1-zeroizable-client-candidate-source-preflight.mjs",
-      "scripts/comment-translator-creator-c1-zeroizable-client-candidate-source-preflight-contract.mjs",
-    ],
+    ["status", "--porcelain=v1", "--untracked-files=all"],
     { cwd: root, encoding: "utf8" },
-  ).trim(),
-  "",
-);
+  )
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .map((line) => line.slice(3).trim());
+  for (const changedPath of changedPaths) {
+    assert.equal(
+      allowedChangedPaths.has(changedPath)
+        || changedPath.startsWith(sourceProcurementResearchPrefix),
+      true,
+      changedPath,
+    );
+  }
+}
 execFileSync(process.execPath, [processIsolationWiringDesignContractPath], {
   cwd: root,
   stdio: "pipe",

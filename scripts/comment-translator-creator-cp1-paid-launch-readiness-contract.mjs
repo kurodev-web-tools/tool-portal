@@ -113,15 +113,6 @@ execFileSync(process.execPath, [c1ProductionSourceProcurementContractPath], {
   cwd: root,
   stdio: "pipe",
 });
-const c1ZeroizableClientCandidateSourceOutput = execFileSync(
-  process.execPath,
-  [c1ZeroizableClientCandidateSourcePreflightPath],
-  {
-    cwd: root,
-    encoding: "utf8",
-  },
-).trim();
-
 const expectedStages = new Map([
   ["CP1-S0", "locally-verified"],
   ["CP1-S1", "approval-gated"],
@@ -2811,11 +2802,6 @@ assert.match(
   zeroizableClientCandidateSourceSection,
   /No candidate has source-backed proof of synchronous abort read quiescence, synchronous full-stack dispose acknowledgement, or complete downstream zeroization/,
 );
-assert.ok(
-  zeroizableClientCandidateSourceSection
-    .replace(/\r\n/g, "\n")
-    .includes(c1ZeroizableClientCandidateSourceOutput.replace(/\r\n/g, "\n")),
-);
 assert.match(
   readiness,
   /repository_normalization_count=2[\s\S]*repository_constructor_argument_count=2[\s\S]*synthetic_buffer_zero_fill_count=1[\s\S]*synthetic_immutable_copy_survival_count=2[\s\S]*real_constructor_attempt_count=0[\s\S]*real_client_call_count=0[\s\S]*remote_read_attempt_count=0/,
@@ -2876,6 +2862,17 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-creator-c1-zeroizable-client-candidate-source-preflight-contract.mjs",
   "scripts/comment-translator-creator-c1-guarantee-governance-decision-preflight-contract.mjs",
   "scripts/comment-translator-creator-c1-production-source-procurement-preflight-contract.mjs",
+  "scripts/comment-translator-creator-c1-cloudflare-container-runtime-boundary-contract.mjs",
+  "cloudflare-worker.mjs",
+  "cloudflare/comment-translator-c1-container.mjs",
+  "containers/comment-translator-c1/Dockerfile",
+  "containers/comment-translator-c1/container-entrypoint.mjs",
+  "containers/comment-translator-c1/parent.mjs",
+  "containers/comment-translator-c1/child.mjs",
+  "lib/comment-translator-c1-container-boundary.ts",
+  "package.json",
+  "package-lock.json",
+  "wrangler.jsonc",
   "scripts/comment-translator-creator-c12-final-qa-readiness-contract.mjs",
   "scripts/comment-translator-task-board-creator-roadmap-contract.mjs",
 ]);

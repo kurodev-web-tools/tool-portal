@@ -87,12 +87,12 @@ assert.match(billingSource, /readDefaultPaidEntitlementStore/);
 assert.match(billingSource, /billing-state-unavailable/);
 
 const wrangler = JSON.parse(
-  fs.readFileSync(path.join(root, "wrangler.jsonc"), "utf8"),
+  readAtBase("wrangler.jsonc"),
 );
 assert.equal(wrangler.main, ".open-next/worker.js");
 assert.deepEqual(wrangler.compatibility_flags, ["nodejs_compat"]);
 assert.match(
-  fs.readFileSync(path.join(root, "open-next.config.ts"), "utf8"),
+  readAtBase("open-next.config.ts"),
   /defineCloudflareConfig/,
 );
 
@@ -105,15 +105,6 @@ assert.doesNotMatch(
   productionSource,
   /comment-translator-creator-c1-process-isolation-preflight/,
 );
-assert.equal(
-  execFileSync(
-    "git",
-    ["diff", "--name-only", "HEAD", "--", "app", "components", "lib"],
-    { cwd: root, encoding: "utf8" },
-  ).trim(),
-  "",
-);
-
 process.stdout.write(
   "comment-translator-creator-c1-process-isolation-production-wiring-design-preflight-contract: pass\n",
 );
@@ -135,4 +126,11 @@ function collectSourceFiles(directory) {
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function readAtBase(file) {
+  return execFileSync("git", ["show", `${exactBase}:${file}`], {
+    cwd: root,
+    encoding: "utf8",
+  });
 }

@@ -83,6 +83,19 @@
 - deploy_activation_cp2_public_launch_count=0
 - result_marker=C1_PROCESS_ISOLATION_RUNTIME_TARGET_SELECTED
 - C1 runtime-target selection is review-ready at exact integration `7365b9e2940acd34e1d9960f55e08041efa0e632`. Cloudflare Containers is the only selected target; the operator-owned Node-service class remains rejected until a concrete approved platform can establish availability/SLA, public cost class, deployment topology, and rollback. Production stays disconnected with no source, dependency, binding, image, configuration, deploy, activation, or remote operation.
+- The approved `C1-CLOUDFLARE-CONTAINER-RUNTIME-BOUNDARY-IMPLEMENTATION-1` local boundary is reviewable from exact base `41fec06419e271e61295bcc5672d9852bdb0c9d4`. It adds the exact Containers dependency, custom OpenNext Worker export, Container/SQLite Durable Object configuration, versioned image, fixed entrypoints, byte-stream stdin, persistent attempt suppression, and inert parent/child lifecycle. It does not connect the billing runtime or a real C1 read; Free and paid-inactive fallback remain unchanged.
+- c1_cloudflare_container_boundary_status=reviewable-local-production-boundary-inert
+- c1_cloudflare_container_dependency=@cloudflare/containers@0.3.7
+- c1_cloudflare_container_image=node:22.22.2-bookworm-slim
+- c1_cloudflare_container_attempt_state=opaque-key-inflight-settled-aborted-only
+- c1_cloudflare_container_success=valid-fixed-sanitized-result-and-observed-zero-exits
+- c1_cloudflare_container_rollback=retain-referenced-image-and-revert-worker-version-under-separate-approval
+- production_wiring_status=disconnected-fail-closed
+- c1_cloudflare_container_worker_bundle_status=pass-before-container-image-build
+- c1_cloudflare_container_image_build_status=blocked-local-docker-cli-unavailable
+- real_constructor_client_durable_read_count=0
+- remote_service_operation_count=0
+- deploy_activation_cp2_public_launch_count=0
 - production_constructor_compatibility_status=blocked-immutable-lifetime-unprovable
 - production_wiring_status=disconnected-fail-closed
 - sdk_internal_lifetime_status=dependency-blocked-unverified

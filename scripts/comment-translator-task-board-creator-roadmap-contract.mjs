@@ -26,7 +26,7 @@ const creatorRows = [
   "| C8 | Moderator share UI route | merged / integration verified at `1ec79ca222149626670ec6692c19356bc56bb2c6`; authenticated feed QA pending / gated |",
   "| C9 | Custom dictionary minimum | merged / integration verified at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb` |",
   "| C10 | Priority display polish | merged / integration verified at `c0ac7152687dc0c91470037ec164fda57d7f4259` |",
-  "| C11 | Simple 7-day history | merged / integration verified at `d1ce9b0d063f65bac968c85f3242398be4b8317f` |",
+  "| C11 | Simple 7-day history | merged / integration verified; migration applied and structural readiness pass |",
   "| C12 | Creator closed beta final QA | local readiness complete; operational readiness blocked / approval-gated |",
 ];
 
@@ -69,7 +69,7 @@ const taskC1BoundaryLines = [
   "- C5 merge / integration verification is complete through PR #672 at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8`; `CP1-A-MIG-C5` apply and post-apply structural readiness are complete, while store/token behavior remains separately approval-gated.",
   "- C6 merge / integration verification is complete through PR #673 at `05104fc2d4c6730be6aae772708a10cb2b39d2d6`; `CP1-A-MIG-C6` apply and post-apply structural readiness are complete, while store/redemption/authenticated-browser behavior remains separately approval-gated.",
   "- C9 merge / integration verification is complete through PR #676 at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; remote migration apply and production persistence remain separately approval-gated.",
-  "- C11 merge / integration verification is complete through PR #678 at `d1ce9b0d063f65bac968c85f3242398be4b8317f`; remote migration apply, production persistence, and authenticated browser history verification remain separately approval-gated.",
+  "- C11 merge / integration verification is complete through PR #678 at `d1ce9b0d063f65bac968c85f3242398be4b8317f`; remote migration apply and catalog/schema-only structural readiness are consumed/pass at reviewed base `6bf0db74a1774b70e1bd95dc0ece9b7b4105080e`. Production persistence, history row read/expiry, cleanup, and authenticated browser history verification remain separately approval-gated.",
   "- C12 merge / integration verification is complete through PR #679 at `097f369a47564b7a44d211c212580f993eddc71b`; C12 head `e93bfb77dc2017fd4a15e99e075f7e419c14a94d` is contained in integration.",
   "- CP1 local readiness is complete. Remote/deployed/billing/provider/token/cleanup/authenticated-browser operations each retain a separate approval unit; deploy, activation, CP2, promotion to `main`, and public paid launch remain out of scope / separately approval-gated.",
 ];
@@ -82,7 +82,7 @@ const creatorC1BoundaryLines = [
   "- C5 merge / integration verification is complete through PR #672 at `f3bdf0d7400b479f6934f37af402d7ec5187c7c8`; `CP1-A-MIG-C5` apply and structural readiness are complete, while store/token behavior remains approval-gated.",
   "- C6 merge / integration verification is complete through PR #673 at `05104fc2d4c6730be6aae772708a10cb2b39d2d6`; `CP1-A-MIG-C6` apply and structural readiness are complete, while store/redemption/authenticated-browser behavior remains approval-gated.",
   "- C9 merge / integration verification is complete through PR #676 at `6f9c2de4c1a14b91ae094987af46e0c46c99cfeb`; remote migration apply and production persistence remain approval-gated.",
-  "- C11 merge / integration verification is complete through PR #678 at `d1ce9b0d063f65bac968c85f3242398be4b8317f`; remote migration apply, production persistence, and authenticated browser history verification remain approval-gated.",
+  "- C11 merge / integration verification is complete through PR #678 at `d1ce9b0d063f65bac968c85f3242398be4b8317f`; remote migration apply and catalog/schema-only structural readiness are consumed/pass at reviewed base `6bf0db74a1774b70e1bd95dc0ece9b7b4105080e`. Production persistence, history row read/expiry, cleanup, and authenticated browser history verification remain separately approval-gated.",
   "- C12 is merged / integration verified through PR #679 at `097f369a47564b7a44d211c212580f993eddc71b`; C12 head `e93bfb77dc2017fd4a15e99e075f7e419c14a94d` is contained in integration.",
   "- CP1 local readiness is complete. Its 72 independent approval units remain consumed, ready-not-approved, or not-run as recorded by the active authority; deploy, activation, CP2, promotion to `main`, and public paid launch remain out of CP1.",
 ];

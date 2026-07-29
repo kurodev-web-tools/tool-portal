@@ -15,6 +15,10 @@ const externalEvidenceReconciliationPath =
   "docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_CP1_EXTERNAL_EVIDENCE_RECONCILIATION_PREFLIGHT.md";
 const contractPath =
   "scripts/comment-translator-creator-c1-guarantee-governance-decision-preflight-contract.mjs";
+const processIsolationWiringDesignContractPath =
+  "scripts/comment-translator-creator-c1-process-isolation-production-wiring-design-preflight-contract.mjs";
+const processIsolationRuntimeTargetFeasibilityContractPath =
+  "scripts/comment-translator-creator-c1-process-isolation-runtime-target-feasibility-contract.mjs";
 const sourceProcurementResearchPrefix =
   "docs/archive/2026-07-28-c1-production-source-procurement-ulw-research/";
 const allowedChangedPaths = new Set([
@@ -23,6 +27,10 @@ const allowedChangedPaths = new Set([
   boardPath,
   taskPath,
   contractPath,
+  processIsolationWiringDesignContractPath,
+  processIsolationRuntimeTargetFeasibilityContractPath,
+  "scripts/comment-translator-creator-c1-process-isolation-preflight-contract.mjs",
+  "scripts/comment-translator-creator-c1-production-constructor-compatibility-contract.mjs",
   "scripts/comment-translator-creator-cp1-paid-launch-readiness-contract.mjs",
   "scripts/comment-translator-creator-c1-production-source-procurement-preflight-contract.mjs",
   "scripts/comment-translator-task-board-creator-roadmap-contract.mjs",
@@ -52,13 +60,13 @@ const requiredGlobalMarkers = [
   `c1_guarantee_governance_base=${baseRevision}`,
   "c1_guarantee_governance_preflight_status=local-decision-pass-review-ready",
   "c1_guarantee_governance_route_count=3",
-  "c1_guarantee_governance_recommendation=operator-provided-exact-source-revision-wait",
-  "c1_guarantee_governance_current_guarantee=retained-buffer-zero-fill",
+  "c1_guarantee_governance_recommendation=accept-process-isolation-residual-risk-and-change-guarantee",
+  "c1_guarantee_governance_current_guarantee=parent-child-buffer-zero-fill-and-single-use-exit-containment",
   "c1_guarantee_governance_exact_source_status=absent",
   "c1_guarantee_governance_repeat_candidate_audit_status=prohibited-no-new-exact-source",
-  "c1_guarantee_governance_process_isolation_risk_acceptance_status=absent-not-in-this-approval",
-  "c1_guarantee_governance_next_approval_unit=single-source-bound-full-stack-feasibility-audit-after-prerequisites",
-  "c1_guarantee_governance_approval_status=consumed-local-decision-preflight-only",
+  "c1_guarantee_governance_process_isolation_risk_acceptance_status=consumed-exact-approval",
+  "c1_guarantee_governance_next_approval_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-SELECTION-1",
+  "c1_guarantee_governance_approval_status=consumed-exact-process-isolation-guarantee-change",
   "c1_guarantee_governance_production_adoption_approval_status=absent",
   "production_wiring_status=disconnected-fail-closed",
 ];
@@ -198,6 +206,14 @@ assert.equal(
   ).trim(),
   "",
 );
+execFileSync(process.execPath, [processIsolationWiringDesignContractPath], {
+  cwd: root,
+  stdio: "pipe",
+});
+execFileSync(process.execPath, [processIsolationRuntimeTargetFeasibilityContractPath], {
+  cwd: root,
+  stdio: "pipe",
+});
 
 process.stdout.write(
   "comment-translator-creator-c1-guarantee-governance-decision-preflight-contract: pass\n",

@@ -740,3 +740,39 @@ The completing attempt first passed `9/9` reducer fixtures and `10/10` source-bo
 This proof does not invoke the C9 application CRUD functions or establish dictionary CRUD/provider-hook behavior. It does not issue, use, redeem, revoke, reissue, backfill, expire, disconnect, delete an account, call a provider, access a browser, deploy, activate, enter CP2, promote, or launch publicly. Data API exposure and catalog RLS/grant/revoke/service-role authority remain separate proof boundaries. No row payload, identifier, owner/session/token/reference, dictionary content, history content, provider/customer/private target metadata, project identifier, URL, organization, region, credential, secret, raw wrapper, raw text, or raw connector response was displayed or recorded.
 
 `CP1-A-STORE-WRITE-READ` and its exact cleanup sub-unit are consumed/pass. The next ordered independent unit is `CP1-A-STRIPE-PRODUCT-PRICE`; it remains separately approval-gated. C1 remains `disconnected-fail-closed`, with `0/7` candidate proofs and `0` eligible candidates.
+
+## CP1-A Stripe Product/Price Sanitized Live Evidence
+
+The `CP1-A-STRIPE-PRODUCT-PRICE-AFTER-KEY-REMEDIATION-1` approval is consumed/pass at exact integration base `d20add97f05fc4298043939049e8931c45b43500`. The evidence source is the fixed sanitized envelope returned by the operator's authenticated interactive PowerShell execution. No independent follow-up Stripe read was approved or performed.
+
+```text
+approval_unit=CP1-A-STRIPE-PRODUCT-PRICE-AFTER-KEY-REMEDIATION-1
+execution_status=PASS
+result_marker=CP1_A_STRIPE_PRODUCT_PRICE_PASS
+product_duplicate_scan_count=1
+price_duplicate_scan_count=1
+product_eligible_candidate_count=0
+price_eligible_candidate_count=0
+product_create_attempt_count=1
+product_create_verified_count=1
+price_create_attempt_count=1
+price_create_verified_count=1
+remote_attempt_count=4
+remote_read_attempt_count=2
+mutation_attempt_count=2
+retry_count=0
+rollback_cleanup_count=0
+sensitive_output_count=0
+private_identifier_output_count=0
+configuration_binding_count=0
+checkout_count=0
+portal_count=0
+webhook_count=0
+billing_activation_count=0
+production_wiring_status=disconnected-fail-closed
+next_ordered_approval_unit=CP1-A-STRIPE-CHECKOUT
+```
+
+The verified public fields are Product name `Creator` and Price `980 JPY`, monthly interval count `1`, tax behavior `inclusive`. Trial, annual pricing, coupon, discount, and Creator Plus remain absent/out of scope. No private Product/Price reference, secret, raw request/response, account/customer/subscription/payment identifier, Dashboard URL, or private cost/usage value was displayed or recorded.
+
+`CP1-A-STRIPE-CHECKOUT` is the next ordered independent unit, but it is not yet executable. Repository runtime requires `STRIPE_SECRET_KEY`, `COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID`, `NEXT_PUBLIC_SITE_URL`, the exact closed-beta billing access marker, the private-launch owner allowlist, and a readable C1 durable billing-state store before it calls Stripe Checkout. The Product/Price approval did not authorize or establish those runtime bindings, activation, C1 production read, Customer creation, or Checkout Session creation. A separately approved presence-only readiness unit must fail closed before any configuration mutation or Checkout operation.

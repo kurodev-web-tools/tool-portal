@@ -140,6 +140,10 @@ const allowedChangedPaths = new Set([
   contractPath,
   cp1ContractPath,
   "scripts/comment-translator-creator-c1-guarantee-governance-decision-preflight-contract.mjs",
+  "scripts/comment-translator-creator-c1-process-isolation-preflight-contract.mjs",
+  "scripts/comment-translator-creator-c1-process-isolation-production-wiring-design-preflight-contract.mjs",
+  "scripts/comment-translator-creator-c1-process-isolation-runtime-target-feasibility-contract.mjs",
+  "scripts/comment-translator-creator-c1-production-constructor-compatibility-contract.mjs",
   "scripts/comment-translator-task-board-creator-roadmap-contract.mjs",
   ...researchPaths,
 ]);

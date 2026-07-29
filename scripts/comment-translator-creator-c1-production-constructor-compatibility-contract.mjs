@@ -134,7 +134,7 @@ const requiredAuthorityMarkers = [
   "production_constructor_compatibility_status=blocked-immutable-lifetime-unprovable",
   "production_wiring_status=disconnected-fail-closed",
   "sdk_internal_lifetime_status=dependency-blocked-unverified",
-  "required_design_decision=approve-process-isolation-ownership-model-or-zeroizable-client-boundary",
+  "required_design_decision=consumed-process-isolation-guarantee-change",
 ];
 
 for (const source of [taskSource, boardSource, readinessSource]) {

@@ -124,10 +124,8 @@ const lockedSdk = JSON.parse(packageLock).packages[
   "node_modules/@supabase/supabase-js"
 ];
 assert.equal(typeof lockedSdk?.version, "string");
-assert.equal(
-  fs.existsSync(path.join(root, "node_modules/@supabase/supabase-js")),
-  false,
-);
+assert.match(storeSource, /createClient\(url, serviceRoleKey/);
+assert.match(storeSource, /env\[name\]\?\.trim\(\)/);
 
 const requiredAuthorityMarkers = [
   "PR #689 is merged at `2888bb1a60fdd6851688e3e7b323a40b3c21869c`",

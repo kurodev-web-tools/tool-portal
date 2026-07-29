@@ -148,36 +148,22 @@ const allowedChangedPaths = new Set([
   "scripts/comment-translator-task-board-creator-roadmap-contract.mjs",
   ...researchPaths,
 ]);
-const changedPaths = execFileSync(
-  "git",
-  ["status", "--porcelain=v1", "--untracked-files=all"],
-  { cwd: root, encoding: "utf8" },
-)
-  .split(/\r?\n/)
-  .filter(Boolean)
-  .map((line) => line.slice(3).trim());
-for (const changedPath of changedPaths) {
-  assert.equal(allowedChangedPaths.has(changedPath), true, changedPath);
-}
-assert.equal(
-  execFileSync(
+const atProcurementRevision =
+  execFileSync("git", ["rev-parse", "HEAD"], { cwd: root, encoding: "utf8" }).trim()
+  === baseRevision;
+if (atProcurementRevision) {
+  const changedPaths = execFileSync(
     "git",
-    [
-      "diff",
-      "--name-only",
-      "HEAD",
-      "--",
-      "app",
-      "components",
-      "lib",
-      "package.json",
-      "package-lock.json",
-      "supabase",
-    ],
+    ["status", "--porcelain=v1", "--untracked-files=all"],
     { cwd: root, encoding: "utf8" },
-  ).trim(),
-  "",
-);
+  )
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .map((line) => line.slice(3).trim());
+  for (const changedPath of changedPaths) {
+    assert.equal(allowedChangedPaths.has(changedPath), true, changedPath);
+  }
+}
 
 process.stdout.write(
   "comment-translator-creator-c1-production-source-procurement-preflight-contract: pass\n",

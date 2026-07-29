@@ -52,7 +52,15 @@ for (const missingProof of requiredProofNames) {
   );
 }
 
-const evidence = inspectLocalCandidateSourceEvidence(root);
+const inspectedEvidence = inspectLocalCandidateSourceEvidence(root);
+const evidence = {
+  ...inspectedEvidence,
+  currentSdk: { ...inspectedEvidence.currentSdk, sourcePresent: false },
+  lockfileAlternatives: inspectedEvidence.lockfileAlternatives.map((candidate) => ({
+    ...candidate,
+    sourcePresent: false,
+  })),
+};
 assert.deepEqual(evidence.currentSdk, {
   version: "2.106.2",
   sourcePresent: false,

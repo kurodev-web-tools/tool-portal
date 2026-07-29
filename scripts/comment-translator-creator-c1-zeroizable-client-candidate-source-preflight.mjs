@@ -166,7 +166,9 @@ export function createCandidateSourceDecision(evidence) {
     nodeV8ProofStatus: "partial-js-hidden-allocation-unverified",
     nativeTransportProofStatus: "unverified",
     osProofStatus: "unverified",
-    sdkClientProofStatus: "source-absent-unverified",
+    sdkClientProofStatus: evidence.currentSdk.sourcePresent
+      ? "source-present-still-unverified"
+      : "source-absent-unverified",
     abortReadQuiescenceStatus:
       "unverified-no-synchronous-quiescence-attestation",
     synchronousDisposeAcknowledgementStatus:

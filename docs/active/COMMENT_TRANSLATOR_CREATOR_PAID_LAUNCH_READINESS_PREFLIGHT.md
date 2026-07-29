@@ -4822,6 +4822,43 @@ deploy_activation_cp2_public_launch_count=0
 result_marker=C1_PROCESS_ISOLATION_RUNTIME_TARGET_SELECTED
 ```
 
+## CP1-S2BD C1 Cloudflare Container Runtime Boundary Implementation
+
+`C1-CLOUDFLARE-CONTAINER-RUNTIME-BOUNDARY-IMPLEMENTATION-1` is bound to clean isolated integration base `41fec06419e271e61295bcc5672d9852bdb0c9d4`. The repository pins `@cloudflare/containers` `0.3.7`, exports one Container-backed Durable Object through the OpenNext custom Worker entrypoint, and fixes one SQLite Durable Object migration plus a versioned `node:22.22.2-bookworm-slim` image. No deploy, remote binding apply, account operation, or Container invocation is part of this unit.
+
+The Worker-side boundary accepts exactly three disjoint mutable byte inputs and an opaque 64-hex attempt key, frames only the bytes into a byte-oriented `ReadableStream`, and transfers that stream to the Container Durable Object RPC. The Durable Object never reads or decodes the input stream. It starts only `node /app/parent.mjs`, passes the stream directly as stdin, ignores stderr, validates only the fixed sanitized stdout shape, and requires the parent `exitCode` to be observed as zero.
+
+The Node parent parses exactly three bounded stdin fields into three owned Buffers, forks exactly one fixed child with advanced IPC and no broad inherited environment, zero-fills its Buffers after the IPC write settles, accepts one fixed sanitized child result, and waits for child exit. The child uses an inert/synthetic reader in this unit, performs one construction and one read, zero-fills its three Buffers before disconnect, and exits. `available` or `missing` is valid only with the child zero exit and the parent zero exit; all other paths are fixed `unavailable`.
+
+Durable Object storage uses only keys derived from the opaque attempt key and the string state `inflight`, `settled`, or `aborted`. Inflight and terminal repeats are rejected before `exec()`. Abort state is persisted before signalling the parent, and a completion observed after abort or settlement cannot replace the terminal state. Missing exit observation, invalid output, timeout, signal ambiguity, command/image/config mismatch, or any runtime exception remains fail closed.
+
+The production billing runtime does not import or call this boundary. No real constructor, Supabase client, durable row read, or secret/private input is used. Free and paid-inactive behavior therefore remains unchanged. Rollback authority is repository-only: retain every referenced Container image and revert the Worker version only under a separate approval; deleting an image invalidates the rollback boundary.
+
+The custom Worker bundle and configuration parse reached Wrangler's Container image-build boundary. Local image construction is blocked because this host has no launchable Docker-compatible CLI. This is the single sanitized blocker for image/entrypoint execution proof; it does not authorize installing or starting Docker, deploying, or invoking a live Container. The billing runtime remains disconnected and fail closed until a later review proves the exact image locally or in an approved CI boundary.
+
+```text
+c1_cloudflare_container_boundary_base=41fec06419e271e61295bcc5672d9852bdb0c9d4
+c1_cloudflare_container_boundary_status=reviewable-local-production-boundary-inert
+c1_cloudflare_container_dependency=@cloudflare/containers@0.3.7
+c1_cloudflare_container_image=node:22.22.2-bookworm-slim
+c1_cloudflare_container_worker_entrypoint=cloudflare-worker.mjs
+c1_cloudflare_container_exec_command=node-/app/parent.mjs
+c1_cloudflare_container_child_entrypoint=/app/child.mjs
+c1_cloudflare_container_input=worker-owned-byte-stream-to-parent-stdin
+c1_cloudflare_container_attempt_state=opaque-key-inflight-settled-aborted-only
+c1_cloudflare_container_success=valid-fixed-sanitized-result-and-observed-zero-exits
+c1_cloudflare_container_late_repeat=inflight-terminal-and-late-success-suppressed
+c1_cloudflare_container_rollback=retain-referenced-image-and-revert-worker-version-under-separate-approval
+c1_cloudflare_container_production_read=disconnected-fail-closed
+c1_cloudflare_container_worker_bundle_status=pass-before-container-image-build
+c1_cloudflare_container_image_build_status=blocked-local-docker-cli-unavailable
+c1_cloudflare_container_residual_risk=accepted-ipc-v8-runtime-os-sdk-copy-erasure-teardown-unproven
+real_constructor_client_durable_read_count=0
+remote_service_operation_count=0
+deploy_activation_cp2_public_launch_count=0
+result_marker=C1_CLOUDFLARE_CONTAINER_RUNTIME_BOUNDARY_REVIEWABLE
+```
+
 ## Entitlement, Usage, Provider, And Capability Proof Rules
 
 - Paid-active requires signed supported billing evidence, future signed period, authenticated owner binding, exact activation/allowlist authority, and readable durable C1 state.

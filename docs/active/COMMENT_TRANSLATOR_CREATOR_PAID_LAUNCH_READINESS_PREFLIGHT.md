@@ -177,7 +177,7 @@ c1_guarantee_governance_current_guarantee=parent-child-buffer-zero-fill-and-sing
 c1_guarantee_governance_exact_source_status=absent
 c1_guarantee_governance_repeat_candidate_audit_status=prohibited-no-new-exact-source
 c1_guarantee_governance_process_isolation_risk_acceptance_status=consumed-exact-approval
-c1_guarantee_governance_next_approval_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-SELECTION-1
+c1_guarantee_governance_next_approval_unit=C1-CLOUDFLARE-CONTAINER-RUNTIME-BOUNDARY-IMPLEMENTATION-1
 c1_guarantee_governance_approval_status=consumed-exact-process-isolation-guarantee-change
 c1_guarantee_governance_production_adoption_approval_status=absent
 c1_process_isolation_wiring_design_approval_status=consumed
@@ -196,8 +196,8 @@ c1_process_isolation_wiring_runtime_target=opennext-cloudflare-worker
 c1_process_isolation_wiring_spawn_capability_status=blocked-workers-child-process-nonfunctional-stub
 c1_process_isolation_wiring_rollback=retain-disconnected-remove-future-wiring-only-under-separate-approval
 c1_process_isolation_wiring_abort=runtime-target-or-bundle-or-input-ownership-or-result-shape-mismatch
-c1_process_isolation_wiring_next_implementation_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-SELECTION-1
-c1_process_isolation_wiring_next_implementation_unit_status=blocked-prerequisite-authorized-process-capable-topology
+c1_process_isolation_wiring_next_implementation_unit=C1-CLOUDFLARE-CONTAINER-RUNTIME-BOUNDARY-IMPLEMENTATION-1
+c1_process_isolation_wiring_next_implementation_unit_status=blocked-separate-implementation-approval
 c1_process_isolation_runtime_target_feasibility_approval_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-FEASIBILITY-1
 c1_process_isolation_runtime_target_feasibility_approval_status=consumed-goal-authority
 c1_process_isolation_runtime_target_feasibility_status=blocked-current-worker-no-functional-child-process
@@ -206,9 +206,38 @@ c1_process_isolation_runtime_target_worker_compatibility_date=2026-05-27
 c1_process_isolation_runtime_target_worker_child_process_status=nonfunctional-stub
 c1_process_isolation_runtime_target_required=process-capable-isolated-node-host
 c1_process_isolation_runtime_target_alternative=separate-cloudflare-container-or-operator-node-service
-c1_process_isolation_runtime_target_topology_authority_status=absent
-c1_process_isolation_runtime_target_production_implementation_status=blocked-no-authorized-process-host
-c1_process_isolation_runtime_target_next_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-SELECTION-1
+c1_process_isolation_runtime_target_topology_authority_status=selected-cloudflare-containers
+c1_process_isolation_runtime_target_production_implementation_status=blocked-separate-implementation-approval
+c1_process_isolation_runtime_target_next_unit=C1-CLOUDFLARE-CONTAINER-RUNTIME-BOUNDARY-IMPLEMENTATION-1
+c1_process_isolation_runtime_target_selection_base=7365b9e2940acd34e1d9960f55e08041efa0e632
+c1_process_isolation_runtime_target_selection_approval_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-SELECTION-1
+c1_process_isolation_runtime_target_selection_status=selected-review-ready
+c1_process_isolation_runtime_target_candidate_count=2
+c1_process_isolation_runtime_target_selected_count=1
+c1_process_isolation_runtime_target_selected=cloudflare-containers
+c1_process_isolation_runtime_target_container_process_status=functional-exec-with-stdin-exitcode-and-kill
+c1_process_isolation_runtime_target_container_availability=general-availability
+c1_process_isolation_runtime_target_container_beta_status=not-beta
+c1_process_isolation_runtime_target_container_sla=container-specific-public-sla-not-established
+c1_process_isolation_runtime_target_container_cost_class=workers-paid-usage-based-container-durable-object-and-worker
+c1_process_isolation_runtime_target_operator_node_service_status=rejected-no-approved-platform-topology
+c1_process_isolation_runtime_target_parent_owner=container-single-use-node-parent
+c1_process_isolation_runtime_target_child_owner=container-single-use-node-child
+c1_process_isolation_runtime_target_secret_input=worker-to-container-rpc-byte-stream-to-parent-stdin-never-argv-or-environment
+c1_process_isolation_runtime_target_transport=worker-container-durable-object-rpc-stream-in-fixed-sanitized-result-out
+c1_process_isolation_runtime_target_lifecycle=durable-object-coordinates-one-exec-parent-coordinates-one-child-success-after-valid-result-and-observed-zero-exits
+c1_process_isolation_runtime_target_repeat_boundary=inflight-and-post-settlement-suppressed-late-success-ignored
+c1_process_isolation_runtime_target_stop_boundary=kill-parent-and-child-zero-fill-owned-buffers-observe-exits-fail-closed
+c1_process_isolation_runtime_target_deployment_topology=opennext-worker-to-container-durable-object-binding-to-versioned-node-image
+c1_process_isolation_runtime_target_rollback=keep-disconnected-until-separate-approval-then-revert-worker-version-with-image-retained
+c1_process_isolation_runtime_target_abort=stream-ownership-or-exec-or-exit-observation-or-sanitized-shape-or-image-retention-mismatch
+production_source_change_count=0
+production_configuration_change_count=0
+dependency_install_count=0
+configuration_binding_count=0
+remote_service_operation_count=0
+deploy_activation_cp2_public_launch_count=0
+result_marker=C1_PROCESS_ISOLATION_RUNTIME_TARGET_SELECTED
 production_wiring_status=disconnected-fail-closed
 cp1_c12_containment_status=verified
 cp1_new_public_api_status=preview-readiness-route-source-approved
@@ -4707,6 +4736,90 @@ stripe_operation_count=0
 deploy_activation_cp2_public_launch_count=0
 official_documentation_read_count=3
 result_marker=C1_PROCESS_ISOLATION_RUNTIME_TARGET_BLOCKED
+```
+
+## CP1-S2BC C1 Process-Isolation Runtime-Target Selection
+
+This selection is fixed to clean isolated integration base `7365b9e2940acd34e1d9960f55e08041efa0e632`, the merge commit for PR #709. It compares only Cloudflare Containers and a vendor-neutral operator-owned isolated Node service. It selects a runtime topology, not a deployment: no production import or wiring, constructor/client/read, private input, dependency installation, manifest/lockfile edit, binding, image, configuration, remote operation, deploy, activation, CP2, or public launch is performed.
+
+The current OpenNext Worker remains unsuitable for process isolation. Cloudflare still classifies `node:child_process` as a nonfunctional stub for the configured `nodejs_compat` date, so importing it does not make `spawn`, `fork`, or supervision functional. Source: https://developers.cloudflare.com/workers/runtime-apis/nodejs/
+
+Cloudflare Containers is selected as the sole runtime target. Containers became generally available on April 13, 2026, run images inside isolated Linux VMs, and are available on the Workers Paid plan. The Container/Durable Object API can start a real process with `exec()`, send a byte-oriented RPC stream directly to the process standard input, observe its exit code, and signal it with `kill()`. RPC transfers ownership of the input stream to the Durable Object, so the calling Worker cannot read it after transfer. The Durable Object provides the single-instance coordination point needed to persist non-secret attempt state and suppress repeat or late completion. Sources:
+
+- https://developers.cloudflare.com/changelog/post/2026-04-13-containers-sandbox-ga/
+- https://developers.cloudflare.com/containers/
+- https://developers.cloudflare.com/containers/execute-commands/
+- https://developers.cloudflare.com/durable-objects/api/state/
+- https://developers.cloudflare.com/durable-objects/reference/in-memory-state/
+
+The selected repository ownership model is narrower than the platform surface. The OpenNext Worker performs caller authorization and derives the three approved inputs, then transfers one byte stream without decoding it in the Container Durable Object. `exec()` starts a single-use Node parent with a fixed executable and script path; no private value is placed in argv, the Container environment, per-execution environment, logs, Durable Object storage, or result metadata. That Node parent owns three input Buffers, forks one single-use Node child, transfers child-owned Buffers, zero-fills its own Buffers after the bounded write, accepts only the approved fixed sanitized result, and waits for the child exit. The child constructs once, reads once, emits only the fixed sanitized result, zero-fills its three owned Buffers before disconnect, and exits. The outer `exec()` result is successful only after the parent has observed the child result and zero exit and the Durable Object has observed the parent zero exit.
+
+The Durable Object owns no secret value and persists only an opaque attempt key plus `inflight`, `settled`, or `aborted` state. A repeated `inflight` or terminal attempt is rejected before `exec()`. A result arriving after abort or terminal settlement is ignored. Stop and error paths first signal the Node parent, require the parent to signal and observe its child, require both processes to zero-fill their owned Buffers, and require observed exits; missing exit observation never becomes success. Because Container `kill()` is not documented as a hard deadline, inability to reach observed termination through the reviewed signal/escalation path is an abort condition and must keep Paid unavailable.
+
+| Criterion | Cloudflare Containers | Operator-owned isolated Node service |
+| --- | --- | --- |
+| Functional process execution | `selected`: real Container `exec()`, stdin, exit-code promise, and signal control are documented. | Node `child_process` is functional, but a runtime API alone does not establish a production service. |
+| Exact parent / child ownership | Fixed Container image can own a single-use Node parent and its single-use child under the accepted Buffer guarantee. | Technically possible in Node, but no approved process host or supervisor owns it. |
+| Private input injection | Worker-to-Durable Object byte RPC stream passes directly to parent stdin; private values are forbidden from argv and environment. | A vendor-neutral protocol can require stdin or a private body, but no concrete private ingress or identity boundary exists. |
+| Sanitized transport | One internal Worker-to-Container RPC, byte stream in and approved fixed status/count result out; stderr/stdout cannot carry private values. | No approved endpoint, network identity, authentication, encryption, or response schema exists. |
+| Single-use / observed-exit lifecycle | Durable Object coordinates one `exec`; Node parent coordinates one child; both exits must be observed before success. | Node can observe child exit, but service process lifecycle, supervision, and host termination are unspecified. |
+| Stop / error / repeat | Persistent non-secret attempt state suppresses re-entry; signal/exit mismatch aborts; late success is ignored. | No approved durable attempt coordinator, retry policy, or service shutdown contract exists. |
+| Worker call boundary | Existing Worker can call a Container-backed Durable Object through an internal binding after separate implementation approval. | Requires an external service boundary and new network/auth authority that the repository does not define. |
+| Availability / beta / SLA | GA, not beta. A Container-specific public SLA is not established by the reviewed public docs; the published Workers Runtime SLA applies to Workers only and is Enterprise-scoped. | Availability, beta status, SLA, regions, capacity, and support are unknowable until a hosting platform is approved. |
+| Public cost class | Workers Paid, usage-based Container memory/CPU/disk plus Durable Object and Worker usage; no private usage or cost is inferred. | No public cost class exists without selecting a provider and service shape. |
+| Dependency / configuration / deployment | Future unit requires a reviewed `@cloudflare/containers` version, Container/Durable Object binding and migration, versioned Node image, fixed entrypoints, and rollout config. | Requires choosing a provider, service artifact, ingress/auth, secret system, network, observability, and deployment pipeline. |
+| Rollback | Keep production disconnected until separately approved. After implementation, retain referenced images and revert the Worker version; deleting an image can break rollback. | No rollback primitive or retained artifact authority exists without a platform. |
+| Abort conditions | Abort on stream ownership, fixed command/image, process exit, sanitized result, persistent suppression, binding, rollout, or retained-image mismatch. | Candidate remains rejected until one approved platform proves every missing availability, transport, lifecycle, cost, deploy, and rollback boundary. |
+| Repository fit | Same Cloudflare control plane as the current Worker, with an internal Durable Object/Container boundary and no invented vendor. | Introduces a new operator platform that has not been selected or authorized. |
+
+The SLA classification is intentionally fail-closed: Cloudflare's published Workers Runtime SLA says it applies to Workers only and is tied to the governing Enterprise agreement; the reviewed official material does not extend it to Containers. Source: https://www.cloudflare.com/en-au/workers-service-level-agreement/
+
+Node's official process documentation confirms that a real Node host can provide piped standard I/O, IPC, signals, and exit events, which makes the inner parent/child contract feasible inside the selected Container image. It does not establish hosting, service availability, network identity, cost, or rollback for the rejected vendor-neutral alternative. Source: https://nodejs.org/api/child_process.html
+
+Containers are usage-priced on Workers Paid; charges cover active Container resources and the associated Worker and Durable Object use. No private usage or projected cost is repository authority. Source: https://developers.cloudflare.com/containers/pricing/
+
+Deployment and rollback remain separate approval gates. Cloudflare builds or references an image through the Worker configuration; Container rollouts are gradual while Worker code updates immediately, so the future boundary must be version-compatible during rollout. A Worker rollback can restore a previous version, but connected resource changes are not rolled back, and a deleted Container image can make a previous version unusable. Sources:
+
+- https://developers.cloudflare.com/containers/platform-details/rollouts/
+- https://developers.cloudflare.com/containers/platform-details/image-management/
+- https://developers.cloudflare.com/workers/versions-and-deployments/rollbacks/
+
+The next and only implementation unit is `C1-CLOUDFLARE-CONTAINER-RUNTIME-BOUNDARY-IMPLEMENTATION-1`. It is separately approval-gated and must stop at an inert/local contract if an exact dependency version, Container image/entrypoint, Durable Object binding/migration, byte-stream ownership, persistent attempt state, two-process exit observation, fixed sanitized result, or retained-image rollback plan is missing. It must not infer deployment or activation authority from this selection.
+
+```text
+c1_process_isolation_runtime_target_selection_base=7365b9e2940acd34e1d9960f55e08041efa0e632
+c1_process_isolation_runtime_target_selection_approval_unit=C1-PROCESS-ISOLATION-RUNTIME-TARGET-SELECTION-1
+c1_process_isolation_runtime_target_selection_status=selected-review-ready
+c1_process_isolation_runtime_target_candidate_count=2
+c1_process_isolation_runtime_target_selected_count=1
+c1_process_isolation_runtime_target_selected=cloudflare-containers
+c1_process_isolation_runtime_target_worker_child_process_status=nonfunctional-stub
+c1_process_isolation_runtime_target_container_process_status=functional-exec-with-stdin-exitcode-and-kill
+c1_process_isolation_runtime_target_container_availability=general-availability
+c1_process_isolation_runtime_target_container_beta_status=not-beta
+c1_process_isolation_runtime_target_container_sla=container-specific-public-sla-not-established
+c1_process_isolation_runtime_target_container_cost_class=workers-paid-usage-based-container-durable-object-and-worker
+c1_process_isolation_runtime_target_operator_node_service_status=rejected-no-approved-platform-topology
+c1_process_isolation_runtime_target_parent_owner=container-single-use-node-parent
+c1_process_isolation_runtime_target_child_owner=container-single-use-node-child
+c1_process_isolation_runtime_target_secret_input=worker-to-container-rpc-byte-stream-to-parent-stdin-never-argv-or-environment
+c1_process_isolation_runtime_target_transport=worker-container-durable-object-rpc-stream-in-fixed-sanitized-result-out
+c1_process_isolation_runtime_target_lifecycle=durable-object-coordinates-one-exec-parent-coordinates-one-child-success-after-valid-result-and-observed-zero-exits
+c1_process_isolation_runtime_target_repeat_boundary=inflight-and-post-settlement-suppressed-late-success-ignored
+c1_process_isolation_runtime_target_stop_boundary=kill-parent-and-child-zero-fill-owned-buffers-observe-exits-fail-closed
+c1_process_isolation_runtime_target_deployment_topology=opennext-worker-to-container-durable-object-binding-to-versioned-node-image
+c1_process_isolation_runtime_target_rollback=keep-disconnected-until-separate-approval-then-revert-worker-version-with-image-retained
+c1_process_isolation_runtime_target_abort=stream-ownership-or-exec-or-exit-observation-or-sanitized-shape-or-image-retention-mismatch
+c1_process_isolation_runtime_target_next_unit=C1-CLOUDFLARE-CONTAINER-RUNTIME-BOUNDARY-IMPLEMENTATION-1
+production_wiring_status=disconnected-fail-closed
+production_source_change_count=0
+production_configuration_change_count=0
+dependency_install_count=0
+configuration_binding_count=0
+remote_service_operation_count=0
+stripe_operation_count=0
+deploy_activation_cp2_public_launch_count=0
+result_marker=C1_PROCESS_ISOLATION_RUNTIME_TARGET_SELECTED
 ```
 
 ## Entitlement, Usage, Provider, And Capability Proof Rules

@@ -2866,6 +2866,7 @@ const allowedChangedFiles = new Set([
   "scripts/comment-translator-creator-c1-process-isolation-preflight-contract.mjs",
   "scripts/comment-translator-creator-c1-process-isolation-production-wiring-design-preflight-contract.mjs",
   "scripts/comment-translator-creator-c1-process-isolation-runtime-target-feasibility-contract.mjs",
+  "scripts/comment-translator-creator-c1-process-isolation-runtime-target-selection-contract.mjs",
   "scripts/comment-translator-creator-c1-zeroizable-client-boundary-preflight.mjs",
   "scripts/comment-translator-creator-c1-zeroizable-client-boundary-preflight-contract.mjs",
   "scripts/comment-translator-creator-c1-zeroizable-client-api-preflight.mjs",

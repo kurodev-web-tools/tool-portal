@@ -20,6 +20,7 @@
 - 作業は`main`直ではなく、最新の対象authority branchからfresh worktree / short-lived feature branchを作る。
 - 1 feature / 1 fix / 1 cleanupを1 branch / 1 PRに閉じ、Comment Translator Creator各sliceとPrompt Board post-MVP実装を混ぜない。
 - docs/task-only変更はfocused contract、baseline-aware comparator、diff、機密情報scanで確認し、runtime/UI変更時だけ追加のlint/typecheck/build/browser QAを行う。
+- Creator paid初回価格の承認済み方向と将来2段階案は`docs/future/COMMENT_TRANSLATOR_CREATOR_TIER_PRICING_DIRECTION.md`を参照する。初回はCreator月額980円（税込）のmonthly-only、Creator Plus月額1,980円（税込）はfuture planning onlyであり、Stripe作成・設定authorityではない。
 - secret、service_role key、private credential、OAuth token、authorization code、owner id、provider target metadata、liveChatId、billing identifierを表示・要求・保存しない。
 - Provider target metadata and liveChatId are consumed only through server-only boundaries and must not appear in output, docs, PR bodies, browser storage, or handoff payloads.
 - 新しい長文履歴をこのファイルへ追加せず、該当active authorityまたは日付付きarchiveへ記録する。

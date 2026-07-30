@@ -2845,6 +2845,7 @@ const allowedChangedFiles = new Set([
   "lib/comment-translator-creator-paid-readiness.ts",
   "scripts/comment-translator-creator-cp1-paid-launch-readiness-contract.mjs",
   "scripts/comment-translator-creator-cp1-reference-presence-route-contract.mjs",
+  "scripts/comment-translator-creator-cp1-checkout-runtime-readiness-preflight-contract.mjs",
   "scripts/comment-translator-creator-c1-runtime-role-classifier.mjs",
   "scripts/comment-translator-creator-c1-runtime-role-classifier-contract.mjs",
   "scripts/comment-translator-creator-c1-production-constructor-compatibility-contract.mjs",

@@ -93,6 +93,18 @@
 - production_wiring_status=disconnected-fail-closed
 - c1_cloudflare_container_worker_bundle_status=pass-before-container-image-build
 - c1_cloudflare_container_image_build_status=blocked-local-docker-cli-unavailable
+- `C1-CLOUDFLARE-CONTAINER-IMAGE-EXECUTION-EVIDENCE-1` is reviewable from exact integration `c7e320473da88d9fd3dc0354be27997912a5ef2c` and remains fail closed. Existing-runtime discovery found zero Docker-compatible CLIs, zero engines, and zero WSL distributions. Docker Desktop requires subscription-agreement acceptance before start, while the official Podman Windows engine path has administrator/restart prerequisites. Neither path fits this unit, so no runtime install, image build, Container run, or stop signal occurred. The exact Dockerfile/image/entrypoints, Worker bundle/config/binding/migration, disconnected production read, and retained-image rollback boundary remain unchanged.
+- c1_cloudflare_container_image_execution_evidence_base=c7e320473da88d9fd3dc0354be27997912a5ef2c
+- c1_cloudflare_container_image_execution_evidence_status=blocked-fail-closed
+- c1_cloudflare_container_image_execution_evidence_blocker=blocked-no-existing-engine-safe-install-requires-license-or-admin-restart
+- c1_cloudflare_container_runtime_cli_count=0
+- c1_cloudflare_container_runtime_engine_count=0
+- c1_cloudflare_container_wsl_distribution_count=0
+- c1_cloudflare_container_runtime_install_count=0
+- c1_cloudflare_container_image_build_count=0
+- c1_cloudflare_container_run_count=0
+- c1_cloudflare_container_stop_signal_count=0
+- c1_cloudflare_container_production_read=disconnected-fail-closed
 - real_constructor_client_durable_read_count=0
 - remote_service_operation_count=0
 - deploy_activation_cp2_public_launch_count=0

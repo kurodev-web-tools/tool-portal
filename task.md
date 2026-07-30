@@ -140,6 +140,18 @@
 - c1_cloudflare_container_production_read=disconnected-fail-closed
 - c1_cloudflare_container_worker_bundle_status=pass-before-container-image-build
 - c1_cloudflare_container_image_build_status=blocked-local-docker-cli-unavailable
+- `C1-CLOUDFLARE-CONTAINER-IMAGE-EXECUTION-EVIDENCE-1` is reviewable from exact integration `c7e320473da88d9fd3dc0354be27997912a5ef2c` and remains fail closed. Windows has zero existing Docker-compatible CLIs and engines, and WSL has zero installed distributions. Docker Desktop cannot be started without accepting its subscription agreement; the official Podman Windows engine path requires machine setup with administrator/restart prerequisites. Those actions are outside this unit, so no runtime was installed and no image build/run/stop occurred. The exact Dockerfile, fixed entrypoints, Worker/config/binding/migration, disconnected production read, and retained-image rollback requirement remain unchanged.
+- c1_cloudflare_container_image_execution_evidence_base=c7e320473da88d9fd3dc0354be27997912a5ef2c
+- c1_cloudflare_container_image_execution_evidence_status=blocked-fail-closed
+- c1_cloudflare_container_image_execution_evidence_blocker=blocked-no-existing-engine-safe-install-requires-license-or-admin-restart
+- c1_cloudflare_container_runtime_cli_count=0
+- c1_cloudflare_container_runtime_engine_count=0
+- c1_cloudflare_container_wsl_distribution_count=0
+- c1_cloudflare_container_runtime_install_count=0
+- c1_cloudflare_container_image_build_count=0
+- c1_cloudflare_container_run_count=0
+- c1_cloudflare_container_stop_signal_count=0
+- c1_cloudflare_container_production_read=disconnected-fail-closed
 - remote_service_operation_count=0
 - deploy_activation_cp2_public_launch_count=0
 - C1 production source procurement is fixed at PR #695 integration tip `d206ff2c07cc10aeb701d0d2034a29b17f58d42b`. One new node-libcurl/libcurl Windows native envelope was researched from official metadata only and rejected with `0/7` proofs established; no PR #694 candidate class was re-audited, no archive was downloaded, and no dependency or production path was executed.

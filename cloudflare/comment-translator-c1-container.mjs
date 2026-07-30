@@ -127,6 +127,7 @@ function parseSanitizedResult(bytes) {
     const value = JSON.parse(new TextDecoder().decode(bytes));
     const keys = Object.keys(value).sort();
     const expected = [
+      "billingState",
       "childBufferZeroFillCount", "childConstructionAttemptCount",
       "childExitCodeObserved", "childReadAttemptCount", "executionStatus",
       "parentBufferZeroFillCount", "resultStatus",
@@ -135,6 +136,12 @@ function parseSanitizedResult(bytes) {
     if (JSON.stringify(keys) !== JSON.stringify(expected)) return null;
     if (value.executionStatus !== "pass") return null;
     if (!["available", "missing"].includes(value.resultStatus)) return null;
+    if (
+      value.billingState !== null
+      && !["paid-active", "paid-inactive"].includes(value.billingState)
+    ) return null;
+    if (value.resultStatus === "available" && value.billingState === null) return null;
+    if (value.resultStatus === "missing" && value.billingState !== null) return null;
     if (value.terminationStatus !== "child-exited-zero-parent-ready") return null;
     if (value.childExitCodeObserved !== true) return null;
     if (value.parentBufferZeroFillCount !== 3 || value.childBufferZeroFillCount !== 3) return null;
@@ -153,6 +160,7 @@ function unavailable(terminationStatus) {
   return Object.freeze({
     executionStatus: "fail-closed",
     resultStatus: "unavailable",
+    billingState: null,
     terminationStatus,
     parentExitCodeObserved: false,
     childExitCodeObserved: false,

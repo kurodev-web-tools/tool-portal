@@ -20,6 +20,9 @@ import {
   type CommentTranslatorPaidEntitlementStore,
   type CommentTranslatorVerifiedBillingEvidence
 } from "./comment-translator-paid-entitlement-store";
+import {
+  readCommentTranslatorC1ProductionBillingState
+} from "./comment-translator-c1-production-read";
 
 export type CommentTranslatorBillingUserReference = `ctbill_${string}`;
 export type CommentTranslatorBillingState = "free" | "paid-active" | "paid-inactive";
@@ -253,19 +256,44 @@ export async function readCommentTranslatorBillingEntitlementSnapshot({
     return createFreeBillingSnapshot(billingUserReferenceId, "free");
   }
 
-  const durableStore = entitlementStore ?? readDefaultPaidEntitlementStore();
-  if (!durableStore) {
-    return createFreeBillingSnapshot(billingUserReferenceId, "paid-inactive");
-  }
-
   try {
-    const record = await durableStore.readByBillingUserReference(billingUserReferenceId);
+    if (!entitlementStore) {
+      const billingState = await readCommentTranslatorC1ProductionBillingState({
+        billingUserReferenceId,
+        environment: env
+      });
+      return createSnapshotFromC1BillingState(billingUserReferenceId, billingState);
+    }
+    const record = await entitlementStore.readByBillingUserReference(billingUserReferenceId);
     return record
       ? createSnapshotFromPaidEntitlementRecord(record, nowMs)
       : createFreeBillingSnapshot(billingUserReferenceId, "free");
   } catch {
     return createFreeBillingSnapshot(billingUserReferenceId, "paid-inactive");
   }
+}
+
+function createSnapshotFromC1BillingState(
+  billingUserReferenceId: CommentTranslatorBillingUserReference,
+  billingState: "paid-active" | "paid-inactive" | "missing" | "unavailable"
+): CommentTranslatorBillingEntitlementSnapshot {
+  if (billingState !== "paid-active") {
+    return createFreeBillingSnapshot(
+      billingUserReferenceId,
+      billingState === "missing" ? "free" : "paid-inactive"
+    );
+  }
+  return {
+    ...createFreeBillingSnapshot(billingUserReferenceId, "paid-inactive"),
+    plan: "paid",
+    billingState: "paid-active",
+    planEntitlement: createPaidPlanEntitlement(),
+    paidPlan: {
+      status: "available",
+      currentPeriodEndIso: null,
+      provider: "stripe"
+    }
+  };
 }
 
 export function createCommentTranslatorBillingBrowserSafeViewModel({

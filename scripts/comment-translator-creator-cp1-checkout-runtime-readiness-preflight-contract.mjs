@@ -51,7 +51,7 @@ const readyReferences =
 
 assert.deepEqual(readyReferences, {
   status: "blocked",
-  blocker: "c1-durable-billing-state-read-disconnected",
+  blocker: "c1-production-activation-read-proof-pending",
   references: [
     { name: "STRIPE_SECRET_KEY", status: "present" },
     { name: "COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID", status: "present" },
@@ -66,7 +66,7 @@ assert.deepEqual(readyReferences, {
     },
     {
       name: "C1_DURABLE_BILLING_STATE_READ",
-      status: "disconnected-fail-closed",
+      status: "connected-unactivated",
     },
   ],
   counts: {
@@ -74,7 +74,7 @@ assert.deepEqual(readyReferences, {
     present: 3,
     missing: 0,
     unreviewed: 2,
-    disconnected: 1,
+    connectedUnactivated: 1,
   },
   checkoutInvocationCount: 0,
 });
@@ -86,15 +86,10 @@ assert.deepEqual(missingReferences.counts, {
   present: 0,
   missing: 5,
   unreviewed: 0,
-  disconnected: 1,
+  connectedUnactivated: 1,
 });
 assert.equal(missingReferences.checkoutInvocationCount, 0);
-assert.equal(
-  missingReferences.references.filter(
-    (reference) => reference.status === "disconnected-fail-closed",
-  ).length,
-  1,
-);
+assert.equal(missingReferences.references.at(-1)?.status, "connected-unactivated");
 
 const billingSource = read(billingPath);
 const workerSource = read(workerPath);
@@ -114,10 +109,7 @@ const stripeCallIndex = billingSource.indexOf(
 assert.ok(missingConfigIndex > 0);
 assert.ok(durableReadIndex > missingConfigIndex);
 assert.ok(stripeCallIndex > durableReadIndex);
-assert.doesNotMatch(
-  billingSource,
-  /comment-translator-c1-container-boundary|COMMENT_TRANSLATOR_C1_CONTAINER/,
-);
+assert.match(billingSource, /readCommentTranslatorC1ProductionBillingState/);
 assert.match(workerSource, /export \{ CommentTranslatorC1Container \}/);
 assert.match(
   read(containerBoundaryPath),
@@ -125,7 +117,7 @@ assert.match(
 );
 assert.match(
   authoritySource,
-  /runtime_readiness_blocker=c1-durable-billing-state-read-disconnected/,
+  /runtime_readiness_blocker=c1-production-activation-read-proof-pending/,
 );
 
 for (const relativePath of [readinessPath, contractPath]) {

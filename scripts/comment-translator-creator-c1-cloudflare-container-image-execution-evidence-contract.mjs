@@ -68,6 +68,7 @@ assert.equal(malformed.stderr, "");
 assert.deepEqual(JSON.parse(malformed.stdout), {
   executionStatus: "fail-closed",
   resultStatus: "unavailable",
+  billingState: null,
   terminationStatus: "parent-error",
   childExitCodeObserved: false,
   parentBufferZeroFillCount: 3,

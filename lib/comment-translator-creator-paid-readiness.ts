@@ -36,7 +36,7 @@ type CheckoutReferenceStatus =
   | "present"
   | "missing"
   | "unreviewed"
-  | "disconnected-fail-closed";
+  | "connected-unactivated";
 
 type ReferencePresence = {
   name: string;
@@ -45,7 +45,7 @@ type ReferencePresence = {
 
 type CheckoutReadiness = {
   status: "blocked";
-  blocker: "c1-durable-billing-state-read-disconnected";
+  blocker: "c1-production-activation-read-proof-pending";
   references: Array<{
     name:
       | (typeof checkoutReferenceNames)[number]
@@ -57,7 +57,7 @@ type CheckoutReadiness = {
     present: number;
     missing: number;
     unreviewed: number;
-    disconnected: 1;
+    connectedUnactivated: 1;
   };
   checkoutInvocationCount: 0;
 };
@@ -126,12 +126,12 @@ function readCheckoutReadiness(environment: object): CheckoutReadiness {
 
   return {
     status: "blocked",
-    blocker: "c1-durable-billing-state-read-disconnected",
+    blocker: "c1-production-activation-read-proof-pending",
     references: [
       ...references,
       {
         name: "C1_DURABLE_BILLING_STATE_READ",
-        status: "disconnected-fail-closed",
+        status: "connected-unactivated",
       },
     ],
     counts: {
@@ -139,7 +139,7 @@ function readCheckoutReadiness(environment: object): CheckoutReadiness {
       present,
       missing: checkoutReferenceNames.length - present - unreviewed,
       unreviewed,
-      disconnected: 1,
+      connectedUnactivated: 1,
     },
     checkoutInvocationCount: 0,
   };
@@ -148,7 +148,7 @@ function readCheckoutReadiness(environment: object): CheckoutReadiness {
 function checkoutReferenceStatus(
   env: Record<string, unknown>,
   name: (typeof checkoutReferenceNames)[number],
-): Exclude<CheckoutReferenceStatus, "disconnected-fail-closed"> {
+): Exclude<CheckoutReferenceStatus, "connected-unactivated"> {
   if (!Object.hasOwn(env, name)) return "missing";
   return name === activationReference ||
     name === "COMMENT_TRANSLATOR_PRIVATE_LAUNCH_ALLOWED_USER_HASHES"

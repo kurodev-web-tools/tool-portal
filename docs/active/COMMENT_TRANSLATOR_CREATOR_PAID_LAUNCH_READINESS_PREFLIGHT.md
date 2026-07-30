@@ -5006,6 +5006,8 @@ CP1 performs no rollback. Later rollback is separately approved and bounded by t
 
 `CP1-A-STRIPE-CHECKOUT-RUNTIME-READINESS-PREFLIGHT-1` is consumed at exact integration base `f5e81b21382b1d07b9d5dd20f78c2fbbceb9e5c5` and stopped fail closed before Checkout. The sanitized production presence reducer returned `route unavailable / 5 unreviewed`; code plus final PR #713 authority keep the C1 durable billing-state production read `disconnected-fail-closed`. The single blocker is `c1-durable-billing-state-read-disconnected`; Free and paid-inactive are unchanged, and Stripe SDK initialization, Customer creation, Checkout Session creation, remote mutation, deploy, activation, Portal, webhook, CP2, promotion, merge, and public launch counts remain zero. The canonical detailed record is `docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_CP1_EXTERNAL_EVIDENCE_RECONCILIATION_PREFLIGHT.md`.
 
+`CP1-A-C1-PRODUCTION-DURABLE-READ-WIRING-1` supersedes only that repository-disconnection blocker from exact base `3a3dd3631d37ea5f5ab8bfffdc1318eb25f828a3`: wiring is `connected-unactivated`, and the sole blocker is now `c1-production-activation-read-proof-pending`. No deploy, production read, configuration apply, activation, Stripe/Checkout, Portal, webhook, CP2, merge, or public launch ran. The external-evidence reconciliation authority is canonical.
+
 ## Exact Unchecked Scope
 
 unchecked_scope_status=recorded

@@ -860,3 +860,70 @@ next_ordered_approval_unit=CP1-A-C1-PRODUCTION-ACTIVATION-READ-PROOF-1
 ```
 
 The next unit may prove deployment/configuration presence and one sanitized production read only under a new exact approval. `CP1-A-STRIPE-CHECKOUT` remains non-executable until that proof passes and the five runtime-reference presence labels are separately current.
+
+## C1 Production Activation And Read Proof
+
+`CP1-A-C1-PRODUCTION-ACTIVATION-READ-PROOF-1` starts from exact clean isolated
+integration revision `b0fe19823e260d768749604affa57cf30d3c7329`, the merge
+commit for PR #715. The single sanitized target label is
+`production-worker`. The intended deployment contains the reviewed custom
+Worker entrypoint, `CommentTranslatorC1Container` export, Container image
+configuration, `COMMENT_TRANSLATOR_C1_CONTAINER` Durable Object binding, and
+`c1-container-v1` migration. Runtime reference values and private identifiers
+remain opaque and are not requested, displayed, persisted, hashed, or partially
+revealed.
+
+The rollback owner is the `repository-deployment-owner`; rollback is not
+authorized in this unit, and every Container image referenced by a deployed
+Worker version must remain retained. The sanitized output reviewer is the
+`task-executing-reviewer`. The one-read reducer is
+`scripts/comment-translator-creator-c1-safe-one-read-reducer.mjs`: it issues one
+same-origin POST with redirects disabled, performs no retry, accepts at most
+4096 bytes, rejects extra/raw fields and revision/count mismatches, and emits
+only the reviewed fixed result. The POST route reuses authenticated session,
+exact billing activation, owner allowlist, and server-derived billing reference
+gates. Its fixed attempt key makes a repeat stop at Durable Object attempt
+state before child construction/read.
+
+Local RED/GREEN is complete for one binding acquisition, one Container RPC
+invocation, one child construction/read, fixed sanitized result projection,
+missing binding/input fail-closed, unauthorized zero-read, repeat suppression,
+redirect/raw-output rejection, and Checkout/Stripe invocation suppression.
+
+The one approved sanitized Cloudflare metadata inspection stopped on its first
+`deployments status` call without emitting raw output or private metadata.
+Because that single attempt could not establish the active deployment,
+`cloudflare-deployment-status-inspection-unavailable` is the sole blocker.
+No retry or remediation ran. Exact deployed revision, remote binding presence,
+and remote Container configuration presence are therefore unproven. The unit
+stopped before configuration apply, deployment/activation, or production C1
+read.
+
+```text
+reviewed_base=b0fe19823e260d768749604affa57cf30d3c7329
+approval_unit=CP1-A-C1-PRODUCTION-ACTIVATION-READ-PROOF-1
+target_label=production-worker
+intended_revision_status=reviewed
+local_container_configuration_presence=present
+local_durable_object_binding_presence=present
+rollback_owner=repository-deployment-owner
+output_reviewer=task-executing-reviewer
+safe_one_read_reducer_status=local-green
+safe_one_read_request_count=not-run
+remote_metadata_inspection_attempt_count=1
+remote_metadata_read_count=1
+exact_deployed_revision_status=unproven
+remote_binding_presence=unproven
+remote_container_configuration_presence=unproven
+sanitized_blocker=cloudflare-deployment-status-inspection-unavailable
+sanitized_blocker_count=1
+activation_attempt_count=0
+production_c1_read_count=0
+checkout_invocation_count=0
+stripe_sdk_initialization_count=0
+customer_checkout_portal_webhook_supabase_mutation_cp2_public_launch_merge_count=0
+free_behavior_status=unchanged
+paid_inactive_behavior_status=unchanged
+retry_rollback_cleanup_status=not-run
+execution_status=blocked-before-remote-mutation-and-production-read
+```

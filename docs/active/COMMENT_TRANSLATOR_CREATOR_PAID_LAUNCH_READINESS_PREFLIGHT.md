@@ -5008,6 +5008,8 @@ CP1 performs no rollback. Later rollback is separately approved and bounded by t
 
 `CP1-A-C1-PRODUCTION-DURABLE-READ-WIRING-1` supersedes only that repository-disconnection blocker from exact base `3a3dd3631d37ea5f5ab8bfffdc1318eb25f828a3`: wiring is `connected-unactivated`, and the sole blocker is now `c1-production-activation-read-proof-pending`. No deploy, production read, configuration apply, activation, Stripe/Checkout, Portal, webhook, CP2, merge, or public launch ran. The external-evidence reconciliation authority is canonical.
 
+`CP1-A-C1-PRODUCTION-ACTIVATION-READ-PROOF-1` is locally reviewable from exact base `b0fe19823e260d768749604affa57cf30d3c7329`. Its one sanitized Cloudflare metadata inspection stopped at `cloudflare-deployment-status-inspection-unavailable`; exact deployed revision and remote binding/Container configuration presence remain unproven. No retry ran, and configuration apply, deployment/activation, production C1 read, Stripe/Checkout, Portal, webhook, CP2, merge, rollback, and public launch counts remain zero. The external-evidence reconciliation authority is canonical.
+
 ## Exact Unchecked Scope
 
 unchecked_scope_status=recorded

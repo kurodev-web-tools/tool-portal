@@ -124,7 +124,7 @@ assert.deepEqual(inactive, {
   },
   checkout: {
     status: "blocked",
-    blocker: "c1-durable-billing-state-read-disconnected",
+    blocker: "c1-production-activation-read-proof-pending",
     references: [
       { name: "STRIPE_SECRET_KEY", status: "present" },
       {
@@ -139,7 +139,7 @@ assert.deepEqual(inactive, {
       },
       {
         name: "C1_DURABLE_BILLING_STATE_READ",
-        status: "disconnected-fail-closed",
+        status: "connected-unactivated",
       },
     ],
     counts: {
@@ -147,7 +147,7 @@ assert.deepEqual(inactive, {
       present: 3,
       missing: 1,
       unreviewed: 1,
-      disconnected: 1,
+      connectedUnactivated: 1,
     },
     checkoutInvocationCount: 0,
   },
@@ -178,7 +178,7 @@ assert.deepEqual(activationPresent.checkout.counts, {
   present: 3,
   missing: 0,
   unreviewed: 2,
-  disconnected: 1,
+  connectedUnactivated: 1,
 });
 
 const blocked = helper.readCommentTranslatorCreatorPaidReadiness(
@@ -196,7 +196,7 @@ assert.deepEqual(blocked.checkout.counts, {
   present: 2,
   missing: 2,
   unreviewed: 1,
-  disconnected: 1,
+  connectedUnactivated: 1,
 });
 
 const route = await import(pathToFileURL(routePath).href);

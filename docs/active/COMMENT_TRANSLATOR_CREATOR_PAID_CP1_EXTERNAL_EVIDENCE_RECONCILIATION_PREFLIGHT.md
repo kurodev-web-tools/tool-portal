@@ -809,3 +809,54 @@ next_ordered_approval_unit=blocked-before-CP1-A-STRIPE-CHECKOUT
 The focused readiness contract never reads environment values: ordinary references are property-presence only, while the activation marker and owner allowlist stay `unreviewed` when their properties exist. Existing billing source separately proves exact-marker and hashed-owner gating at the Checkout boundary. The contract proves the five-reference plus C1 six-prerequisite count and keeps Checkout invocation at zero. Existing focused C2 and C1 Container contracts separately retain owner gating, missing-reference suppression, unreadable-store suppression, Free / paid-inactive fallback, and inflight/repeat/late-success suppression. The accepted IPC/V8/runtime/OS/SDK internal-copy erasure and teardown residual risk is unchanged.
 
 No configuration/binding apply, Cloudflare/Stripe/Supabase account mutation, authenticated dashboard/browser operation, Customer, Checkout Session, redirect follow, Portal, webhook, entitlement activation, deploy, CP2, promotion, merge, or public launch ran. `CP1-A-STRIPE-CHECKOUT` remains non-executable until a later exact-base readiness unit proves both presence-only runtime references and an actually connected, readable production C1 boundary.
+
+## C1 Production Durable Billing-State Read Wiring
+
+`CP1-A-C1-PRODUCTION-DURABLE-READ-WIRING-1` is reviewable from exact clean isolated integration base `3a3dd3631d37ea5f5ab8bfffdc1318eb25f828a3`. It resolves only the repository wiring blocker from PR #714. It does not deploy, apply configuration, activate billing, read production data, initialize Stripe, or enter `CP1-A-STRIPE-CHECKOUT`.
+
+The production-compatible call path is now:
+
+1. the server-owned billing snapshot keeps the existing authorization, exact activation-marker, and owner-hash gates;
+2. OpenNext `getCloudflareContext().env` acquires the configured `COMMENT_TRANSLATOR_C1_CONTAINER` binding;
+3. the fixed-name Container Durable Object stub receives one opaque random attempt key and one byte-oriented `ReadableStream` through its documented RPC method;
+4. the Durable Object transfers that stream directly to one `exec()` stdin, persists only opaque `inflight` / `settled` / `aborted` attempt state, suppresses repeat and late success, and observes process exit after bounded termination;
+5. the child performs exactly one read against `comment_translator_paid_entitlements`, selects only the fields required by the existing C1 signed-evidence row parser, validates the same evidence/state/timestamp conditions, then returns only `available` / `missing` / `unavailable` plus `paid-active` / `paid-inactive` or null and fixed lifecycle counts;
+6. the billing snapshot projects `missing` to Free, and every missing binding/reference, malformed row, read error, stop, timeout, unreadable result, or inactive state to Free or paid-inactive.
+
+This seam follows the current official OpenNext binding API and Cloudflare Containers/Durable Objects documentation:
+
+- `https://opennext.js.org/cloudflare/bindings`
+- `https://developers.cloudflare.com/durable-objects/api/stub/`
+- `https://developers.cloudflare.com/containers/execute-commands/`
+- `https://developers.cloudflare.com/containers/container-class/`
+
+No direct Supabase SDK constructor was added to the Container. Runtime reference values and the billing reference are encoded into three separately owned byte arrays, transferred once, and zero-filled by the Worker boundary, parent, and child. No value, hash, partial value, raw response, row, URL, Authorization header, private identifier, or account/project metadata is returned, logged, or persisted. IPC/V8/runtime/OS/internal HTTP copy erasure and teardown remain the explicitly accepted residual risk.
+
+```text
+reviewed_base=3a3dd3631d37ea5f5ab8bfffdc1318eb25f828a3
+approval_unit=CP1-A-C1-PRODUCTION-DURABLE-READ-WIRING-1
+production_wiring_status=connected-unactivated
+c1_durable_billing_state_read_status=connected-unactivated
+binding_acquisition_status=opennext-cloudflare-context
+byte_stream_transfer_status=single-use-rpc-to-container-exec
+read_invocation_status=one-row-projection-only
+result_projection_status=presence-and-billing-state-only
+repeat_late_success_suppression_status=retained
+parent_child_buffer_zero_fill_status=retained
+accepted_residual_risk_status=unchanged
+free_behavior_status=unchanged
+paid_inactive_behavior_status=unchanged
+runtime_readiness_blocker=c1-production-activation-read-proof-pending
+sanitized_blocker_count=1
+checkout_invocation_count=0
+stripe_sdk_initialization_count=0
+customer_creation_count=0
+checkout_session_creation_count=0
+remote_read_count=0
+remote_mutation_count=0
+configuration_binding_apply_count=0
+deploy_activation_portal_webhook_cp2_public_launch_merge_count=0
+next_ordered_approval_unit=CP1-A-C1-PRODUCTION-ACTIVATION-READ-PROOF-1
+```
+
+The next unit may prove deployment/configuration presence and one sanitized production read only under a new exact approval. `CP1-A-STRIPE-CHECKOUT` remains non-executable until that proof passes and the five runtime-reference presence labels are separately current.

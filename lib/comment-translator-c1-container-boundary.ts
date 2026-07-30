@@ -1,8 +1,9 @@
 import "server-only";
 
-type SanitizedContainerResult = Readonly<{
+export type CommentTranslatorC1SanitizedContainerResult = Readonly<{
   executionStatus: "pass" | "fail-closed";
   resultStatus: "available" | "missing" | "unavailable";
+  billingState: "paid-active" | "paid-inactive" | null;
   terminationStatus: string;
   parentExitCodeObserved: boolean;
   childExitCodeObserved: boolean;
@@ -16,15 +17,19 @@ type CommentTranslatorC1ContainerStub = {
   readonly runAttempt: (
     attemptKey: string,
     input: ReadableStream<Uint8Array>
-  ) => Promise<SanitizedContainerResult>;
+  ) => Promise<CommentTranslatorC1SanitizedContainerResult>;
+};
+
+export type CommentTranslatorC1ContainerNamespace = {
+  readonly getByName: (name: string) => CommentTranslatorC1ContainerStub;
 };
 
 export const commentTranslatorC1ContainerBoundaryContract = {
-  status: "production-boundary-disconnected-inert",
+  status: "production-durable-read-wired-unactivated",
   inputOwnership: "worker-byte-stream-transferred-to-container-do-parent-stdin",
   privateInputCount: 3,
   persistentState: "opaque-attempt-key-and-inflight-settled-aborted-only",
-  productionRead: "not-connected",
+  productionRead: "connected-unactivated",
   safeFallback: "free-or-paid-inactive",
 } as const;
 
@@ -40,7 +45,7 @@ export async function runCommentTranslatorC1ContainerBoundary({
   readonly endpoint: Uint8Array;
   readonly credential: Uint8Array;
   readonly billingReference: Uint8Array;
-}): Promise<SanitizedContainerResult> {
+}): Promise<CommentTranslatorC1SanitizedContainerResult> {
   const inputs = [endpoint, credential, billingReference];
   if (
     !/^[a-f0-9]{64}$/.test(attemptKey)
@@ -88,10 +93,11 @@ function zeroFill(inputs: readonly Uint8Array[]) {
   for (const input of inputs) input.fill(0);
 }
 
-function unavailable(terminationStatus: string): SanitizedContainerResult {
+function unavailable(terminationStatus: string): CommentTranslatorC1SanitizedContainerResult {
   return Object.freeze({
     executionStatus: "fail-closed",
     resultStatus: "unavailable",
+    billingState: null,
     terminationStatus,
     parentExitCodeObserved: false,
     childExitCodeObserved: false,

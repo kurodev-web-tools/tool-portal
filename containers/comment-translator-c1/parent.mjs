@@ -82,6 +82,7 @@ function failClosed(terminationStatus, childExitCodeObserved, message = null) {
   return {
     executionStatus: "fail-closed",
     resultStatus: "unavailable",
+    billingState: null,
     terminationStatus,
     childExitCodeObserved,
     parentBufferZeroFillCount: 3,
@@ -92,12 +93,18 @@ function failClosed(terminationStatus, childExitCodeObserved, message = null) {
 }
 
 function isChildResult(value) {
+  const expectedKeys =
+    "billingState,childBufferZeroFillCount,childConstructionAttemptCount,"
+    + "childReadAttemptCount,executionStatus,resultStatus";
   return value !== null
     && typeof value === "object"
-    && Object.keys(value).sort().join(",")
-      === "childBufferZeroFillCount,childConstructionAttemptCount,childReadAttemptCount,executionStatus,resultStatus"
+    && Object.keys(value).sort().join(",") === expectedKeys
     && ["pass", "fail-closed"].includes(value.executionStatus)
     && ["available", "missing", "unavailable"].includes(value.resultStatus)
+    && (
+      value.billingState === null
+      || ["paid-active", "paid-inactive"].includes(value.billingState)
+    )
     && value.childBufferZeroFillCount === 3
     && value.childConstructionAttemptCount === 1
     && value.childReadAttemptCount === 1;

@@ -98,7 +98,7 @@ const workerBoundary = read(paths.workerBoundary);
 assert.match(workerBoundary, /new ReadableStream<Uint8Array>/);
 assert.match(workerBoundary, /type: "bytes"/);
 assert.match(workerBoundary, /container\.runAttempt\(attemptKey, input\)/);
-assert.match(workerBoundary, /productionRead: "not-connected"/);
+assert.match(workerBoundary, /productionRead: "connected-unactivated"/);
 for (const authority of [
   "task.md",
   "docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md",
@@ -145,6 +145,7 @@ async function verifyDurableAttemptSuppression(source) {
   const parentResult = {
     executionStatus: "pass",
     resultStatus: "available",
+    billingState: "paid-active",
     terminationStatus: "child-exited-zero-parent-ready",
     childExitCodeObserved: true,
     parentBufferZeroFillCount: 3,

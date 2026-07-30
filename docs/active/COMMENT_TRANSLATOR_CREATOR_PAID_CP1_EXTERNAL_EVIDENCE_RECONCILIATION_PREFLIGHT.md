@@ -927,3 +927,100 @@ paid_inactive_behavior_status=unchanged
 retry_rollback_cleanup_status=not-run
 execution_status=blocked-before-remote-mutation-and-production-read
 ```
+
+## C1 Production Activation And Read Proof Retry 1
+
+`CP1-A-C1-PRODUCTION-ACTIVATION-READ-PROOF-RETRY-1` starts from the exact clean
+isolated integration revision
+`918ba6b3646baa40965a6b22f475159b7dd7e90f`, the merge commit for PR #716.
+The intended target remains the single sanitized label `production-worker`.
+The rollback owner remains `repository-deployment-owner`, and the sanitized
+output reviewer remains `task-executing-reviewer`.
+
+Focused RED/GREEN first characterized the previous blocker. The prior reducer
+collapsed a missing local Wrangler installation and a failed Cloudflare
+control-plane call into the same inspection-unavailable result. The retry used
+one lockfile-faithful `npm ci` in only the clean isolated worktree, with zero
+manifest or lockfile changes, then added a local Wrangler command preflight.
+Missing local Wrangler now stops with
+`local-wrangler-command-unavailable` and remote metadata read count zero.
+
+Wrangler `4.95.0` local help and installed implementation, plus current
+official Cloudflare Workers/Containers documentation, confirmed the documented
+`deployments status --json`, `versions view --json`, and
+`containers list --json` command shapes. The inspection reducer remains
+presence-only: it never emits raw command output, account/project metadata,
+version identifiers, Container identifiers, image references, runtime
+references, secrets, or private identifiers.
+
+The one approved sanitized Cloudflare inspection passed the local configuration
+and Wrangler preconditions, then stopped on its first remote control-plane read.
+The terminal blocker is
+`cloudflare-deployment-status-control-plane-unavailable`. The consumed result
+does not safely distinguish authentication, account scope, network, or remote
+service availability without inspecting prohibited raw output or performing a
+second remote attempt. No such inspection, retry, remediation, or credential
+request was made.
+
+Because the active deployment remained unproven, the retry stopped before
+configuration/binding apply, deploy/activation, and production C1 read. The
+exact deployed revision, remote Durable Object binding presence, and remote
+Container configuration presence remain unproven. The reviewed one-read reducer
+is locally GREEN for a single same-origin POST, redirect/raw/extra-field
+rejection, fixed status/count projection, and zero Checkout/Stripe invocation,
+but it was not invoked.
+
+```text
+execution_recorded_at=2026-07-30T14:06:43+09:00
+reviewed_base=918ba6b3646baa40965a6b22f475159b7dd7e90f
+approval_unit=CP1-A-C1-PRODUCTION-ACTIVATION-READ-PROOF-RETRY-1
+target_label=production-worker
+intended_revision_status=reviewed
+local_dependency_install_count=1
+manifest_change_count=0
+lockfile_change_count=0
+local_wrangler_version=4.95.0
+local_wrangler_preflight_status=pass
+local_container_configuration_presence=present
+local_durable_object_binding_presence=present
+rollback_owner=repository-deployment-owner
+output_reviewer=task-executing-reviewer
+safe_one_read_reducer_status=local-green
+safe_one_read_request_count=not-run
+remote_metadata_inspection_attempt_count=1
+remote_metadata_read_count=1
+exact_deployed_revision_status=unproven
+remote_binding_presence=unproven
+remote_container_configuration_presence=unproven
+sanitized_blocker=cloudflare-deployment-status-control-plane-unavailable
+sanitized_blocker_count=1
+activation_attempt_count=0
+production_c1_read_count=0
+checkout_invocation_count=0
+stripe_sdk_initialization_count=0
+customer_creation_count=0
+checkout_session_creation_count=0
+portal_invocation_count=0
+webhook_operation_count=0
+supabase_mutation_count=0
+cp2_public_launch_merge_count=0
+free_behavior_status=unchanged
+paid_inactive_behavior_status=unchanged
+repeat_late_success_suppression_status=retained
+parent_child_buffer_zero_fill_status=retained
+accepted_residual_risk_status=unchanged
+retry_rollback_cleanup_status=not-run
+execution_status=blocked-before-remote-mutation-and-production-read
+```
+
+Local verification after recording the terminal result passed the four focused
+retry/route/reducer contracts, the applicable Creator C1/CP1 broad contracts,
+ESLint, `tsc --noEmit`, the Next production build, the OpenNext Cloudflare
+build, `git diff --check`, the dependency/configuration presence scan, and the
+generated-artifact and sensitive/private-value addition scans. The broader
+contract batch produced `29 pass / 1 non-applicable failure`: the remaining
+C12 final-QA contract intentionally rejects any non-docs C12 diff and therefore
+rejects this separately approved proof-route metadata revision. It is not used
+as evidence for this retry. OpenNext also retained its existing Windows
+compatibility warning; the Cloudflare build nevertheless completed with exit
+code zero.

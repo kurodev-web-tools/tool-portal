@@ -4,8 +4,8 @@ import {
 } from "./comment-translator-creator-c1-safe-one-read-reducer.mjs";
 
 const validBody = {
-  approvalUnit: "CP1-A-C1-PRODUCTION-ACTIVATION-READ-PROOF-1",
-  reviewedBase: "b0fe19823e260d768749604affa57cf30d3c7329",
+  approvalUnit: "CP1-A-C1-PRODUCTION-ACTIVATION-READ-PROOF-RETRY-1",
+  reviewedBase: "918ba6b3646baa40965a6b22f475159b7dd7e90f",
   targetLabel: "production-worker",
   authorizationStatus: "authorized",
   bindingStatus: "available",

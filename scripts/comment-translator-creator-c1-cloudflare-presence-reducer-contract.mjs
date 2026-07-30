@@ -3,7 +3,7 @@ import {
   inspectCommentTranslatorC1CloudflarePresence,
 } from "./comment-translator-creator-c1-cloudflare-presence-reducer.mjs";
 
-const expectedRevision = "b0fe19823e260d768749604affa57cf30d3c7329";
+const expectedRevision = "918ba6b3646baa40965a6b22f475159b7dd7e90f";
 const versionId = "11111111-1111-4111-8111-111111111111";
 const calls = [];
 const exact = inspectCommentTranslatorC1CloudflarePresence({
@@ -97,8 +97,23 @@ const blocked = inspectCommentTranslatorC1CloudflarePresence({
 });
 assert.deepEqual(blocked, {
   inspectionStatus: "blocked",
-  blocker: "cloudflare-presence-inspection-unavailable",
+  blocker: "cloudflare-deployment-status-control-plane-unavailable",
   remoteMetadataReadCount: 1,
+  privateMetadataOutputCount: 0,
+});
+
+const localUnavailable = inspectCommentTranslatorC1CloudflarePresence({
+  checkWrangler() {
+    return false;
+  },
+  run() {
+    throw new Error("remote inspection must not run");
+  },
+});
+assert.deepEqual(localUnavailable, {
+  inspectionStatus: "blocked",
+  blocker: "local-wrangler-command-unavailable",
+  remoteMetadataReadCount: 0,
   privateMetadataOutputCount: 0,
 });
 

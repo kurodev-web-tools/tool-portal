@@ -78,9 +78,9 @@ export async function runCommentTranslatorC1SafeOneRead(request) {
     || Array.isArray(value)
     || JSON.stringify(Object.keys(value).sort()) !== JSON.stringify(expectedKeys)
     || value.approvalUnit
-      !== "CP1-A-C1-PRODUCTION-ACTIVATION-READ-PROOF-1"
+      !== "CP1-A-C1-PRODUCTION-ACTIVATION-READ-PROOF-RETRY-1"
     || value.reviewedBase
-      !== "b0fe19823e260d768749604affa57cf30d3c7329"
+      !== "918ba6b3646baa40965a6b22f475159b7dd7e90f"
     || value.targetLabel !== "production-worker"
     || value.authorizationStatus !== "authorized"
     || value.bindingStatus !== "available"

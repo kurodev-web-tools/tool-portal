@@ -110,8 +110,8 @@ assert.equal(active.status, 200);
 assert.equal(active.headers.get("Cache-Control"), "no-store");
 assert.equal(active.headers.get("X-Content-Type-Options"), "nosniff");
 assert.deepEqual(active.body, {
-  approvalUnit: "CP1-A-C1-PRODUCTION-ACTIVATION-READ-PROOF-1",
-  reviewedBase: "b0fe19823e260d768749604affa57cf30d3c7329",
+  approvalUnit: "CP1-A-C1-PRODUCTION-ACTIVATION-READ-PROOF-RETRY-1",
+  reviewedBase: "918ba6b3646baa40965a6b22f475159b7dd7e90f",
   targetLabel: "production-worker",
   authorizationStatus: "authorized",
   bindingStatus: "available",

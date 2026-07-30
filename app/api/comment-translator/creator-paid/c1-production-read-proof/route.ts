@@ -9,8 +9,8 @@ import { getAccountSessionState } from "@/lib/supabase/session";
 
 export const dynamic = "force-dynamic";
 
-const approvalUnit = "CP1-A-C1-PRODUCTION-ACTIVATION-READ-PROOF-1";
-const reviewedBase = "b0fe19823e260d768749604affa57cf30d3c7329";
+const approvalUnit = "CP1-A-C1-PRODUCTION-ACTIVATION-READ-PROOF-RETRY-1";
+const reviewedBase = "918ba6b3646baa40965a6b22f475159b7dd7e90f";
 const attemptKey =
   "b48b861afa50f8eefdf119afff68d3b01b48f439b0d7664f77f3cc2e5fff182e";
 

@@ -9,32 +9,28 @@ const authorities = [
   "docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md",
   "docs/active/COMMENT_TRANSLATOR_CREATOR_PAID_LAUNCH_READINESS_PREFLIGHT.md",
 ];
-const exactBlocker =
-  "blocked-no-existing-engine-safe-install-requires-license-or-admin-restart";
+const exactBase = "a8fb4e1953391f27ed06b6b05c89fb2b2d9b896d";
 
 for (const authority of authorities) {
   const source = read(authority);
   assert.match(
     source,
-    /c1_cloudflare_container_image_execution_evidence_base=c7e320473da88d9fd3dc0354be27997912a5ef2c/,
+    new RegExp(`c1_cloudflare_container_image_execution_retry_1_base=${exactBase}`),
   );
   assert.match(
     source,
-    /c1_cloudflare_container_image_execution_evidence_status=blocked-fail-closed/,
+    /c1_cloudflare_container_image_execution_retry_1_status=local-image-execution-pass-review-ready/,
   );
-  assert.match(
-    source,
-    new RegExp(
-      `c1_cloudflare_container_image_execution_evidence_blocker=${exactBlocker}`,
-    ),
-  );
-  assert.match(source, /c1_cloudflare_container_runtime_cli_count=0/);
-  assert.match(source, /c1_cloudflare_container_runtime_engine_count=0/);
-  assert.match(source, /c1_cloudflare_container_wsl_distribution_count=0/);
-  assert.match(source, /c1_cloudflare_container_runtime_install_count=0/);
-  assert.match(source, /c1_cloudflare_container_image_build_count=0/);
-  assert.match(source, /c1_cloudflare_container_run_count=0/);
-  assert.match(source, /c1_cloudflare_container_stop_signal_count=0/);
+  assert.match(source, /c1_cloudflare_container_image_execution_retry_1_blocker=none/);
+  assert.match(source, /c1_cloudflare_container_runtime_cli_count=1/);
+  assert.match(source, /c1_cloudflare_container_runtime_engine_count=1/);
+  assert.match(source, /c1_cloudflare_container_wsl_distribution_count=1/);
+  assert.match(source, /c1_cloudflare_container_runtime_install_count=1/);
+  assert.match(source, /c1_cloudflare_container_image_build_count=1/);
+  assert.match(source, /c1_cloudflare_container_run_count=5/);
+  assert.match(source, /c1_cloudflare_container_stop_signal_count=1/);
+  assert.match(source, /c1_cloudflare_container_retained_image_count=1/);
+  assert.match(source, /c1_cloudflare_container_input_exposure_count=0/);
   assert.match(
     source,
     /c1_cloudflare_container_production_read=disconnected-fail-closed|production_wiring_status=disconnected-fail-closed/,
@@ -49,6 +45,15 @@ assert.match(
   dockerfile,
   /^ENTRYPOINT \["node", "\/app\/container-entrypoint\.mjs"\]$/m,
 );
+
+const runtimeVerifier = read(
+  "scripts/comment-translator-creator-c1-cloudflare-container-image-runtime-verifier.mjs",
+);
+assert.match(runtimeVerifier, /node:22\.22\.2-bookworm-slim/);
+assert.match(runtimeVerifier, /sanitizedCaseCount: 4/);
+assert.match(runtimeVerifier, /inputExposureCount: 0/);
+assert.match(runtimeVerifier, /retainedImageCount: 1/);
+assert.doesNotMatch(runtimeVerifier, /console\.(?:log|error|warn)/);
 
 const malformed = spawnSync(
   process.execPath,

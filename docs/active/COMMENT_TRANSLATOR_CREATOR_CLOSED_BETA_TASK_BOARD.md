@@ -108,6 +108,23 @@
 - real_constructor_client_durable_read_count=0
 - remote_service_operation_count=0
 - deploy_activation_cp2_public_launch_count=0
+- `C1-CLOUDFLARE-CONTAINER-IMAGE-EXECUTION-EVIDENCE-RETRY-1` is reviewable from exact integration `a8fb4e1953391f27ed06b6b05c89fb2b2d9b896d`. The official Podman 5.8.2 per-user path safely replaced the previous runtime blocker on the already-enabled WSL 2 host. The exact Dockerfile built once and its image remains retained. Five synthetic-only image runs proved the default ENTRYPOINT stop/zero-exit path and available, missing, unavailable, and malformed-frame parent paths with fixed sanitized stdout, observed exits, no input fixture exposure in argv/environment/log/diff/metadata, and no volume mount. The focused contract keeps Buffer zero-fill, persistent attempt suppression, Worker bundle/config/binding/migration, Free/paid-inactive fallback, and production disconnection fixed. No Cloudflare account, remote Worker, deploy, activation, billing, provider, or next CP1 unit operation ran.
+- c1_cloudflare_container_image_execution_retry_1_base=a8fb4e1953391f27ed06b6b05c89fb2b2d9b896d
+- c1_cloudflare_container_image_execution_retry_1_status=local-image-execution-pass-review-ready
+- c1_cloudflare_container_image_execution_retry_1_blocker=none
+- c1_cloudflare_container_runtime_cli_count=1
+- c1_cloudflare_container_runtime_engine_count=1
+- c1_cloudflare_container_wsl_distribution_count=1
+- c1_cloudflare_container_runtime_install_count=1
+- c1_cloudflare_container_image_build_count=1
+- c1_cloudflare_container_run_count=5
+- c1_cloudflare_container_stop_signal_count=1
+- c1_cloudflare_container_retained_image_count=1
+- c1_cloudflare_container_input_exposure_count=0
+- c1_cloudflare_container_production_read=disconnected-fail-closed
+- real_constructor_client_durable_read_count=0
+- remote_service_operation_count=0
+- deploy_activation_cp2_public_launch_count=0
 - production_constructor_compatibility_status=blocked-immutable-lifetime-unprovable
 - production_wiring_status=disconnected-fail-closed
 - sdk_internal_lifetime_status=dependency-blocked-unverified

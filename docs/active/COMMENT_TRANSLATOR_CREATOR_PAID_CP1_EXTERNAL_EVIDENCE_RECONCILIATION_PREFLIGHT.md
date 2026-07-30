@@ -776,3 +776,36 @@ next_ordered_approval_unit=CP1-A-STRIPE-CHECKOUT
 The verified public fields are Product name `Creator` and Price `980 JPY`, monthly interval count `1`, tax behavior `inclusive`. Trial, annual pricing, coupon, discount, and Creator Plus remain absent/out of scope. No private Product/Price reference, secret, raw request/response, account/customer/subscription/payment identifier, Dashboard URL, or private cost/usage value was displayed or recorded.
 
 `CP1-A-STRIPE-CHECKOUT` is the next ordered independent unit, but it is not yet executable. Repository runtime requires `STRIPE_SECRET_KEY`, `COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID`, `NEXT_PUBLIC_SITE_URL`, the exact closed-beta billing access marker, the private-launch owner allowlist, and a readable C1 durable billing-state store before it calls Stripe Checkout. The Product/Price approval did not authorize or establish those runtime bindings, activation, C1 production read, Customer creation, or Checkout Session creation. A separately approved presence-only readiness unit must fail closed before any configuration mutation or Checkout operation.
+
+## CP1-A Stripe Checkout Runtime Readiness Preflight
+
+`CP1-A-STRIPE-CHECKOUT-RUNTIME-READINESS-PREFLIGHT-1` is consumed at exact clean isolated integration base `f5e81b21382b1d07b9d5dd20f78c2fbbceb9e5c5`. The public production presence route was requested once through a fixed reducer that rejected redirects and raw output; it was unavailable, so the five runtime-reference labels remain `unreviewed`. No value, hash, partial value, raw response, redirect URL, account/project metadata, or private identifier was requested, displayed, or stored.
+
+Repository code and the final PR #713 authority independently establish that the selected C1 Cloudflare Container is exported and locally image-execution verified, but the billing runtime does not import or invoke that Container boundary. The production C1 durable billing-state read therefore remains `disconnected-fail-closed`. This is the first sufficient ordered blocker, so the preflight stops without Stripe SDK initialization or Checkout creation even if all five runtime references later become present.
+
+```text
+reviewed_base=f5e81b21382b1d07b9d5dd20f78c2fbbceb9e5c5
+approval_unit=CP1-A-STRIPE-CHECKOUT-RUNTIME-READINESS-PREFLIGHT-1
+reference_presence_route_status=unavailable
+required_runtime_prerequisite_count=6
+runtime_reference_label_count=5
+runtime_reference_present_count=0
+runtime_reference_missing_count=0
+runtime_reference_unreviewed_count=5
+c1_durable_billing_state_read_status=disconnected-fail-closed
+runtime_readiness_blocker=c1-durable-billing-state-read-disconnected
+sanitized_blocker_count=1
+free_behavior_status=unchanged
+paid_inactive_behavior_status=unchanged
+checkout_invocation_count=0
+stripe_sdk_initialization_count=0
+customer_creation_count=0
+checkout_session_creation_count=0
+remote_mutation_count=0
+deploy_activation_portal_webhook_cp2_public_launch_merge_count=0
+next_ordered_approval_unit=blocked-before-CP1-A-STRIPE-CHECKOUT
+```
+
+The focused readiness contract never reads environment values: ordinary references are property-presence only, while the activation marker and owner allowlist stay `unreviewed` when their properties exist. Existing billing source separately proves exact-marker and hashed-owner gating at the Checkout boundary. The contract proves the five-reference plus C1 six-prerequisite count and keeps Checkout invocation at zero. Existing focused C2 and C1 Container contracts separately retain owner gating, missing-reference suppression, unreadable-store suppression, Free / paid-inactive fallback, and inflight/repeat/late-success suppression. The accepted IPC/V8/runtime/OS/SDK internal-copy erasure and teardown residual risk is unchanged.
+
+No configuration/binding apply, Cloudflare/Stripe/Supabase account mutation, authenticated dashboard/browser operation, Customer, Checkout Session, redirect follow, Portal, webhook, entitlement activation, deploy, CP2, promotion, merge, or public launch ran. `CP1-A-STRIPE-CHECKOUT` remains non-executable until a later exact-base readiness unit proves both presence-only runtime references and an actually connected, readable production C1 boundary.

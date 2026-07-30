@@ -122,6 +122,35 @@ assert.deepEqual(inactive, {
     unreviewed: 0,
     total: 19,
   },
+  checkout: {
+    status: "blocked",
+    blocker: "c1-durable-billing-state-read-disconnected",
+    references: [
+      { name: "STRIPE_SECRET_KEY", status: "present" },
+      {
+        name: "COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID",
+        status: "present",
+      },
+      { name: "NEXT_PUBLIC_SITE_URL", status: "present" },
+      { name: activationReference, status: "missing" },
+      {
+        name: "COMMENT_TRANSLATOR_PRIVATE_LAUNCH_ALLOWED_USER_HASHES",
+        status: "unreviewed",
+      },
+      {
+        name: "C1_DURABLE_BILLING_STATE_READ",
+        status: "disconnected-fail-closed",
+      },
+    ],
+    counts: {
+      total: 6,
+      present: 3,
+      missing: 1,
+      unreviewed: 1,
+      disconnected: 1,
+    },
+    checkoutInvocationCount: 0,
+  },
 });
 
 const activationPresent = helper.readCommentTranslatorCreatorPaidReadiness(
@@ -144,6 +173,13 @@ assert.deepEqual(activationPresent.references.at(-1), {
   name: activationReference,
   status: "unreviewed",
 });
+assert.deepEqual(activationPresent.checkout.counts, {
+  total: 6,
+  present: 3,
+  missing: 0,
+  unreviewed: 2,
+  disconnected: 1,
+});
 
 const blocked = helper.readCommentTranslatorCreatorPaidReadiness(
   createPresenceOnlyEnvironment(expectedSupportingReferences.slice(1)),
@@ -154,6 +190,13 @@ assert.deepEqual(blocked.counts, {
   missing: 2,
   unreviewed: 0,
   total: 19,
+});
+assert.deepEqual(blocked.checkout.counts, {
+  total: 6,
+  present: 2,
+  missing: 2,
+  unreviewed: 1,
+  disconnected: 1,
 });
 
 const route = await import(pathToFileURL(routePath).href);
@@ -168,6 +211,7 @@ assert.deepEqual(Object.keys(response.body), [
   "status",
   "references",
   "counts",
+  "checkout",
 ]);
 
 const helperSource = fs.readFileSync(helperPath, "utf8");

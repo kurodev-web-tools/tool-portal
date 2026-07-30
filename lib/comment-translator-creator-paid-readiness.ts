@@ -23,12 +23,43 @@ const supportingReferences = [
 
 const activationReference =
   "COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_BILLING_ACCESS";
+const checkoutReferenceNames = [
+  "STRIPE_SECRET_KEY",
+  "COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID",
+  "NEXT_PUBLIC_SITE_URL",
+  "COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_BILLING_ACCESS",
+  "COMMENT_TRANSLATOR_PRIVATE_LAUNCH_ALLOWED_USER_HASHES",
+] as const;
 
 type ReferencePresenceStatus = "present" | "missing" | "unreviewed";
+type CheckoutReferenceStatus =
+  | "present"
+  | "missing"
+  | "unreviewed"
+  | "disconnected-fail-closed";
 
 type ReferencePresence = {
   name: string;
   status: ReferencePresenceStatus;
+};
+
+type CheckoutReadiness = {
+  status: "blocked";
+  blocker: "c1-durable-billing-state-read-disconnected";
+  references: Array<{
+    name:
+      | (typeof checkoutReferenceNames)[number]
+      | "C1_DURABLE_BILLING_STATE_READ";
+    status: CheckoutReferenceStatus;
+  }>;
+  counts: {
+    total: 6;
+    present: number;
+    missing: number;
+    unreviewed: number;
+    disconnected: 1;
+  };
+  checkoutInvocationCount: 0;
 };
 
 type CreatorPaidReadiness = {
@@ -38,6 +69,7 @@ type CreatorPaidReadiness = {
     | "activation-reference-unreviewed";
   references: ReferencePresence[];
   counts: Record<ReferencePresenceStatus | "total", number>;
+  checkout: CheckoutReadiness;
 };
 
 export function readCommentTranslatorCreatorPaidReadiness(
@@ -64,6 +96,7 @@ export function readCommentTranslatorCreatorPaidReadiness(
   const hasMissingSupportingReference = supporting.some(
     (reference) => reference.status === "missing",
   );
+  const checkout = readCheckoutReadiness(environment);
 
   return {
     status: hasMissingSupportingReference
@@ -73,5 +106,52 @@ export function readCommentTranslatorCreatorPaidReadiness(
         : "ready-inactive",
     references,
     counts,
+    checkout,
   };
+}
+
+function readCheckoutReadiness(environment: object): CheckoutReadiness {
+  const env = environment as Record<string, unknown>;
+  const references: CheckoutReadiness["references"] =
+    checkoutReferenceNames.map((name) => ({
+      name,
+      status: checkoutReferenceStatus(env, name),
+    }));
+  const present = references.filter(
+    (reference) => reference.status === "present",
+  ).length;
+  const unreviewed = references.filter(
+    (reference) => reference.status === "unreviewed",
+  ).length;
+
+  return {
+    status: "blocked",
+    blocker: "c1-durable-billing-state-read-disconnected",
+    references: [
+      ...references,
+      {
+        name: "C1_DURABLE_BILLING_STATE_READ",
+        status: "disconnected-fail-closed",
+      },
+    ],
+    counts: {
+      total: 6,
+      present,
+      missing: checkoutReferenceNames.length - present - unreviewed,
+      unreviewed,
+      disconnected: 1,
+    },
+    checkoutInvocationCount: 0,
+  };
+}
+
+function checkoutReferenceStatus(
+  env: Record<string, unknown>,
+  name: (typeof checkoutReferenceNames)[number],
+): Exclude<CheckoutReferenceStatus, "disconnected-fail-closed"> {
+  if (!Object.hasOwn(env, name)) return "missing";
+  return name === activationReference ||
+    name === "COMMENT_TRANSLATOR_PRIVATE_LAUNCH_ALLOWED_USER_HASHES"
+    ? "unreviewed"
+    : "present";
 }

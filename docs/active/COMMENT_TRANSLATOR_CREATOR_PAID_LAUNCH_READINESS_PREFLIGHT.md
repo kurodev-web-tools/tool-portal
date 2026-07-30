@@ -5010,6 +5010,8 @@ CP1 performs no rollback. Later rollback is separately approved and bounded by t
 
 `CP1-A-C1-PRODUCTION-ACTIVATION-READ-PROOF-1` is locally reviewable from exact base `b0fe19823e260d768749604affa57cf30d3c7329`. Its one sanitized Cloudflare metadata inspection stopped at `cloudflare-deployment-status-inspection-unavailable`; exact deployed revision and remote binding/Container configuration presence remain unproven. No retry ran, and configuration apply, deployment/activation, production C1 read, Stripe/Checkout, Portal, webhook, CP2, merge, rollback, and public launch counts remain zero. The external-evidence reconciliation authority is canonical.
 
+`CP1-A-C1-PRODUCTION-ACTIVATION-READ-PROOF-RETRY-1` is reviewable from exact base `918ba6b3646baa40965a6b22f475159b7dd7e90f`. The retry established a separate local Wrangler preflight and consumed one sanitized Cloudflare inspection, which stopped on its first control-plane read at `cloudflare-deployment-status-control-plane-unavailable`. Exact deployed revision and remote binding/Container configuration presence remain unproven. Configuration apply, deployment/activation, production C1 read, Stripe/Checkout, Portal, webhook, CP2, merge, rollback, cleanup, and public launch counts remain zero. The external-evidence reconciliation authority is canonical.
+
 ## Exact Unchecked Scope
 
 unchecked_scope_status=recorded

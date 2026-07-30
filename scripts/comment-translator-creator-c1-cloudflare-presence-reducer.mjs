@@ -2,12 +2,13 @@ import fs from "node:fs";
 import { spawnSync } from "node:child_process";
 import { pathToFileURL } from "node:url";
 
-const expectedRevision = "b0fe19823e260d768749604affa57cf30d3c7329";
+const expectedRevision = "918ba6b3646baa40965a6b22f475159b7dd7e90f";
 const workerName = "v-streamer-tools";
 const bindingName = "COMMENT_TRANSLATOR_C1_CONTAINER";
 const className = "CommentTranslatorC1Container";
 
 export function inspectCommentTranslatorC1CloudflarePresence({
+  checkWrangler = isWranglerAvailable,
   run = runWrangler,
 } = {}) {
   const config = JSON.parse(fs.readFileSync("wrangler.jsonc", "utf8"));
@@ -31,6 +32,9 @@ export function inspectCommentTranslatorC1CloudflarePresence({
   if (!localConfigurationReady) {
     return blocked("local-cloudflare-configuration-mismatch", 0);
   }
+  if (!checkWrangler()) {
+    return blocked("local-wrangler-command-unavailable", 0);
+  }
 
   let remoteMetadataReadCount = 1;
   const deployment = run([
@@ -40,7 +44,12 @@ export function inspectCommentTranslatorC1CloudflarePresence({
     workerName,
     "--json",
   ]);
-  if (!deployment.ok) return blockedInspection(remoteMetadataReadCount);
+  if (!deployment.ok) {
+    return blocked(
+      "cloudflare-deployment-status-control-plane-unavailable",
+      remoteMetadataReadCount,
+    );
+  }
   const versions = deployment.value?.versions;
   if (
     !Array.isArray(versions)
@@ -143,6 +152,15 @@ function runWrangler(args) {
   } catch {
     return { ok: false };
   }
+}
+
+function isWranglerAvailable() {
+  const cliPath = "node_modules/wrangler/bin/wrangler.js";
+  if (!fs.existsSync(cliPath)) return false;
+  return spawnSync(process.execPath, [cliPath, "--version"], {
+    encoding: "utf8",
+    windowsHide: true,
+  }).status === 0;
 }
 
 if (

@@ -148,7 +148,7 @@ assert.match(routeSource, /export\s+async\s+function\s+POST\s*\(/);
 assert.doesNotMatch(routeSource, /export\s+async\s+function\s+GET\s*\(/);
 assert.match(routeSource, /isCommentTranslatorCreatorClosedBetaBillingActiveForCaller/);
 assert.match(routeSource, /createCommentTranslatorBillingUserReference/);
-assert.match(routeSource, /b0fe19823e260d768749604affa57cf30d3c7329/);
+assert.match(routeSource, /918ba6b3646baa40965a6b22f475159b7dd7e90f/);
 assert.match(routeSource, new RegExp(attemptKey));
 assert.doesNotMatch(
   routeSource,

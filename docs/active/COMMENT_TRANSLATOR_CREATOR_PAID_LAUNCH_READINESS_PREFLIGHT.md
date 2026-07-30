@@ -4887,6 +4887,36 @@ deploy_activation_cp2_public_launch_count=0
 result_marker=C1_CLOUDFLARE_CONTAINER_IMAGE_EXECUTION_EVIDENCE_BLOCKED
 ```
 
+## CP1-S2BF C1 Cloudflare Container Image Execution Evidence RETRY-1
+
+`C1-CLOUDFLARE-CONTAINER-IMAGE-EXECUTION-EVIDENCE-RETRY-1` is bound to clean isolated integration base `a8fb4e1953391f27ed06b6b05c89fb2b2d9b896d`, the merge commit for PR #712. The exact dependency remains `@cloudflare/containers@0.3.7`; the Dockerfile remains pinned to `node:22.22.2-bookworm-slim`; and the fixed image, Container, parent, and child entrypoints plus Worker binding/migration configuration are unchanged.
+
+Read-only discovery again found zero existing Docker-compatible CLIs, zero engines, and zero WSL distributions. The previous blocker then materially changed: official Podman 5.8.2 provides a signed, checksum-verified per-user Windows MSI, and this host already had WSL 2 enabled. The bounded install completed without elevation, restart, license interaction, authentication, secret, or account operation. One 2-CPU, 2-GiB, 10-GiB WSL Podman machine was created and started. Docker Desktop was not installed or started.
+
+The exact Dockerfile built once from `node:22.22.2-bookworm-slim` into retained local image `localhost/comment-translator-c1-evidence:a8fb4e195339`. Image inspection proved `USER node`, `/app`, and `["node", "/app/container-entrypoint.mjs"]`. One default ENTRYPOINT run accepted SIGTERM and exited zero with empty stdout/stderr. Four parent runs used only synthetic non-secret framed stdin: `available` and `missing` returned the exact fixed pass result with observed child zero exit and parent zero exit; `unavailable` returned the fixed fail-closed result with observed child nonzero and parent nonzero exits; malformed input returned the fixed `parent-error` fail-closed result. Runtime inspection found no input fixture material in argv, environment, logs, filesystem diff, or container metadata; no volume mount existed; and stdout contained only the exact sanitized result.
+
+The focused runtime contract remains GREEN for parent/child Buffer zero-fill, available/missing/unavailable classification, malformed/error fail-closed behavior, persistent attempt suppression, Worker bundle/config/binding/migration consistency, production-read disconnection, and retained-image rollback requirement. This local OCI execution does not claim remote Cloudflare Container invocation. IPC/V8/runtime/OS/SDK internal copy erasure and teardown remain accepted residual risk. Free and paid-inactive behavior is unchanged, production paid read remains disconnected, and no real constructor/client/durable read, remote/account operation, deploy, activation, Checkout, next CP1 unit, CP2, promotion, or public launch ran.
+
+```text
+c1_cloudflare_container_image_execution_retry_1_base=a8fb4e1953391f27ed06b6b05c89fb2b2d9b896d
+c1_cloudflare_container_image_execution_retry_1_status=local-image-execution-pass-review-ready
+c1_cloudflare_container_image_execution_retry_1_blocker=none
+c1_cloudflare_container_runtime_cli_count=1
+c1_cloudflare_container_runtime_engine_count=1
+c1_cloudflare_container_wsl_distribution_count=1
+c1_cloudflare_container_runtime_install_count=1
+c1_cloudflare_container_image_build_count=1
+c1_cloudflare_container_run_count=5
+c1_cloudflare_container_stop_signal_count=1
+c1_cloudflare_container_retained_image_count=1
+c1_cloudflare_container_input_exposure_count=0
+c1_cloudflare_container_production_read=disconnected-fail-closed
+real_constructor_client_durable_read_count=0
+remote_service_operation_count=0
+deploy_activation_cp2_public_launch_count=0
+result_marker=C1_CLOUDFLARE_CONTAINER_IMAGE_EXECUTION_RETRY_1_REVIEWABLE
+```
+
 ## Entitlement, Usage, Provider, And Capability Proof Rules
 
 - Paid-active requires signed supported billing evidence, future signed period, authenticated owner binding, exact activation/allowlist authority, and readable durable C1 state.

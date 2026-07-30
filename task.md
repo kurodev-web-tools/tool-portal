@@ -154,6 +154,22 @@
 - c1_cloudflare_container_production_read=disconnected-fail-closed
 - remote_service_operation_count=0
 - deploy_activation_cp2_public_launch_count=0
+- `C1-CLOUDFLARE-CONTAINER-IMAGE-EXECUTION-EVIDENCE-RETRY-1` is reviewable from exact integration `a8fb4e1953391f27ed06b6b05c89fb2b2d9b896d`. Official Podman 5.8.2 added a verified per-user Windows MSI path that required no elevation, restart, license interaction, authentication, secret, or account operation on the already-enabled WSL 2 host. One bounded WSL machine built the exact `node:22.22.2-bookworm-slim` Dockerfile and retained the fixed local image. Five image runs proved the default ENTRYPOINT start/SIGTERM/zero-exit path plus synthetic available, missing, unavailable, and malformed-frame parent paths. Container argv/environment/log/diff/metadata held no three-input fixture material, stdout was the fixed sanitized result only, and no volume mount existed. The focused runtime contract still proves Buffer zero-fill, persistent attempt suppression, Worker bundle/config/binding/migration consistency, and disconnected production read. Free and paid-inactive remain unchanged; IPC/V8/runtime/OS/SDK internal copy erasure and teardown remain accepted residual risk.
+- c1_cloudflare_container_image_execution_retry_1_base=a8fb4e1953391f27ed06b6b05c89fb2b2d9b896d
+- c1_cloudflare_container_image_execution_retry_1_status=local-image-execution-pass-review-ready
+- c1_cloudflare_container_image_execution_retry_1_blocker=none
+- c1_cloudflare_container_runtime_cli_count=1
+- c1_cloudflare_container_runtime_engine_count=1
+- c1_cloudflare_container_wsl_distribution_count=1
+- c1_cloudflare_container_runtime_install_count=1
+- c1_cloudflare_container_image_build_count=1
+- c1_cloudflare_container_run_count=5
+- c1_cloudflare_container_stop_signal_count=1
+- c1_cloudflare_container_retained_image_count=1
+- c1_cloudflare_container_input_exposure_count=0
+- c1_cloudflare_container_production_read=disconnected-fail-closed
+- remote_service_operation_count=0
+- deploy_activation_cp2_public_launch_count=0
 - C1 production source procurement is fixed at PR #695 integration tip `d206ff2c07cc10aeb701d0d2034a29b17f58d42b`. One new node-libcurl/libcurl Windows native envelope was researched from official metadata only and rejected with `0/7` proofs established; no PR #694 candidate class was re-audited, no archive was downloaded, and no dependency or production path was executed.
 - CP1 remaining external-evidence reconciliation is current through exact integration base `d20add97f05fc4298043939049e8931c45b43500`. `CP1-A-STORE-READINESS`, `CP1-A-STORE-WRITE-READ`, and `CP1-A-STRIPE-PRODUCT-PRICE` are consumed/pass. The operator-returned sanitized Stripe envelope records complete Product/Price duplicate scans with `0 / 0` eligible candidates, followed by exactly one verified live Creator Product and one verified live monthly `980 JPY` tax-inclusive Price creation; `2` reads, `2` mutations, `0` retries, `0` rollback/cleanup, and `0` sensitive/private-identifier output. No private Product/Price reference is repository authority. The next ordered independent unit is `CP1-A-STRIPE-CHECKOUT`, but it is not executable until separately approved readiness work proves the required live runtime reference presence and the C1 durable billing-state read boundary. The exact process-isolation guarantee-change approval is consumed: repository-owned parent/child Buffer zero-fill plus single-use child-process exit containment is now the C1 design guarantee, while IPC/V8/runtime/OS/SDK copy erasure and teardown remain accepted residual risk. Production wiring remains `disconnected-fail-closed`; Checkout, Portal, webhook, configuration binding, billing activation, deploy, and public launch remain not-run.
 - c1_source_procurement_base=d206ff2c07cc10aeb701d0d2034a29b17f58d42b

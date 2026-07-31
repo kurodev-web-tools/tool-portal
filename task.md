@@ -31,16 +31,44 @@
 - Cloudflare production control authority remains `codex/comment-translator-free-public-beta-integration`; Creator task PRs target that integration branch from short-lived branches.
 - Creator closed betaのcurrent authorityは`docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md`。
 - C1 establishes durable server-owned paid entitlement rows from signed billing evidence with sanitized output and safe Free / paid-inactive fallback; PR #668 is merged and integration verified at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995`, while remote migration apply remains incomplete.
-- Creator C1 containerless billing-state read design PR #718 is merged at `9ad39a530a2394995b031849929d88217b207f5c`; Phase 1 PR #719 is merged at exact integration commit `ea6928f5f0160ab3db453f845e4fb16245bb4e9e`, and reviewed head `feb33c7986b0410c94045b06bf37d534d637fb4c` is contained in integration. The first Phase 2 remote-readiness approval was consumed and stopped before remote read. The same task confirms the current unique opaque target binding, project-owner target/apply/rollback responsibility, project-owner sanitized reviewer, and billing-mutation gate closed through Phase 3 after repository-pinned CLI `2.109.0` login/link. The second exact approval was consumed by one sanitized read-only remote attempt: health/capability/dependency/collision/exposure gates passed, but only 12 of 16 required prior migrations were present, 5 local migrations including the target were pending, and 4 pending migrations were not the target. First-blocker behavior stopped with remote mutation/apply counts zero. A separate migration-history reconciliation approval is required before any apply approval can be eligible. The repository-pinned CLI selects all remote-history-derived pending migrations, and the Phase 1 SQL changes the existing writer/privilege posture before the separately gated Phase 3 backfill. Migration history reconciliation/apply, owner-binding count proof/backfill, custom-schema exposure/schema-cache work, production consumer cutover, deploy, activation, Checkout, CP2, and public paid launch remain separately approval-gated / not run.
+- Creator C1 containerless billing-state read design PR #718 is merged at `9ad39a530a2394995b031849929d88217b207f5c`; Phase 1 PR #719 is merged at exact integration commit `ea6928f5f0160ab3db453f845e4fb16245bb4e9e`, and Phase 2 preflight PR #720 is merged at exact integration commit `38f0d7fa7fc5bb3e2ef443abce3f261e5026dd07` with reviewed head `c64c5c9c50b96a25b03dbcc3084f2c673a03f2d9`. Reconciliation approval 2 completed with 12 known present, 5 known absent, 10 unknown remote versions, and target pending. The approved prior-migration state proof then consumed one read-only attempt and completed with three `equivalent-present`, one `partial` (`20260705000000`), zero missing/conflicting/unverifiable, and unknown remote count unchanged at 10. Remote mutation, repair, apply, and backfill counts remain zero. The strict canonical-effect proof design is approved, and its local implementation/contract are review-ready. The exact next approval unit is the proposal-only `C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-1`; no strict remote attempt has occurred. Repair and apply remain blocked regardless of any future proof result. Phase 2 target apply remains blocked until all four prior versions are resolved and a refreshed 17-version reconciliation proves the target is sole pending. Owner-binding count proof/backfill, custom-schema exposure/schema-cache work, production consumer cutover, deploy, activation, Checkout, CP2, and public paid launch remain separately approval-gated / not run.
 - c1_containerless_phase_2_preflight_status=blocked-migration-history-not-sole-pending
-- c1_containerless_phase_2_next_approval_unit=C1-CONTAINERLESS-BILLING-PHASE2-MIGRATION-HISTORY-RECONCILIATION-1
+- c1_containerless_phase_2_next_approval_unit=C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-1
 - c1_containerless_phase_2_remote_readiness_approval_status=consumed-no-retry
 - c1_containerless_phase_2_remote_readiness_execution_status=blocked-readiness-failed
 - c1_containerless_phase_2_previous_remote_readiness_execution_status=blocked-authority-preconditions-unconfirmed
-- c1_containerless_phase_2_remote_read_attempt_count=1
+- c1_containerless_phase_2_remote_read_attempt_count=3
 - c1_containerless_phase_2_remote_mutation_attempt_count=0
-- c1_containerless_phase_2_next_approval_status=awaiting-exact-migration-history-reconciliation-approval
+- c1_containerless_phase_2_next_approval_status=proposal-only-not-approved
 - c1_containerless_phase_2_authority_status=current-confirmed
+- c1_containerless_phase_2_migration_history_reconciliation_local_status=review-ready
+- c1_containerless_phase_2_migration_history_reconciliation_approval_status=consumed-pass-no-retry
+- c1_containerless_phase_2_migration_history_reconciliation_remote_read_attempt_count=1
+- c1_containerless_phase_2_migration_history_reconciliation_remote_mutation_attempt_count=0
+- c1_containerless_phase_2_migration_history_reconciliation_execution_status=reconciliation-complete
+- c1_containerless_phase_2_migration_history_reconciliation_abort_status=not-triggered
+- c1_containerless_phase_2_migration_history_known_present_count=12
+- c1_containerless_phase_2_migration_history_known_absent_count=5
+- c1_containerless_phase_2_migration_history_unknown_remote_count=10
+- c1_containerless_phase_2_migration_history_target_pending_status=pending
+- c1_containerless_phase_2_current_worktree_cli_status=present-repository-pinned-2.109.0
+- c1_containerless_phase_2_current_worktree_link_metadata_status=present-target-match-pass-git-ignored
+- c1_containerless_phase_2_migration_history_reconciliation_local_prerequisite_status=pass-after-user-setup
+- c1_containerless_phase_2_migration_history_remediation_design_status=review-ready-local-only
+- c1_containerless_phase_2_migration_history_remediation_strategy=proof-first-oldest-first-no-inferred-repair
+- c1_containerless_phase_2_prior_migration_state_proof_status=complete-partial-remediation-design-required
+- c1_containerless_phase_2_prior_migration_state_proof_approval_status=consumed-pass-no-retry
+- c1_containerless_phase_2_prior_migration_state_proof_remote_read_attempt_count=1
+- c1_containerless_phase_2_prior_migration_state_proof_result=equivalent-present-3-partial-1-missing-0-conflicting-0-unverifiable-0
+- c1_containerless_phase_2_strict_source_equivalence_design_status=approved
+- c1_containerless_phase_2_strict_source_equivalence_local_implementation_status=review-ready
+- c1_containerless_phase_2_strict_source_equivalence_local_contract_status=pass
+- c1_containerless_phase_2_strict_source_equivalence_approval_status=proposal-only-not-approved
+- c1_containerless_phase_2_strict_source_equivalence_remote_read_attempt_count=0
+- c1_containerless_phase_2_strict_source_equivalence_repair_authorization=not-authorized-regardless-of-result
+- c1_containerless_phase_2_strict_source_equivalence_apply_authorization=not-authorized-regardless-of-result
+- c1_containerless_phase_2_migration_repair_attempt_count=0
+- c1_containerless_phase_2_migration_apply_attempt_count=0
 - C3 adds service-role-only paid counters, private event deduplication, and atomic reset only when signed entitlement evidence advances its period end; PR #669 is merged and integration verified at `5fc3cca2730a58f35279098ec0b2f5c804ce0076` with C3 head `85fa39896f63e223463a85000eb8e02f538754d4` contained in integration.
 - C2 is merged through PR #670 at exact integration commit `4486c180f68369d6620b9f8f3df33518b7cadc38`; the integration tree matches C2 head `761f503f276a5a7e095c79be5f3ca31c26fe6fff`. Stripe live activation remains separately approval-gated.
 - C4 is merged through PR #671 at exact integration commit `fa0d5582a296c2164bd3945c37cbec746315f357`; C4 head `5be49c1995f484145e5989384f0bfd36bbcbe1bb` is contained in integration and both trees are `414ad101c5bdaa56fe205a967a3e63bbb1e5f1b9`.

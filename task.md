@@ -189,6 +189,9 @@
 - c1_cloudflare_container_rollback=retain-referenced-image-and-revert-worker-version-under-separate-approval
 - c1_cloudflare_container_production_read=disconnected-fail-closed
 - c1_cloudflare_container_worker_bundle_status=pass-before-container-image-build
+- c1_cloudflare_preview_deploy_preflight_fix_status=local-contract-pass-remote-retry-not-run
+- c1_cloudflare_preview_deploy_preflight_fix=dev-enable-containers-false
+- c1_cloudflare_preview_deploy_preflight_remote_operation_count=0
 - c1_cloudflare_container_image_build_status=blocked-local-docker-cli-unavailable
 - `C1-CLOUDFLARE-CONTAINER-IMAGE-EXECUTION-EVIDENCE-1` is reviewable from exact integration `c7e320473da88d9fd3dc0354be27997912a5ef2c` and remains fail closed. Windows has zero existing Docker-compatible CLIs and engines, and WSL has zero installed distributions. Docker Desktop cannot be started without accepting its subscription agreement; the official Podman Windows engine path requires machine setup with administrator/restart prerequisites. Those actions are outside this unit, so no runtime was installed and no image build/run/stop occurred. The exact Dockerfile, fixed entrypoints, Worker/config/binding/migration, disconnected production read, and retained-image rollback requirement remain unchanged.
 - c1_cloudflare_container_image_execution_evidence_base=c7e320473da88d9fd3dc0354be27997912a5ef2c

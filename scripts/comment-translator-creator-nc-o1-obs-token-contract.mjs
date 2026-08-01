@@ -52,6 +52,11 @@ for (const [source, label] of [[storeSource, "store"], [runtimeSource, "runtime"
   assert.match(source, /^import "server-only";/, `NC-O1 ${label} is server-only`);
   assert.doesNotMatch(source, /localStorage|sessionStorage|indexedDB|console\.|fetch\s*\(/);
 }
+assert.doesNotMatch(
+  storeSource,
+  /\{ readonly status: "missing" \| "unreadable" \}/,
+  "store read results use distinct discriminants so ready records narrow during TypeScript checking"
+);
 assert.match(runtimeSource, /randomBytes\(32\)/, "runtime generates 32 random bytes");
 assert.match(runtimeSource, /createHash\("sha256"\)/, "runtime persists a one-way SHA-256 digest");
 assert.doesNotMatch(runtimeSource, /process\.env|createClient\s*\(/, "runtime owns no configuration or persistence client");

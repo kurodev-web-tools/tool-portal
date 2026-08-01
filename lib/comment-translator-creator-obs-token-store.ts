@@ -18,11 +18,13 @@ export type CommentTranslatorCreatorObsTokenRecord = {
 export interface CommentTranslatorCreatorObsTokenStore {
   readCurrent(request: { readonly ownerUserId: string }): Promise<
     | { readonly status: "ready"; readonly record: CommentTranslatorCreatorObsTokenRecord }
-    | { readonly status: "missing" | "unreadable" }
+    | { readonly status: "missing" }
+    | { readonly status: "unreadable" }
   >;
   readByDigest(request: { readonly tokenDigest: string }): Promise<
     | { readonly status: "ready"; readonly record: CommentTranslatorCreatorObsTokenRecord }
-    | { readonly status: "missing" | "unreadable" }
+    | { readonly status: "missing" }
+    | { readonly status: "unreadable" }
   >;
   issueOrRotate(request: {
     readonly mode: "issue" | "rotate";

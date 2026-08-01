@@ -6,7 +6,7 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0-repair | Comment Translator Creator NC-P1 entitlement type-import build repair | Focused RED/GREEN verification is complete and Draft PR #736 is open from `codex/comment-translator-creator-entitlement-type-import-fix`; merge and deploy remain unapproved. PR #735 is merged at integration commit `3534f0ca25cd3747fdeaa415d484dd108b654562`, but its post-merge Cloudflare build inherited the NC-P1 missing type import. | `scripts/comment-translator-creator-nc-p1-paid-provider-contract.mjs`, `lib/comment-translator-creator-entitlement-runtime.ts` |
+| P0-repair | Comment Translator Creator NC-O1 token-read discriminant build repair | Focused RED/GREEN verification is complete and Draft PR #737 is open from `codex/comment-translator-creator-obs-token-read-result-type-fix`; merge and deploy remain unapproved. PR #736 is merged at integration commit `f902df5f79254d95ee821f054f43850d9f14817f`, and its post-merge Cloudflare build passed the NC-P1 import fix before exposing the NC-O1 read-result narrowing error. | `scripts/comment-translator-creator-nc-o1-obs-token-contract.mjs`, `lib/comment-translator-creator-obs-token-store.ts` |
 | P0-operations | Comment Translator Cloudflare legacy Durable Object retirement | PR #733 is merged at integration commit `db328816e0cb0d2e8e8235cc4716095070392451`; the user confirmed the automatic Cloudflare build and deployment succeeded. No further retirement operation is active here. | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md`, `scripts/comment-translator-cloudflare-legacy-do-retirement-contract.mjs` |
 | P1-operations | Comment Translator Free public beta | Released and final production smoke complete; `public_release_capable=yes`. No release-chain operator action remains. | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
 | P1-maintenance | 配信カンペボード | MVP and custom delete-dialog follow-up are merged to `main`; no active follow-up is recorded here. | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
@@ -15,27 +15,28 @@
 ## Current Goal
 
 ```text
-current_goal=comment-translator-creator-entitlement-type-import-build-fix
-current_pr=736
+current_goal=comment-translator-creator-obs-token-read-result-type-build-fix
+current_pr=737
 current_pr_state=draft-open
-previous_pr=735
+previous_pr=736
 previous_pr_state=merged
-previous_pr_merge_commit=3534f0ca25cd3747fdeaa415d484dd108b654562
+previous_pr_merge_commit=f902df5f79254d95ee821f054f43850d9f14817f
 current_base=codex/comment-translator-free-public-beta-integration
-current_branch=codex/comment-translator-creator-entitlement-type-import-fix
+current_branch=codex/comment-translator-creator-obs-token-read-result-type-fix
 feasibility_decision=conditional-go
 selected_runtime=cloudflare-workers-open-next
 selected_persistence=supabase-postgres-existing-server-only-boundary
 container_disposition=rejected-not-a-candidate
-current_approved_boundary=entitlement-type-import-fix-verification-and-draft-pr
-current_lane=NC-P1-build-repair
+current_approved_boundary=obs-token-read-result-type-fix-verification-and-draft-pr
+current_lane=NC-O1-build-repair
 implementation_status=verified-draft-pr-open
 publication_status=draft-pr-open
-deploy_status=not-approved
+deploy_status=blocked-build-failed
 ```
 
-- Current branch: `codex/comment-translator-creator-entitlement-type-import-fix` from fetched integration merge `3534f0ca25cd3747fdeaa415d484dd108b654562`; Draft PR #736 targets `codex/comment-translator-free-public-beta-integration`. PR #735 is `MERGED`, and intake began from that exact integration tip.
+- Current branch: `codex/comment-translator-creator-obs-token-read-result-type-fix` from fetched integration merge `f902df5f79254d95ee821f054f43850d9f14817f`; Draft PR #737 targets `codex/comment-translator-free-public-beta-integration`. PR #736 is `MERGED`, and intake began from that exact integration tip.
 - The post-merge Cloudflare builds for PR #734 and PR #735 compiled successfully, then failed during Next.js TypeScript checking because NC-P1 referenced `CommentTranslatorCreatorEntitlementRead` without importing it. PR #736 adds only the missing type-only import and a focused failing-first regression assertion.
+- The post-merge Cloudflare build for PR #736 passed the NC-P1 import location, then failed because NC-O1 combined `missing | unreadable` in one store-result member and TypeScript could not narrow `record`. PR #737 splits both owner and digest reads into three distinct discriminants and adds a focused failing-first assertion.
 - NC-O1 adds a disconnected server-only OBS read-capability token runtime, service-role-RPC-only additive schema/store, and focused contract. Issue/rotate return a cryptographically random 32-byte opaque value once, while persistence receives only its SHA-256 digest and minimal owner/session/expiry/revocation/redemption metadata.
 - Authenticated owner and current session authority are server-derived. Missing, unreadable, unauthorized, owner/session-mismatched, expired, revoked, or replayed state fails closed; rotation invalidates the prior capability, redemption is atomic and one-time, and returned status/capability projections exclude owner, session, and digest values.
 - Focused NC-O1 plus executable no-container/NC-F1/NC-D1/NC-E1/NC-U1/NC-C1/NC-P1 and auth-security contracts pass locally. Runtime/store/types syntax, whitespace, secret, suppression/debug, file-size, disconnected-import, and migration RLS/grant checks pass.
@@ -106,7 +107,7 @@ The following require a separately stated target, ready preflight where applicab
 
 ## Next Reviewable Candidates
 
-1. Review Draft PR #736 and its focused entitlement type-import RED/GREEN evidence. Merge remains a later separate approval boundary.
+1. Review Draft PR #737 and its focused NC-O1 read-result RED/GREEN evidence. Merge remains a later separate approval boundary.
 2. Keep NC-O1 migration apply, production token read/write, live issue/redeem, OBS/browser route wiring, authenticated browser smoke, activation, and deploy blocked behind their own explicit approvals.
 3. After an approved PR workflow, continue the no-container dependency order without connecting Creator/public paid activation prematurely.
 4. Continue to monitor the Supabase future-default-privileges support/risk boundary. New `public` database objects still require explicit object-level grants/RLS/default-privileges review.

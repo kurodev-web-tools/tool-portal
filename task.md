@@ -6,7 +6,7 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0-implementation | Comment Translator Creator no-container NC-F1 | PR #725 is merged at `5cc9acd94768ff8ec67251a919fde94cba2b2318`. NC-F1 is locally verified and approved through draft PR publication; merge/deploy remain unapproved. | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_IMPLEMENTATION_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_LEGACY_CROSSWALK.md` |
+| P0-implementation | Comment Translator Creator no-container NC-D1 | PR #726 merged NC-F1 at `1f2bb057f0a3017fbb33c6088b149aa995a14057`. NC-D1 local schema/adapter implementation and verification are complete; publication, remote apply/read/write, activation, and deploy remain unapproved. | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_IMPLEMENTATION_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_LEGACY_CROSSWALK.md` |
 | P1-operations | Comment Translator Free public beta | Released and final production smoke complete; `public_release_capable=yes`. No release-chain operator action remains. | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
 | P1-maintenance | 配信カンペボード | MVP and custom delete-dialog follow-up are merged to `main`; no active follow-up is recorded here. | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
 | Workflow | New-tool preview development | Task PRs target a tool-specific preview/integration branch; promotion to `main` occurs only after readiness and explicit approval. | `docs/active/TOOL_PREVIEW_DEVELOPMENT_WORKFLOW.md` |
@@ -14,25 +14,25 @@
 ## Current Goal
 
 ```text
-current_goal=nc-f1-free-invariant-characterization-and-disabled-creator-seam
-current_pr=725
-current_pr_state=merged
-current_pr_merge_commit=5cc9acd94768ff8ec67251a919fde94cba2b2318
+current_goal=nc-d1-paid-entitlement-data-model
+current_pr=none-local-only
+current_pr_state=not-created-not-approved
+current_pr_merge_commit=none
 current_base=codex/comment-translator-free-public-beta-integration
 feasibility_decision=conditional-go
 selected_runtime=cloudflare-workers-open-next
 selected_persistence=supabase-postgres-existing-server-only-boundary
 container_disposition=rejected-not-a-candidate
-current_approved_boundary=nc-f1-local-implementation-and-verification
+current_approved_boundary=nc-d1-local-implementation-and-verification
 first_designated_implementation_pr=NC-F1
 implementation_status=local-verified-reviewable-diff
-publication_status=draft-pr-approved
+publication_status=not-approved
 deploy_status=not-approved
 ```
 
-- Current branch: `codex/comment-translator-creator-nc-f1` in the provided isolated worktree.
-- PR #725 merged the no-container design authority. The current approval extends NC-F1 through commit, branch push, and draft PR creation; dependency installation, schema apply, remote account/database access, provider/Stripe execution, browser smoke, deployment, merge, and public paid activation remain unapproved.
-- NC-F1 characterizes existing Free invariants before adding a disconnected, fail-closed Creator seam. Missing dependencies remain a reported verification blocker and must not be installed without approval.
+- Current branch: `codex/comment-translator-creator-nc-d1` in the provided isolated worktree.
+- PR #726 merged NC-F1 and its disabled, fail-closed Creator seam. The current approval is limited to local NC-D1 implementation and verification; commit, push, PR creation, dependency installation, schema apply, remote account/database access, provider/Stripe execution, browser smoke, deployment, merge, and public paid activation remain unapproved.
+- NC-D1 adds a disconnected service-role-only schema/RPC and server-only store adapter for future signed Stripe evidence. NC-F1 remains disabled and existing Free behavior remains unchanged.
 - Cloudflare Containers, Docker images, managed registry, Container bindings, Container-backed Durable Objects, paid Container permission, and Container fallback remain excluded.
 
 ## Current Repository And Release State
@@ -95,8 +95,8 @@ The following require a separately stated target, ready preflight where applicab
 
 ## Next Reviewable Candidates
 
-1. Review the NC-F1 draft PR and request separate approval before merge or deployment.
-2. Keep later no-container lanes blocked until NC-F1 review and their own explicit approval.
+1. Review the local NC-D1 diff and request separate approval before commit, push, or draft PR creation.
+2. Keep remote migration apply/read/write and later no-container lanes blocked until NC-D1 review and their own explicit approval.
 3. Continue to monitor the Supabase future-default-privileges support/risk boundary. New `public` database objects still require explicit object-level grants/RLS/default-privileges review.
 4. Do not reopen completed Free release or prompt-board history unless new evidence creates a current action.
 

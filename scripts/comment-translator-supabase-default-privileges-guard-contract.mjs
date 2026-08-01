@@ -5,6 +5,7 @@ import path from "node:path";
 const root = process.cwd();
 const guardMigrationPath = "supabase/migrations/20260706073204_supabase_default_privileges_guard.sql";
 const auditDocPath = "docs/active/COMMENT_TRANSLATOR_SUPABASE_DB_AUTH_RLS_SECURITY_AUDIT.md";
+const archivedTaskPath = "docs/archive/task-board-pre-2026-08-01-creator-no-container-cleanup.md";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -34,8 +35,7 @@ const guardMigration = read(guardMigrationPath);
 const guardSql = compactSql(guardMigration);
 const allMigrationSql = compactSql(migrationPaths.map(read).join("\n"));
 const auditDoc = read(auditDocPath);
-const task = read("task.md");
-const taskLower = task.toLowerCase();
+const archivedTaskLower = read(archivedTaskPath).toLowerCase();
 
 for (const requiredRevoke of [
   "alter default privileges for role postgres in schema public revoke select, insert, update, delete on tables from anon, authenticated, service_role",
@@ -55,7 +55,7 @@ assert.doesNotMatch(guardSql, /\bgrant\s+[^;]*\bon\s+(all\s+)?tables\s+in\s+sche
 const createdTables = [...allMigrationSql.matchAll(/create table if not exists public\.([a-z0-9_]+)/g)].map(
   (match) => match[1]
 );
-assert.equal(new Set(createdTables).size, 9, "local public table inventory remains the existing 9 tables");
+assert.equal(new Set(createdTables).size, 11, "local public table inventory includes the 9-table baseline and 2 additive NC-D1 tables");
 
 for (const requiredDocMarker of [
   "Future Public-Table Default Privilege Guard",
@@ -73,9 +73,11 @@ for (const requiredTaskMarker of [
   "existing 9 public tables remain unchanged",
   "remote migration apply: not-run"
 ]) {
-  assert.ok(taskLower.includes(requiredTaskMarker.toLowerCase()), `task.md records ${requiredTaskMarker}`);
+  assert.ok(archivedTaskLower.includes(requiredTaskMarker.toLowerCase()), `archived task evidence records ${requiredTaskMarker}`);
 }
 
-console.log(
-  `comment translator Supabase default privileges guard contract passed (default_revoke_blocks=4, existing_public_tables=9, remote_apply=not_run)`
+process.stdout.write(
+  "comment translator Supabase default privileges guard contract passed " +
+    "(default_revoke_blocks=4, baseline_public_tables=9, additive_nc_d1_tables=2, " +
+    "current_public_tables=11, remote_apply=not_run)\n"
 );

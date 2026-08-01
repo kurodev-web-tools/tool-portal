@@ -18,6 +18,11 @@ const entitlementSource = read(entitlementRuntimePath);
 const providerBoundarySource = read(providerBoundaryPath);
 const providerPolicySource = read(providerPolicyPath);
 
+assert.match(
+  entitlementSource,
+  /^import type \{[^}]*\bCommentTranslatorCreatorEntitlementRead\b[^}]*\} from "\.\/comment-translator-creator-entitlement-store";/m,
+  "NC-P1 imports the entitlement read type used by its authorization contract"
+);
 assert.match(runtimeSource, /^import "server-only";/);
 assert.match(runtimeTypesSource, /comment-translator-creator-entitlement-runtime/);
 assert.match(runtimeTypesSource, /comment-translator-creator-usage-runtime/);

@@ -6,7 +6,8 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0-operations | Comment Translator Cloudflare legacy Durable Object retirement | PR #730-#732 are merged and the latest Cloudflare build completes, but deployment is blocked with API code `10064` because the remote Worker still owns the retired `CommentTranslatorC1Container` namespace. The current branch adds only the explicit legacy delete migration and its local contract; applying it remains a destructive deployment operation. | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md`, `scripts/comment-translator-cloudflare-legacy-do-retirement-contract.mjs` |
+| P0-implementation | Comment Translator Creator no-container NC-P1 Paid Provider Route | Local implementation and focused verification are complete on `codex/comment-translator-creator-nc-p1`; commit, push, Draft PR, merge, activation, provider/live operation, and deploy remain unapproved. | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_IMPLEMENTATION_TASK_BOARD.md`, `scripts/comment-translator-creator-nc-p1-paid-provider-contract.mjs` |
+| P0-operations | Comment Translator Cloudflare legacy Durable Object retirement | PR #733 is merged at integration commit `db328816e0cb0d2e8e8235cc4716095070392451`; the user confirmed the automatic Cloudflare build and deployment succeeded. No further retirement operation is active here. | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md`, `scripts/comment-translator-cloudflare-legacy-do-retirement-contract.mjs` |
 | P1-operations | Comment Translator Free public beta | Released and final production smoke complete; `public_release_capable=yes`. No release-chain operator action remains. | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
 | P1-maintenance | 配信カンペボード | MVP and custom delete-dialog follow-up are merged to `main`; no active follow-up is recorded here. | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
 | Workflow | New-tool preview development | Task PRs target a tool-specific preview/integration branch; promotion to `main` occurs only after readiness and explicit approval. | `docs/active/TOOL_PREVIEW_DEVELOPMENT_WORKFLOW.md` |
@@ -14,25 +15,30 @@
 ## Current Goal
 
 ```text
-current_goal=cloudflare-legacy-c1-durable-object-retirement
-current_pr=733
-current_pr_state=draft-open
-current_pr_merge_commit=none
+current_goal=comment-translator-creator-nc-p1-paid-provider-route
+current_pr=none-local-uncommitted
+previous_pr=733
+previous_pr_state=merged
+previous_pr_merge_commit=db328816e0cb0d2e8e8235cc4716095070392451
 current_base=codex/comment-translator-free-public-beta-integration
+current_branch=codex/comment-translator-creator-nc-p1
 feasibility_decision=conditional-go
 selected_runtime=cloudflare-workers-open-next
 selected_persistence=supabase-postgres-existing-server-only-boundary
 container_disposition=rejected-not-a-candidate
-current_approved_boundary=legacy-do-retirement-config-contract-and-draft-pr
-first_designated_implementation_pr=NC-F1
-implementation_status=verified-draft-pr-open
+current_approved_boundary=nc-p1-local-implementation-and-verification-only
+current_lane=NC-P1
+implementation_status=local-focused-verified-uncommitted
 publication_status=not-approved
-deploy_status=blocked-delete-migration-not-applied
+deploy_status=not-approved
 ```
 
-- Current branch: `codex/comment-translator-retire-c1-durable-object` from integration merge `d8417d6363fb0b7a8ddb75af30c04cc0f2fd42dd`.
-- PR #730-#732 are merged. The latest Cloudflare run completes Next.js compilation, TypeScript, static generation, and OpenNext bundling, then fails during `wrangler deploy --name tool-portal --keep-vars` because the remote Worker still depends on the legacy `CommentTranslatorC1Container` Durable Object class.
-- The local fix preserves the already-applied `c1-container-v1` migration tag and appends `c1-container-retired-v2` with `deleted_classes`, while keeping the Container code, class export, and Durable Object binding absent. Deploying this migration permanently deletes that legacy namespace and its stored data; no remote deploy or migration apply is performed by this branch preparation.
+- Current branch: `codex/comment-translator-creator-nc-p1` from integration merge `db328816e0cb0d2e8e8235cc4716095070392451`; fetched integration and local base tree were identical at intake.
+- PR #733 is merged, and the user confirmed its automatic Cloudflare build and deployment succeeded. No remote state was queried again in this NC-P1 task.
+- NC-P1 adds a disconnected server-only Paid provider orchestration seam. Authenticated caller, fixed server activation authority, readable paid-active entitlement, budget authorization, provider configuration, and effective glossary context must all pass before provider execution. OpenAI mini remains primary; only approved recoverable classes may fall back to Azure. Provider success is exposed and cached only after NC-U1 accounting records it.
+- Focused local evidence passes for NC-P1 plus NC-F1/NC-D1/NC-E1/NC-U1/NC-C1. Cache hits remain uncounted, glossary notes are not forwarded, effective glossary versions separate cache identity, and existing Free remains disconnected from this seam.
+- Fresh worktree dependencies remain absent. Lint, TypeScript typecheck, Next build, OpenNext build, and dependency-backed provider/session/feed/cache/usage contracts are setup-blocked; no dependency installation or manifest/lockfile change was performed.
+- Historical broad contracts that pin superseded `task.md` or source-shape snapshots also remain nonzero; the NC-P1 diff does not modify their asserted Free feed/source files, and no unrelated contract rewrite was made.
 - NC-C1 adds a disconnected service-role-RPC-only owner glossary with a 30-term bound, NFKC/case/language normalization, optimistic write version, content-derived effective version, note-free provider projection, and glossary-version cache separation. Missing or unreadable authority fails closed; activation remains fixed closed, no existing runtime route invokes the unapplied store, and existing Free behavior remains unchanged.
 - Cloudflare Containers, Docker images, managed registry, Container bindings, Container-backed Durable Objects, paid Container permission, and Container fallback remain excluded.
 
@@ -96,9 +102,9 @@ The following require a separately stated target, ready preflight where applicab
 
 ## Next Reviewable Candidates
 
-1. Review the legacy Durable Object retirement Draft PR and its irreversible data-deletion boundary before merge or automatic deployment.
-2. After an explicitly approved deployment, verify that the `CommentTranslatorC1Container` namespace/binding is retired and that Worker version creation no longer returns code `10064`.
-3. Keep NC-P1, production usage/entitlement store wiring/read/write, paid provider execution, activation, and later no-container lanes blocked behind their own explicit approvals.
+1. Review the local NC-P1 diff and focused evidence. Commit, push, and Draft PR each remain a separate approval boundary.
+2. Keep production entitlement/usage/glossary store wiring or read/write, paid activation, account/model/budget values, live provider calls, and deploy blocked behind their own explicit approvals.
+3. After an approved PR workflow, continue the no-container dependency order without connecting Creator/public paid activation prematurely.
 4. Continue to monitor the Supabase future-default-privileges support/risk boundary. New `public` database objects still require explicit object-level grants/RLS/default-privileges review.
 5. Do not reopen completed Free release or prompt-board history unless new evidence creates a current action.
 

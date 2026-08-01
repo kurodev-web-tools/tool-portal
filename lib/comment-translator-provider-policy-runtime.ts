@@ -221,6 +221,7 @@ export function resolveCommentTranslatorTranslationProviderRoute({
 class AzureCommentTranslationProvider implements CommentTranslationProvider {
   readonly id = "azure-translator";
   readonly name = "Azure Translator";
+  readonly configurationStatus: "ready" | "missing";
   readonly runtimeScope = "server-runtime-only" as const;
   readonly secretBoundary = providerSecretBoundary;
 
@@ -231,6 +232,7 @@ class AzureCommentTranslationProvider implements CommentTranslationProvider {
 
   constructor(config: AzureCommentTranslationProviderConfig) {
     this.key = config.key?.trim() || null;
+    this.configurationStatus = this.key ? "ready" : "missing";
     this.endpoint = normalizeEndpoint(config.endpoint, defaultAzureEndpoint);
     this.region = config.region?.trim() || null;
     this.fetchImpl = config.fetchImpl ?? ((url, init) => fetch(url, init));
@@ -267,6 +269,7 @@ class AzureCommentTranslationProvider implements CommentTranslationProvider {
     try {
       const response = await this.fetchImpl(url.toString(), {
         method: "POST",
+        signal: request.signal,
         headers: {
           "Ocp-Apim-Subscription-Key": this.key,
           ...(this.region ? { "Ocp-Apim-Subscription-Region": this.region } : {}),
@@ -313,6 +316,7 @@ class AzureCommentTranslationProvider implements CommentTranslationProvider {
 class OpenAIMiniCommentTranslationProvider implements CommentTranslationProvider {
   readonly id = "openai-mini";
   readonly name = "OpenAI mini translation model";
+  readonly configurationStatus: "ready" | "missing";
   readonly runtimeScope = "server-runtime-only" as const;
   readonly secretBoundary = providerSecretBoundary;
 
@@ -324,6 +328,7 @@ class OpenAIMiniCommentTranslationProvider implements CommentTranslationProvider
   constructor(config: OpenAIMiniCommentTranslationProviderConfig) {
     this.apiKey = config.apiKey?.trim() || null;
     this.model = config.model?.trim() || null;
+    this.configurationStatus = this.apiKey && this.model ? "ready" : "missing";
     this.endpoint = normalizeEndpoint(config.endpoint, defaultOpenAIEndpoint);
     this.fetchImpl = config.fetchImpl ?? ((url, init) => fetch(url, init));
   }
@@ -344,6 +349,7 @@ class OpenAIMiniCommentTranslationProvider implements CommentTranslationProvider
     try {
       const response = await this.fetchImpl(this.endpoint, {
         method: "POST",
+        signal: request.signal,
         headers: {
           Authorization: `Bearer ${this.apiKey}`,
           "Content-Type": "application/json"
@@ -377,7 +383,24 @@ class OpenAIMiniCommentTranslationProvider implements CommentTranslationProvider
         return await mapProviderErrorResponse(response, usageHandoff);
       }
 
-      const parsed = parseOpenAITranslationProviderResponse(await response.json());
+      let responseBody: unknown;
+      try {
+        responseBody = await response.json();
+      } catch (error) {
+        if (error instanceof SyntaxError) {
+          return terminalError("policy-blocked", "OpenAI mini response failed strict translation output parsing.");
+        }
+        if (error instanceof Error) {
+          return recoverableError({
+            code: "temporary-unavailable",
+            message: "OpenAI mini response body was temporarily unavailable.",
+            retryAfterMs: null,
+            usageHandoff
+          });
+        }
+        return terminalError("policy-blocked", "OpenAI mini response failed strict translation output parsing.");
+      }
+      const parsed = parseOpenAITranslationProviderResponse(responseBody);
       if (parsed.status !== "parsed") {
         return terminalError("policy-blocked", "OpenAI mini response failed strict translation output parsing.");
       }

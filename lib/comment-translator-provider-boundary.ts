@@ -83,6 +83,7 @@ export type CommentTranslationProviderRequest = {
   };
   privacy: CommentTranslationPrivacyBoundary;
   usageHandoff: CommentTranslationUsageHandoff;
+  readonly signal?: AbortSignal;
 };
 
 export type CommentTranslationProviderResponse = {
@@ -123,6 +124,7 @@ export type CommentTranslationProviderResult =
 export interface CommentTranslationProvider {
   readonly id: string;
   readonly name: string;
+  readonly configurationStatus?: "ready" | "missing";
   readonly runtimeScope: CommentTranslationProviderRuntimeScope;
   readonly secretBoundary: CommentTranslationProviderSecretBoundary;
   translate(request: CommentTranslationProviderRequest): Promise<CommentTranslationProviderResult>;

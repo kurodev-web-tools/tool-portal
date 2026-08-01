@@ -2,6 +2,10 @@ import "server-only";
 
 import { createServerSupabaseClient } from "@/lib/supabase/server";
 import {
+  authorizeCommentTranslatorCreatorCaller,
+  type CommentTranslatorCreatorCallerAuthority
+} from "@/lib/comment-translator-creator-entitlement-runtime";
+import {
   authorizeYouTubeOAuthCredentialStatusCaller,
   readYouTubeOAuthCredentialStatus,
   type YouTubeOAuthCredentialStatusCallerAuthorization
@@ -31,6 +35,23 @@ export async function readCommentTranslatorActionCallerAuthorization(): Promise<
     });
   } catch {
     return authorizeYouTubeOAuthCredentialStatusCaller({ callerUserId: null, authUnavailable: true });
+  }
+}
+
+export async function readCommentTranslatorCreatorActionCallerAuthority(): Promise<CommentTranslatorCreatorCallerAuthority> {
+  const callerAuthorization = await readCommentTranslatorActionCallerAuthorization();
+  switch (callerAuthorization.status) {
+    case "authorized":
+      return authorizeCommentTranslatorCreatorCaller({
+        callerUserId: callerAuthorization.ownerUserId
+      });
+    case "unavailable":
+      return authorizeCommentTranslatorCreatorCaller({
+        callerUserId: null,
+        authUnavailable: callerAuthorization.reason === "auth-unavailable"
+      });
+    default:
+      return assertNeverCreatorCallerAuthorization(callerAuthorization);
   }
 }
 
@@ -99,4 +120,9 @@ function readCreatorWaitlistDisplayName(metadata: unknown): string | null {
     if (typeof value === "string" && value.trim()) return value.trim();
   }
   return null;
+}
+
+function assertNeverCreatorCallerAuthorization(value: never): never {
+  void value;
+  throw new TypeError("Unreachable Comment Translator caller authorization state");
 }

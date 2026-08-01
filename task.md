@@ -15,8 +15,8 @@
 
 ```text
 current_goal=cloudflare-legacy-c1-durable-object-retirement
-current_pr=not-created
-current_pr_state=not-created
+current_pr=733
+current_pr_state=draft-open
 current_pr_merge_commit=none
 current_base=codex/comment-translator-free-public-beta-integration
 feasibility_decision=conditional-go
@@ -25,7 +25,7 @@ selected_persistence=supabase-postgres-existing-server-only-boundary
 container_disposition=rejected-not-a-candidate
 current_approved_boundary=legacy-do-retirement-config-contract-and-draft-pr
 first_designated_implementation_pr=NC-F1
-implementation_status=local-green-pr-pending
+implementation_status=verified-draft-pr-open
 publication_status=not-approved
 deploy_status=blocked-delete-migration-not-applied
 ```

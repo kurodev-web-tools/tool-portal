@@ -11,6 +11,9 @@
   "observability": {
     "enabled": true
   },
+  "dev": {
+    "enable_containers": false
+  },
   "containers": [
     {
       "class_name": "CommentTranslatorC1Container",

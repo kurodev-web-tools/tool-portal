@@ -23,6 +23,9 @@ assert.equal(packageJson.dependencies["@cloudflare/containers"], "0.3.7");
 
 const wrangler = readJson("wrangler.jsonc");
 assert.equal(wrangler.main, "cloudflare-worker.mjs");
+assert.deepEqual(wrangler.dev, {
+  enable_containers: false,
+}, "OpenNext deploy preflight must not initialize local containers without a build ID");
 assert.deepEqual(wrangler.containers, [{
   class_name: "CommentTranslatorC1Container",
   image: "./containers/comment-translator-c1/Dockerfile",

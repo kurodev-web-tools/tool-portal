@@ -6,7 +6,7 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0-implementation | Comment Translator Creator no-container NC-C1 | PR #729 merged NC-U1 at `1fa3b78d599f54ad17b3c3493c04aa0edf9008ac`. NC-C1 local owner-scoped glossary migration/store/runtime/provider-cache hook implementation and verification are complete; NC-P1, production route/store wiring, remote apply/read/write, activation, publication, and deploy remain unapproved. | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_IMPLEMENTATION_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_LEGACY_CROSSWALK.md` |
+| P0-implementation | Comment Translator Creator no-container NC-C1 | PR #730 merged the NC-C1 glossary authority and PR #731 merged its first Cloudflare compatibility fix. Draft PR #732 fixes the follow-up discriminated-union TypeScript failure; NC-P1, production route/store wiring, remote apply/read/write, activation, publication, and manual deploy remain unapproved. | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_IMPLEMENTATION_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_LEGACY_CROSSWALK.md` |
 | P1-operations | Comment Translator Free public beta | Released and final production smoke complete; `public_release_capable=yes`. No release-chain operator action remains. | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
 | P1-maintenance | 配信カンペボード | MVP and custom delete-dialog follow-up are merged to `main`; no active follow-up is recorded here. | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
 | Workflow | New-tool preview development | Task PRs target a tool-specific preview/integration branch; promotion to `main` occurs only after readiness and explicit approval. | `docs/active/TOOL_PREVIEW_DEVELOPMENT_WORKFLOW.md` |
@@ -14,24 +14,24 @@
 ## Current Goal
 
 ```text
-current_goal=nc-c1-owner-scoped-glossary-authority
-current_pr=none-local-only
-current_pr_state=not-created-not-approved
+current_goal=nc-c1-cloudflare-typecheck-follow-up
+current_pr=732
+current_pr_state=draft-open
 current_pr_merge_commit=none
 current_base=codex/comment-translator-free-public-beta-integration
 feasibility_decision=conditional-go
 selected_runtime=cloudflare-workers-open-next
 selected_persistence=supabase-postgres-existing-server-only-boundary
 container_disposition=rejected-not-a-candidate
-current_approved_boundary=nc-c1-local-implementation-and-verification
+current_approved_boundary=nc-c1-typecheck-fix-verification-and-pr
 first_designated_implementation_pr=NC-F1
-implementation_status=local-verified-reviewable-diff
+implementation_status=verified-draft-pr-open
 publication_status=not-approved
 deploy_status=not-approved
 ```
 
-- Current branch: `codex/comment-translator-creator-nc-c1` in a fresh isolated worktree from the fetched integration tip.
-- PR #729 merged NC-U1 and its disconnected provider-executed paid usage accounting at `1fa3b78d599f54ad17b3c3493c04aa0edf9008ac`. The current approval is limited to local NC-C1 implementation and verification; commit, push, PR creation, dependency installation, remote migration apply/read/write, NC-P1/provider/Stripe execution, browser smoke, deployment, merge, and public paid activation remain unapproved.
+- Current branch: `codex/comment-translator-creator-nc-c1-typecheck` from integration merge `9290ea6e2c8dbf5c9a4af2026d1b69000b6b6668`.
+- PR #730 merged NC-C1, and PR #731 merged the ES5 regular-expression compatibility fix. Draft PR #732 contains only the follow-up rejection-reason type fix, its regression contract, and this status update; dependency installation, remote migration apply/read/write, NC-P1/provider/Stripe execution, manual deployment, merge, and public paid activation remain unapproved.
 - NC-C1 adds a disconnected service-role-RPC-only owner glossary with a 30-term bound, NFKC/case/language normalization, optimistic write version, content-derived effective version, note-free provider projection, and glossary-version cache separation. Missing or unreadable authority fails closed; activation remains fixed closed, no existing runtime route invokes the unapplied store, and existing Free behavior remains unchanged.
 - Cloudflare Containers, Docker images, managed registry, Container bindings, Container-backed Durable Objects, paid Container permission, and Container fallback remain excluded.
 

@@ -169,16 +169,16 @@ function normalizeEntries(entries: readonly GlossaryInputEntry[]):
 
 function normalizeText(value: string, maximumLength: number, allowEmpty = false): string | null {
   if (typeof value !== "string") return null;
-  const normalized = value.normalize("NFKC").trim().replace(/\s+/gu, " ");
+  const normalized = value.normalize("NFKC").trim().replace(/\s+/g, " ");
   if ((!normalized && !allowEmpty) || Array.from(normalized).length > maximumLength) return null;
   return normalized;
 }
 
 function normalizeLanguageScope(value: string): string | null {
-  const normalized = value.normalize("NFKC").trim().toLowerCase().replace(/_/gu, "-");
+  const normalized = value.normalize("NFKC").trim().toLowerCase().replace(/_/g, "-");
   const aliases: Readonly<Record<string, string>> = { jp: "ja", japanese: "ja", eng: "en", english: "en", kr: "ko", korean: "ko", cn: "zh-hans", chinese: "zh-hans" };
   const canonical = aliases[normalized] ?? normalized;
-  return canonical === "*" || /^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/u.test(canonical) ? canonical : null;
+  return canonical === "*" || /^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/.test(canonical) ? canonical : null;
 }
 
 function projectStatus(read: CallerRead): GlossaryStatus {

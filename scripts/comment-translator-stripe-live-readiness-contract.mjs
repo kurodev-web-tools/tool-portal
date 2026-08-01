@@ -171,13 +171,7 @@ assert.equal(report.overallStatus, "blocked-pending-live-mode-approval", "defaul
 assert.equal(report.outputPolicy, "sanitized-metadata-only", "report output policy is sanitized");
 assert.deepEqual(
   report.requiredEnvReferences.sort(),
-  [
-    "COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_BILLING_ACCESS",
-    "COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID",
-    "NEXT_PUBLIC_SITE_URL",
-    "STRIPE_SECRET_KEY",
-    "STRIPE_WEBHOOK_SECRET"
-  ].sort(),
+  ["COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID", "NEXT_PUBLIC_SITE_URL", "STRIPE_SECRET_KEY", "STRIPE_WEBHOOK_SECRET"].sort(),
   "report lists env reference names only"
 );
 assert.ok(
@@ -199,12 +193,11 @@ for (const status of ["past_due", "unpaid", "canceled", "incomplete", "incomplet
   assert.equal(reviewed.sessionAccess, "safe-free-limits", `${status} keeps safe Free limits`);
 }
 
-const activeReview = readiness.reviewCommentTranslatorStripeSubscriptionStatusForLaunch("active");
-assert.equal(activeReview.entitlementPlan, "paid", "active keeps paid entitlement");
-assert.equal(activeReview.sessionAccess, "paid-limits", "active keeps paid limits");
-const trialingReview = readiness.reviewCommentTranslatorStripeSubscriptionStatusForLaunch("trialing");
-assert.equal(trialingReview.entitlementPlan, "free", "trialing remains Free until a separate policy is reviewed");
-assert.equal(trialingReview.sessionAccess, "safe-free-limits", "trialing does not infer paid trial access");
+for (const status of ["active", "trialing"]) {
+  const reviewed = readiness.reviewCommentTranslatorStripeSubscriptionStatusForLaunch(status);
+  assert.equal(reviewed.entitlementPlan, "paid", `${status} keeps paid entitlement`);
+  assert.equal(reviewed.sessionAccess, "paid-limits", `${status} keeps paid limits`);
+}
 
 const serialized = JSON.stringify({ report, approvedGate });
 assert.doesNotMatch(

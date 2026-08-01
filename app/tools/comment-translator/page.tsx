@@ -6,8 +6,6 @@ import { readCommentTranslatorFreeBetaRuntimeAccessForAccountSession } from "@/l
 import { createUnavailableCommentTranslatorRealCommentsFeedState } from "@/lib/comment-translator-real-comments-ui-wiring";
 import { readCommentTranslatorToolCredentialStatusSource } from "@/lib/comment-translator-youtube-tool-credential-source";
 import { getAccountSessionState } from "@/lib/supabase/session";
-import { readCommentTranslatorBillingEntitlementSnapshot } from "@/lib/comment-translator-billing-runtime";
-import { authorizeYouTubeOAuthCredentialStatusCaller } from "@/lib/comment-translator-youtube-credential-status-boundary";
 
 export const metadata: Metadata = {
   title: "Kuro Live Comment Translator",
@@ -30,16 +28,6 @@ export default async function CommentTranslatorPage() {
   }
 
   const youtubeCredentialStatusSource = await readCommentTranslatorToolCredentialStatusSource({ accountSession });
-  const callerAuthorization = authorizeYouTubeOAuthCredentialStatusCaller({
-    callerUserId:
-      accountSession.authStatus === "signed-in" && accountSession.user
-        ? accountSession.user.id
-        : null,
-    authUnavailable: accountSession.authStatus === "unavailable"
-  });
-  const billingSnapshot = await readCommentTranslatorBillingEntitlementSnapshot({
-    callerAuthorization
-  });
   const initialRealCommentsFeed = createUnavailableCommentTranslatorRealCommentsFeedState({
     reason: "live-provider-polling-not-approved"
   });
@@ -49,9 +37,6 @@ export default async function CommentTranslatorPage() {
       <CommentTranslatorDock
         youtubeCredentialStatusSource={youtubeCredentialStatusSource}
         initialRealCommentsFeed={initialRealCommentsFeed}
-        creatorHistoryAvailable={
-          billingSnapshot.plan === "paid" && billingSnapshot.billingState === "paid-active"
-        }
       />
     </PortalShell>
   );

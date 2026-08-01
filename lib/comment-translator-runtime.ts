@@ -21,7 +21,6 @@ import type {
   CommentTranslatorStatusFilter,
   CommentTranslatorTargetLanguageId
 } from "./comment-translator-types";
-import type { CommentTranslatorPriorityFilter } from "./comment-translator-priority-classification";
 
 export function findCommentTranslatorOption<TOption extends { id: string }>(
   options: TOption[],
@@ -102,12 +101,10 @@ export function filterCommentTranslatorComments(
   comments: CommentTranslatorComment[],
   {
     statusFilter,
-    searchQuery,
-    priorityFilter = "all"
+    searchQuery
   }: {
     statusFilter: CommentTranslatorStatusFilter;
     searchQuery: string;
-    priorityFilter?: CommentTranslatorPriorityFilter;
   }
 ) {
   const normalizedQuery = searchQuery.trim().toLocaleLowerCase();
@@ -115,10 +112,6 @@ export function filterCommentTranslatorComments(
   return comments.filter((comment) => {
     const statusMatches = statusFilter === "all" || comment.status === statusFilter;
     if (!statusMatches) {
-      return false;
-    }
-
-    if (priorityFilter === "priority" && (!comment.priorityCategory || comment.priorityCategory === "standard")) {
       return false;
     }
 

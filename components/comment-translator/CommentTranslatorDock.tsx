@@ -5,7 +5,6 @@ import { CommentTranslatorFeedPanel } from "./CommentTranslatorFeedPanel";
 import { CommentTranslatorSessionPanel } from "./CommentTranslatorSessionPanel";
 import { CommentTranslatorSettingsPanel } from "./CommentTranslatorSettingsPanel";
 import { CommentTranslatorUsageSidebar } from "./CommentTranslatorUsageSidebar";
-import { CommentTranslatorCreatorHistoryPanel } from "./CommentTranslatorCreatorHistoryPanel";
 import { useLocale } from "@/components/portal/LocaleProvider";
 import { filterCommentTranslatorComments } from "@/lib/comment-translator";
 import {
@@ -25,13 +24,11 @@ export function CommentTranslatorDock({
   youtubeCredentialStatusSource,
   initialRealCommentsFeed,
   initialSessionState,
-  creatorHistoryAvailable = false,
   runtimeMode = "live"
 }: {
   youtubeCredentialStatusSource: CommentTranslatorToolCredentialStatusSource;
   initialRealCommentsFeed: CommentTranslatorRealCommentsFeedState;
   initialSessionState?: CommentTranslatorDockInitialSessionState;
-  creatorHistoryAvailable?: boolean;
   runtimeMode?: "live" | "dev-fixture";
 }) {
   const { locale } = useLocale();
@@ -49,7 +46,6 @@ export function CommentTranslatorDock({
     surfaceMode, setSurfaceMode,
     showStreamSafeAuthorDisplayNames, setShowStreamSafeAuthorDisplayNames,
     statusFilter, setStatusFilter,
-    priorityFilter, setPriorityFilter,
     searchQuery, setSearchQuery,
     viewMode, setViewMode,
     localizedConnection,
@@ -99,7 +95,7 @@ export function CommentTranslatorDock({
   });
   const commentOnly = viewMode === "comments";
   const publicFeedComments = feedComments.filter((comment) => comment.status !== "skipped");
-  const filteredComments = filterCommentTranslatorComments(publicFeedComments, { statusFilter, searchQuery, priorityFilter });
+  const filteredComments = filterCommentTranslatorComments(publicFeedComments, { statusFilter, searchQuery });
   const liveStats = {
     translated: publicFeedComments.filter((comment) => comment.status === "translated").length,
     errors: publicFeedComments.filter((comment) => comment.status === "error").length
@@ -212,37 +208,30 @@ export function CommentTranslatorDock({
               />
             </aside>
           ) : null}
-          <div className="grid min-w-0 content-start gap-3">
-            <CommentTranslatorFeedPanel
-              locale={locale}
-              copy={copy}
-              commentOnly={commentOnly}
-              sessionStatus={sessionState.status}
-              authorDisplayNamePolicy={authorDisplayNamePolicy}
-              searchQuery={searchQuery}
-              statusFilter={statusFilter}
-              statusFilters={statusFilters}
-              priorityFilter={priorityFilter}
-              filteredComments={filteredComments}
-              publicCommentCount={publicFeedComments.length}
-              translatedCount={liveStats.translated}
-              displayMode={displayMode}
-              targetLanguageLabel={localizedTargetLanguage.label}
-              isPending={isRealCommentsFeedPending}
-              hasRetainedRows={hasRetainedStoppedPreviewRows}
-              errorMessage={realCommentsFeedError}
-              unavailableMessage={realCommentsFeedUnavailableMessage}
-              onNormalView={() => setViewMode("normal")}
-              onSearchQueryChange={setSearchQuery}
-              onStatusFilterChange={setStatusFilter}
-              onPriorityFilterChange={setPriorityFilter}
-              onRefresh={refreshRealCommentsFeed}
-              onClear={clearRetainedPreviewFeed}
-            />
-            {!commentOnly && creatorHistoryAvailable ? (
-              <CommentTranslatorCreatorHistoryPanel locale={locale} />
-            ) : null}
-          </div>
+          <CommentTranslatorFeedPanel
+            locale={locale}
+            copy={copy}
+            commentOnly={commentOnly}
+            sessionStatus={sessionState.status}
+            authorDisplayNamePolicy={authorDisplayNamePolicy}
+            searchQuery={searchQuery}
+            statusFilter={statusFilter}
+            statusFilters={statusFilters}
+            filteredComments={filteredComments}
+            publicCommentCount={publicFeedComments.length}
+            translatedCount={liveStats.translated}
+            displayMode={displayMode}
+            targetLanguageLabel={localizedTargetLanguage.label}
+            isPending={isRealCommentsFeedPending}
+            hasRetainedRows={hasRetainedStoppedPreviewRows}
+            errorMessage={realCommentsFeedError}
+            unavailableMessage={realCommentsFeedUnavailableMessage}
+            onNormalView={() => setViewMode("normal")}
+            onSearchQueryChange={setSearchQuery}
+            onStatusFilterChange={setStatusFilter}
+            onRefresh={refreshRealCommentsFeed}
+            onClear={clearRetainedPreviewFeed}
+          />
           {!commentOnly ? (
             <CommentTranslatorUsageSidebar
               copy={copy}

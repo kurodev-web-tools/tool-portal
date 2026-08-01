@@ -4,10 +4,6 @@ import type {
   CommentTranslatorTargetLanguageId
 } from "./comment-translator";
 import type { CommentTranslationCacheOutcome } from "./comment-translator-provider-boundary";
-import {
-  readCommentTranslatorProjectedPriority,
-  type CommentTranslatorPriorityClassification
-} from "./comment-translator-priority-classification";
 import type { Locale } from "./locale";
 
 export type CommentTranslatorRealCommentsFeedStatus = "ready" | "inactive" | "unavailable";
@@ -65,7 +61,6 @@ export type CommentTranslatorRealCommentsDisplayRow = {
   translationCacheStatus: CommentTranslationCacheOutcome | null;
   moderationLabel: "visible" | "deleted" | "banned" | "ended" | "system";
   deletionPropagation: "not-deleted" | "message-reference-tombstone-only" | "author-history-p1-deferred" | "stream-ended";
-  priority?: CommentTranslatorPriorityClassification;
   badgeLabel: "owner" | "moderator" | "member" | "super-chat" | "super-sticker" | "system" | null;
   purchaseLabel: string | null;
   memberMonthCount: number | null;
@@ -225,7 +220,6 @@ export function mapCommentTranslatorRealCommentsFeedRowsToUiComments({
   authorDisplayNamePolicy?: CommentTranslatorAuthorDisplayNamePolicy;
 }): CommentTranslatorComment[] {
   return sortCommentTranslatorRealCommentsFeedRowsNewestFirst(feed.rows).map((row) => {
-    const priority = readCommentTranslatorProjectedPriority(row.priority);
     const sourceLanguage = "YT";
     const targetLanguage = row.targetLanguage.toLocaleUpperCase();
     const baseComment: CommentTranslatorComment = {
@@ -246,8 +240,7 @@ export function mapCommentTranslatorRealCommentsFeedRowsToUiComments({
       cacheStatus: resolveUiCacheStatus(row),
       skipReason: resolveSkipReason(row),
       errorMessage: resolveErrorMessage(row),
-      badge: priority.badgeLabel ?? row.badgeLabel ?? undefined,
-      priorityCategory: priority.category,
+      badge: row.badgeLabel ?? undefined,
       unitCost: row.translationStatus === "translated-f10" ? 1 : 0
     };
 
@@ -262,16 +255,14 @@ export function mapCommentTranslatorRealCommentsFeedRowsToUiComments({
     if (row.kind === "super-chat" || row.kind === "super-sticker") {
       return {
         ...baseComment,
-        badge: row.purchaseLabel
-          ? `${priority.badgeLabel ?? row.badgeLabel}: ${row.purchaseLabel}`
-          : priority.badgeLabel ?? row.badgeLabel ?? undefined
+        badge: row.purchaseLabel ?? row.badgeLabel ?? undefined
       };
     }
 
     if (row.kind === "member" && row.memberMonthCount) {
       return {
         ...baseComment,
-        badge: `${priority.badgeLabel ?? "Member"} ${row.memberMonthCount}`
+        badge: `member ${row.memberMonthCount}`
       };
     }
 

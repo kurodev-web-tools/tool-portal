@@ -48,6 +48,11 @@ assert.doesNotMatch(
   /\/\\s\+\/gu|\/_\/gu|\/\^\[a-z\][^\r\n]*\/u/,
   "NC-C1 runtime regular expressions remain compatible with the repository ES5 TypeScript target"
 );
+assert.doesNotMatch(
+  runtimeSource,
+  /GlossaryReplaceResult\["reason"\]/,
+  "NC-C1 rejection reasons are typed from the rejected result variant"
+);
 
 const storeModule = await importTypeScript(
   storeSource.replace('import "server-only";', "").replace(

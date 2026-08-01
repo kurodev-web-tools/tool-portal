@@ -55,7 +55,11 @@ assert.doesNotMatch(guardSql, /\bgrant\s+[^;]*\bon\s+(all\s+)?tables\s+in\s+sche
 const createdTables = [...allMigrationSql.matchAll(/create table if not exists public\.([a-z0-9_]+)/g)].map(
   (match) => match[1]
 );
-assert.equal(new Set(createdTables).size, 11, "local public table inventory includes the 9-table baseline and 2 additive NC-D1 tables");
+assert.equal(
+  new Set(createdTables).size,
+  13,
+  "local public table inventory includes the 9-table baseline and additive NC-D1/NC-U1 tables"
+);
 
 for (const requiredDocMarker of [
   "Future Public-Table Default Privilege Guard",
@@ -79,5 +83,5 @@ for (const requiredTaskMarker of [
 process.stdout.write(
   "comment translator Supabase default privileges guard contract passed " +
     "(default_revoke_blocks=4, baseline_public_tables=9, additive_nc_d1_tables=2, " +
-    "current_public_tables=11, remote_apply=not_run)\n"
+    "additive_nc_u1_tables=2, current_public_tables=13, remote_apply=not_run)\n"
 );

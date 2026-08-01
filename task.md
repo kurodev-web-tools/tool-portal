@@ -6,7 +6,7 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0-implementation | Comment Translator Creator no-container NC-E1 | PR #727 merged NC-D1 at `8710944cce0c5cd7ae0a279ce881c584edc49277`. NC-E1 local entitlement runtime/action-context implementation and verification are complete; production store wiring/read, activation, publication, and deploy remain unapproved. | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_IMPLEMENTATION_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_LEGACY_CROSSWALK.md` |
+| P0-implementation | Comment Translator Creator no-container NC-U1 | PR #728 merged NC-E1 at `da1e1d7bc0d9c25817c73e390dfc9a31f370d889`. NC-U1 local paid-usage migration/store/runtime implementation and verification are complete; production route/store wiring, remote apply/read/write, activation, publication, and deploy remain unapproved. | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_IMPLEMENTATION_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_LEGACY_CROSSWALK.md` |
 | P1-operations | Comment Translator Free public beta | Released and final production smoke complete; `public_release_capable=yes`. No release-chain operator action remains. | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
 | P1-maintenance | 配信カンペボード | MVP and custom delete-dialog follow-up are merged to `main`; no active follow-up is recorded here. | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
 | Workflow | New-tool preview development | Task PRs target a tool-specific preview/integration branch; promotion to `main` occurs only after readiness and explicit approval. | `docs/active/TOOL_PREVIEW_DEVELOPMENT_WORKFLOW.md` |
@@ -14,7 +14,7 @@
 ## Current Goal
 
 ```text
-current_goal=nc-e1-paid-entitlement-runtime
+current_goal=nc-u1-paid-usage-accounting
 current_pr=none-local-only
 current_pr_state=not-created-not-approved
 current_pr_merge_commit=none
@@ -23,16 +23,16 @@ feasibility_decision=conditional-go
 selected_runtime=cloudflare-workers-open-next
 selected_persistence=supabase-postgres-existing-server-only-boundary
 container_disposition=rejected-not-a-candidate
-current_approved_boundary=nc-e1-local-implementation-and-verification
+current_approved_boundary=nc-u1-local-implementation-and-verification
 first_designated_implementation_pr=NC-F1
 implementation_status=local-verified-reviewable-diff
 publication_status=not-approved
 deploy_status=not-approved
 ```
 
-- Current branch: `codex/comment-translator-creator-nc-e1` in the provided isolated worktree.
-- PR #727 merged NC-D1 and its disconnected service-role-only schema/RPC/store adapter at `8710944cce0c5cd7ae0a279ce881c584edc49277`. The current approval is limited to local NC-E1 implementation and verification; commit, push, PR creation, dependency installation, remote migration apply/read/write, provider/Stripe execution, browser smoke, deployment, merge, and public paid activation remain unapproved.
-- NC-E1 adds a disconnected server-only entitlement runtime and action-context caller-authority seam. NC-D1 remains the only future paid authority, activation remains fixed closed, no existing runtime route invokes the production store, and existing Free behavior remains unchanged.
+- Current branch: `codex/comment-translator-creator-nc-u1` in a fresh isolated worktree from the fetched integration tip.
+- PR #728 merged NC-E1 and its disconnected entitlement runtime/action-context caller-authority seam at `da1e1d7bc0d9c25817c73e390dfc9a31f370d889`. The current approval is limited to local NC-U1 implementation and verification; commit, push, PR creation, dependency installation, remote migration apply/read/write, provider/Stripe execution, browser smoke, deployment, merge, and public paid activation remain unapproved.
+- NC-U1 adds a disconnected service-role-only paid usage migration, atomic RPC, store, and runtime. NC-D1 signed entitlement period is the only paid period authority; only provider-executed success is counted, cache/non-provider outcomes are excluded, accounting failure suppresses success, and only sanitized status/counts are returned. Activation remains fixed closed, no existing runtime route invokes the unapplied store, and existing Free behavior remains unchanged.
 - Cloudflare Containers, Docker images, managed registry, Container bindings, Container-backed Durable Objects, paid Container permission, and Container fallback remain excluded.
 
 ## Current Repository And Release State
@@ -95,8 +95,8 @@ The following require a separately stated target, ready preflight where applicab
 
 ## Next Reviewable Candidates
 
-1. Review the local NC-E1 diff and request separate approval before commit, push, or draft PR creation.
-2. Keep production entitlement-store wiring/read, remote migration apply/read/write, activation, and later no-container lanes blocked until NC-E1 review and their own explicit approval.
+1. Review the local NC-U1 diff and request separate approval before commit, push, or draft PR creation.
+2. Keep production usage/entitlement store wiring/read/write, remote migration apply/read/write, paid provider execution, activation, and later no-container lanes blocked until NC-U1 review and their own explicit approval.
 3. Continue to monitor the Supabase future-default-privileges support/risk boundary. New `public` database objects still require explicit object-level grants/RLS/default-privileges review.
 4. Do not reopen completed Free release or prompt-board history unless new evidence creates a current action.
 

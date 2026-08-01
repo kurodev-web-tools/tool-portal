@@ -43,6 +43,11 @@ assert.doesNotMatch(runtimeSource, /\bnew Map\b|\bMap</);
 assert.match(storeSource, /SUPABASE_SERVICE_ROLE_KEY/);
 assert.match(storeSource, /replace_comment_translator_creator_glossary/);
 assert.match(runtimeSource, /normalize\("NFKC"\)/);
+assert.doesNotMatch(
+  runtimeSource,
+  /\/\\s\+\/gu|\/_\/gu|\/\^\[a-z\][^\r\n]*\/u/,
+  "NC-C1 runtime regular expressions remain compatible with the repository ES5 TypeScript target"
+);
 
 const storeModule = await importTypeScript(
   storeSource.replace('import "server-only";', "").replace(

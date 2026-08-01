@@ -24,17 +24,19 @@ type GlossaryStatus =
       readonly effectiveVersion: null;
     };
 
+type GlossaryReplaceRejectionReason =
+  | "caller-unavailable"
+  | "expected-version-stale"
+  | "term-limit-exceeded"
+  | "normalized-term-collision"
+  | "malformed-entry"
+  | "glossary-unreadable";
+
 type GlossaryReplaceResult =
   | { readonly status: "updated"; readonly termCount: number; readonly version: number; readonly effectiveVersion: string }
   | {
       readonly status: "rejected";
-      readonly reason:
-        | "caller-unavailable"
-        | "expected-version-stale"
-        | "term-limit-exceeded"
-        | "normalized-term-collision"
-        | "malformed-entry"
-        | "glossary-unreadable";
+      readonly reason: GlossaryReplaceRejectionReason;
       readonly termCount: number;
       readonly version: number | null;
       readonly effectiveVersion: string | null;
@@ -191,7 +193,7 @@ function projectStatus(read: CallerRead): GlossaryStatus {
   return { status: "fail-closed", reason, termCount: 0, version: null, effectiveVersion: null };
 }
 
-function rejected(reason: GlossaryReplaceResult["reason"], read: CallerRead): GlossaryReplaceResult {
+function rejected(reason: GlossaryReplaceRejectionReason, read: CallerRead): GlossaryReplaceResult {
   const status = projectStatus(read);
   return {
     status: "rejected",
@@ -202,6 +204,6 @@ function rejected(reason: GlossaryReplaceResult["reason"], read: CallerRead): Gl
   };
 }
 
-function mapStoreReason(reason: "expected-version-stale" | "term-limit-exceeded" | "normalized-term-collision" | "malformed" | "unreadable"): GlossaryReplaceResult["reason"] {
+function mapStoreReason(reason: "expected-version-stale" | "term-limit-exceeded" | "normalized-term-collision" | "malformed" | "unreadable"): GlossaryReplaceRejectionReason {
   return reason === "malformed" ? "malformed-entry" : reason === "unreadable" ? "glossary-unreadable" : reason;
 }

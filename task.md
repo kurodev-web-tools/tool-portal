@@ -6,7 +6,7 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0-implementation | Comment Translator Creator no-container NC-P1 Paid Provider Route | Local implementation and focused verification are complete on `codex/comment-translator-creator-nc-p1`; commit, push, Draft PR, merge, activation, provider/live operation, and deploy remain unapproved. | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_IMPLEMENTATION_TASK_BOARD.md`, `scripts/comment-translator-creator-nc-p1-paid-provider-contract.mjs` |
+| P0-implementation | Comment Translator Creator no-container NC-P1 Paid Provider Route | Focused verification is complete and Draft PR #734 is open from `codex/comment-translator-creator-nc-p1`; merge, activation, provider/live operation, and deploy remain unapproved. | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_IMPLEMENTATION_TASK_BOARD.md`, `scripts/comment-translator-creator-nc-p1-paid-provider-contract.mjs` |
 | P0-operations | Comment Translator Cloudflare legacy Durable Object retirement | PR #733 is merged at integration commit `db328816e0cb0d2e8e8235cc4716095070392451`; the user confirmed the automatic Cloudflare build and deployment succeeded. No further retirement operation is active here. | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md`, `scripts/comment-translator-cloudflare-legacy-do-retirement-contract.mjs` |
 | P1-operations | Comment Translator Free public beta | Released and final production smoke complete; `public_release_capable=yes`. No release-chain operator action remains. | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
 | P1-maintenance | 配信カンペボード | MVP and custom delete-dialog follow-up are merged to `main`; no active follow-up is recorded here. | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
@@ -16,7 +16,8 @@
 
 ```text
 current_goal=comment-translator-creator-nc-p1-paid-provider-route
-current_pr=none-local-uncommitted
+current_pr=734
+current_pr_state=draft-open
 previous_pr=733
 previous_pr_state=merged
 previous_pr_merge_commit=db328816e0cb0d2e8e8235cc4716095070392451
@@ -26,14 +27,15 @@ feasibility_decision=conditional-go
 selected_runtime=cloudflare-workers-open-next
 selected_persistence=supabase-postgres-existing-server-only-boundary
 container_disposition=rejected-not-a-candidate
-current_approved_boundary=nc-p1-local-implementation-and-verification-only
+current_approved_boundary=nc-p1-implementation-verification-and-draft-pr
 current_lane=NC-P1
-implementation_status=local-focused-verified-uncommitted
-publication_status=not-approved
+implementation_status=verified-draft-pr-open
+publication_status=draft-pr-open
 deploy_status=not-approved
 ```
 
 - Current branch: `codex/comment-translator-creator-nc-p1` from integration merge `db328816e0cb0d2e8e8235cc4716095070392451`; fetched integration and local base tree were identical at intake.
+- Draft PR #734 targets `codex/comment-translator-free-public-beta-integration`; merge, deploy, activation, and live provider execution remain separate approval boundaries.
 - PR #733 is merged, and the user confirmed its automatic Cloudflare build and deployment succeeded. No remote state was queried again in this NC-P1 task.
 - NC-P1 adds a disconnected server-only Paid provider orchestration seam. Authenticated caller, fixed server activation authority, readable paid-active entitlement, budget authorization, provider configuration, and effective glossary context must all pass before provider execution. OpenAI mini remains primary; only approved recoverable classes may fall back to Azure. Provider success is exposed and cached only after NC-U1 accounting records it.
 - Focused local evidence passes for NC-P1 plus NC-F1/NC-D1/NC-E1/NC-U1/NC-C1. Cache hits remain uncounted, glossary notes are not forwarded, effective glossary versions separate cache identity, and existing Free remains disconnected from this seam.
@@ -102,7 +104,7 @@ The following require a separately stated target, ready preflight where applicab
 
 ## Next Reviewable Candidates
 
-1. Review the local NC-P1 diff and focused evidence. Commit, push, and Draft PR each remain a separate approval boundary.
+1. Review Draft PR #734 and its focused NC-P1 evidence. Merge remains a separate approval boundary.
 2. Keep production entitlement/usage/glossary store wiring or read/write, paid activation, account/model/budget values, live provider calls, and deploy blocked behind their own explicit approvals.
 3. After an approved PR workflow, continue the no-container dependency order without connecting Creator/public paid activation prematurely.
 4. Continue to monitor the Supabase future-default-privileges support/risk boundary. New `public` database objects still require explicit object-level grants/RLS/default-privileges review.

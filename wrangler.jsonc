@@ -10,5 +10,15 @@
   },
   "observability": {
     "enabled": true
-  }
+  },
+  "migrations": [
+    {
+      "tag": "c1-container-v1",
+      "new_sqlite_classes": ["CommentTranslatorC1Container"]
+    },
+    {
+      "tag": "c1-container-retired-v2",
+      "deleted_classes": ["CommentTranslatorC1Container"]
+    }
+  ]
 }

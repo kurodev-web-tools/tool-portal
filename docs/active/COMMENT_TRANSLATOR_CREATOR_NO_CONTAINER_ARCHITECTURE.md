@@ -43,7 +43,7 @@ Archiveはlegacy要件を読むためだけの資料である。archiveのruntim
 
 | Boundary | Current repository evidence | Creator may depend on | Creator must not weaken |
 | --- | --- | --- | --- |
-| Cloudflare runtime | `wrangler.jsonc` points to `.open-next/worker.js`, enables `nodejs_compat`, static assets, observability; no Container/D1/DO/KV/R2/Queue binding exists | one HTTP Worker, static assets, outbound `fetch` | Free route behavior, bundle/runtime compatibility, fail-closed route handling |
+| Cloudflare runtime | `wrangler.jsonc` points to `.open-next/worker.js`, enables `nodejs_compat`, static assets, observability; no Container/D1/DO/KV/R2/Queue binding exists. The legacy migration ledger retains the historical C1 create tag plus an explicit delete tag until the remote namespace is retired. | one HTTP Worker, static assets, outbound `fetch` | Free route behavior, bundle/runtime compatibility, fail-closed route handling |
 | Next/OpenNext | Next 16.2.6, `@opennextjs/cloudflare` 1.19.11, default `defineCloudflareConfig()` | App Router, Route Handlers, Server Actions, SSR/SSG supported by the adapter | do not introduce a second backend or browser authority |
 | Supabase | `@supabase/ssr` for browser/server auth; `@supabase/supabase-js` service-role adapters for trusted stores | existing project, server-owned RLS/service-role tables and atomic RPCs | no service-role key or private reference in browser; missing config fails closed |
 | auth/session | server derives caller from Supabase session; translator session route/actions are server-owned | authenticated owner binding, current session authority | browser input cannot select owner, entitlement, session, provider target, or liveChatId |
@@ -177,6 +177,8 @@ flowchart LR
 
 Migration is additive and lane-by-lane: characterization → schema → disconnected adapters → server authorization → feature wiring → live evidence. No lane may make browser state authoritative or require a bulk cutover. Each new schema must be service-role-only, RLS/grant reviewed, additive, and reversible by leaving the feature gate closed; destructive rollback is a separate approval.
 
+The `CommentTranslatorC1Container` delete migration is not a new Creator runtime or persistence option. It is one-time lifecycle cleanup for a namespace created by the rejected legacy Container design. The Worker must continue to omit the Container, class export, and Durable Object binding. Applying the migration permanently deletes the legacy namespace and all stored data, so merge/deploy remains an explicit destructive-operation approval boundary.
+
 ## Logging And Observability Boundary
 
 - Allow: route/action label、status/reason、latency bucket、CPU/request/egress/storage quota percentage、provider class、count、opaque correlation reference。
@@ -217,6 +219,7 @@ All sources below were checked as public official documentation on 2026-08-01. P
 - Cloudflare Workers limits: https://developers.cloudflare.com/workers/platform/limits/
 - Cloudflare Durable Objects pricing: https://developers.cloudflare.com/durable-objects/platform/pricing/
 - Cloudflare Durable Objects limits: https://developers.cloudflare.com/durable-objects/platform/limits/
+- Cloudflare Durable Object legacy class migrations: https://developers.cloudflare.com/durable-objects/reference/durable-object-class-migrations-legacy/
 - Cloudflare Queues pricing: https://developers.cloudflare.com/queues/platform/pricing/
 - Cloudflare KV pricing: https://developers.cloudflare.com/kv/platform/pricing/
 - Cloudflare D1 pricing: https://developers.cloudflare.com/d1/platform/pricing/

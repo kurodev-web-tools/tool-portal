@@ -212,7 +212,7 @@ export function runStrictSourceEquivalenceProofSqlValidatorContract() {
   const sql = fs.readFileSync(
     path.join(process.cwd(), strictSourceEquivalenceSqlPath),
     "utf8"
-  );
+  ).replace(/\r\n/g, "\n");
   for (const mutant of createStrictSqlMutants(sql)) {
     assert.throws(
       () => assertCurrentStrictSqlContract(mutant.sql),

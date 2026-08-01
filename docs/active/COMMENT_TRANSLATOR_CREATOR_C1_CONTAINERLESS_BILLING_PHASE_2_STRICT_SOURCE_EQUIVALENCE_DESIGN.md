@@ -1,20 +1,30 @@
 # Creator C1 Phase 2 Strict Source-Equivalence Proof Design
 
-Status: local implementation review-ready
+Status: two approved remote reads consumed / blocked-sanitized-output-invalid /
+no retry
 
 ```text
 local contract: pass
-remote strict proof: not run
-strict-proof remote read attempts: 0
+remote strict proof: blocked-sanitized-output-invalid
+strict-proof remote read attempts: 2
 remote mutation / repair / apply attempts: 0 / 0 / 0
-approval status: proposal-only-not-approved
+approval status: consumed-no-retry
+sanitized output review status: fail
+abort status: triggered-sanitized-output-invalid
 ```
 
 Design unit:
 `C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-DESIGN-1`
 
 Reviewed base:
-`38f0d7fa7fc5bb3e2ef443abce3f261e5026dd07`
+`06a26c74bf0f7c910e3f79df97f260d3ce364090`
+
+PR #721 merged the strict-proof implementation at this exact integration tip.
+The earlier owner-pasted approval remained bound to
+`38f0d7fa7fc5bb3e2ef443abce3f261e5026dd07`; it was therefore stale after the
+merge, stopped at the base/ref gate before any remote call, and was not
+consumed. The later merged-base approval consumed the sole strict-proof remote
+read attempt and stopped at `triggered-sanitized-output-invalid`.
 
 ## Purpose
 
@@ -508,12 +518,39 @@ split into 4 public artifacts and 14 support modules (18 artifacts total) so
 the public proof boundary stays explicit while fixture, validation, and
 scenario responsibilities remain isolated.
 
-No strict remote proof has run. Strict-proof remote read attempts are `0`;
-remote mutation, migration-history repair, and migration apply attempts are
-`0 / 0 / 0`. The future strict-proof approval id is present only in
-paste-ready proposal text and the closed local gate. Its approval status is
-`proposal-only-not-approved`.
+Two strict remote read attempts ran under separate merged-base exact approvals.
+All local gates passed, then each reducer invocation stopped at
+`blocked-sanitized-output-invalid`. No raw output was retained or inspected.
+Strict-proof remote read attempts are `2`; remote mutation,
+migration-history repair, and migration apply attempts remain `0 / 0 / 0`.
+The approval is consumed and cannot authorize a retry.
 
-No approval is currently eligible for remote execution. No wording in this
-document authorizes a remote query, repair, apply, backfill, exposure/cache
-action, deploy, commit, push, PR, merge, or later phase.
+The owner-reviewed local output-contract remediation is now implemented under:
+
+```text
+cli_output_contract_design_unit=C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-CLI-OUTPUT-CONTRACT-1
+cli_output_contract_status=executed-proof-2-consumed-no-retry
+cli_agent_mode=no
+closed_runner_unit=C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-3
+next_approval_unit=none
+next_approval_status=not-proposed
+```
+
+The runner and reducer approval identity rotate past consumed `PROOF-1` and
+consumed `PROOF-2` to closed internal unit `PROOF-3`, so neither exact approval
+can reopen the gate. No `PROOF-3` approval has been proposed or issued. The
+future CLI command is fixed to `--output-format json --agent no`; the reducer
+still accepts only the original exact one-row seven-key array and was not
+loosened to accept an agent envelope. Synthetic characterization confirms the
+agent envelope remains `blocked-sanitized-output-invalid` without retaining
+its boundary or warning.
+
+Specification:
+`docs/superpowers/specs/2026-07-31-comment-translator-creator-c1-phase-2-cli-output-contract-design.md`.
+Implementation plan:
+`docs/superpowers/plans/2026-07-31-comment-translator-creator-c1-phase-2-cli-output-contract-remediation.md`.
+
+The approved `PROOF-2` unit consumed exactly one remote read and stopped at its
+first sanitized blocker. No wording in this document authorizes a diagnostic
+query, retry, repair, apply, backfill, exposure/cache action, deploy, commit,
+push, PR, merge, or later phase.

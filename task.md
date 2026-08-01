@@ -31,15 +31,15 @@
 - Cloudflare production control authority remains `codex/comment-translator-free-public-beta-integration`; Creator task PRs target that integration branch from short-lived branches.
 - Creator closed betaのcurrent authorityは`docs/active/COMMENT_TRANSLATOR_CREATOR_CLOSED_BETA_TASK_BOARD.md`。
 - C1 establishes durable server-owned paid entitlement rows from signed billing evidence with sanitized output and safe Free / paid-inactive fallback; PR #668 is merged and integration verified at `c4b7bc4cd03ad400c737ae662e1e94c4462e9995`, while remote migration apply remains incomplete.
-- Creator C1 containerless billing-state read design PR #718 is merged at `9ad39a530a2394995b031849929d88217b207f5c`; Phase 1 PR #719 is merged at exact integration commit `ea6928f5f0160ab3db453f845e4fb16245bb4e9e`, and Phase 2 preflight PR #720 is merged at exact integration commit `38f0d7fa7fc5bb3e2ef443abce3f261e5026dd07` with reviewed head `c64c5c9c50b96a25b03dbcc3084f2c673a03f2d9`. Reconciliation approval 2 completed with 12 known present, 5 known absent, 10 unknown remote versions, and target pending. The approved prior-migration state proof then consumed one read-only attempt and completed with three `equivalent-present`, one `partial` (`20260705000000`), zero missing/conflicting/unverifiable, and unknown remote count unchanged at 10. Remote mutation, repair, apply, and backfill counts remain zero. The strict canonical-effect proof design is approved, and its local implementation/contract are review-ready. The exact next approval unit is the proposal-only `C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-1`; no strict remote attempt has occurred. Repair and apply remain blocked regardless of any future proof result. Phase 2 target apply remains blocked until all four prior versions are resolved and a refreshed 17-version reconciliation proves the target is sole pending. Owner-binding count proof/backfill, custom-schema exposure/schema-cache work, production consumer cutover, deploy, activation, Checkout, CP2, and public paid launch remain separately approval-gated / not run.
+- Creator C1 containerless billing-state read design PR #718 is merged at `9ad39a530a2394995b031849929d88217b207f5c`; Phase 1 PR #719 is merged at exact integration commit `ea6928f5f0160ab3db453f845e4fb16245bb4e9e`, Phase 2 preflight PR #720 is merged at exact integration commit `38f0d7fa7fc5bb3e2ef443abce3f261e5026dd07` with reviewed head `c64c5c9c50b96a25b03dbcc3084f2c673a03f2d9`, and strict-proof PR #721 is merged at exact integration commit `06a26c74bf0f7c910e3f79df97f260d3ce364090` with reviewed head `b5e1418065c9a9d3f6570a49c81301c41e0bc55b`. Reconciliation approval 2 completed with 12 known present, 5 known absent, 10 unknown remote versions, and target pending. The approved prior-migration state proof consumed one read-only attempt and completed with three `equivalent-present`, one `partial` (`20260705000000`), zero missing/conflicting/unverifiable, and unknown remote count unchanged at 10. Strict source-equivalence `PROOF-1` and `PROOF-2` each consumed one read-only attempt after all local gates passed, and each stopped at the first sanitized blocker `blocked-sanitized-output-invalid`; no raw output was retained or inspected and neither approval can authorize a retry. Total Phase 2 remote reads are now five; remote mutation, repair, apply, and backfill counts remain zero. The runner is rotated to closed internal unit `PROOF-3`; no new approval is proposed. Repair and apply remain blocked regardless of result. Phase 2 target apply remains blocked until all four prior versions are resolved and a refreshed 17-version reconciliation proves the target is sole pending. Owner-binding count proof/backfill, custom-schema exposure/schema-cache work, production consumer cutover, deploy, activation, Checkout, CP2, and public paid launch remain separately approval-gated / not run.
 - c1_containerless_phase_2_preflight_status=blocked-migration-history-not-sole-pending
-- c1_containerless_phase_2_next_approval_unit=C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-1
+- c1_containerless_phase_2_next_approval_unit=none
 - c1_containerless_phase_2_remote_readiness_approval_status=consumed-no-retry
 - c1_containerless_phase_2_remote_readiness_execution_status=blocked-readiness-failed
 - c1_containerless_phase_2_previous_remote_readiness_execution_status=blocked-authority-preconditions-unconfirmed
-- c1_containerless_phase_2_remote_read_attempt_count=3
+- c1_containerless_phase_2_remote_read_attempt_count=5
 - c1_containerless_phase_2_remote_mutation_attempt_count=0
-- c1_containerless_phase_2_next_approval_status=proposal-only-not-approved
+- c1_containerless_phase_2_next_approval_status=not-proposed
 - c1_containerless_phase_2_authority_status=current-confirmed
 - c1_containerless_phase_2_migration_history_reconciliation_local_status=review-ready
 - c1_containerless_phase_2_migration_history_reconciliation_approval_status=consumed-pass-no-retry
@@ -61,10 +61,22 @@
 - c1_containerless_phase_2_prior_migration_state_proof_remote_read_attempt_count=1
 - c1_containerless_phase_2_prior_migration_state_proof_result=equivalent-present-3-partial-1-missing-0-conflicting-0-unverifiable-0
 - c1_containerless_phase_2_strict_source_equivalence_design_status=approved
+- c1_containerless_phase_2_strict_source_equivalence_reviewed_base=06a26c74bf0f7c910e3f79df97f260d3ce364090
 - c1_containerless_phase_2_strict_source_equivalence_local_implementation_status=review-ready
 - c1_containerless_phase_2_strict_source_equivalence_local_contract_status=pass
-- c1_containerless_phase_2_strict_source_equivalence_approval_status=proposal-only-not-approved
-- c1_containerless_phase_2_strict_source_equivalence_remote_read_attempt_count=0
+- c1_containerless_phase_2_strict_source_equivalence_approval_status=consumed-no-retry
+- c1_containerless_phase_2_strict_source_equivalence_stale_approval_status=blocked-before-remote-not-consumed
+- c1_containerless_phase_2_strict_source_equivalence_stale_approval_abort_status=triggered-base-ref-mismatch
+- c1_containerless_phase_2_strict_source_equivalence_remote_read_attempt_count=2
+- c1_containerless_phase_2_strict_source_equivalence_execution_status=blocked-sanitized-output-invalid
+- c1_containerless_phase_2_strict_source_equivalence_sanitized_output_review_status=fail
+- c1_containerless_phase_2_strict_source_equivalence_abort_status=triggered-sanitized-output-invalid
+- c1_containerless_phase_2_strict_source_equivalence_cli_output_contract_design_unit=C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-CLI-OUTPUT-CONTRACT-1
+- c1_containerless_phase_2_strict_source_equivalence_cli_output_contract_status=executed-proof-2-consumed-no-retry
+- c1_containerless_phase_2_strict_source_equivalence_cli_agent_mode=no
+- c1_containerless_phase_2_strict_source_equivalence_closed_runner_unit=C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-3
+- c1_containerless_phase_2_strict_source_equivalence_proposed_approval_unit=none
+- c1_containerless_phase_2_strict_source_equivalence_proposed_approval_status=not-proposed
 - c1_containerless_phase_2_strict_source_equivalence_repair_authorization=not-authorized-regardless-of-result
 - c1_containerless_phase_2_strict_source_equivalence_apply_authorization=not-authorized-regardless-of-result
 - c1_containerless_phase_2_migration_repair_attempt_count=0

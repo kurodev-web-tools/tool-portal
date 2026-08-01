@@ -2922,6 +2922,8 @@ const allowedChangedFiles = new Set([
   "docs/active/COMMENT_TRANSLATOR_CREATOR_C1_CONTAINERLESS_BILLING_PHASE_2_REMOTE_SCHEMA_APPLY_PREFLIGHT.md",
   "docs/active/COMMENT_TRANSLATOR_CREATOR_C1_CONTAINERLESS_BILLING_PHASE_2_STRICT_SOURCE_EQUIVALENCE_DESIGN.md",
   "docs/superpowers/plans/2026-07-30-comment-translator-creator-c1-phase-2-strict-source-equivalence-proof.md",
+  "docs/superpowers/plans/2026-07-31-comment-translator-creator-c1-phase-2-cli-output-contract-remediation.md",
+  "docs/superpowers/specs/2026-07-31-comment-translator-creator-c1-phase-2-cli-output-contract-design.md",
   "supabase/migrations/20260730000000_comment_translator_c1_containerless_billing_read.sql",
   "supabase/tests/comment_translator_c1_containerless_billing_read.test.sql",
   "package.json",

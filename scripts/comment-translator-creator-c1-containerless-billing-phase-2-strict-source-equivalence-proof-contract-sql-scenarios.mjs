@@ -209,6 +209,6 @@ export function runStrictSourceEquivalenceProofSqlContract() {
     `strict source equivalence SQL exists: ${strictSourceEquivalenceSqlPath}`
   );
   assertStrictSourceEquivalenceProofSqlContract(
-    fs.readFileSync(absolutePath, "utf8")
+    fs.readFileSync(absolutePath, "utf8").replace(/\r\n/g, "\n")
   );
 }

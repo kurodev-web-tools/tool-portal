@@ -1,6 +1,6 @@
 // allow: SIZE_OK — pure declarative fixed manifest and truth-table oracle data.
 export const expectedApprovalId =
-  "C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-1";
+  "C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-3";
 
 export const manifests = [
   {

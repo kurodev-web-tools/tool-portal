@@ -9,8 +9,12 @@ const preflightPath =
   "docs/active/COMMENT_TRANSLATOR_CREATOR_C1_CONTAINERLESS_BILLING_PHASE_2_REMOTE_SCHEMA_APPLY_PREFLIGHT.md";
 const strictDesignPath =
   "docs/active/COMMENT_TRANSLATOR_CREATOR_C1_CONTAINERLESS_BILLING_PHASE_2_STRICT_SOURCE_EQUIVALENCE_DESIGN.md";
-const strictApprovalUnit =
+const priorConsumedStrictApprovalUnit =
   "C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-1";
+const consumedStrictApprovalUnit =
+  "C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-2";
+const closedStrictRunnerUnit =
+  "C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-3";
 
 const strictPublicArtifacts = [
   "scripts/comment-translator-creator-c1-containerless-billing-phase-2-strict-source-equivalence-proof.sql",
@@ -39,9 +43,9 @@ const strictSupportModules = [
 const expectedContract = {
   schemaVersion: 1,
   approvalUnit: "C1-CONTAINERLESS-BILLING-PHASE2-APPLY-1",
-  nextApprovalUnit: strictApprovalUnit,
-  reviewedBase: "38f0d7fa7fc5bb3e2ef443abce3f261e5026dd07",
-  reviewedPrHead: "c64c5c9c50b96a25b03dbcc3084f2c673a03f2d9",
+  nextApprovalUnit: "none",
+  reviewedBase: "06a26c74bf0f7c910e3f79df97f260d3ce364090",
+  reviewedPrHead: "b5e1418065c9a9d3f6570a49c81301c41e0bc55b",
   migration: {
     path: migrationPath,
     version: "20260730000000",
@@ -58,7 +62,7 @@ const expectedContract = {
   cli: {
     version: "2.109.0",
     localBinaryStatus: "present-repository-pinned",
-    loginStatus: "user-completed-link-current-worktree",
+    loginStatus: "linked-read-executed",
     linkMetadataStatus: "present-target-match-pass-git-ignored",
     pendingSelection: "all-pending-from-remote-history",
     transactionUnit: "one-implicit-transaction-per-migration-file",
@@ -171,8 +175,12 @@ const expectedContract = {
     status: "complete-partial-remediation-design-required"
   },
   strictSourceEquivalenceProof: {
-    approvalUnit: strictApprovalUnit,
-    approvalStatus: "proposal-only-not-approved",
+    approvalUnit: consumedStrictApprovalUnit,
+    priorApprovalUnit: priorConsumedStrictApprovalUnit,
+    approvalStatus: "consumed-no-retry",
+    staleApprovalStatus: "blocked-before-remote-not-consumed",
+    staleApprovalAbortStatus: "triggered-base-ref-mismatch",
+    staleApprovalRemoteAttemptCount: 0,
     localImplementationStatus: "review-ready",
     localContractStatus: "pass",
     artifactCount: strictPublicArtifacts.length + strictSupportModules.length,
@@ -182,16 +190,27 @@ const expectedContract = {
     predicateCounts: [27, 4, 31, 22],
     unknownRemoteVersionCountExpected: 10,
     commandMode: "linked-read-only-file",
-    remoteAttemptCount: 0,
+    cliOutputContractDesignUnit:
+      "C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-CLI-OUTPUT-CONTRACT-1",
+    cliOutputContractStatus: "executed-proof-2-consumed-no-retry",
+    cliAgentMode: "no",
+    closedRunnerUnit: closedStrictRunnerUnit,
+    proposedApprovalUnit: "none",
+    proposedApprovalStatus: "not-proposed",
+    proposedCommandMode: "linked-read-only-file-json-agent-no",
+    remoteAttemptCount: 2,
     remoteMutationCount: 0,
     repairAttemptCount: 0,
     applyAttemptCount: 0,
     repairAuthorization: "not-authorized",
     applyAuthorization: "not-authorized",
-    status: "ready-for-owner-review-not-approved"
+    executionStatus: "blocked-sanitized-output-invalid",
+    sanitizedOutputReviewStatus: "fail",
+    abortStatus: "triggered-sanitized-output-invalid",
+    status: "blocked-proof-2-consumed-no-retry"
   },
   execution: {
-    remoteReadAttemptCount: 3,
+    remoteReadAttemptCount: 5,
     remoteMutationAttemptCount: 0,
     migrationAttemptCount: 0,
     migrationApplyCount: 0,
@@ -247,17 +266,38 @@ const expectedReadinessExecution = {
   unchecked_scope_status: "recorded"
 };
 
+const expectedStrictExecution = {
+  approval_id: consumedStrictApprovalUnit,
+  approval_gate_status: "pass",
+  reviewed_base_status: "pass",
+  candidate_identity_status: "pass",
+  target_binding_status: "pass",
+  cli_version_status: "pass",
+  linked_metadata_status: "pass",
+  linked_target_status: "pass",
+  local_contract_status: "pass",
+  default_privileges_security_goal_status: "separately-blocked",
+  remote_read_attempt_count: 1,
+  remote_mutation_attempt_count: 0,
+  migration_repair_attempt_count: 0,
+  migration_apply_attempt_count: 0,
+  execution_status: "blocked-sanitized-output-invalid",
+  sanitized_output_review_status: "fail",
+  abort_status: "triggered-sanitized-output-invalid",
+  unchecked_scope_status: "repair-apply-and-later-not-run"
+};
+
 const preflight = fs.readFileSync(preflightPath, "utf8");
 const normalizedPreflight = preflight.replace(/\r\n/g, "\n");
 const strictDesign = fs.readFileSync(strictDesignPath, "utf8");
 assert.ok(
   normalizedPreflight.startsWith(
     "# Creator C1 Containerless Billing Phase 2 Remote Schema Apply Preflight\n\n" +
-      "Status: strict source-equivalence proof locally review-ready / proposal only /\n" +
-      "no strict remote attempt / repair and Phase 2 apply remain blocked and\n" +
-      "unapproved.\n"
+      "Status: strict source-equivalence proofs consumed / two remote reads /\n" +
+      "blocked-sanitized-output-invalid / no retry / repair and Phase 2 apply remain\n" +
+      "blocked and unapproved.\n"
   ),
-  "preflight top status identifies the current strict-proof proposal boundary"
+  "preflight top status identifies the consumed strict-proof blocker"
 );
 const contractMatch = preflight.match(
   /```preflight-contract-json\r?\n([\s\S]*?)\r?\n```/
@@ -286,26 +326,34 @@ assert.deepEqual(
   JSON.parse(readinessExecutionMatch[1]),
   expectedReadinessExecution
 );
-const strictProposalHeading = `### Paste-Ready Proposal: ${strictApprovalUnit}`;
-const strictProposalHeadingMatches = [
+const consumedStrictApprovalHeading =
+  `### Consumed Exact Approval (Do Not Reuse): ${priorConsumedStrictApprovalUnit}`;
+const consumedStrictApprovalHeadingMatches = [
   ...normalizedPreflight.matchAll(
-    new RegExp(`^${strictProposalHeading}$`, "gm")
+    new RegExp(
+      `^${consumedStrictApprovalHeading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+      "gm"
+    )
   )
 ];
 assert.equal(
-  strictProposalHeadingMatches.length,
+  consumedStrictApprovalHeadingMatches.length,
   1,
-  "preflight exposes exactly one strict-proof approval proposal heading"
+  "preflight exposes exactly one consumed strict-proof approval heading"
 );
-const strictProposalSection = normalizedPreflight.slice(
-  strictProposalHeadingMatches[0].index + strictProposalHeading.length
+const consumedStrictApprovalSection = normalizedPreflight.slice(
+  consumedStrictApprovalHeadingMatches[0].index
+    + consumedStrictApprovalHeading.length
 );
-const strictProposalMatch = strictProposalSection.match(
+const consumedStrictApprovalMatch = consumedStrictApprovalSection.match(
   /```text\n([\s\S]*?)\n```/
 );
-assert.ok(strictProposalMatch, "strict-proof proposal has one text fence");
-const strictProposalFields = Object.fromEntries(
-  strictProposalMatch[1]
+assert.ok(
+  consumedStrictApprovalMatch,
+  "consumed strict-proof approval has one text fence"
+);
+const consumedStrictApprovalFields = Object.fromEntries(
+  consumedStrictApprovalMatch[1]
     .split("\n")
     .filter((line) => /^[a-z0-9_]+=/.test(line))
     .map((line) => {
@@ -314,9 +362,9 @@ const strictProposalFields = Object.fromEntries(
     })
 );
 assert.deepEqual(
-  strictProposalFields,
+  consumedStrictApprovalFields,
   {
-    approval_id: strictApprovalUnit,
+    approval_id: priorConsumedStrictApprovalUnit,
     reviewed_base: expectedContract.reviewedBase,
     prior_approval_id:
       "C1-CONTAINERLESS-BILLING-PHASE2-PRIOR-MIGRATION-STATE-PROOF-1",
@@ -330,8 +378,16 @@ assert.deepEqual(
       expectedContract.migration.gitBlobSha256,
     action_label: "one-sanitized-read-only-strict-source-equivalence-proof"
   },
-  "strict-proof proposal exposes only the reviewed machine fields"
+  "consumed strict-proof approval exposes only the reviewed machine fields"
 );
+const strictExecutionMatch = normalizedPreflight.match(
+  /```strict-source-equivalence-execution-json\n([\s\S]*?)\n```/
+);
+assert.ok(
+  strictExecutionMatch,
+  "preflight exposes one sanitized strict-proof execution record"
+);
+assert.deepEqual(JSON.parse(strictExecutionMatch[1]), expectedStrictExecution);
 assert.equal(
   normalizedPreflight.includes(
     "The next allowed unit is one sanitized read-only proof for the four known prior"
@@ -339,10 +395,79 @@ assert.equal(
   false,
   "preflight does not retain the consumed prior proof as the next allowed unit"
 );
+const proposedStrictApprovalHeading =
+  `### Consumed Exact Approval (Do Not Reuse): ${consumedStrictApprovalUnit}`;
+const proposedStrictApprovalHeadingMatches = [
+  ...normalizedPreflight.matchAll(
+    new RegExp(
+      `^${proposedStrictApprovalHeading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+      "gm"
+    )
+  )
+];
 assert.equal(
-  normalizedPreflight.includes("### Paste-Ready Proposal For The Next Read-Only Unit"),
-  false,
-  "preflight does not retain the consumed prior proof as the next paste-ready proposal"
+  proposedStrictApprovalHeadingMatches.length,
+  1,
+  "preflight exposes exactly one consumed PROOF-2 approval heading"
+);
+const proposedStrictApprovalSection = normalizedPreflight.slice(
+  proposedStrictApprovalHeadingMatches[0].index
+    + proposedStrictApprovalHeading.length
+);
+const proposedStrictApprovalMatch = proposedStrictApprovalSection.match(
+  /```text\n([\s\S]*?)\n```/
+);
+assert.ok(
+  proposedStrictApprovalMatch,
+  "proposal-only strict-proof approval has one text fence"
+);
+const proposedStrictApprovalFields = Object.fromEntries(
+  proposedStrictApprovalMatch[1]
+    .split("\n")
+    .filter((line) => /^[a-z0-9_]+=/.test(line))
+    .map((line) => {
+      const separator = line.indexOf("=");
+      return [line.slice(0, separator), line.slice(separator + 1)];
+    })
+);
+assert.deepEqual(
+  proposedStrictApprovalFields,
+  {
+    approval_id: consumedStrictApprovalUnit,
+    reviewed_base: expectedContract.reviewedBase,
+    prior_approval_id: priorConsumedStrictApprovalUnit,
+    prior_result: "blocked-sanitized-output-invalid-no-retry",
+    candidate_versions:
+      "20260623000000,20260624000000,20260705000000,20260706073204",
+    candidate_05_identity:
+      "05|20260623000000|supabase/migrations/20260623000000_comment_translator_real_comments_feed_snapshots.sql|cead8d52e3361149f8476f3852263aabdc38b369|618233207efc605f70d2c806ad2fc705052ec8db7eeed361defc3dfb0cca0522|3474",
+    candidate_06_identity:
+      "06|20260624000000|supabase/migrations/20260624000000_account_display_timezone_preference.sql|01352c948683ddffbc246b7ea26bb220e4465b3c|e027e146d5094b5010fe35ba6201c66fb42a537daa7bf63c1f223e407418aae2|701",
+    candidate_07_identity:
+      "07|20260705000000|supabase/migrations/20260705000000_comment_translator_creator_waitlist_registrations.sql|86253c3d8751d01df1359dc6e407553d31419902|037e3a72b20502e26e8c45e4d4227e25a1e4405b6bd28c39fcd246e4b7ddcfd0|3318",
+    candidate_08_identity:
+      "08|20260706073204|supabase/migrations/20260706073204_supabase_default_privileges_guard.sql|761e3e740c8e317a76da4c5bb9505060b7746ce5|5454fc4ed5381eb29e11d573d0655b4c62172b6f46429d7a3222ebe03184291e|1135",
+    target_migration_version: expectedContract.migration.version,
+    target_canonical_git_blob: expectedContract.migration.gitBlob,
+    target_canonical_git_blob_byte_sha256:
+      expectedContract.migration.gitBlobSha256,
+    repository_pinned_supabase_cli: expectedContract.cli.version,
+    cli_agent_mode: "no",
+    integration_ref:
+      "origin/codex/comment-translator-free-public-beta-integration",
+    migration_history_current_authority: "current-confirmed",
+    opaque_linked_target_binding:
+      "git-ignored-authority-target-exact-match-required",
+    sql_path:
+      "scripts/comment-translator-creator-c1-containerless-billing-phase-2-strict-source-equivalence-proof.sql",
+    sql_canonical_byte_sha256:
+      "f3448f70416bb87cce2e4a94bd75b76bf5e217e231a52edf1cd868c948e7e3f0",
+    sql_canonical_bytes: "60706",
+    cli_command_contract:
+      "db-query-linked-fixed-file-output-format-json-agent-no-log-level-error",
+    action_label: "one-sanitized-read-only-strict-source-equivalence-proof-2"
+  },
+  "consumed PROOF-2 approval exposes only the reviewed machine fields"
 );
 for (const artifact of [...strictPublicArtifacts, ...strictSupportModules]) {
   assert.match(
@@ -364,12 +489,19 @@ for (const field of [
   assert.match(preflight, new RegExp(`\\b${field}\\b`), `preflight records ${field}`);
 }
 for (const status of [
-  "Status: local implementation review-ready",
+  "Status: two approved remote reads consumed / blocked-sanitized-output-invalid /",
   "local contract: pass",
-  "remote strict proof: not run",
-  "strict-proof remote read attempts: 0",
+  "remote strict proof: blocked-sanitized-output-invalid",
+  "strict-proof remote read attempts: 2",
   "remote mutation / repair / apply attempts: 0 / 0 / 0",
-  "approval status: proposal-only-not-approved"
+  "approval status: consumed-no-retry",
+  "sanitized output review status: fail",
+  "abort status: triggered-sanitized-output-invalid",
+  "cli_output_contract_status=executed-proof-2-consumed-no-retry",
+  "cli_agent_mode=no",
+  `closed_runner_unit=${closedStrictRunnerUnit}`,
+  "next_approval_unit=none",
+  "next_approval_status=not-proposed"
 ]) {
   assert.match(strictDesign, new RegExp(status.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
 }
@@ -437,7 +569,7 @@ assert.match(
 );
 assert.match(
   task,
-  new RegExp(`^- c1_containerless_phase_2_next_approval_unit=${strictApprovalUnit}$`, "m")
+  /^- c1_containerless_phase_2_next_approval_unit=none$/m
 );
 assert.match(
   task,
@@ -453,7 +585,7 @@ assert.match(
 );
 assert.match(
   task,
-  /^- c1_containerless_phase_2_remote_read_attempt_count=3$/m
+  /^- c1_containerless_phase_2_remote_read_attempt_count=5$/m
 );
 assert.match(
   task,
@@ -461,7 +593,7 @@ assert.match(
 );
 assert.match(
   task,
-  /^- c1_containerless_phase_2_next_approval_status=proposal-only-not-approved$/m
+  /^- c1_containerless_phase_2_next_approval_status=not-proposed$/m
 );
 assert.match(
   task,
@@ -517,6 +649,18 @@ assert.match(
 );
 assert.match(
   task,
+  /^- c1_containerless_phase_2_strict_source_equivalence_reviewed_base=06a26c74bf0f7c910e3f79df97f260d3ce364090$/m
+);
+assert.match(
+  task,
+  /^- c1_containerless_phase_2_strict_source_equivalence_stale_approval_status=blocked-before-remote-not-consumed$/m
+);
+assert.match(
+  task,
+  /^- c1_containerless_phase_2_strict_source_equivalence_execution_status=blocked-sanitized-output-invalid$/m
+);
+assert.match(
+  task,
   /^- c1_containerless_phase_2_migration_repair_attempt_count=0$/m
 );
 assert.match(
@@ -549,11 +693,43 @@ assert.match(
 );
 assert.match(
   task,
-  /^- c1_containerless_phase_2_strict_source_equivalence_approval_status=proposal-only-not-approved$/m
+  /^- c1_containerless_phase_2_strict_source_equivalence_approval_status=consumed-no-retry$/m
 );
 assert.match(
   task,
-  /^- c1_containerless_phase_2_strict_source_equivalence_remote_read_attempt_count=0$/m
+  /^- c1_containerless_phase_2_strict_source_equivalence_remote_read_attempt_count=2$/m
+);
+assert.match(
+  task,
+  /^- c1_containerless_phase_2_strict_source_equivalence_sanitized_output_review_status=fail$/m
+);
+assert.match(
+  task,
+  /^- c1_containerless_phase_2_strict_source_equivalence_abort_status=triggered-sanitized-output-invalid$/m
+);
+assert.match(
+  task,
+  /^- c1_containerless_phase_2_strict_source_equivalence_cli_output_contract_design_unit=C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-CLI-OUTPUT-CONTRACT-1$/m
+);
+assert.match(
+  task,
+  /^- c1_containerless_phase_2_strict_source_equivalence_cli_output_contract_status=executed-proof-2-consumed-no-retry$/m
+);
+assert.match(
+  task,
+  /^- c1_containerless_phase_2_strict_source_equivalence_cli_agent_mode=no$/m
+);
+assert.match(
+  task,
+  new RegExp(`^- c1_containerless_phase_2_strict_source_equivalence_closed_runner_unit=${closedStrictRunnerUnit}$`, "m")
+);
+assert.match(
+  task,
+  /^- c1_containerless_phase_2_strict_source_equivalence_proposed_approval_unit=none$/m
+);
+assert.match(
+  task,
+  /^- c1_containerless_phase_2_strict_source_equivalence_proposed_approval_status=not-proposed$/m
 );
 assert.match(
   task,

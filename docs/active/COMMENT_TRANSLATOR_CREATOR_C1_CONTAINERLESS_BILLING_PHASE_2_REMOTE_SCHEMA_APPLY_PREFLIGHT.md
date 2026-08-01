@@ -1,21 +1,24 @@
 # Creator C1 Containerless Billing Phase 2 Remote Schema Apply Preflight
 
-Status: strict source-equivalence proof locally review-ready / proposal only /
-no strict remote attempt / repair and Phase 2 apply remain blocked and
-unapproved.
+Status: strict source-equivalence proofs consumed / two remote reads /
+blocked-sanitized-output-invalid / no retry / repair and Phase 2 apply remain
+blocked and unapproved.
 
-This authority prepares the separately gated Phase 2 schema apply defined by
+This authority records the separately gated Phase 2 preparation defined by
 `docs/future/COMMENT_TRANSLATOR_CREATOR_C1_CONTAINERLESS_BILLING_STATE_READ_DESIGN.md`.
-It does not authorize or perform a Supabase query, migration apply, backfill,
-schema exposure/cache action, RPC call, cutover, deploy, activation, or release.
+It records two separately approved strict read-only Supabase queries. It does not authorize
+or perform a retry, diagnostic query, migration apply, backfill, schema
+exposure/cache action, RPC call, cutover, deploy, activation, or release.
 
 ## Reviewed Base And Migration Identity
 
 | Evidence | Exact local result |
 | --- | --- |
 | fetched integration branch | `origin/codex/comment-translator-free-public-beta-integration` |
-| fetched integration / detached HEAD / merge-base | `38f0d7fa7fc5bb3e2ef443abce3f261e5026dd07` |
-| integration tree | `c7ec8044667526e466a3f0f8937056061d91943e` |
+| fetched integration / detached HEAD / merge-base | `06a26c74bf0f7c910e3f79df97f260d3ce364090` |
+| integration tree | `ea1cf8cffe48def31b328ef6b8a06326d6799aba` |
+| PR #721 state | `MERGED` |
+| reviewed PR #721 head | `b5e1418065c9a9d3f6570a49c81301c41e0bc55b` |
 | PR #720 state | `MERGED` |
 | reviewed PR #720 head | `c64c5c9c50b96a25b03dbcc3084f2c673a03f2d9` |
 | PR #719 state | `MERGED` |
@@ -45,12 +48,14 @@ tests only. Neither PR authorizes this Phase 2 remote operation.
 - The consumed remote-readiness attempt used the repository-pinned Supabase CLI
   `2.109.0` after user-confirmed login/link. That historical execution fact is
   not current local tool availability.
-- The prior reconciliation approval stopped while this worktree had no CLI or
+- The prior reconciliation approval stopped while its worktree had no CLI or
   linked metadata. After that approval was consumed, the project owner restored
-  locked dependencies and linked this exact worktree. Read-only local
-  revalidation now confirms the repository-pinned CLI `2.109.0`, linked
-  metadata presence, equality with the previously linked checkout target, and
-  the Git-ignore boundary. No manifest/lockfile change occurred.
+  locked dependencies and linked that historical worktree.
+- In this fresh post-merge worktree, read-only local revalidation confirms the
+  package-lock pin at CLI `2.109.0`, but the executable is absent. Matching
+  linked metadata was copied from the established opaque authority file and is
+  present, equal to that target, and Git-ignored. No dependency install or
+  manifest/lockfile change occurred.
 - `psql`, Docker, `supabase/config.toml`, and `supabase/roles.sql` remain
   unavailable. A Podman client is installed, but no existing local Supabase
   database was available and no image pull or container start was authorized
@@ -1009,20 +1014,29 @@ without defining a subsequent remote approval unit.
 
 ## Strict Source-Equivalence Proof Local Readiness
 
-The strict canonical-effect proof design is approved. Its local
-implementation and contract are review-ready, but the remote proof has not
-run and the approval remains proposal-only:
+The strict canonical-effect proof design and local contract passed. Two exact
+approval units each consumed one read-only remote attempt. All eight local
+gates passed for both attempts, and each stopped at the first sanitized output
+blocker. No raw output was retained or inspected and no retry is authorized:
 
 ```text
 strict_source_equivalence_design_status=approved
 strict_source_equivalence_local_implementation_status=review-ready
 strict_source_equivalence_local_contract_status=pass
-strict_source_equivalence_approval_status=proposal-only-not-approved
-strict_source_equivalence_remote_read_attempt_count=0
+strict_source_equivalence_approval_status=consumed-no-retry
+strict_source_equivalence_remote_read_attempt_count=2
 strict_source_equivalence_remote_mutation_attempt_count=0
 strict_source_equivalence_repair_attempt_count=0
 strict_source_equivalence_apply_attempt_count=0
-strict_source_equivalence_status=ready-for-owner-review-not-approved
+strict_source_equivalence_execution_status=blocked-sanitized-output-invalid
+strict_source_equivalence_sanitized_output_review_status=fail
+strict_source_equivalence_abort_status=triggered-sanitized-output-invalid
+strict_source_equivalence_cli_output_contract_status=executed-proof-2-consumed-no-retry
+strict_source_equivalence_cli_agent_mode=no
+strict_source_equivalence_closed_runner_unit=C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-3
+strict_source_equivalence_proposed_approval_unit=none
+strict_source_equivalence_proposed_approval_status=not-proposed
+strict_source_equivalence_status=blocked-proof-2-consumed-no-retry
 ```
 
 ### Exact Artifact Inventory
@@ -1060,8 +1074,8 @@ artifacts plus `14` support modules.
 
 ### Exact Source And Target Binding
 
-The future proof remains bound to reviewed base
-`38f0d7fa7fc5bb3e2ef443abce3f261e5026dd07` and these exact canonical
+The future proof remains bound to reviewed merged base
+`06a26c74bf0f7c910e3f79df97f260d3ce364090` and these exact canonical
 candidates:
 
 | order | version | canonical path | Git blob | canonical byte SHA-256 | bytes | predicates |
@@ -1165,19 +1179,45 @@ by this canonical migration-effect proof.
 Presence or canonical-effect equivalence is evidence only. It does not prove
 historical execution identity or authorization identity, and it never
 authorizes migration-history repair, migration apply, remediation, backfill,
-or any other mutation. Across Phase 2, the historical remote read count remains
-`3`; strict-proof remote reads remain `0`; remote mutation, repair, apply, and
+or any other mutation. Across Phase 2, the historical remote read count is now
+`4`; strict-proof remote reads are `1`; remote mutation, repair, apply, and
 backfill counts remain `0`.
 
-### Paste-Ready Proposal: C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-1
+### Stale Post-Merge Approval Audit
 
-This text is proposal-only and is not approved or consumed.
+The project owner pasted the earlier proposal after PR #721 merged, but that
+text remained bound to reviewed base
+`38f0d7fa7fc5bb3e2ef443abce3f261e5026dd07`. The fetched integration ref and
+detached HEAD were already
+`06a26c74bf0f7c910e3f79df97f260d3ce364090`, so the exact first-mismatch rule
+blocked the approval before any Supabase remote call. The approved runner path
+was not entered, the stale approval was not consumed or rewritten, and no
+attempt counter changed.
+
+```text
+approval_id=C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-1
+approval_status=stale-not-consumed
+reviewed_base_status=fail
+remote_read_attempt_count=0
+remote_mutation_attempt_count=0
+migration_repair_attempt_count=0
+migration_apply_attempt_count=0
+execution_status=blocked-before-remote
+sanitized_output_review_status=pass
+abort_status=triggered-base-ref-mismatch
+unchecked_scope_status=repair-apply-and-later-not-run
+```
+
+### Consumed Exact Approval (Do Not Reuse): C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-1
+
+This exact text was approved and consumed by the single attempt recorded
+below. It cannot authorize a retry.
 
 ```text
 承認します。
 
 approval_id=C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-1
-reviewed_base=38f0d7fa7fc5bb3e2ef443abce3f261e5026dd07
+reviewed_base=06a26c74bf0f7c910e3f79df97f260d3ce364090
 prior_approval_id=C1-CONTAINERLESS-BILLING-PHASE2-PRIOR-MIGRATION-STATE-PROOF-1
 prior_result=coarse-present-3-partial-1-unknown-remote-10-no-repair-eligibility
 candidate_versions=20260623000000,20260624000000,20260705000000,20260706073204
@@ -1219,15 +1259,163 @@ query/reducerの最初のsanitized failure、unknown remote count change、
 historical execution identity、repair、またはapplyを承認しません。
 ```
 
+### Strict Source-Equivalence Sanitized Result
+
+```strict-source-equivalence-proof-1-execution-json
+{
+  "approval_id": "C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-1",
+  "approval_gate_status": "pass",
+  "reviewed_base_status": "pass",
+  "candidate_identity_status": "pass",
+  "target_binding_status": "pass",
+  "cli_version_status": "pass",
+  "linked_metadata_status": "pass",
+  "linked_target_status": "pass",
+  "local_contract_status": "pass",
+  "default_privileges_security_goal_status": "separately-blocked",
+  "remote_read_attempt_count": 1,
+  "remote_mutation_attempt_count": 0,
+  "migration_repair_attempt_count": 0,
+  "migration_apply_attempt_count": 0,
+  "execution_status": "blocked-sanitized-output-invalid",
+  "sanitized_output_review_status": "fail",
+  "abort_status": "triggered-sanitized-output-invalid",
+  "unchecked_scope_status": "repair-apply-and-later-not-run"
+}
+```
+
+The matrix and all classification counts are omitted because the sanitized
+output contract failed before a valid retained result existed. No raw row,
+error, predicate vector, relation/conflict state, object/role/owner name, or
+private value was retained or inspected. This approval is consumed with no
+retry. Its historical record remains bound to `PROOF-1`.
+
+### CLI Output Contract Local Remediation
+
+```text
+cli_output_contract_design_unit=C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-CLI-OUTPUT-CONTRACT-1
+cli_output_contract_status=executed-proof-2-consumed-no-retry
+cli_agent_mode=no
+closed_runner_unit=C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-3
+next_approval_unit=none
+next_approval_status=not-proposed
+remote_read_attempt_count=1
+remote_mutation_attempt_count=0
+migration_repair_attempt_count=0
+migration_apply_attempt_count=0
+```
+
+The fixed future command now includes `--output-format json --agent no` so
+Supabase CLI `2.109.0` returns the plain rows-array shape already required by
+the strict reducer. The reducer remains strict and does not accept the CLI
+agent envelope. Consumed `PROOF-1` and `PROOF-2` no longer open the rotated
+runner. `PROOF-3` is a closed internal runner identity only; no approval text
+for it has been proposed or issued.
+
+### Consumed Exact Approval (Do Not Reuse): C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-2
+
+The project owner pasted the following exact text in this same task. It was
+consumed by the one attempt recorded immediately below and cannot authorize a
+retry.
+
+```text
+承認します。
+
+approval_id=C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-2
+reviewed_base=06a26c74bf0f7c910e3f79df97f260d3ce364090
+prior_approval_id=C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-1
+prior_result=blocked-sanitized-output-invalid-no-retry
+candidate_versions=20260623000000,20260624000000,20260705000000,20260706073204
+candidate_05_identity=05|20260623000000|supabase/migrations/20260623000000_comment_translator_real_comments_feed_snapshots.sql|cead8d52e3361149f8476f3852263aabdc38b369|618233207efc605f70d2c806ad2fc705052ec8db7eeed361defc3dfb0cca0522|3474
+candidate_06_identity=06|20260624000000|supabase/migrations/20260624000000_account_display_timezone_preference.sql|01352c948683ddffbc246b7ea26bb220e4465b3c|e027e146d5094b5010fe35ba6201c66fb42a537daa7bf63c1f223e407418aae2|701
+candidate_07_identity=07|20260705000000|supabase/migrations/20260705000000_comment_translator_creator_waitlist_registrations.sql|86253c3d8751d01df1359dc6e407553d31419902|037e3a72b20502e26e8c45e4d4227e25a1e4405b6bd28c39fcd246e4b7ddcfd0|3318
+candidate_08_identity=08|20260706073204|supabase/migrations/20260706073204_supabase_default_privileges_guard.sql|761e3e740c8e317a76da4c5bb9505060b7746ce5|5454fc4ed5381eb29e11d573d0655b4c62172b6f46429d7a3222ebe03184291e|1135
+target_migration_version=20260730000000
+target_canonical_git_blob=331db8095fc2ec09332718e9a5d05f62f26d18e8
+target_canonical_git_blob_byte_sha256=27c116aa8872c9c1a04d0a3d0accd2a214e3c28a961ca92c6cb3ba6d3115cd15
+repository_pinned_supabase_cli=2.109.0
+cli_agent_mode=no
+integration_ref=origin/codex/comment-translator-free-public-beta-integration
+migration_history_current_authority=current-confirmed
+opaque_linked_target_binding=git-ignored-authority-target-exact-match-required
+sql_path=scripts/comment-translator-creator-c1-containerless-billing-phase-2-strict-source-equivalence-proof.sql
+sql_canonical_byte_sha256=f3448f70416bb87cce2e4a94bd75b76bf5e217e231a52edf1cd868c948e7e3f0
+sql_canonical_bytes=60706
+cli_command_contract=db-query-linked-fixed-file-output-format-json-agent-no-log-level-error
+action_label=one-sanitized-read-only-strict-source-equivalence-proof-2
+
+同じtaskでcurrent authorityとopaque target bindingを再確認し、exact
+base/ref、上記4 migrationのfilename/order/canonical blob/hash/byte size、
+target migration identity、repository-pinned Supabase CLI 2.109.0、
+cli agent mode=no、Git-ignored linked metadataと既存targetの一致、fixed
+SQL identity、exact command contract、local contractがすべて維持されている
+場合に限り、4つのrepository-known prior migrationについて
+canonical-effect-equivalent-within-enumerated-predicate-domainをread-onlyで
+1 attemptだけ確認することを承認します。保持・表示してよい結果は公開
+repository versionごとのcanonical-effect-equivalent|absent|partial|
+conflicting|unverifiable、固定categoryごとのpass|fail|unverifiable、各status
+count、既知外remote migration count=10、gate/review/attempt/mutation/repair/
+apply/execution/abort/unchecked-scope statusだけです。transient predicate
+vector、relation/conflict state、predicate id、unknown remote version値、raw
+catalog/query/CLI/connector output、raw row/error、remote由来object/role/owner
+名、policy/function/ACL source、private identifierまたはpartial valueは保存・
+表示しないでください。
+
+この承認は単一query内で固定されたformat_type、pg_get_expr、
+pg_get_constraintdef、pg_get_indexdef、aclexplode、acldefaultのread-only
+catalog evaluationだけを含みます。この承認はPROOF-1または他のapprovalの
+retry、unknown remote versionの取得またはmapping、migration history repair、
+db push、migration apply、SQL/DDL/DML mutation、Auth/authority/billing/account/
+user data readまたはcount、application/Edge Function invocation、PostgREST
+RPC call、schema exposure/cache action、backfill、remediation、rollback、deploy、
+commit、push、PR、merge、Phase 2 target apply、Phase 3以降を含みません。
+最初のlocal gate不一致ではremote call前に停止し、query/reducerの最初の
+sanitized failure、unknown remote count change、またはunverifiableではretry・
+diagnostic query・repair・mutationを行わず停止してください。
+canonical-effect-equivalentを含むどの結果もhistorical execution identity、
+repair、またはapplyを承認しません。
+```
+
+### PROOF-2 Strict Source-Equivalence Sanitized Result
+
+```strict-source-equivalence-execution-json
+{
+  "approval_id": "C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-2",
+  "approval_gate_status": "pass",
+  "reviewed_base_status": "pass",
+  "candidate_identity_status": "pass",
+  "target_binding_status": "pass",
+  "cli_version_status": "pass",
+  "linked_metadata_status": "pass",
+  "linked_target_status": "pass",
+  "local_contract_status": "pass",
+  "default_privileges_security_goal_status": "separately-blocked",
+  "remote_read_attempt_count": 1,
+  "remote_mutation_attempt_count": 0,
+  "migration_repair_attempt_count": 0,
+  "migration_apply_attempt_count": 0,
+  "execution_status": "blocked-sanitized-output-invalid",
+  "sanitized_output_review_status": "fail",
+  "abort_status": "triggered-sanitized-output-invalid",
+  "unchecked_scope_status": "repair-apply-and-later-not-run"
+}
+```
+
+The matrix and all classification counts are omitted because the sanitized
+output contract failed before a valid retained result existed. No raw row,
+error, predicate vector, relation/conflict state, predicate id, unknown remote
+version value, object/role/owner name, policy/function/ACL source, or private
+value was retained or inspected. `PROOF-2` is consumed with no retry.
+
 ## Machine-Readable Contract
 
 ```preflight-contract-json
 {
   "schemaVersion": 1,
   "approvalUnit": "C1-CONTAINERLESS-BILLING-PHASE2-APPLY-1",
-  "nextApprovalUnit": "C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-1",
-  "reviewedBase": "38f0d7fa7fc5bb3e2ef443abce3f261e5026dd07",
-  "reviewedPrHead": "c64c5c9c50b96a25b03dbcc3084f2c673a03f2d9",
+  "nextApprovalUnit": "none",
+  "reviewedBase": "06a26c74bf0f7c910e3f79df97f260d3ce364090",
+  "reviewedPrHead": "b5e1418065c9a9d3f6570a49c81301c41e0bc55b",
   "migration": {
     "path": "supabase/migrations/20260730000000_comment_translator_c1_containerless_billing_read.sql",
     "version": "20260730000000",
@@ -1244,7 +1432,7 @@ historical execution identity、repair、またはapplyを承認しません。
   "cli": {
     "version": "2.109.0",
     "localBinaryStatus": "present-repository-pinned",
-    "loginStatus": "user-completed-link-current-worktree",
+    "loginStatus": "linked-read-executed",
     "linkMetadataStatus": "present-target-match-pass-git-ignored",
     "pendingSelection": "all-pending-from-remote-history",
     "transactionUnit": "one-implicit-transaction-per-migration-file",
@@ -1357,8 +1545,12 @@ historical execution identity、repair、またはapplyを承認しません。
     "status": "complete-partial-remediation-design-required"
   },
   "strictSourceEquivalenceProof": {
-    "approvalUnit": "C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-1",
-    "approvalStatus": "proposal-only-not-approved",
+    "approvalUnit": "C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-2",
+    "priorApprovalUnit": "C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-1",
+    "approvalStatus": "consumed-no-retry",
+    "staleApprovalStatus": "blocked-before-remote-not-consumed",
+    "staleApprovalAbortStatus": "triggered-base-ref-mismatch",
+    "staleApprovalRemoteAttemptCount": 0,
     "localImplementationStatus": "review-ready",
     "localContractStatus": "pass",
     "artifactCount": 18,
@@ -1373,16 +1565,26 @@ historical execution identity、repair、またはapplyを承認しません。
     ],
     "unknownRemoteVersionCountExpected": 10,
     "commandMode": "linked-read-only-file",
-    "remoteAttemptCount": 0,
+    "cliOutputContractDesignUnit": "C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-CLI-OUTPUT-CONTRACT-1",
+    "cliOutputContractStatus": "executed-proof-2-consumed-no-retry",
+    "cliAgentMode": "no",
+    "closedRunnerUnit": "C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-3",
+    "proposedApprovalUnit": "none",
+    "proposedApprovalStatus": "not-proposed",
+    "proposedCommandMode": "linked-read-only-file-json-agent-no",
+    "remoteAttemptCount": 2,
     "remoteMutationCount": 0,
     "repairAttemptCount": 0,
     "applyAttemptCount": 0,
     "repairAuthorization": "not-authorized",
     "applyAuthorization": "not-authorized",
-    "status": "ready-for-owner-review-not-approved"
+    "executionStatus": "blocked-sanitized-output-invalid",
+    "sanitizedOutputReviewStatus": "fail",
+    "abortStatus": "triggered-sanitized-output-invalid",
+    "status": "blocked-proof-2-consumed-no-retry"
   },
   "execution": {
-    "remoteReadAttemptCount": 3,
+    "remoteReadAttemptCount": 5,
     "remoteMutationAttemptCount": 0,
     "migrationAttemptCount": 0,
     "migrationApplyCount": 0,
@@ -1414,8 +1616,9 @@ git diff --check
 pgTAP execution remains unchecked because the current worktree has no `psql`,
 Docker, or existing local Supabase/Postgres service. Podman is installed, but
 no image pull or container start was authorized or performed. The current
-worktree now has the repository-pinned CLI and matching Git-ignored linked
-metadata.
-Across Phase 2, three Codex-initiated read-only remote attempts have occurred:
-readiness 2, reconciliation 2, and prior-migration state proof 1. No remote
-mutation, repair, migration apply, or backfill occurred.
+worktree has the repository-pinned CLI `2.109.0` executable and matching
+Git-ignored linked metadata.
+Across Phase 2, four Codex-initiated read-only remote attempts have occurred:
+readiness 2, reconciliation 2, prior-migration state proof 1, and strict
+source-equivalence proof 1. No remote mutation, repair, migration apply, or
+backfill occurred.

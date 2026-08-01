@@ -492,12 +492,12 @@ async function translateWithRetry({
       };
     }
 
-    if (attempt < maxProviderAttemptsPerComment && isPaidRecoverableProviderError(result)) {
+    if (attempt < maxProviderAttemptsPerComment && isRetryableRecoverableError(result)) {
       retryCount += 1;
       continue;
     }
 
-    if (fallbackProvider && fallbackOnRecoverableProviderError && isPaidRecoverableProviderError(result)) {
+    if (fallbackProvider && fallbackOnRecoverableProviderError) {
       const fallbackResult = await fallbackProvider.translate(providerRequest);
       providerCallCount += 1;
       recoverablePrimaryFallbackCount += 1;
@@ -814,8 +814,8 @@ function isServerOnlyTranslatorProvider(provider: CommentTranslationProvider): b
   );
 }
 
-function isPaidRecoverableProviderError(result: CommentTranslationProviderRecoverableError) {
-  return result.retry.retryable && result.code !== "content-filtered";
+function isRetryableRecoverableError(result: CommentTranslationProviderRecoverableError) {
+  return result.retry.retryable;
 }
 
 function normalizePositiveInteger(value: number | null | undefined, fallback: number): number {

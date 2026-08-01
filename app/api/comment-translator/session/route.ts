@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const billingSnapshot = await readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
+  const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
   const previewRateLimitSmokeOverride = resolveCommentTranslatorFreeBetaPreviewRateLimitSmokeOverride({
     privateLaunchAccess: readCommentTranslatorPrivateLaunchAccess({ callerAuthorization })
   });

@@ -79,12 +79,9 @@ async function readCommentTranslatorFreeBetaDerivedReadiness(): Promise<{
       })
     : null;
   const durableUsageState = durableUsageRead?.status === "ready" ? "ready" : "unreadable";
-  const billingSnapshot = durableUsageRead
-    ? await readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization })
-    : null;
-  const entitlementBaseline = durableUsageRead && billingSnapshot
+  const entitlementBaseline = durableUsageRead
     ? resolveCommentTranslatorPublicEntitlementBaseline({
-        billingSnapshot,
+        billingSnapshot: readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization }),
         durableUsageRead,
         previewRateLimitSmokeOverride
       })

@@ -58,7 +58,7 @@ export default async function AccountBillingPage({ searchParams }: AccountBillin
     callerUserId: accountSession.authStatus === "signed-in" ? accountSession.user?.id ?? null : null,
     authUnavailable: accountSession.authStatus === "unavailable"
   });
-  const billingSnapshot = await readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
+  const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
   const billingView = createCommentTranslatorBillingBrowserSafeViewModel({
     snapshot: billingSnapshot,
     env: process.env

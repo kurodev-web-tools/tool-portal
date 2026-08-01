@@ -1,5 +1,3 @@
-import type { CommentTranslatorPriorityCategory } from "./comment-translator-priority-classification";
-
 export type CommentTranslationStatus = "translated" | "skipped" | "error";
 export type CommentCacheStatus = "hit" | "miss" | "none";
 export type CommentTranslatorConnectionStateId = "connected" | "syncing" | "offline";
@@ -72,7 +70,6 @@ export type CommentTranslatorComment = {
   skipReason?: string;
   errorMessage?: string;
   badge?: string;
-  priorityCategory?: CommentTranslatorPriorityCategory;
   unitCost: number;
 };
 

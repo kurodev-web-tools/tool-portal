@@ -170,12 +170,6 @@ export function createYouTubeOAuthCredentialDisconnectUnavailablePayload({
   };
 }
 
-export function createYouTubeOAuthCredentialDisconnectCleanupFailedPayload(
-  credentialReferenceId: string
-): YouTubeOAuthCredentialDisconnectResult {
-  return createDisconnectFailedPayload(credentialReferenceId);
-}
-
 export async function readYouTubeOAuthCredentialDisconnectResult(
   request: ReadYouTubeOAuthCredentialDisconnectRequest
 ): Promise<YouTubeOAuthCredentialDisconnectResult> {

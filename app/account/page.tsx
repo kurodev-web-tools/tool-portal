@@ -43,12 +43,12 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
 
   const [youtubeIntegration, billing] = await Promise.all([
     readYouTubeAccountIntegrationStatusViewModel({ accountSession }),
-    Promise.resolve().then(async () => {
+    Promise.resolve().then(() => {
       const callerAuthorization = authorizeYouTubeOAuthCredentialStatusCaller({
         callerUserId: accountSession.authStatus === "signed-in" ? accountSession.user?.id ?? null : null,
         authUnavailable: accountSession.authStatus === "unavailable"
       });
-      const billingSnapshot = await readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
+      const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
       return createCommentTranslatorBillingBrowserSafeViewModel({
         snapshot: billingSnapshot,
         env: process.env

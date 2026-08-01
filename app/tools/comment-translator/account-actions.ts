@@ -6,12 +6,9 @@ import {
   createYouTubeOAuthCredentialStatusUnavailablePayload
 } from "@/lib/comment-translator-youtube-credential-status-boundary";
 import {
-  createYouTubeOAuthCredentialDisconnectCleanupFailedPayload,
   createYouTubeOAuthCredentialDisconnectUnavailablePayload,
   readYouTubeOAuthCredentialDisconnectResult
 } from "@/lib/comment-translator-youtube-disconnect-runtime";
-import { cleanupCommentTranslatorCreatorHistoryForOwner } from "@/lib/comment-translator-creator-history";
-import { createTrustedCommentTranslatorCreatorHistoryStore } from "@/lib/comment-translator-creator-history-store";
 import { readCommentTranslatorFreeBetaRuntimeAccess } from "@/lib/comment-translator-private-launch-access-gate";
 import {
   createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime
@@ -74,28 +71,12 @@ export async function disconnectYouTubeOAuthCredentialAction() {
   const trustedDisconnectRuntime = credentialResolutionDisabled || callerAuthorization.status !== "authorized"
     ? null
     : createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime();
-  const disconnectResult = await readYouTubeOAuthCredentialDisconnectResult({
+  return readYouTubeOAuthCredentialDisconnectResult({
     credentialReferenceId: credentialReference.credentialReferenceId,
     trustedDisconnectAdapter: trustedDisconnectRuntime?.trustedDisconnectAdapter ?? null,
     callerAuthorization,
     credentialResolutionDisabled
   });
-  if (
-    disconnectResult.status !== "disconnected" &&
-    disconnectResult.status !== "already-disconnected"
-  ) {
-    return disconnectResult;
-  }
-  const historyCleanup = await cleanupCommentTranslatorCreatorHistoryForOwner({
-    callerAuthorization,
-    trigger: "oauth-disconnect",
-    historyStore: createTrustedCommentTranslatorCreatorHistoryStore()
-  });
-  return historyCleanup.status === "completed"
-    ? disconnectResult
-    : createYouTubeOAuthCredentialDisconnectCleanupFailedPayload(
-        disconnectResult.credentialReferenceId
-      );
 }
 
 function unavailableCredentialStatus() {

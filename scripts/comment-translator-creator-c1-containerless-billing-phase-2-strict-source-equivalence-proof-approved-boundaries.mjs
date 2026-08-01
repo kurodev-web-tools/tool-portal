@@ -128,10 +128,15 @@ function linkedTargetMatches(root, fileSystem) {
 }
 
 function sqlFingerprintMatches(root, fileSystem) {
-  const sql = fileSystem.readFileSync(path.join(root, SQL_PATH));
-  return Buffer.isBuffer(sql)
-    && sql.length === SQL_BYTES
-    && crypto.createHash("sha256").update(sql).digest("hex") === SQL_SHA256;
+  const workingTreeSql = fileSystem.readFileSync(path.join(root, SQL_PATH));
+  if (!Buffer.isBuffer(workingTreeSql)) return false;
+  const canonicalSql = Buffer.from(
+    workingTreeSql.toString("utf8").replace(/\r\n/g, "\n"),
+    "utf8"
+  );
+  return canonicalSql.length === SQL_BYTES
+    && crypto.createHash("sha256").update(canonicalSql).digest("hex")
+      === SQL_SHA256;
 }
 
 export function runLocalIdentityGates({

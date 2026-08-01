@@ -1,12 +1,12 @@
 export const PROPOSED_APPROVAL_ID =
-  "C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-1";
+  "C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-3";
 export const APPROVAL_ENV =
   "C1_PHASE2_STRICT_SOURCE_EQUIVALENCE_APPROVAL_ID";
 export const AUTHORITY_ENV =
   "C1_PHASE2_MIGRATION_HISTORY_CURRENT_AUTHORITY";
 export const CURRENT_AUTHORITY = "current-confirmed";
 export const REVIEWED_BASE =
-  "38f0d7fa7fc5bb3e2ef443abce3f261e5026dd07";
+  "06a26c74bf0f7c910e3f79df97f260d3ce364090";
 export const INTEGRATION_REF =
   "origin/codex/comment-translator-free-public-beta-integration";
 export const CLI_VERSION = "2.109.0";
@@ -79,7 +79,7 @@ export function createFutureCommand(file) {
     file,
     args: [
       "db", "query", "--linked", "--file", SQL_PATH,
-      "--output-format", "json", "--log-level", "error"
+      "--output-format", "json", "--agent", "no", "--log-level", "error"
     ]
   };
 }

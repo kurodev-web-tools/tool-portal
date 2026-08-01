@@ -140,7 +140,7 @@ function assertInjectedApprovedProofOrchestration() {
     file: CLI_PATH,
     args: [
       "db", "query", "--linked", "--file", SQL_PATH,
-      "--output-format", "json", "--log-level", "error"
+      "--output-format", "json", "--agent", "no", "--log-level", "error"
     ],
     options: {
       cwd: ROOT, encoding: "utf8", env: { KEEP: "yes", NO_COLOR: "1" },

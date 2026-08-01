@@ -85,14 +85,15 @@ function assertGateFailure(action, gateId) {
 
 function assertExactIdentitiesAndCommand() {
   // Given: the reviewed repository identities and future SQL payload.
-  assert.equal(PROPOSED_APPROVAL_ID, "C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-1");
-  assert.equal(REVIEWED_BASE, "38f0d7fa7fc5bb3e2ef443abce3f261e5026dd07");
+  assert.equal(PROPOSED_APPROVAL_ID, "C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-3");
+  assert.equal(REVIEWED_BASE, "06a26c74bf0f7c910e3f79df97f260d3ce364090");
   assert.equal(INTEGRATION_REF, "origin/codex/comment-translator-free-public-beta-integration");
   assert.deepEqual(CANDIDATES, EXPECTED_CANDIDATES);
   assert.deepEqual(TARGET, EXPECTED_TARGET);
   assert.equal(CLI_VERSION, "2.109.0");
   assert.equal(AUTHORITY_PROJECT_REF, "D:/V_streamer_tools/supabase/.temp/project-ref");
-  const sql = fs.readFileSync(path.join(process.cwd(), SQL_PATH), "utf8");
+  const sql = fs.readFileSync(path.join(process.cwd(), SQL_PATH), "utf8")
+    .replace(/\r\n/g, "\n");
   assert.equal(Buffer.byteLength(sql), 60_706);
   // When: the future linked-read command is built.
   const command = createFutureCommand("C:/repo/supabase.exe", sql);
@@ -100,7 +101,10 @@ function assertExactIdentitiesAndCommand() {
   assert.equal(command.args.includes(sql), false, "SQL contents must not be argv");
   assert.deepEqual(command, {
     file: "C:/repo/supabase.exe",
-    args: ["db", "query", "--linked", "--file", SQL_PATH, "--output-format", "json", "--log-level", "error"]
+    args: [
+      "db", "query", "--linked", "--file", SQL_PATH,
+      "--output-format", "json", "--agent", "no", "--log-level", "error"
+    ]
   });
 }
 
@@ -137,6 +141,14 @@ function assertExactApprovalThreeWayGate() {
   // When/Then: either approval-id failure independently closes the gate.
   assert.equal(hasExactApproval(exactArgv, { [AUTHORITY_ENV]: CURRENT_AUTHORITY }), false);
   assert.equal(hasExactApproval(exactArgv, { [APPROVAL_ENV]: "not-approved", [AUTHORITY_ENV]: CURRENT_AUTHORITY }), false);
+  assert.equal(hasExactApproval(exactArgv, {
+    [APPROVAL_ENV]: "C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-1",
+    [AUTHORITY_ENV]: CURRENT_AUTHORITY
+  }), false, "consumed PROOF-1 cannot open the rotated runner");
+  assert.equal(hasExactApproval(exactArgv, {
+    [APPROVAL_ENV]: "C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-2",
+    [AUTHORITY_ENV]: CURRENT_AUTHORITY
+  }), false, "consumed PROOF-2 cannot open the rotated runner");
   // When/Then: all three exact inputs open only the pure gate function.
   assert.equal(hasExactApproval(exactArgv, exactEnv), true);
   // When/Then: alternate positions, values, and extra argv remain closed.
@@ -224,7 +236,7 @@ function assertDefaultRunnerIsBlocked() {
   assert.equal(result.status, 2);
   assert.equal(result.stderr, "");
   assert.equal(result.stdout, [
-    "approval_id=C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-1",
+    "approval_id=C1-CONTAINERLESS-BILLING-PHASE2-STRICT-SOURCE-EQUIVALENCE-PROOF-3",
     "approval_gate_status=fail",
     "reviewed_base_status=not-evaluated",
     "candidate_identity_status=not-evaluated",

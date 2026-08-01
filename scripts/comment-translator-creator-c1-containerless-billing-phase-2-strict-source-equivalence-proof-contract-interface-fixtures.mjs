@@ -47,6 +47,14 @@ export const invalidInterfaceStdoutFixtures = [
     stdout: JSON.stringify({ sentinel: rawSentinel })
   },
   {
+    name: "Supabase CLI agent envelope",
+    stdout: JSON.stringify({
+      boundary: rawSentinel,
+      rows: [allPassRow],
+      warning: rawSentinel
+    })
+  },
+  {
     name: "zero rows",
     stdout: JSON.stringify([])
   },

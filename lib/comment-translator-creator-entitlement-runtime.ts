@@ -1,6 +1,9 @@
 import "server-only";
 
-import type { CommentTranslatorCreatorEntitlementStore } from "./comment-translator-creator-entitlement-store";
+import type {
+  CommentTranslatorCreatorEntitlementRead,
+  CommentTranslatorCreatorEntitlementStore
+} from "./comment-translator-creator-entitlement-store";
 
 export type CommentTranslatorCreatorCallerAuthority =
   | {

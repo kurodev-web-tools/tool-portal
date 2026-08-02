@@ -381,4 +381,3 @@ grant execute on function public.cleanup_comment_translator_creator_safe_history
 
 comment on table public.comment_translator_creator_safe_history is
   'NC-H1 seven-day Creator safe-history snapshots. Only security-definer service-role RPCs may access rows.';
-

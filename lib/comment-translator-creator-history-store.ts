@@ -203,4 +203,3 @@ function createTrustedSupabaseServiceRoleClient(url: string, serviceRoleKey: str
     }
   };
 }
-

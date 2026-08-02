@@ -554,4 +554,3 @@ async function importTypeScript(source) {
   const executable = stripTypeScriptTypes(source, { mode: "transform" });
   return import(`data:text/javascript;base64,${Buffer.from(executable).toString("base64")}`);
 }
-

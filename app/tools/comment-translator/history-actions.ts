@@ -121,4 +121,3 @@ async function createCommentTranslatorCreatorSafeHistoryActionContext() {
 
   return { callerAuthority, runtime };
 }
-

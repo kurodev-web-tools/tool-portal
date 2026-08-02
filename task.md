@@ -148,4 +148,3 @@ The following require a separately stated target, ready preflight where applicab
 - Deleted from the active board: duplicate status paragraphs, stale “current branch” labels, completed next-session handoffs, superseded readiness claims, and repeated canonical-document listings.
 - No runtime source, migration, active authority, evidence document, or existing archive file was deleted.
 - Historical contracts that assert old `task.md` prose are archival compatibility checks, not current authority. When such a contract is next maintained, repoint its historical evidence input to the dated snapshot instead of restoring old prose here.
-

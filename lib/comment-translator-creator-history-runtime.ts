@@ -221,4 +221,3 @@ function isCorrelationDigest(value: unknown): value is string {
 function unavailable() {
   return { status: "unavailable" as const };
 }
-

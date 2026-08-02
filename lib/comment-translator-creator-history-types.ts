@@ -75,4 +75,3 @@ export type CommentTranslatorCreatorHistorySafeFeed = {
     | { readonly status: "unavailable"; readonly reason: string }
   >;
 };
-

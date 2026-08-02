@@ -9,6 +9,8 @@ import type {
 import type {
   CommentTranslatorCreatorObsSessionAuthority,
   CommentTranslatorCreatorObsSessionAuthorityResult,
+  CommentTranslatorCreatorObsTokenBrowserSessionAuthority,
+  CommentTranslatorCreatorObsTokenBrowserSessionValidation,
   CommentTranslatorCreatorObsTokenFailClosed,
   CommentTranslatorCreatorObsTokenFailClosedReason,
   CommentTranslatorCreatorObsTokenIssueResult,
@@ -39,11 +41,14 @@ export const commentTranslatorCreatorObsTokenRuntimeContract = {
   replayPolicy: "atomic-single-redemption",
   browserProjection: "sanitized-capability-metadata-only",
   creatorActivation: "fixed-closed",
-  productionRouteWiring: "disconnected-until-nc-o2",
+  productionRouteWiring: "nc-o2-local-browser-route-activation-closed",
   remoteSupabaseMigrationApply: "not-run-in-this-thread"
 } as const;
 
 export function createCommentTranslatorCreatorObsTokenRuntime(dependencies: RuntimeDependencies) {
+  const browserSessionAuthority: CommentTranslatorCreatorObsTokenBrowserSessionAuthority = {
+    validateBrowserSession: (request) => validateBrowserSession(dependencies, request)
+  };
   return {
     issue: (request: CallerRequest): Promise<CommentTranslatorCreatorObsTokenIssueResult> => writeToken(dependencies, request, "issue"),
     rotate: (request: CallerRequest): Promise<CommentTranslatorCreatorObsTokenIssueResult> => writeToken(dependencies, request, "rotate"),
@@ -75,7 +80,7 @@ export function createCommentTranslatorCreatorObsTokenRuntime(dependencies: Runt
       if (!ownerUserId) return failClosed("caller-unavailable", false);
       if (!dependencies.tokenStore) return failClosed("token-store-unavailable", true);
       try {
-        const session = await dependencies.sessionAuthority.readCurrentForOwner(ownerUserId);
+        const session = await dependencies.sessionAuthority.readCurrentForOwner(ownerUserId, request.nowMs);
         if (session.status === "unavailable") {
           return failClosed("session-unavailable", session.reason === "session-authority-unavailable");
         }
@@ -129,12 +134,47 @@ export function createCommentTranslatorCreatorObsTokenRuntime(dependencies: Runt
           access: "read-only",
           browserSafe: true
         };
-      } catch (error) {
-        if (error instanceof Error) return denied("overlay-unavailable", true);
+      } catch {
         return denied("overlay-unavailable", true);
       }
-    }
+    },
+    ...browserSessionAuthority
   };
+}
+
+async function validateBrowserSession(
+  dependencies: RuntimeDependencies,
+  request: {
+    readonly ownerUserId: string;
+    readonly sessionReferenceId: string;
+    readonly tokenVersion: number;
+    readonly expiresAtIso: string;
+    readonly nowMs: number;
+  }
+): Promise<CommentTranslatorCreatorObsTokenBrowserSessionValidation> {
+  if (!dependencies.tokenStore) return denied("overlay-unavailable", true);
+  try {
+    const current = await dependencies.tokenStore.readCurrent({ ownerUserId: request.ownerUserId });
+    if (current.status === "missing") return denied("invalid-token", false);
+    if (current.status === "unreadable") return denied("overlay-unavailable", true);
+    if (
+      current.record.ownerUserId !== request.ownerUserId ||
+      current.record.sessionReferenceId !== request.sessionReferenceId ||
+      current.record.version !== request.tokenVersion ||
+      current.record.expiresAtIso !== request.expiresAtIso ||
+      current.record.redeemedAtIso === null
+    ) return denied("invalid-token", false);
+    const authority = await validateCurrentSession(
+      dependencies.sessionAuthority,
+      request.ownerUserId,
+      current.record,
+      request.nowMs
+    );
+    if (authority) return denied(authority.retryable ? "overlay-unavailable" : "invalid-token", authority.retryable);
+    return { status: "authorized", expiresAtIso: current.record.expiresAtIso };
+  } catch {
+    return denied("overlay-unavailable", true);
+  }
 }
 
 async function writeToken(
@@ -147,7 +187,7 @@ async function writeToken(
   if (!dependencies.tokenStore) return failClosed("token-store-unavailable", true);
   let session: CommentTranslatorCreatorObsSessionAuthorityResult;
   try {
-    session = await dependencies.sessionAuthority.readCurrentForOwner(ownerUserId);
+    session = await dependencies.sessionAuthority.readCurrentForOwner(ownerUserId, request.nowMs);
   } catch (error) {
     if (error instanceof Error) return failClosed("session-unavailable", true);
     return failClosed("session-unavailable", true);
@@ -195,7 +235,7 @@ async function validateCurrentSession(
   record: CommentTranslatorCreatorObsTokenRecord,
   nowMs: number
 ): Promise<CommentTranslatorCreatorObsTokenFailClosed | null> {
-  const session = await sessionAuthority.readCurrentForOwner(ownerUserId);
+  const session = await sessionAuthority.readCurrentForOwner(ownerUserId, nowMs);
   if (session.status === "unavailable") {
     return failClosed("session-unavailable", session.reason === "session-authority-unavailable");
   }

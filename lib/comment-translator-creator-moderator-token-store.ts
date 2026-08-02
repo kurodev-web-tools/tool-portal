@@ -126,7 +126,7 @@ function parseRecord(value: Record<string, unknown>): CommentTranslatorCreatorMo
   if (
     typeof value.owner_user_id !== "string" || typeof value.session_reference_id !== "string" ||
     value.scope !== moderatorScope || typeof value.token_digest !== "string" || !/^[a-f0-9]{64}$/.test(value.token_digest) ||
-    !isTimestamp(value.issued_at) || !isTimestamp(value.expires_at) || !isNullableTimestamp(value.revoked_at) ||
+    !isTimestamp(value.issued_at) || !isTimestamp(value.expires_at) || !isNullableTimestamp(value.revoked_at) || !isNullableTimestamp(value.redeemed_at) ||
     typeof value.version !== "number" || !Number.isSafeInteger(value.version) || value.version < 1
   ) return null;
   return {
@@ -137,6 +137,7 @@ function parseRecord(value: Record<string, unknown>): CommentTranslatorCreatorMo
     issuedAtIso: value.issued_at,
     expiresAtIso: value.expires_at,
     revokedAtIso: value.revoked_at,
+    redeemedAtIso: value.redeemed_at,
     version: value.version
   };
 }

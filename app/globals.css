@@ -167,6 +167,148 @@ body:has(.comment-translator-obs-overlay-canvas),
   color: rgb(203 213 225);
 }
 
+.comment-translator-moderator-share-canvas {
+  min-height: 100vh;
+  padding: clamp(1rem, 3vw, 2rem);
+}
+
+.comment-translator-moderator-share-feed,
+.comment-translator-moderator-share-unavailable {
+  display: grid;
+  gap: 1rem;
+  width: min(100%, 56rem);
+  margin: 0 auto;
+}
+
+.comment-translator-moderator-share-header,
+.comment-translator-moderator-share-row,
+.comment-translator-moderator-share-unavailable {
+  border: 1px solid rgb(var(--color-border));
+  border-radius: 0.75rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  background: rgb(var(--color-surface));
+  box-shadow: 0 0.5rem 1.5rem rgb(16 24 39 / 0.08);
+}
+
+.comment-translator-moderator-share-header p,
+.comment-translator-moderator-share-header h1,
+.comment-translator-moderator-share-header span,
+.comment-translator-moderator-share-row p,
+.comment-translator-moderator-share-unavailable p,
+.comment-translator-moderator-share-unavailable h1 {
+  margin: 0;
+}
+
+.comment-translator-moderator-share-header {
+  gap: 0.375rem;
+}
+
+.comment-translator-moderator-share-header p {
+  color: rgb(var(--color-primary));
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.comment-translator-moderator-share-header h1,
+.comment-translator-moderator-share-unavailable h1 {
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  line-height: 1.2;
+}
+
+.comment-translator-moderator-share-header span,
+.comment-translator-moderator-share-state,
+.comment-translator-moderator-share-source,
+.comment-translator-moderator-share-empty,
+.comment-translator-moderator-share-unavailable p {
+  color: rgb(var(--color-muted));
+}
+
+.comment-translator-moderator-share-rows {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.comment-translator-moderator-share-row {
+  display: grid;
+  gap: 0.625rem;
+  min-width: 0;
+}
+
+.comment-translator-moderator-share-row-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.comment-translator-moderator-share-row-header span {
+  border-radius: 999px;
+  padding: 0.2rem 0.5rem;
+  background: rgb(var(--color-primary-soft));
+  color: rgb(var(--color-primary-strong));
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.comment-translator-moderator-share-text {
+  overflow-wrap: anywhere;
+  font-size: clamp(1rem, 2.8vw, 1.25rem);
+  font-weight: 800;
+  line-height: 1.5;
+}
+
+.comment-translator-moderator-share-state,
+.comment-translator-moderator-share-source,
+.comment-translator-moderator-share-original {
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.comment-translator-moderator-share-original summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.comment-translator-moderator-share-original p {
+  overflow-wrap: anywhere;
+}
+
+.comment-translator-moderator-share-form {
+  display: grid;
+  gap: 0.625rem;
+}
+
+.comment-translator-moderator-share-form input,
+.comment-translator-moderator-share-form button {
+  min-height: 2.75rem;
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  font: inherit;
+}
+
+.comment-translator-moderator-share-form input {
+  border: 1px solid rgb(var(--color-border));
+  background: rgb(var(--color-surface));
+  color: rgb(var(--color-foreground));
+}
+
+.comment-translator-moderator-share-form button {
+  border: 0;
+  background: rgb(var(--color-primary));
+  color: rgb(var(--color-surface));
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.comment-translator-moderator-share-form button:hover {
+  background: rgb(var(--color-primary-strong));
+}
+
 @layer components {
   .panel {
     @apply rounded-base border border-border bg-surface shadow-panel;

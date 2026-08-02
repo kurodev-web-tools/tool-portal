@@ -18,6 +18,7 @@ export type CommentTranslatorCreatorModeratorTokenRecord = {
   readonly issuedAtIso: string;
   readonly expiresAtIso: string;
   readonly revokedAtIso: string | null;
+  readonly redeemedAtIso: string | null;
   readonly version: number;
 };
 
@@ -92,3 +93,25 @@ export type CommentTranslatorCreatorModeratorTokenValidationResult =
       readonly retryable: boolean;
       readonly browserSafe: true;
     };
+
+type CommentTranslatorCreatorModeratorTokenPrivateDenied = Extract<
+  CommentTranslatorCreatorModeratorTokenValidationResult,
+  { readonly status: "denied" }
+>;
+
+export type CommentTranslatorCreatorModeratorTokenBrowserSessionValidation =
+  | {
+      readonly status: "authorized";
+      readonly expiresAtIso: string;
+    }
+  | CommentTranslatorCreatorModeratorTokenPrivateDenied;
+
+export interface CommentTranslatorCreatorModeratorTokenBrowserSessionAuthority {
+  validateBrowserSession(request: {
+    readonly ownerUserId: string;
+    readonly sessionReferenceId: string;
+    readonly tokenVersion: number;
+    readonly expiresAtIso: string;
+    readonly nowMs: number;
+  }): Promise<CommentTranslatorCreatorModeratorTokenBrowserSessionValidation>;
+}

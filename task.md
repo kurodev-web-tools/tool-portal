@@ -6,7 +6,7 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0-repair | Comment Translator Creator NC-O1 token-read discriminant build repair | Focused RED/GREEN verification is complete and Draft PR #737 is open from `codex/comment-translator-creator-obs-token-read-result-type-fix`; merge and deploy remain unapproved. PR #736 is merged at integration commit `f902df5f79254d95ee821f054f43850d9f14817f`, and its post-merge Cloudflare build passed the NC-P1 import fix before exposing the NC-O1 read-result narrowing error. | `scripts/comment-translator-creator-nc-o1-obs-token-contract.mjs`, `lib/comment-translator-creator-obs-token-store.ts` |
+| P0-implementation | Comment Translator Creator NC-O2 OBS Overlay Browser Route | Local RED/GREEN implementation and root verification are complete on `codex/comment-translator-creator-nc-o2`; commit, push, Draft PR, migration apply, live redemption, deploy, merge, and activation remain unapproved. PR #737 and workflow-config PR #738 are merged, and the user confirmed the PR #737 build repair succeeded in the real deployment environment. | `scripts/comment-translator-creator-nc-o2-obs-overlay-contract.mjs`, `app/api/comment-translator/obs-overlay/session/route.ts`, `app/tools/comment-translator/overlay/page.tsx` |
 | P0-operations | Comment Translator Cloudflare legacy Durable Object retirement | PR #733 is merged at integration commit `db328816e0cb0d2e8e8235cc4716095070392451`; the user confirmed the automatic Cloudflare build and deployment succeeded. No further retirement operation is active here. | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md`, `scripts/comment-translator-cloudflare-legacy-do-retirement-contract.mjs` |
 | P1-operations | Comment Translator Free public beta | Released and final production smoke complete; `public_release_capable=yes`. No release-chain operator action remains. | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
 | P1-maintenance | 配信カンペボード | MVP and custom delete-dialog follow-up are merged to `main`; no active follow-up is recorded here. | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
@@ -15,33 +15,32 @@
 ## Current Goal
 
 ```text
-current_goal=comment-translator-creator-obs-token-read-result-type-build-fix
-current_pr=737
-current_pr_state=draft-open
-previous_pr=736
+current_goal=comment-translator-creator-nc-o2-obs-overlay-browser-route
+current_pr=none
+current_pr_state=not-created
+previous_pr=738
 previous_pr_state=merged
-previous_pr_merge_commit=f902df5f79254d95ee821f054f43850d9f14817f
+previous_pr_merge_commit=c1c03a69c259dc83aedc44b30f1e07a3f28fe2c1
 current_base=codex/comment-translator-free-public-beta-integration
-current_branch=codex/comment-translator-creator-obs-token-read-result-type-fix
+current_branch=codex/comment-translator-creator-nc-o2
 feasibility_decision=conditional-go
 selected_runtime=cloudflare-workers-open-next
 selected_persistence=supabase-postgres-existing-server-only-boundary
 container_disposition=rejected-not-a-candidate
-current_approved_boundary=obs-token-read-result-type-fix-verification-and-draft-pr
-current_lane=NC-O1-build-repair
-implementation_status=verified-draft-pr-open
-publication_status=draft-pr-open
-deploy_status=blocked-build-failed
+current_approved_boundary=nc-o2-local-implementation-verification-and-task-update
+current_lane=NC-O2
+implementation_status=local-verified-uncommitted
+publication_status=not-started
+deploy_status=not-approved
 ```
 
-- Current branch: `codex/comment-translator-creator-obs-token-read-result-type-fix` from fetched integration merge `f902df5f79254d95ee821f054f43850d9f14817f`; Draft PR #737 targets `codex/comment-translator-free-public-beta-integration`. PR #736 is `MERGED`, and intake began from that exact integration tip.
-- The post-merge Cloudflare builds for PR #734 and PR #735 compiled successfully, then failed during Next.js TypeScript checking because NC-P1 referenced `CommentTranslatorCreatorEntitlementRead` without importing it. PR #736 adds only the missing type-only import and a focused failing-first regression assertion.
-- The post-merge Cloudflare build for PR #736 passed the NC-P1 import location, then failed because NC-O1 combined `missing | unreadable` in one store-result member and TypeScript could not narrow `record`. PR #737 splits both owner and digest reads into three distinct discriminants and adds a focused failing-first assertion.
-- NC-O1 adds a disconnected server-only OBS read-capability token runtime, service-role-RPC-only additive schema/store, and focused contract. Issue/rotate return a cryptographically random 32-byte opaque value once, while persistence receives only its SHA-256 digest and minimal owner/session/expiry/revocation/redemption metadata.
-- Authenticated owner and current session authority are server-derived. Missing, unreadable, unauthorized, owner/session-mismatched, expired, revoked, or replayed state fails closed; rotation invalidates the prior capability, redemption is atomic and one-time, and returned status/capability projections exclude owner, session, and digest values.
-- Focused NC-O1 plus executable no-container/NC-F1/NC-D1/NC-E1/NC-U1/NC-C1/NC-P1 and auth-security contracts pass locally. Runtime/store/types syntax, whitespace, secret, suppression/debug, file-size, disconnected-import, and migration RLS/grant checks pass.
-- Fresh worktree dependencies remain absent. Dependency-backed durable-session/session/security contracts, lint, TypeScript typecheck, Next build, OpenNext build, and the TypeScript no-excuse checker are setup-blocked; no dependency installation or manifest/lockfile change was performed. The historical DB/Auth/RLS audit contract still pins superseded `task.md` audit prose and its original pre-Creator migration inventory; NC-O1 does not restore that stale snapshot.
-- NC-O1 remains disconnected from app/OBS/browser routes until NC-O2. Migration apply, production read/write, live issue/redeem, authenticated browser smoke, activation, and deploy remain separate approval boundaries.
+- Current branch: `codex/comment-translator-creator-nc-o2` from fetched integration merge `c1c03a69c259dc83aedc44b30f1e07a3f28fe2c1`; the worktree was detached at that exact tip before this branch was created. The fetched tip contains the prior PR #737 integration tip `57fddd7197bf77f17343eecf096bd25bbbf9c0ec` and PR #738 merge commit `c1c03a69c259dc83aedc44b30f1e07a3f28fe2c1`.
+- PR #737 is merged, and the user confirmed its NC-O1 token-read discriminant repair built successfully in the real deployment environment. PR #738 is merged and supplies the repository agent workflow configuration used by this lane.
+- NC-O2 adds a POST-body-only one-time NC-O1 redemption boundary, atomic service-role RPC for token consumption plus digest-only browser capability replacement, token-free stable overlay URL, HttpOnly/SameSite Strict/path- and expiry-bounded cookie, and per-refresh current token/session revalidation before safe-feed reads.
+- The overlay renders only the existing sanitized translated/original/source/badge/purchase projection on a transparent canvas and refreshes through the server authorization boundary. Production/live redemption and GET feed reads remain fixed closed.
+- Focused NC-O2 and NC-O1 plus executable no-container/NC-F1/NC-D1/NC-E1/NC-U1/NC-C1/NC-P1 contracts pass locally. Syntax, diff, ownership, secret/private-identifier, browser-storage/query/log, migration RLS/grant/atomicity, and file-size checks pass. Sol semantic review found and verified fixes for live refresh, production GET gate, variable session expiry, atomic redemption, dynamic heartbeat expiry, and SQL heartbeat enforcement; the final review has no concrete findings.
+- Fresh worktree dependencies remain absent. Dependency-backed durable-session/session/feed/security contracts, lint, TypeScript typecheck, Next build, OpenNext build, and transparent-canvas width/console/overflow/focus browser QA are setup-blocked; no dependency installation or manifest/lockfile change was performed. Two historical contracts still pin the superseded aggregate action source and old `task.md` DB/Auth/RLS audit prose.
+- Migration apply, production database read/write, live token issue/redemption, authenticated browser smoke, deploy, merge, activation, and cleanup remain separate approval boundaries. No remote Supabase, Cloudflare, provider, Stripe, or live account operation was performed.
 - PR #734 merged the disconnected NC-P1 Paid provider orchestration seam. Provider/live operation, paid activation, and deployment remain unapproved.
 - PR #733 is merged, and the user confirmed its automatic Cloudflare build and deployment succeeded. No Cloudflare or Supabase state was queried in NC-O1.
 - NC-C1 adds a disconnected service-role-RPC-only owner glossary with a 30-term bound, NFKC/case/language normalization, optimistic write version, content-derived effective version, note-free provider projection, and glossary-version cache separation. Missing or unreadable authority fails closed; activation remains fixed closed, no existing runtime route invokes the unapplied store, and existing Free behavior remains unchanged.
@@ -107,9 +106,9 @@ The following require a separately stated target, ready preflight where applicab
 
 ## Next Reviewable Candidates
 
-1. Review Draft PR #737 and its focused NC-O1 read-result RED/GREEN evidence. Merge remains a later separate approval boundary.
-2. Keep NC-O1 migration apply, production token read/write, live issue/redeem, OBS/browser route wiring, authenticated browser smoke, activation, and deploy blocked behind their own explicit approvals.
-3. After an approved PR workflow, continue the no-container dependency order without connecting Creator/public paid activation prematurely.
+1. Obtain separate approval before commit, push, or creating a Draft PR for the local verified NC-O2 diff.
+2. Keep NC-O1/NC-O2 migration apply, production token/capability read/write, live issue/redeem, authenticated browser smoke, activation, deploy, merge, and cleanup blocked behind their own explicit approvals.
+3. After an approved NC-O2 PR workflow, continue the no-container dependency order without connecting Creator/public paid activation prematurely.
 4. Continue to monitor the Supabase future-default-privileges support/risk boundary. New `public` database objects still require explicit object-level grants/RLS/default-privileges review.
 5. Do not reopen completed Free release or prompt-board history unless new evidence creates a current action.
 

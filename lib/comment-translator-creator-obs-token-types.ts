@@ -5,7 +5,7 @@ export type CommentTranslatorCreatorObsSessionAuthorityResult =
   | { readonly status: "unavailable"; readonly reason: "active-session-missing" | "session-authority-unavailable" };
 
 export interface CommentTranslatorCreatorObsSessionAuthority {
-  readCurrentForOwner(ownerUserId: string): Promise<CommentTranslatorCreatorObsSessionAuthorityResult>;
+  readCurrentForOwner(ownerUserId: string, nowMs?: number): Promise<CommentTranslatorCreatorObsSessionAuthorityResult>;
 }
 
 export type CommentTranslatorCreatorObsTokenFailClosedReason =
@@ -59,3 +59,25 @@ export type CommentTranslatorCreatorObsTokenRedeemResult =
       readonly retryable: boolean;
       readonly browserSafe: true;
     };
+
+type CommentTranslatorCreatorObsTokenPrivateDenied = Extract<
+  CommentTranslatorCreatorObsTokenRedeemResult,
+  { readonly status: "denied" }
+>;
+
+export type CommentTranslatorCreatorObsTokenBrowserSessionValidation =
+  | {
+      readonly status: "authorized";
+      readonly expiresAtIso: string;
+    }
+  | CommentTranslatorCreatorObsTokenPrivateDenied;
+
+export interface CommentTranslatorCreatorObsTokenBrowserSessionAuthority {
+  validateBrowserSession(request: {
+    readonly ownerUserId: string;
+    readonly sessionReferenceId: string;
+    readonly tokenVersion: number;
+    readonly expiresAtIso: string;
+    readonly nowMs: number;
+  }): Promise<CommentTranslatorCreatorObsTokenBrowserSessionValidation>;
+}

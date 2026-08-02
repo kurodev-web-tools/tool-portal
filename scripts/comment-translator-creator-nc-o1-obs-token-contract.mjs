@@ -60,7 +60,10 @@ assert.doesNotMatch(
 assert.match(runtimeSource, /randomBytes\(32\)/, "runtime generates 32 random bytes");
 assert.match(runtimeSource, /createHash\("sha256"\)/, "runtime persists a one-way SHA-256 digest");
 assert.doesNotMatch(runtimeSource, /process\.env|createClient\s*\(/, "runtime owns no configuration or persistence client");
-assert.doesNotMatch(readAppRuntimeSources(), /createCommentTranslatorCreatorObsTokenRuntime\s*\(/, "NC-O1 remains disconnected from app routes");
+const ncO2RouteSource = read("app/api/comment-translator/obs-overlay/session/route.ts");
+const ncO2PageSource = read("app/tools/comment-translator/overlay/page.tsx");
+assert.match(ncO2RouteSource, /redeemCommentTranslatorCreatorObsOverlayBrowserSession\s*\(/, "NC-O2 is the designated atomic POST redemption connection");
+assert.match(ncO2PageSource, /createCommentTranslatorCreatorObsTokenRuntime\s*\(/, "NC-O2 rechecks current token authority on every overlay read");
 
 const storeModule = await importTypeScript(
   storeSource.replace('import "server-only";', "").replace(
@@ -234,7 +237,7 @@ assert.deepEqual(runtimeModule.commentTranslatorCreatorObsTokenRuntimeContract, 
   replayPolicy: "atomic-single-redemption",
   browserProjection: "sanitized-capability-metadata-only",
   creatorActivation: "fixed-closed",
-  productionRouteWiring: "disconnected-until-nc-o2",
+  productionRouteWiring: "nc-o2-local-browser-route-activation-closed",
   remoteSupabaseMigrationApply: "not-run-in-this-thread"
 });
 
@@ -306,12 +309,6 @@ function revoked() { return { status: "revoked", scope: "obs-overlay-read", acce
 function failClosed(reason, retryable) { return { status: "fail-closed", reason, retryable, browserSafe: true }; }
 function read(relativePath) { return fs.readFileSync(path.join(root, relativePath), "utf8"); }
 function escapeRegExp(value) { return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }
-function readAppRuntimeSources() {
-  return fs.readdirSync(path.join(root, "app"), { recursive: true, withFileTypes: true })
-    .filter((entry) => entry.isFile() && /\.(?:ts|tsx)$/.test(entry.name))
-    .map((entry) => fs.readFileSync(path.join(entry.parentPath, entry.name), "utf8"))
-    .join("\n");
-}
 async function importTypeScript(source) {
   const executable = stripTypeScriptTypes(source, { mode: "transform" });
   return import(`data:text/javascript;base64,${Buffer.from(executable).toString("base64")}`);

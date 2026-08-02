@@ -33,7 +33,7 @@ export const commentTranslatorCreatorModeratorTokenRuntimeContract = {
   currentTokenSemantics: "one-current-token-per-owner-session-scope",
   replayPolicy: "revoked-expired-reissued-or-cross-scope-denied",
   moderatorIdentityAuthority: "not-established-or-persisted",
-  browserRouteWiring: "not-implemented-nc-m2",
+  browserSessionValidation: "current-token-version-and-durable-session-rechecked",
   creatorActivation: "fixed-closed",
   productionLiveOperation: "fixed-closed",
   remoteSupabaseMigrationApply: "not-run-in-this-thread"
@@ -45,7 +45,14 @@ export function createCommentTranslatorCreatorModeratorTokenRuntime(dependencies
     readStatus: (request: CallerRequest): Promise<CommentTranslatorCreatorModeratorTokenSafeStatus> => readStatus(dependencies, request),
     revoke: (request: CallerRequest) => revoke(dependencies, request),
     validatePresentedToken: ({ presentedToken, nowMs }: { readonly presentedToken: string; readonly nowMs: number }): Promise<CommentTranslatorCreatorModeratorTokenValidationResult> =>
-      validatePresentedToken(dependencies, presentedToken, nowMs)
+      validatePresentedToken(dependencies, presentedToken, nowMs),
+    validateBrowserSession: (request: {
+      readonly ownerUserId: string;
+      readonly sessionReferenceId: string;
+      readonly tokenVersion: number;
+      readonly expiresAtIso: string;
+      readonly nowMs: number;
+    }) => validateBrowserSession(dependencies, request)
   };
 }
 
@@ -67,7 +74,8 @@ async function issue(dependencies: RuntimeDependencies, request: CallerRequest):
         tokenDigest: digestToken(token),
         issuedAtIso: new Date(request.nowMs).toISOString(),
         expiresAtIso: new Date(session.expiresAtMs).toISOString(),
-        revokedAtIso: null
+        revokedAtIso: null,
+        redeemedAtIso: null
       }
     });
     if (result.status === "rejected") {
@@ -147,10 +155,49 @@ async function validatePresentedToken(
     });
     if (current.status === "missing") return denied("invalid-token", false);
     if (current.status === "unreadable") return denied("moderator-share-unavailable", true);
+    if (current.record.redeemedAtIso !== null) return denied("invalid-token", false);
     const session = await readSession(dependencies.sessionAuthority, current.record.ownerUserId, nowMs);
     const reason = currentRecordFailure(current.record, current.record.ownerUserId, session, nowMs);
     if (reason) return denied(reason === "token-store-unavailable" ? "moderator-share-unavailable" : "invalid-token", reason === "token-store-unavailable");
     return { status: "authorized", scope: moderatorScope, access: "read-only", browserSafe: true };
+  } catch {
+    return denied("moderator-share-unavailable", true);
+  }
+}
+
+async function validateBrowserSession(
+  dependencies: RuntimeDependencies,
+  request: {
+    readonly ownerUserId: string;
+    readonly sessionReferenceId: string;
+    readonly tokenVersion: number;
+    readonly expiresAtIso: string;
+    readonly nowMs: number;
+  }
+) {
+  if (
+    !request.ownerUserId || !request.sessionReferenceId || !Number.isSafeInteger(request.tokenVersion) || request.tokenVersion < 1 ||
+    !Number.isFinite(request.nowMs) || !Number.isFinite(Date.parse(request.expiresAtIso))
+  ) return denied("invalid-token", false);
+  if (!dependencies.tokenStore) return denied("moderator-share-unavailable", true);
+  try {
+    const current = await dependencies.tokenStore.readCurrent({
+      ownerUserId: request.ownerUserId,
+      nowIso: new Date(request.nowMs).toISOString()
+    });
+    if (current.status === "missing") return denied("invalid-token", false);
+    if (current.status === "unreadable") return denied("moderator-share-unavailable", true);
+    if (
+      current.record.ownerUserId !== request.ownerUserId ||
+      current.record.sessionReferenceId !== request.sessionReferenceId ||
+      current.record.version !== request.tokenVersion ||
+      current.record.expiresAtIso !== request.expiresAtIso ||
+      current.record.redeemedAtIso === null
+    ) return denied("invalid-token", false);
+    const session = await readSession(dependencies.sessionAuthority, request.ownerUserId, request.nowMs);
+    const reason = currentRecordFailure(current.record, request.ownerUserId, session, request.nowMs);
+    if (reason) return denied(reason === "token-store-unavailable" ? "moderator-share-unavailable" : "invalid-token", reason === "token-store-unavailable");
+    return { status: "authorized" as const, expiresAtIso: current.record.expiresAtIso };
   } catch {
     return denied("moderator-share-unavailable", true);
   }
@@ -192,6 +239,9 @@ function digestToken(token: string): string {
 function failClosed(reason: CommentTranslatorCreatorModeratorTokenFailClosedReason, retryable: boolean): CommentTranslatorCreatorModeratorTokenFailClosed {
   return { status: "fail-closed", reason, retryable, browserSafe: true };
 }
-function denied(reason: "invalid-token" | "moderator-share-unavailable", retryable: boolean): CommentTranslatorCreatorModeratorTokenValidationResult {
+function denied(
+  reason: "invalid-token" | "moderator-share-unavailable",
+  retryable: boolean
+): Extract<CommentTranslatorCreatorModeratorTokenValidationResult, { readonly status: "denied" }> {
   return { status: "denied", reason, retryable, browserSafe: true };
 }

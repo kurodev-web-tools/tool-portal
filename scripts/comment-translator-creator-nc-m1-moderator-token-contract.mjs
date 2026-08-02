@@ -116,6 +116,9 @@ assert.match(runtimeSource, /issue\s*:/, "NC-M1 exposes issue");
 assert.match(runtimeSource, /readStatus\s*:/, "NC-M1 exposes readStatus");
 assert.match(runtimeSource, /revoke\s*:/, "NC-M1 exposes revoke");
 assert.match(runtimeSource, /validatePresentedToken\s*:/, "NC-M1 exposes token validation without a browser route");
+assert.match(runtimeSource, /validateBrowserSession\s*:/, "NC-M1 exposes the NC-M2 browser-session validation seam");
+assert.match(storeSource, /redeemed_at/, "NC-M1 trusted reads require the NC-M2 plaintext-consumption state");
+assert.match(runtimeSource, /redeemedAtIso\s*!==\s*null/, "NC-M1 plaintext validation rejects an atomically consumed credential");
 
 const storeModule = await importTypeScript(
   storeSource
@@ -185,11 +188,40 @@ assert.equal(tokenStore.persistedPlaintextCount(), 0, "plaintext is never persis
 assert.equal(tokenStore.current().ownerUserId, "owner-a", "caller input cannot select a different owner");
 assert.equal(tokenStore.current().sessionReferenceId, "session-a", "caller input cannot select a different session");
 assert.equal(tokenStore.current().tokenDigest, digest(issued.token), "only the SHA-256 digest is persisted");
+assert.equal(tokenStore.current().redeemedAtIso, null, "a newly issued plaintext starts unconsumed");
 assert.doesNotMatch(JSON.stringify(tokenStore.current()), new RegExp(escapeRegExp(issued.token)));
 assert.deepEqual(await runtime.readStatus({ callerAuthority: ownerA, nowMs }), ready());
 assert.deepEqual(await runtime.readStatus({ callerAuthority: ownerB, nowMs }), failClosed("token-missing", false));
 assert.deepEqual(await runtime.issue({ callerAuthority: { status: "unauthenticated" }, nowMs }), failClosed("caller-unavailable", false));
 assert.deepEqual(await runtime.validatePresentedToken({ presentedToken: issued.token, nowMs }), authorized());
+assert.deepEqual(
+  await runtime.validateBrowserSession({
+    ownerUserId: "owner-a",
+    sessionReferenceId: "session-a",
+    tokenVersion: tokenStore.current().version,
+    expiresAtIso: tokenStore.current().expiresAtIso,
+    nowMs
+  }),
+  denied("invalid-token", false),
+  "an unconsumed NC-M1 plaintext cannot be treated as a browser capability"
+);
+tokenStore.markCurrentRedeemed(new Date(nowMs).toISOString());
+assert.deepEqual(
+  await runtime.validatePresentedToken({ presentedToken: issued.token, nowMs }),
+  denied("invalid-token", false),
+  "an atomically consumed NC-M1 plaintext is denied by its direct validation seam"
+);
+assert.deepEqual(
+  await runtime.validateBrowserSession({
+    ownerUserId: "owner-a",
+    sessionReferenceId: "session-a",
+    tokenVersion: tokenStore.current().version,
+    expiresAtIso: tokenStore.current().expiresAtIso,
+    nowMs
+  }),
+  { status: "authorized", expiresAtIso: new Date(expiresAtMs).toISOString() },
+  "only a consumed NC-M1 token can validate an NC-M2 browser record against the current version and durable session"
+);
 
 const concurrentStore = createFakeStore();
 const concurrentRuntime = runtimeModule.createCommentTranslatorCreatorModeratorTokenRuntime({ tokenStore: concurrentStore, sessionAuthority });
@@ -310,13 +342,11 @@ assert.deepEqual(runtimeModule.commentTranslatorCreatorModeratorTokenRuntimeCont
   currentTokenSemantics: "one-current-token-per-owner-session-scope",
   replayPolicy: "revoked-expired-reissued-or-cross-scope-denied",
   moderatorIdentityAuthority: "not-established-or-persisted",
-  browserRouteWiring: "not-implemented-nc-m2",
+  browserSessionValidation: "current-token-version-and-durable-session-rechecked",
   creatorActivation: "fixed-closed",
   productionLiveOperation: "fixed-closed",
   remoteSupabaseMigrationApply: "not-run-in-this-thread"
 });
-assert.equal(fs.existsSync(path.join(root, "app/api/comment-translator/moderator-share/session/route.ts")), false, "NC-M2 live browser redemption remains absent");
-assert.equal(fs.existsSync(path.join(root, "app/tools/comment-translator/moderator/page.tsx")), false, "NC-M2 moderator UI remains absent");
 
 process.stdout.write("comment translator NC-M1 moderator token contract passed\n");
 
@@ -338,6 +368,7 @@ function createFakeStore() {
   return {
     current: () => record,
     persistedPlaintextCount: () => persistedPlaintexts,
+    markCurrentRedeemed: (redeemedAtIso) => { record = record ? { ...record, redeemedAtIso } : null; },
     async readCurrent({ ownerUserId }) {
       return record?.ownerUserId === ownerUserId ? { status: "ready", record } : { status: "missing" };
     },
@@ -352,7 +383,7 @@ function createFakeStore() {
       ) {
         return { status: "rejected", reason: "current-token-exists" };
       }
-      record = { ...next, scope: "moderator-share-read", version: (record?.version ?? 0) + 1 };
+      record = { ...next, redeemedAtIso: null, scope: "moderator-share-read", version: (record?.version ?? 0) + 1 };
       return { status: "applied" };
     },
     async revokeCurrent({ ownerUserId, sessionReferenceId, revokedAtIso }) {
@@ -374,6 +405,7 @@ function readyRecord() {
     issued_at: "2026-08-02T10:00:00.000Z",
     expires_at: "2026-08-02T10:01:00.000Z",
     revoked_at: null,
+    redeemed_at: null,
     version: 1
   };
 }

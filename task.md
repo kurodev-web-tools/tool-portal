@@ -6,7 +6,7 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0-implementation | Comment Translator Creator NC-H1 Seven-Day Safe History | Local RED/GREEN implementation, root verification, and final Sol semantic review are complete on `codex/comment-translator-creator-nc-h1`. Commit, push, Draft PR, migration apply, live history/feed/entitlement read or write, deploy, activation, and cleanup remain unapproved. PR #742 for NC-M2 is merged at integration commit `d0e0265b71e87e4855137f0804ebbd3c4ea6aa70`. | `scripts/comment-translator-creator-nc-h1-history-contract.mjs`, `lib/comment-translator-creator-history-runtime.ts`, `components/comment-translator/CommentTranslatorCreatorHistoryPanel.tsx`, `supabase/migrations/20260802040000_comment_translator_creator_safe_history.sql` |
+| P0-implementation | Comment Translator Creator NC-H1 Seven-Day Safe History | Draft PR #743 is open from `codex/comment-translator-creator-nc-h1` to `codex/comment-translator-free-public-beta-integration`. Local RED/GREEN implementation, root verification, and final Sol semantic review are complete. Migration apply, live history/feed/entitlement read or write, deploy, merge, activation, and cleanup remain unapproved. PR #742 for NC-M2 is merged at integration commit `d0e0265b71e87e4855137f0804ebbd3c4ea6aa70`. | `scripts/comment-translator-creator-nc-h1-history-contract.mjs`, `lib/comment-translator-creator-history-runtime.ts`, `components/comment-translator/CommentTranslatorCreatorHistoryPanel.tsx`, `supabase/migrations/20260802040000_comment_translator_creator_safe_history.sql` |
 | P0-operations | Comment Translator Cloudflare legacy Durable Object retirement | PR #733 is merged at integration commit `db328816e0cb0d2e8e8235cc4716095070392451`; the user confirmed the automatic Cloudflare build and deployment succeeded. No further retirement operation is active here. | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md`, `scripts/comment-translator-cloudflare-legacy-do-retirement-contract.mjs` |
 | P1-operations | Comment Translator Free public beta | Released and final production smoke complete; `public_release_capable=yes`. No release-chain operator action remains. | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
 | P1-maintenance | 配信カンペボード | MVP and custom delete-dialog follow-up are merged to `main`; no active follow-up is recorded here. | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
@@ -16,10 +16,10 @@
 
 ```text
 current_goal=comment-translator-creator-nc-h1-seven-day-safe-history-local-complete
-current_pr=none
-current_pr_state=not-created
+current_pr=743
+current_pr_state=draft-open
 current_pr_merge_commit=none
-current_pr_implementation_head=none
+current_pr_implementation_head=e3d03125119573f8b3023e1d64523a9fd78edaa7
 previous_pr=742
 previous_pr_state=merged
 previous_pr_merge_commit=d0e0265b71e87e4855137f0804ebbd3c4ea6aa70
@@ -29,10 +29,10 @@ feasibility_decision=conditional-go
 selected_runtime=cloudflare-workers-open-next
 selected_persistence=supabase-postgres-existing-server-only-boundary
 container_disposition=rejected-not-a-candidate
-current_approved_boundary=nc-h1-local-implementation-and-verification-complete
+current_approved_boundary=nc-h1-draft-pr-open
 current_lane=NC-H1
 implementation_status=local-complete
-publication_status=local-only
+publication_status=draft-pr-open
 deploy_status=not-approved
 ```
 
@@ -41,7 +41,7 @@ deploy_status=not-approved
 - Focused NC-H1 RED/GREEN and root reruns pass. Inclusive UTC cutoff, malformed/future/stale source rows, owner/session isolation, Free/paid-inactive non-retention, safe-field whitelist, visible-to-tombstone replacement and non-resurrection, all-owner expiry beyond 100 rows, prior-session owner reads, concurrent atomic writes, DB-authoritative read clock, unavailable authority/store, cleanup idempotency, fixed production closure, RLS/grants/lock order, and O/M scope isolation are covered. No-container, NC-F1, NC-D1, NC-E1, NC-O1/O2, and NC-M1/M2 contracts also pass; syntax and diff checks pass.
 - Fresh worktree dependencies are absent. Dependency-backed entitlement/session/feed/security/OAuth cleanup contracts, lint, strict typecheck, Next build, OpenNext build, and deterministic browser QA at `390 / 820 / 1024 / 1280 / 1366px` are setup-blocked. No dependency installation or manifest/lockfile change was performed.
 - NC-H1 production activation remains fixed closed. The panel and cleanup functions are disconnected deterministic/server-orchestration seams; existing OAuth disconnect and request-only data-deletion flows were not changed. The retention/storage/read-volume budget required before activation is not authorized and remains an explicit blocker; no numeric product cap was invented.
-- NC-M1/NC-M2 and NC-H1 migration apply, production database/history/token/capability read or write, live feed/entitlement/session use, authenticated browser smoke, deploy, activation, and cleanup remain separate approval boundaries. No remote Supabase, Cloudflare, provider, Stripe, or live account operation was performed. NC-H1 commit, push, and Draft PR have not been authorized or performed.
+- Draft PR #743 was opened from remote implementation head `e3d03125119573f8b3023e1d64523a9fd78edaa7` against `codex/comment-translator-free-public-beta-integration`. NC-M1/NC-M2 and NC-H1 migration apply, production database/history/token/capability read or write, live feed/entitlement/session use, authenticated browser smoke, deploy, merge, activation, and cleanup remain separate approval boundaries. No remote Supabase, Cloudflare, provider, Stripe, or live account operation was performed.
 - PR #741 merged final head `18c91bc0e0299f48bf16d84663496d4fa3476931` (implementation head `8b80cdb2e309950c6f6656b3d31dde30261afe31`) at integration commit `bcc65046e60a00cdfe55b532313cf52ac33bdaf1`. The final head is contained in the integration history used as the NC-M2 base.
 - NC-M2 adds a moderator-only POST-body redemption route, separate digest-only browser capability store/RPC, token-free stable moderator page, Secure HttpOnly SameSite Strict path/expiry-bounded cookie, and read-only safe-feed UI. Moderator token/capability scope, table, RPC, cookie, and runtime remain separate from NC-O1/NC-O2 OBS authority.
 - Each moderator read revalidates the consumed current NC-M1 token version/state plus durable owner/session/45-second heartbeat. Revocation, reissue, expiry, session replacement, replay, cross-scope input, unreadable authority, and unavailable safe feed fail closed. Existing safe translation/original/author/badge/purchase/source/moderation fields only are projected; no moderator identity, role, recipient, invite, delivery, browser-selected authority, moderation action, or NC-V1 priority/filter was added.
@@ -126,7 +126,7 @@ The following require a separately stated target, ready preflight where applicab
 
 ## Next Reviewable Candidates
 
-1. NC-H1 local implementation, root verification, and final Sol semantic review are complete. Commit, push, and Draft PR require separate explicit approval.
+1. NC-H1 local implementation, root verification, and final Sol semantic review are complete in Draft PR #743. Review and merge require separate explicit approval.
 2. Keep NC-M1/NC-M2/NC-H1 migration apply, production token/capability/history read/write, live issue/redemption/share/feed/entitlement operations, authenticated real-feed/browser smoke, activation, deploy, merge, and cleanup blocked behind their own explicit approvals. Keep the existing NC-O1/NC-O2 external-operation gates unchanged.
 3. Roadmap work beyond NC-H1 remains not started in this branch. Treat NC-V1, production/Creator activation, live token/share/history operations, and any retention/storage/read-volume budget as closed until their authority explicitly opens them.
 4. Continue to monitor the Supabase future-default-privileges support/risk boundary. New `public` database objects still require explicit object-level grants/RLS/default-privileges review.

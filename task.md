@@ -16,10 +16,10 @@
 
 ```text
 current_goal=comment-translator-creator-nc-b1-local-acceptance
-current_pr=none
-current_pr_state=not-created-not-approved
+current_pr=746
+current_pr_state=draft-open
 current_pr_merge_commit=none
-current_pr_implementation_head=none
+current_pr_implementation_head=ff186b6479f94a9feb442e6d95eed43ffacb534b
 previous_pr=745
 previous_pr_state=merged
 previous_pr_merge_commit=0a969240c54c76c328a337831044151de91ffbbf
@@ -33,7 +33,7 @@ container_disposition=rejected-not-a-candidate
 current_approved_boundary=creator-nc-b1-local-implementation-and-verification
 current_lane=NC-B1
 implementation_status=local-implementation-root-verification-and-semantic-review-complete
-publication_status=local-uncommitted-no-pr
+publication_status=committed-pushed-draft-pr-open
 base_deploy_status=not-confirmed-for-pr-745-integration-tip
 deploy_status=not-approved-for-nc-b1
 ```
@@ -42,7 +42,7 @@ deploy_status=not-approved-for-nc-b1
 - PR #745 final head `020203ffcfa9de89bedb4130cf0205d9a012fc65` is merged into `codex/comment-translator-free-public-beta-integration` at exact integration tip `0a969240c54c76c328a337831044151de91ffbbf`; fresh fetch, exact tip, and ancestry checks passed. A successful post-merge deployment for PR #745 was not confirmed and is not inferred from merge state.
 - NC-B1 adds zero-input authenticated and hash-allowlisted Creator Checkout/Portal commands, a fixed closed production activation policy, service-role-only durable Checkout reservation and signed lifecycle RPCs, owner-scoped Portal reads, pinned-version raw-body Stripe signature verification, and a reservation-bound signed-event-only NC-D1 entitlement writer. Browser-selected owner/customer/subscription/price/plan/return/billing identifiers are not accepted. Checkout return/completion is never Paid evidence; only compatible signed subscription evidence can activate Paid. Signed expiration alone releases a post-Stripe reservation, while trial, inactive, cancellation, deletion, payment failure, price removal, missing/unreadable configuration, malformed/unknown events, ownership mismatch, and writer failure remain Free or paid-inactive.
 - Focused NC-B1 RED/GREEN and repeated root reruns pass. The final fresh Sol review reports no in-scope finding after fixes for production adapter wiring, abuse guards, durable duplicate prevention, reservation/customer/subscription binding, multi-line and paginated event handling, stale/replay/timestamp ordering, inactive period preservation, Creator Price removal, and out-of-order webhook retry. The requested executable no-container, NC-F1/D1/E1/U1/P1/C1/O1/O2/M1/M2/H1/V1, login-only, and OAuth public-info set passes 17/17. Abuse hardening, Stripe paid-plan/live-readiness, security/privacy, session start/stop, disconnect/revocation, OAuth account-status, and OAuth token-persistence contracts are setup-blocked by missing `typescript` from absent `node_modules`; lint, strict TypeScript, Next build, and OpenNext build are likewise not run. Syntax, diff, manifest/lock/config isolation, browser-storage/query/log, secret/private identifier, and raw-payload persistence scans pass; the only secret-pattern candidate is a deterministic NC-D1 fixture placeholder, not a live value. No dependency install or manifest/lockfile change was performed.
-- Production Checkout/Portal/webhook adapters are implemented but unreachable behind the fixed closed gate. The additive NC-B1 migration remains local and unapplied. `has_more=true` remains retryable/fail-closed because live Stripe pagination is outside this lane. No live Stripe call, Product/Price/tax/legal decision, live key/webhook, remote Supabase read/write or migration apply, provider/account/browser production smoke, deploy, activation, public paid gate, Container/Docker/config/binding change, commit, push, PR, merge, or cleanup was performed in NC-B1. No UI or CSS changed, so width QA is not applicable.
+- Production Checkout/Portal/webhook adapters are implemented but unreachable behind the fixed closed gate. The additive NC-B1 migration remains local and unapplied. `has_more=true` remains retryable/fail-closed because live Stripe pagination is outside this lane. Draft PR #746 was opened from implementation commit `ff186b6479f94a9feb442e6d95eed43ffacb534b`; no live Stripe call, Product/Price/tax/legal decision, live key/webhook, remote Supabase read/write or migration apply, provider/account/browser production smoke, deploy, activation, public paid gate, Container/Docker/config/binding change, merge, or cleanup was performed in NC-B1. No UI or CSS changed, so width QA is not applicable.
 - NC-V1 adds one canonical presentation-only classification with `Super Chat > Super Sticker > owner > moderator > member > standard` precedence. Only strict normalized event/role signals classify rows; malformed, unknown, inconsistent, deleted, banned, ended, and legacy projections downgrade to standard. Feed, history, OBS, and moderator surfaces preserve existing safe translated/original/source/badge/purchase/moderation fields, while local `all / priority` filters never authorize, persist, query, schedule, meter, or mutate a row.
 - Focused NC-V1 RED/GREEN and root reruns pass. NC-F1/D1/E1/U1/P1/C1/O1/O2/M1/M2/H1, login-only, executable no-container, syntax, diff, changed-scope, file-size, browser-storage/query/log, private-field/raw-payload, migration/storage, and manifest/lock isolation checks pass. Read-only Sol semantic review found malformed-provider-event and compound-filter empty-state gaps; both were corrected, five malformed end-to-end fixtures now downgrade to standard, and the final fresh review reports no concrete finding. The approved `npm clean-install --progress=false` installed the locked tree without changing `package.json` or `package-lock.json`; lint, strict TypeScript, Next production build, and OpenNext build pass. Deterministic local Playwright fixtures at `390 / 820 / 1024 / 1280 / 1366px` cover feed/history/OBS/moderator standard, priority, deleted, empty, unavailable, filter, focus/keyboard, console, storage, and horizontal-overflow states with no console error, browser-storage write, or horizontal overflow. Twelve broader historical contracts remain red because they pin superseded task labels, old aggregate-action/runtime source shapes, or old changed-file allowlists; they did not identify a current NC-V1 type/build/runtime regression and were not widened in this lane.
 - Existing H1 migration/RPC/persisted JSON shape remains unchanged. New in-memory safe-history snapshots carry the validated priority projection, while persisted or legacy history rows return as standard rather than inferring owner/moderator/member or purchase priority from display labels. This safe downgrade is the residual local limitation until a separately approved storage-contract change exists.
@@ -137,7 +137,7 @@ The following require a separately stated target, ready preflight where applicab
 ## Next Reviewable Candidates
 
 1. If requested, approve dependency installation separately so NC-B1 lint, strict typecheck, Next/OpenNext builds, and dependency-backed historical contracts can run; otherwise retain the exact setup-blocked classification.
-2. After local acceptance, request separate commit/push/Draft PR approval for `codex/comment-translator-creator-nc-b1`. No migration apply, activation, deploy, or publication operation is implied by local completion.
+2. Review Draft PR #746. Merge, migration apply, activation, deploy, and publication remain separate approval boundaries.
 3. Keep the NC-B1 migration apply, live Stripe pagination/API, production database read/write, authenticated browser smoke, activation, deploy, merge, and cleanup blocked behind their own explicit approvals. Keep all NC-D1/E1/U1/P1/C1/O1/O2/M1/M2/H1/V1 external-operation gates unchanged.
 4. Continue to monitor the Supabase future-default-privileges support/risk boundary. New `public` database objects still require explicit object-level grants/RLS/default-privileges review.
 5. Do not reopen completed Free release or prompt-board history unless new evidence creates a current action.

@@ -81,8 +81,11 @@ export async function authorizeCommentTranslatorCreatorModeratorBrowserSession({
       capabilityDigest: digestCapability(capability),
       nowIso: new Date(nowMs).toISOString()
     });
-    if (read.status === "missing") return unavailable("invalid-credential", false);
-    if (read.status === "unreadable") return unavailable("moderator-share-unavailable", true);
+    if (read.status !== "ready") {
+      return read.status === "unreadable"
+        ? unavailable("moderator-share-unavailable", true)
+        : unavailable("invalid-credential", false);
+    }
     if (Date.parse(read.record.expiresAtIso) <= nowMs) return unavailable("invalid-credential", false);
     const current = await tokenRuntime.validateBrowserSession({
       ownerUserId: read.record.ownerUserId,

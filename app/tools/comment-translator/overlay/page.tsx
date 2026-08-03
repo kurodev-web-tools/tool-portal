@@ -41,8 +41,13 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function CommentTranslatorObsOverlayPage() {
+  const feed = await loadAuthorizedObsFeed();
+  return <CommentTranslatorObsOverlay feed={feed} />;
+}
+
+async function loadAuthorizedObsFeed() {
   if (isCommentTranslatorCreatorObsOverlayBrowserRouteClosed()) {
-    return <CommentTranslatorObsOverlay feed={unavailableFeed()} />;
+    return unavailableFeed();
   }
   const browserSessionStoreResult = createTrustedCommentTranslatorCreatorObsOverlayBrowserSessionStore();
   const tokenStoreResult = createTrustedCommentTranslatorCreatorObsTokenStore();
@@ -59,13 +64,13 @@ export default async function CommentTranslatorObsOverlayPage() {
     nowMs: Date.now()
   });
   if (authorization.status !== "authorized") {
-    return <CommentTranslatorObsOverlay feed={unavailableFeed()} />;
+    return unavailableFeed();
   }
 
   const durableSessionStore = createTrustedCommentTranslatorSessionSupabaseStore();
   const durableFeedStore = createTrustedCommentTranslatorRealCommentsFeedDurableStore();
   if (durableSessionStore.status !== "ready" || durableFeedStore.status !== "ready") {
-    return <CommentTranslatorObsOverlay feed={unavailableFeed()} />;
+    return unavailableFeed();
   }
 
   try {
@@ -73,16 +78,16 @@ export default async function CommentTranslatorObsOverlayPage() {
       ownerUserId: authorization.ownerUserId
     });
     if (!activeSession || activeSession.sessionReferenceId !== authorization.sessionReferenceId) {
-      return <CommentTranslatorObsOverlay feed={unavailableFeed()} />;
+      return unavailableFeed();
     }
     const feed = await readCommentTranslatorRealCommentsFeedForActiveSession({
       callerAuthorization: { status: "authorized", ownerUserId: authorization.ownerUserId },
       activeSession,
       durableFeedStore
     });
-    return <CommentTranslatorObsOverlay feed={feed.status === "ready" ? feed : unavailableFeed()} />;
+    return feed.status === "ready" ? feed : unavailableFeed();
   } catch {
-    return <CommentTranslatorObsOverlay feed={unavailableFeed()} />;
+    return unavailableFeed();
   }
 }
 

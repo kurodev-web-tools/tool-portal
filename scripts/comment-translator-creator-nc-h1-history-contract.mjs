@@ -29,6 +29,22 @@ const historyActionsSource = read("app/tools/comment-translator/history-actions.
 const aggregateActionsSource = read("app/tools/comment-translator/actions.ts");
 const panelSource = read("components/comment-translator/CommentTranslatorCreatorHistoryPanel.tsx");
 
+assert.match(
+  runtimeSource,
+  /Promise<\{ readonly historyStore: CommentTranslatorCreatorSafeHistoryStore; readonly ownerUserId: string; readonly sessionReferenceId: string \} \| null>/,
+  "authorized history context carries the non-null store proven by the authority boundary"
+);
+assert.match(
+  runtimeSource,
+  /context\.historyStore\.appendSafeHistory/,
+  "history writes use the store narrowed by the authorized context"
+);
+assert.match(
+  runtimeSource,
+  /context\.historyStore\.readSafeHistory/,
+  "history reads use the store narrowed by the authorized context"
+);
+
 const projection = await importTypeScript(projectionSource.replace('import "server-only";', ""));
 const runtime = await importTypeScript(runtimeSource.replace('import "server-only";', ""));
 
@@ -287,6 +303,12 @@ assert.equal(
   "unavailable",
   "a future row returned by an unreadable/malformed store fails closed"
 );
+store.replaceRows([{ ...storedBoundaryRow, recordedAtIso: new Date(nowMs + 1).toISOString() }]);
+assert.equal(
+  (await historyRuntime.read({ callerAuthority: { status: "authenticated", ownerUserId: "fixture-owner" }, nowMs })).status,
+  "unavailable",
+  "a future authoritative recorded timestamp fails closed"
+);
 store.replaceRows([{ ...storedBoundaryRow, moderationLabel: "deleted", originalText: "must-not-render", translatedText: null }]);
 assert.equal(
   (await historyRuntime.read({ callerAuthority: { status: "authenticated", ownerUserId: "fixture-owner" }, nowMs })).status,
@@ -349,7 +371,7 @@ for (const name of [
   "cleanupCommentTranslatorCreatorSafeHistoryForDisconnectAction",
   "cleanupCommentTranslatorCreatorSafeHistoryForAccountDeletionAction"
 ]) assert.match(historyActionsSource, new RegExp(`export\\s+async\\s+function\\s+${name}\\s*\\(\\s*\\)`), `history action takes no browser authority input: ${name}`);
-assert.match(historyActionsSource, /cleanupWiring:\s*["']server-orchestration-seam-not-wired/, "cleanup is explicitly an unwired server orchestration seam");
+assert.match(runtimeSource, /cleanupWiring:\s*["']server-orchestration-seam-not-wired/, "cleanup is explicitly an unwired server orchestration seam");
 assert.match(aggregateActionsSource, /from "\.\/history-actions"/, "the aggregate action module exposes the disconnected NC-H1 actions");
 assert.doesNotMatch(aggregateActionsSource, /NC-H1|history.*(?:localStorage|sessionStorage|indexedDB|console\.)/i, "the aggregate action module adds no browser authority or logging");
 

@@ -262,6 +262,6 @@ function failClosed(
 function denied(
   reason: "invalid-token" | "stale-or-replayed-token" | "overlay-unavailable",
   retryable: boolean
-): CommentTranslatorCreatorObsTokenRedeemResult {
+): Extract<CommentTranslatorCreatorObsTokenRedeemResult, { readonly status: "denied" }> {
   return { status: "denied", reason, retryable, browserSafe: true };
 }

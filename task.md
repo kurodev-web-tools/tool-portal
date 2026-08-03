@@ -15,11 +15,11 @@
 ## Current Goal
 
 ```text
-current_goal=comment-translator-creator-nc-v1-draft-pr-publication
-current_pr=pending-creation
-current_pr_state=approved-for-draft-creation
+current_goal=comment-translator-creator-nc-v1-draft-pr-review
+current_pr=745
+current_pr_state=draft-open
 current_pr_merge_commit=none
-current_pr_implementation_head=none
+current_pr_implementation_head=313702e0142c153be6f673e3ed8503d329703b54
 previous_pr=744
 previous_pr_state=merged
 previous_pr_merge_commit=ceed3348e1df207b8946df623cb270291edabc8c
@@ -29,15 +29,16 @@ feasibility_decision=conditional-go
 selected_runtime=cloudflare-workers-open-next
 selected_persistence=supabase-postgres-existing-server-only-boundary
 container_disposition=rejected-not-a-candidate
-current_approved_boundary=creator-nc-v1-through-draft-pr-creation
+current_approved_boundary=creator-nc-v1-draft-pr-created
 current_lane=NC-V1
 implementation_status=local-implementation-and-browser-verification-complete-semantic-review-clear
-publication_status=approved-pending-commit-push-draft-pr
+publication_status=draft-pr-open
 base_deploy_status=user-confirmed-success-pr-744
 deploy_status=not-approved-for-nc-v1
 ```
 
 - PR #744 final head `bbcb610f9c3857cf123a8c5e8190c1780e108d0f` is merged into `codex/comment-translator-free-public-beta-integration` at `ceed3348e1df207b8946df623cb270291edabc8c`. Fresh `git fetch origin --prune`, exact tip comparison, and ancestry verification passed. The user confirmed the post-merge automatic build/deploy completed successfully; no remote build log or production state was read in this task.
+- Draft PR #745 is open from `codex/comment-translator-creator-nc-v1` to `codex/comment-translator-free-public-beta-integration`; its verified remote implementation head is `313702e0142c153be6f673e3ed8503d329703b54`. The ordinary terminal `git push` path was policy-blocked after explicit user approval, so the GitHub connector created a remote commit from a tree SHA verified identical to the local implementation tree before creating the branch and Draft PR.
 - NC-V1 adds one canonical presentation-only classification with `Super Chat > Super Sticker > owner > moderator > member > standard` precedence. Only strict normalized event/role signals classify rows; malformed, unknown, inconsistent, deleted, banned, ended, and legacy projections downgrade to standard. Feed, history, OBS, and moderator surfaces preserve existing safe translated/original/source/badge/purchase/moderation fields, while local `all / priority` filters never authorize, persist, query, schedule, meter, or mutate a row.
 - Focused NC-V1 RED/GREEN and root reruns pass. NC-F1/D1/E1/U1/P1/C1/O1/O2/M1/M2/H1, login-only, executable no-container, syntax, diff, changed-scope, file-size, browser-storage/query/log, private-field/raw-payload, migration/storage, and manifest/lock isolation checks pass. Read-only Sol semantic review found malformed-provider-event and compound-filter empty-state gaps; both were corrected, five malformed end-to-end fixtures now downgrade to standard, and the final fresh review reports no concrete finding. The approved `npm clean-install --progress=false` installed the locked tree without changing `package.json` or `package-lock.json`; lint, strict TypeScript, Next production build, and OpenNext build pass. Deterministic local Playwright fixtures at `390 / 820 / 1024 / 1280 / 1366px` cover feed/history/OBS/moderator standard, priority, deleted, empty, unavailable, filter, focus/keyboard, console, storage, and horizontal-overflow states with no console error, browser-storage write, or horizontal overflow. Twelve broader historical contracts remain red because they pin superseded task labels, old aggregate-action/runtime source shapes, or old changed-file allowlists; they did not identify a current NC-V1 type/build/runtime regression and were not widened in this lane.
 - Existing H1 migration/RPC/persisted JSON shape remains unchanged. New in-memory safe-history snapshots carry the validated priority projection, while persisted or legacy history rows return as standard rather than inferring owner/moderator/member or purchase priority from display labels. This safe downgrade is the residual local limitation until a separately approved storage-contract change exists.

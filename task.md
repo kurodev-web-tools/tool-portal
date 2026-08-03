@@ -16,10 +16,10 @@
 
 ```text
 current_goal=comment-translator-creator-nc-q1-local-integrated-qa
-current_pr=none
-current_pr_state=not-opened
+current_pr=747
+current_pr_state=draft-open
 current_pr_merge_commit=none
-current_pr_implementation_head=none
+current_pr_implementation_head=297a64f45c8d452a0236671384c7d62156a930d6
 previous_pr=746
 previous_pr_state=merged
 previous_pr_merge_commit=10c3adf507d21d61891f62a3b2ee9a24f28ea56d
@@ -33,12 +33,13 @@ container_disposition=rejected-not-a-candidate
 current_approved_boundary=creator-nc-q1-local-implementation-and-verification
 current_lane=NC-Q1
 implementation_status=local-implementation-root-verification-and-semantic-review-complete
-publication_status=uncommitted-unpublished
+publication_status=committed-pushed-draft-pr-open
 base_deploy_status=not-confirmed-for-pr-746-integration-tip
 deploy_status=not-approved-for-nc-q1
 ```
 
 - PR #746 final head `ce1d064190de3a2db147bc2fedc2633054e1c78e` is merged into `codex/comment-translator-free-public-beta-integration` at exact integration tip `10c3adf507d21d61891f62a3b2ee9a24f28ea56d`. A successful post-merge deployment for PR #746 was not confirmed and is not inferred from merge state.
+- Draft PR #747 was opened from NC-Q1 implementation commit `297a64f45c8d452a0236671384c7d62156a930d6` against `codex/comment-translator-free-public-beta-integration`. Merge, deployment, activation, migration apply, live operations, and cleanup remain separate approval boundaries.
 - NC-Q1 adds a deterministic fixture-only integration harness, an executable 14-lane local matrix, a five-class evidence authority (`fixture / local / gated / blocked / live`), and an operator/manual QA checklist. The behavioral composition invokes actual B1→D1→E1→C1/P1/U1→V1/H1 projection/store/runtime exports plus actual O1→O2 and M1→M2 capability pairs without editing production sources. The effective path always observes fixed-closed activation and performs zero paid side effects; the hypothetical Paid path requires an explicit fixture-only marker with production/deployed proof false. Checkout completion remains non-evidence, only signed active subscription evidence can create the Paid control, pre-provider budget/quota rejection prevents provider work, provider failure makes no usage call, and post-provider usage commit rejection suppresses output and records no success. The actual H1 store adapter/parser enforces exact RPC/read-row allowlists, removes raw owner/session/message/unexpected/correlation fields, retains translated text, and preserves the existing safe `standard` priority downgrade for persisted rows.
 - Focused NC-Q1 RED detected the missing entrypoint, then corrected GREEN passed. Root rejected an initial self-contained fake/static-lane implementation after semantic review and replaced it with the actual runtime composition above; deployed-proof bypass, pre-budget/post-usage conflation, incomplete H1 safe-key assertions, and the handwritten H1 store gap were also closed. Root reruns pass Node syntax, the focused integrated entrypoint, the exact 14 Creator lane contracts, and the broader 17/17 no-container/login/OAuth public-info set. Legacy 23 completeness, branch/base ancestry, changed-scope, manifest/lock/config, migration, UI/CSS, secret literal, private fixture identifier, raw-payload persistence, browser storage/query/log API, network-import, and trailing-whitespace scans pass. `node_modules` and the eslint/tsc/next/OpenNext executables are absent, so lint, strict typecheck, Next build, OpenNext build, and dependency-backed contracts remain setup-blocked; no install was performed. No UI/CSS changed, so deterministic width QA is not applicable.
 - The final fresh read-only Sol review reports no concrete in-scope finding after the actual H1 store/parser correction. Residual uncertainty is limited to dependency-backed checks blocked by absent `node_modules` and external/live/deployed evidence that was not authorized or performed.

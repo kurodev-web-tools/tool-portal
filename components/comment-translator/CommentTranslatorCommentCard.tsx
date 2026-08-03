@@ -1,5 +1,6 @@
 import type { CommentTranslatorComment, CommentTranslatorDisplayMode } from "@/lib/comment-translator";
 import type { CommentTranslatorAuthorDisplayNamePolicy } from "@/lib/comment-translator-real-comments-feed-shared";
+import { readCommentTranslatorProjectedPriority } from "@/lib/comment-translator-priority-classification";
 import { skipReasonLabel, statusClassName, statusLabel } from "./comment-translator-dock-format";
 import type { CommentTranslatorUiCopy } from "./comment-translator-dock-model";
 
@@ -13,6 +14,8 @@ export function CommentTranslatorCommentCard({ comment, displayMode, authorDispl
   const showOriginal = displayMode === "both" || displayMode === "original";
   const showTranslated = (displayMode === "both" || displayMode === "translated") && Boolean(comment.translatedText);
   const showTranslatedFallback = displayMode === "translated" && !comment.translatedText;
+  const priority = readCommentTranslatorProjectedPriority(comment.priority);
+  const safeBadgeLabel = priority.badgeLabel ?? (comment.source !== "manual" ? comment.badge : undefined);
   return (
     <article className={["rounded-base border bg-surface p-3 shadow-sm sm:p-4", comment.badge === "support" ? "border-amber-200 bg-amber-50/35" : "border-border", comment.status === "error" ? "border-red-200 bg-red-50/35" : ""].join(" ")}>
       <div className="grid gap-3 sm:grid-cols-[2.25rem_minmax(0,1fr)_auto] sm:items-start">
@@ -23,7 +26,7 @@ export function CommentTranslatorCommentCard({ comment, displayMode, authorDispl
             <span className="rounded-base bg-surface-muted px-2 py-1 text-[11px] font-bold text-muted">{comment.timestamp}</span>
             {comment.source === "manual" ? <span className="rounded-base border border-cyan-200 bg-cyan-50 px-2 py-1 text-[11px] font-bold text-cyan-700">{copy.manualInput.sourceBadge}</span> : null}
             {comment.source === "server" && comment.sourceLabel ? <span className="rounded-base border border-indigo-200 bg-indigo-50 px-2 py-1 text-[11px] font-bold text-indigo-700">{comment.sourceLabel}</span> : null}
-            {comment.badge && comment.source !== "manual" ? <span className="rounded-base border border-blue-200 bg-blue-50 px-2 py-1 text-[11px] font-bold text-blue-700">{comment.badge}</span> : null}
+            {safeBadgeLabel ? <span className="rounded-base border border-violet-200 bg-violet-50 px-2 py-1 text-[11px] font-bold text-violet-700">{safeBadgeLabel}</span> : null}
           </div>
           <div className="mt-3 grid gap-2">
             {showOriginal ? <div className="grid min-w-0 gap-2 rounded-base border border-border/70 bg-background/60 p-2.5 sm:grid-cols-[3.5rem_minmax(0,1fr)]"><span className="w-fit rounded-base bg-blue-50 px-2 py-1 text-[11px] font-black text-blue-700">{comment.sourceLanguage}</span><p className="min-w-0 break-words text-sm leading-6 text-foreground">{comment.originalText}</p></div> : null}

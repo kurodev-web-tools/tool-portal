@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { readCommentTranslatorProjectedPriority } from "@/lib/comment-translator-priority-classification";
 import type { CommentTranslatorRealCommentsFeedState } from "@/lib/comment-translator-real-comments-feed-shared";
 
 const overlayRefreshIntervalMs = 15_000;
@@ -17,17 +18,19 @@ export function CommentTranslatorObsOverlay({
     return () => window.clearInterval(refreshHandle);
   }, [router]);
   const translatedRows = feed.status === "ready"
-    ? feed.rows.filter((row) => row.translationStatus === "translated-f10" && Boolean(row.translatedText))
+    ? feed.rows
+      .filter((row) => row.moderationLabel === "visible" && row.translationStatus === "translated-f10" && Boolean(row.translatedText))
+      .map((row) => ({ row, priority: readCommentTranslatorProjectedPriority(row.priority) }))
     : [];
 
   return (
     <main className="comment-translator-obs-overlay-canvas" aria-live="polite">
       <section className="comment-translator-obs-overlay-feed" aria-label="Translated live comments">
-        {translatedRows.map((row) => (
+        {translatedRows.map(({ row, priority }) => (
           <article key={row.id} className="comment-translator-obs-overlay-row">
             <div className="comment-translator-obs-overlay-row-header">
               <p className="comment-translator-obs-overlay-author">{row.authorDisplayName ?? row.authorLabel}</p>
-              {row.badgeLabel ? <span className="comment-translator-obs-overlay-badge">{row.badgeLabel}</span> : null}
+              {priority.badgeLabel ?? row.badgeLabel ? <span className="comment-translator-obs-overlay-badge">{priority.badgeLabel ?? row.badgeLabel}</span> : null}
               {row.purchaseLabel ? <span className="comment-translator-obs-overlay-purchase">{row.purchaseLabel}</span> : null}
             </div>
             <p className="comment-translator-obs-overlay-translated">{row.translatedText}</p>

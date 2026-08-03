@@ -45,7 +45,14 @@ assert.match(
   "history reads use the store narrowed by the authorized context"
 );
 
-const projection = await importTypeScript(projectionSource.replace('import "server-only";', ""));
+const projection = await importTypeScript(
+  projectionSource
+    .replace('import "server-only";', "")
+    .replace(
+      'import { readCommentTranslatorProjectedPriority } from "./comment-translator-priority-classification";',
+      'const readCommentTranslatorProjectedPriority = () => ({ category: "standard", lane: "standard", rank: 5, badgeLabel: null });'
+    )
+);
 const runtime = await importTypeScript(runtimeSource.replace('import "server-only";', ""));
 
 const nowMs = Date.parse("2026-08-02T12:00:00.000Z");
@@ -59,6 +66,7 @@ const safeFeedRow = {
   translatedText: "Fixture translated",
   translationStatus: "translated-f10",
   moderationLabel: "visible",
+  priority: { category: "standard", lane: "standard", rank: 5, badgeLabel: null },
   badgeLabel: "member",
   purchaseLabel: null,
   publishedAtIso: "2026-08-02T11:59:59.000Z"
@@ -83,6 +91,7 @@ assert.deepEqual(projected, {
   translatedText: "Fixture translated",
   translationStatus: "translated-f10",
   moderationLabel: "visible",
+  priority: { category: "standard", lane: "standard", rank: 5, badgeLabel: null },
   badgeLabel: "member",
   purchaseLabel: null
 }, "the projection retains only the approved safe-feed whitelist");
@@ -445,7 +454,7 @@ assert.match(panelSource, /deterministic-props-only-not-production-wired/, "the 
 assert.match(panelSource, /<details/, "the panel offers a keyboard-focusable safe original-text control");
 assert.match(panelSource, /w-full/, "the panel has a width-safe layout class");
 for (const state of ["ready", "unavailable", "deleted"]) assert.match(panelSource, new RegExp(`status\\s*===\\s*["']${state}["']`), `panel renders the ${state} state`);
-assert.doesNotMatch(panelSource, /messageReferenceId|ownerUserId|sessionReferenceId|liveChatId|rawProviderPayload|rawComments|localStorage|sessionStorage|indexedDB|searchParams|console\.|priority|filter/i, "the panel has no identifiers, private fields, browser storage, or NC-V1 work");
+assert.doesNotMatch(panelSource, /messageReferenceId|ownerUserId|sessionReferenceId|liveChatId|rawProviderPayload|rawComments|localStorage|sessionStorage|indexedDB|searchParams|console\./i, "the panel has no identifiers, private fields, browser storage, or logs");
 
 process.stdout.write("comment translator NC-H1 seven-day safe history contract passed\n");
 

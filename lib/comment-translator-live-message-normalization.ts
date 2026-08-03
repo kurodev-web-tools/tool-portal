@@ -1,6 +1,11 @@
 import "server-only";
 
 import type { YouTubeProviderSafeCommentPayload } from "./comment-translator-youtube-input-boundary";
+import {
+  readCommentTranslatorProjectedPriority,
+  resolveCommentTranslatorPriorityClassification,
+  type CommentTranslatorProjectedPriority
+} from "./comment-translator-priority-classification";
 
 export type CommentTranslatorNormalizedLiveMessageKind =
   | "text"
@@ -57,9 +62,9 @@ export type CommentTranslatorYouTubeLiveMessageProviderPayload = {
     liveChatEndedDetails?: Record<string, unknown>;
   };
   authorDetails?: {
-    isChatOwner?: boolean;
-    isChatModerator?: boolean;
-    isChatSponsor?: boolean;
+    isChatOwner?: unknown;
+    isChatModerator?: unknown;
+    isChatSponsor?: unknown;
     channelId?: string;
     channelUrl?: string;
     profileImageUrl?: string;
@@ -87,6 +92,10 @@ export type CommentTranslatorNormalizedLiveMessage = {
   system: {
     subtype: "new-sponsor" | "system-message" | "unknown";
   } | null;
+  prioritySignal: {
+    event: "text" | "super-chat" | "super-sticker" | "member" | "new-sponsor" | "other";
+    valid: boolean;
+  };
   targetMessageReferenceId: string | null;
   terminalSignal: "stream-ended" | null;
   moderation: {
@@ -114,6 +123,7 @@ export type CommentTranslatorLiveMessageBrowserSafeRow = {
   role: CommentTranslatorNormalizedLiveMessage["role"];
   purchase: CommentTranslatorNormalizedLiveMessage["purchase"];
   member: CommentTranslatorNormalizedLiveMessage["member"];
+  priority: CommentTranslatorProjectedPriority;
   moderationLabel: "visible" | "deleted" | "banned" | "ended" | "system";
   deletionPropagation: "not-deleted" | "message-reference-tombstone-only" | "author-history-p1-deferred" | "stream-ended";
   rawProviderPayload: "not-returned-by-design";
@@ -268,6 +278,16 @@ export function projectCommentTranslatorNormalizedLiveMessagesForBrowser(
     role: message.role,
     purchase: message.purchase,
     member: message.member,
+    priority: message.prioritySignal.valid
+      ? resolveCommentTranslatorPriorityClassification({
+          kind: message.kind,
+          role: message.role,
+          purchase: message.purchase,
+          member: message.member,
+          system: message.system,
+          moderation: message.moderation
+        })
+      : readCommentTranslatorProjectedPriority(undefined),
     moderationLabel: mapModerationLabel(message),
     deletionPropagation: mapDeletionPropagation(message),
     rawProviderPayload: "not-returned-by-design",
@@ -291,6 +311,7 @@ export function mapYouTubeProviderSafeCommentsToNormalizedLiveMessages(
       purchase: null,
       member: null,
       system: null,
+      prioritySignal: { event: "other" as const, valid: false },
       targetMessageReferenceId: null,
       terminalSignal: null,
       moderation: visibleModeration(),
@@ -308,6 +329,7 @@ function normalizeProviderPayload({
   messageReferenceId: string;
 }): CommentTranslatorNormalizedLiveMessage {
   const type = normalizeProviderType(payload.snippet?.type);
+  const prioritySignal = readPrioritySignal(payload.snippet);
   const publishedAtIso = normalizePublishedAtIso(payload.snippet?.publishedAt);
   const role = normalizeAuthorRole(payload.authorDetails);
   const authorDisplayName = normalizeAuthorDisplayName(payload.authorDetails?.displayName);
@@ -318,6 +340,7 @@ function normalizeProviderPayload({
     authorDisplayName,
     source: "youtube-live-chat" as const,
     role,
+    prioritySignal,
     targetMessageReferenceId: null,
     terminalSignal: null,
     rawProviderPayload: "not-returned-by-design" as const,
@@ -481,6 +504,17 @@ function normalizeProviderType(type: string | null | undefined): CommentTranslat
   return "text";
 }
 
+function readPrioritySignal(
+  snippet: CommentTranslatorYouTubeLiveMessageProviderPayload["snippet"]
+): CommentTranslatorNormalizedLiveMessage["prioritySignal"] {
+  if (snippet?.type === "textMessageEvent") return { event: "text", valid: isRecord(snippet.textMessageDetails) };
+  if (snippet?.type === "superChatEvent") return { event: "super-chat", valid: isRecord(snippet.superChatDetails) };
+  if (snippet?.type === "superStickerEvent") return { event: "super-sticker", valid: isRecord(snippet.superStickerDetails) };
+  if (snippet?.type === "memberMilestoneChatEvent") return { event: "member", valid: isRecord(snippet.memberMilestoneChatDetails) };
+  if (snippet?.type === "newSponsorEvent") return { event: "new-sponsor", valid: isRecord(snippet.newSponsorDetails) };
+  return { event: "other", valid: false };
+}
+
 function normalizeMessageReferenceId(payload: CommentTranslatorYouTubeLiveMessageProviderPayload): string | null {
   return normalizeString(payload.id);
 }
@@ -509,6 +543,10 @@ function normalizeString(value: string | null | undefined): string | null {
   return normalized ? normalized : null;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function normalizeNumber(value: number | null | undefined): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
@@ -516,15 +554,15 @@ function normalizeNumber(value: number | null | undefined): number | null {
 function normalizeAuthorRole(
   authorDetails: CommentTranslatorYouTubeLiveMessageProviderPayload["authorDetails"]
 ): CommentTranslatorNormalizedLiveMessage["role"] {
-  if (authorDetails?.isChatOwner) {
+  if (authorDetails?.isChatOwner === true) {
     return "owner";
   }
 
-  if (authorDetails?.isChatModerator) {
+  if (authorDetails?.isChatModerator === true) {
     return "moderator";
   }
 
-  if (authorDetails?.isChatSponsor) {
+  if (authorDetails?.isChatSponsor === true) {
     return "member";
   }
 

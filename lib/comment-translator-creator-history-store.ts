@@ -6,6 +6,7 @@ import type {
   CommentTranslatorCreatorSafeHistorySnapshot,
   CommentTranslatorCreatorSafeHistoryStore
 } from "./comment-translator-creator-history-types";
+import { readCommentTranslatorProjectedPriority } from "./comment-translator-priority-classification";
 
 type TrustedEnvName = "NEXT_PUBLIC_SUPABASE_URL" | "SUPABASE_SERVICE_ROLE_KEY";
 type RpcResult = { readonly data: unknown; readonly error: { readonly code?: string; readonly message?: string } | null };
@@ -152,6 +153,7 @@ function parseRow(value: unknown): CommentTranslatorCreatorSafeHistoryRow | null
     translatedText: value.translated_text,
     translationStatus: value.translation_status,
     moderationLabel: value.moderation_label,
+    priority: readCommentTranslatorProjectedPriority(undefined),
     badgeLabel: value.badge_label,
     purchaseLabel: value.purchase_label,
     sourcePublishedAtIso: value.source_published_at,

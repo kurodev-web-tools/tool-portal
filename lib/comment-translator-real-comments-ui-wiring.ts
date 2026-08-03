@@ -10,6 +10,7 @@ import type {
   CommentTranslatorRealCommentsDisplayRow,
   CommentTranslatorRealCommentsFeedState
 } from "./comment-translator-real-comments-feed-shared";
+import { readCommentTranslatorProjectedPriority } from "./comment-translator-priority-classification";
 import type { CommentTranslatorSessionBrowserSafeState } from "./comment-translator-session-runtime";
 import type { CommentTranslatorTargetLanguageId } from "./comment-translator";
 
@@ -169,6 +170,7 @@ function mapBrowserSafeRowToDisplayRow({
     translationCacheStatus: null,
     moderationLabel: row.moderationLabel,
     deletionPropagation: row.deletionPropagation,
+    priority: readCommentTranslatorProjectedPriority(row.priority),
     badgeLabel: resolveBadgeLabel(row),
     purchaseLabel: row.purchase?.amountDisplayString ?? null,
     memberMonthCount: row.member?.monthCount ?? null,

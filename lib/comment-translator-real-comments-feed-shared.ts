@@ -5,6 +5,10 @@ import type {
 } from "./comment-translator";
 import type { CommentTranslationCacheOutcome } from "./comment-translator-provider-boundary";
 import type { Locale } from "./locale";
+import {
+  readCommentTranslatorProjectedPriority,
+  type CommentTranslatorProjectedPriority
+} from "./comment-translator-priority-classification";
 
 export type CommentTranslatorRealCommentsFeedStatus = "ready" | "inactive" | "unavailable";
 export type CommentTranslatorLiveProviderDiagnostics = {
@@ -61,6 +65,7 @@ export type CommentTranslatorRealCommentsDisplayRow = {
   translationCacheStatus: CommentTranslationCacheOutcome | null;
   moderationLabel: "visible" | "deleted" | "banned" | "ended" | "system";
   deletionPropagation: "not-deleted" | "message-reference-tombstone-only" | "author-history-p1-deferred" | "stream-ended";
+  priority?: CommentTranslatorProjectedPriority;
   badgeLabel: "owner" | "moderator" | "member" | "super-chat" | "super-sticker" | "system" | null;
   purchaseLabel: string | null;
   memberMonthCount: number | null;
@@ -241,7 +246,8 @@ export function mapCommentTranslatorRealCommentsFeedRowsToUiComments({
       skipReason: resolveSkipReason(row),
       errorMessage: resolveErrorMessage(row),
       badge: row.badgeLabel ?? undefined,
-      unitCost: row.translationStatus === "translated-f10" ? 1 : 0
+      unitCost: row.translationStatus === "translated-f10" ? 1 : 0,
+      priority: readCommentTranslatorProjectedPriority(row.priority)
     };
 
     if (row.moderationLabel === "ended") {

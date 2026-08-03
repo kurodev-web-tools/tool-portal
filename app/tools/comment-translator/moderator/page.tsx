@@ -35,6 +35,7 @@ import {
 import {
   type CommentTranslatorRealCommentsFeedState
 } from "@/lib/comment-translator-real-comments-feed-shared";
+import { readCommentTranslatorProjectedPriority } from "@/lib/comment-translator-priority-classification";
 
 export const metadata: Metadata = {
   title: "Comment Translator Moderator Share",
@@ -113,7 +114,8 @@ function projectModeratorSafeFeed(feed: CommentTranslatorRealCommentsFeedState):
       purchaseLabel: row.purchaseLabel,
       sourceAttributionLabel: row.sourceAttributionLabel,
       translationStatus: row.translationStatus,
-      moderationLabel: row.moderationLabel
+      moderationLabel: row.moderationLabel,
+      priority: readCommentTranslatorProjectedPriority(row.priority)
     }))
   };
 }

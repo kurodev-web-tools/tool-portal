@@ -2,6 +2,7 @@ import "server-only";
 
 import { createHash } from "node:crypto";
 import type { CommentTranslatorCreatorSafeHistorySnapshot } from "./comment-translator-creator-history-types";
+import { readCommentTranslatorProjectedPriority } from "./comment-translator-priority-classification";
 import type { CommentTranslatorRealCommentsDisplayRow } from "./comment-translator-real-comments-feed-shared";
 
 const translationStatuses = new Set([
@@ -43,6 +44,7 @@ export function projectCommentTranslatorCreatorSafeHistoryRow({
     | "translatedText"
     | "translationStatus"
     | "moderationLabel"
+    | "priority"
     | "badgeLabel"
     | "purchaseLabel"
     | "publishedAtIso"
@@ -76,6 +78,7 @@ export function projectCommentTranslatorCreatorSafeHistoryRow({
     translatedText: row.translatedText,
     translationStatus: row.translationStatus,
     moderationLabel: row.moderationLabel,
+    priority: readCommentTranslatorProjectedPriority(row.priority),
     badgeLabel: row.badgeLabel,
     purchaseLabel: row.purchaseLabel
   };

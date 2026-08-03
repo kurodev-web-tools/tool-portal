@@ -35,6 +35,7 @@ export const commentTranslatorCreatorSafeHistoryRuntimeContract = {
   productionLiveOperation: "fixed-closed",
   browserAuthority: "forbidden",
   cleanup: "owner-derived-idempotent-disconnect-and-account-seams",
+  cleanupWiring: "server-orchestration-seam-not-wired-to-existing-oauth-or-deletion-request",
   scheduler: "forbidden"
 } as const;
 
@@ -91,13 +92,21 @@ async function captureSafeHistory({
   if (!context) return unavailable();
   let safeFeed: Awaited<ReturnType<CommentTranslatorCreatorHistorySafeFeed["readCurrentSafeRows"]>>;
   try {
-    safeFeed = await readSafeFeed({ ...context, nowMs });
+    safeFeed = await readSafeFeed({
+      ownerUserId: context.ownerUserId,
+      sessionReferenceId: context.sessionReferenceId,
+      nowMs
+    });
   } catch {
     return unavailable();
   }
   if (safeFeed.status !== "ready" || !safeFeed.rows.every((row) => isSafeHistorySnapshot(row, nowMs))) return unavailable();
   try {
-    const written = await historyStore.appendSafeHistory({ ...context, rows: safeFeed.rows });
+    const written = await context.historyStore.appendSafeHistory({
+      ownerUserId: context.ownerUserId,
+      sessionReferenceId: context.sessionReferenceId,
+      rows: safeFeed.rows
+    });
     return written.status === "recorded" ? written : unavailable();
   } catch {
     return unavailable();
@@ -120,7 +129,10 @@ async function readSafeHistory({
   const context = await readAuthorizedContext({ historyStore, paidAuthority, sessionAuthority, callerAuthority, nowMs });
   if (!context) return unavailable();
   try {
-    const read = await historyStore.readSafeHistory(context);
+    const read = await context.historyStore.readSafeHistory({
+      ownerUserId: context.ownerUserId,
+      sessionReferenceId: context.sessionReferenceId
+    });
     const evaluatedAtMs = read.status === "ready" ? Date.parse(read.evaluatedAtIso) : Number.NaN;
     if (read.status !== "ready" || !Number.isFinite(evaluatedAtMs) || !read.rows.every((row) => isSafeHistoryRow(row, evaluatedAtMs))) return unavailable();
     return { status: "ready" as const, rows: read.rows };
@@ -158,7 +170,7 @@ async function readAuthorizedContext({
   readonly sessionAuthority: CommentTranslatorCreatorHistorySessionAuthority;
   readonly callerAuthority: CommentTranslatorCreatorCallerAuthority;
   readonly nowMs: number;
-}): Promise<{ readonly ownerUserId: string; readonly sessionReferenceId: string } | null> {
+}): Promise<{ readonly historyStore: CommentTranslatorCreatorSafeHistoryStore; readonly ownerUserId: string; readonly sessionReferenceId: string } | null> {
   const ownerUserId = readOwner(callerAuthority);
   if (!historyStore || !ownerUserId || !Number.isFinite(nowMs)) return null;
   let paid: Awaited<ReturnType<CommentTranslatorCreatorHistoryPaidAuthority["authorize"]>>;
@@ -171,7 +183,7 @@ async function readAuthorizedContext({
   try {
     const session = await sessionAuthority.readCurrentForOwner(ownerUserId, nowMs);
     return session.status === "ready" && isNonEmpty(session.sessionReferenceId)
-      ? { ownerUserId, sessionReferenceId: session.sessionReferenceId }
+      ? { historyStore, ownerUserId, sessionReferenceId: session.sessionReferenceId }
       : null;
   } catch {
     return null;
@@ -179,8 +191,10 @@ async function readAuthorizedContext({
 }
 
 function isSafeHistoryRow(row: CommentTranslatorCreatorSafeHistoryRow, evaluatedAtMs: number): boolean {
+  const recordedAtMs = Date.parse(row.recordedAtIso);
   return isSafeHistoryFields(row) &&
-    isTimestamp(row.recordedAtIso) &&
+    Number.isFinite(recordedAtMs) &&
+    recordedAtMs <= evaluatedAtMs &&
     isCommentTranslatorCreatorSafeHistoryWithinInclusiveCutoff({ sourcePublishedAtIso: row.sourcePublishedAtIso, nowMs: evaluatedAtMs });
 }
 
@@ -208,10 +222,6 @@ function isNullableString(value: unknown): value is string | null {
 
 function isNonEmpty(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
-}
-
-function isTimestamp(value: unknown): value is string {
-  return typeof value === "string" && Number.isFinite(Date.parse(value));
 }
 
 function isCorrelationDigest(value: unknown): value is string {

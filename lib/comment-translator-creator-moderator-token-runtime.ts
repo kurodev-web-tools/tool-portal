@@ -102,8 +102,11 @@ async function readStatus(dependencies: RuntimeDependencies, request: CallerRequ
   if (!dependencies.tokenStore) return failClosed("token-store-unavailable", true);
   try {
     const current = await dependencies.tokenStore.readCurrent({ ownerUserId, nowIso: new Date(request.nowMs).toISOString() });
-    if (current.status === "missing") return failClosed("token-missing", false);
-    if (current.status === "unreadable") return failClosed("token-store-unavailable", true);
+    if (current.status !== "ready") {
+      return current.status === "unreadable"
+        ? failClosed("token-store-unavailable", true)
+        : failClosed("token-missing", false);
+    }
     const session = await readSession(dependencies.sessionAuthority, ownerUserId, request.nowMs);
     const reason = currentRecordFailure(current.record, ownerUserId, session, request.nowMs);
     if (reason) return failClosed(reason, reason === "token-store-unavailable");
@@ -153,8 +156,11 @@ async function validatePresentedToken(
       tokenDigest: digestToken(presentedToken),
       nowIso: new Date(nowMs).toISOString()
     });
-    if (current.status === "missing") return denied("invalid-token", false);
-    if (current.status === "unreadable") return denied("moderator-share-unavailable", true);
+    if (current.status !== "ready") {
+      return current.status === "unreadable"
+        ? denied("moderator-share-unavailable", true)
+        : denied("invalid-token", false);
+    }
     if (current.record.redeemedAtIso !== null) return denied("invalid-token", false);
     const session = await readSession(dependencies.sessionAuthority, current.record.ownerUserId, nowMs);
     const reason = currentRecordFailure(current.record, current.record.ownerUserId, session, nowMs);
@@ -185,8 +191,11 @@ async function validateBrowserSession(
       ownerUserId: request.ownerUserId,
       nowIso: new Date(request.nowMs).toISOString()
     });
-    if (current.status === "missing") return denied("invalid-token", false);
-    if (current.status === "unreadable") return denied("moderator-share-unavailable", true);
+    if (current.status !== "ready") {
+      return current.status === "unreadable"
+        ? denied("moderator-share-unavailable", true)
+        : denied("invalid-token", false);
+    }
     if (
       current.record.ownerUserId !== request.ownerUserId ||
       current.record.sessionReferenceId !== request.sessionReferenceId ||

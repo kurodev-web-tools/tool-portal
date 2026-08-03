@@ -16,12 +16,6 @@ import { createTrustedCommentTranslatorRealCommentsFeedDurableStore } from "@/li
 import { isCommentTranslatorHeartbeatMissing } from "@/lib/comment-translator-session-policy";
 import { readCommentTranslatorActionCallerAuthorization } from "./action-context";
 
-export const commentTranslatorCreatorSafeHistoryActionsContract = {
-  productionActivation: "fixed-closed-through-nc-e1-policy",
-  paidAuthority: "nc-d1-store-and-nc-e1-authorizer-after-approved-policy-change",
-  cleanupWiring: "server-orchestration-seam-not-wired-to-existing-oauth-or-deletion-request"
-} as const;
-
 export async function readCommentTranslatorCreatorSafeHistoryAction() {
   const context = await createCommentTranslatorCreatorSafeHistoryActionContext();
   return context.runtime.read({ callerAuthority: context.callerAuthority, nowMs: Date.now() });

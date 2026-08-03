@@ -6,7 +6,7 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0-implementation | Comment Translator Creator NC-H1 Seven-Day Safe History | PR #743 is merged at integration commit `3a0718c8707a8f53a25c93c0f87b3b909ef9bc6a`. The #739-#743 automatic Cloudflare failures were reproduced and repaired locally across OBS, moderator, and history boundaries. Strict typecheck, lint, Next build, and OpenNext/Cloudflare build now pass locally. Commit, push, PR, remote automatic build, deploy, migration apply, live history/feed/entitlement read or write, activation, and cleanup remain unapproved or unverified. | `scripts/comment-translator-creator-nc-h1-history-contract.mjs`, `lib/comment-translator-creator-history-runtime.ts`, `components/comment-translator/CommentTranslatorCreatorHistoryPanel.tsx`, `supabase/migrations/20260802040000_comment_translator_creator_safe_history.sql` |
+| P0-implementation | Comment Translator Creator NC-H1 Seven-Day Safe History | Draft PR #744 is open from `codex/comment-translator-creator-build-fix` to `codex/comment-translator-free-public-beta-integration`. The #739-#743 automatic Cloudflare failures were reproduced and repaired locally across OBS, moderator, and history boundaries. Strict typecheck, lint, Next build, and OpenNext/Cloudflare build pass locally. Remote automatic build, review, merge, deploy, migration apply, live history/feed/entitlement read or write, activation, and cleanup remain unapproved or unverified. | `scripts/comment-translator-creator-nc-h1-history-contract.mjs`, `lib/comment-translator-creator-history-runtime.ts`, `components/comment-translator/CommentTranslatorCreatorHistoryPanel.tsx`, `supabase/migrations/20260802040000_comment_translator_creator_safe_history.sql` |
 | P0-operations | Comment Translator Cloudflare legacy Durable Object retirement | PR #733 is merged at integration commit `db328816e0cb0d2e8e8235cc4716095070392451`; the user confirmed the automatic Cloudflare build and deployment succeeded. No further retirement operation is active here. | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md`, `scripts/comment-translator-cloudflare-legacy-do-retirement-contract.mjs` |
 | P1-operations | Comment Translator Free public beta | Released and final production smoke complete; `public_release_capable=yes`. No release-chain operator action remains. | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
 | P1-maintenance | 配信カンペボード | MVP and custom delete-dialog follow-up are merged to `main`; no active follow-up is recorded here. | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
@@ -15,28 +15,29 @@
 ## Current Goal
 
 ```text
-current_goal=comment-translator-creator-nc-h1-post-merge-build-repair-local
-current_pr=743
-current_pr_state=merged
-current_pr_merge_commit=3a0718c8707a8f53a25c93c0f87b3b909ef9bc6a
-current_pr_implementation_head=13b75bafa782d4bad1e3aa66d34cc3988243c680
-previous_pr=742
+current_goal=comment-translator-creator-build-repair-draft-pr-open
+current_pr=744
+current_pr_state=draft-open
+current_pr_merge_commit=none
+current_pr_implementation_head=9df01c9414d19e71d0f5c2f0b0def35f7c53ec51
+previous_pr=743
 previous_pr_state=merged
-previous_pr_merge_commit=d0e0265b71e87e4855137f0804ebbd3c4ea6aa70
+previous_pr_merge_commit=3a0718c8707a8f53a25c93c0f87b3b909ef9bc6a
 current_base=codex/comment-translator-free-public-beta-integration
-current_branch=codex/comment-translator-creator-nc-h1
+current_branch=codex/comment-translator-creator-build-fix
 feasibility_decision=conditional-go
 selected_runtime=cloudflare-workers-open-next
 selected_persistence=supabase-postgres-existing-server-only-boundary
 container_disposition=rejected-not-a-candidate
-current_approved_boundary=nc-h1-post-merge-build-repair-local
+current_approved_boundary=creator-build-repair-draft-pr-open
 current_lane=NC-H1
 implementation_status=local-build-repair-complete
-publication_status=merged-build-repair-not-published
+publication_status=draft-pr-open
 deploy_status=not-approved
 ```
 
 - PR #743 merged final head `13b75bafa782d4bad1e3aa66d34cc3988243c680` at integration commit `3a0718c8707a8f53a25c93c0f87b3b909ef9bc6a`. GitHub records `Workers Builds: tool-portal` as failed for the #739 through #743 integration merge commits. The supplied #743 build log identifies `lib/comment-translator-creator-history-runtime.ts` nullable `historyStore` access as its first TypeScript failure; GitHub exposes no build-log annotations for the earlier four failures.
+- Draft PR #744 was opened from implementation commit `9df01c9414d19e71d0f5c2f0b0def35f7c53ec51` against `codex/comment-translator-free-public-beta-integration`. The remote compare is one commit ahead, zero behind, and contains only the eight intended build-repair/task files with no deletion, manifest, lockfile, migration, or deployment configuration change.
 - The local build repair adds separate read/write regression assertions that the authorized context carries the non-null history store proven by the authority boundary, routes both operations through that narrowed store, and rejects a future `recordedAtIso` relative to the authoritative DB evaluation clock. It also makes the existing OBS/moderator store unions directly discriminate `ready`, narrows the OBS denied helper to the denied result variant, separates OBS page data loading from JSX rendering for React purity/error-boundary lint, and moves a non-function contract export out of the `"use server"` action module. The fixes preserve the existing fail-closed reasons, retryability, feed projection, session checks, and O1/O2/M1/M2/H1 isolation.
 - PR #742 merged final head `20c7b82b453f1b129c1e1f72321c1ddfb7deac35` at fetched integration tip `d0e0265b71e87e4855137f0804ebbd3c4ea6aa70`. The final head is contained in the fetched integration branch used as the NC-H1 base. This fresh task's `git fetch origin --prune` was policy-blocked, so the evidence is limited to the already-fetched exact local remote ref and successful ancestry check.
 - NC-H1 adds one additive service-role-RPC-only safe-history migration, server-only correlation digests, source-time seven-day retention, current-session and paid-active atomic authorization, owner-wide prior-session reads, read/write-time expiry, monotonic tombstone propagation, and owner-derived idempotent disconnect/account-deletion cleanup seams. Plaintext message references, owner/session identifiers, RPC evaluation time, and private/provider authority are not returned to the panel.
@@ -128,7 +129,7 @@ The following require a separately stated target, ready preflight where applicab
 
 ## Next Reviewable Candidates
 
-1. Publish the focused #739-#743 build repair only after separate commit/push/PR approval, then use the resulting automatic Cloudflare check as the remote confirmation of the locally green strict typecheck, lint, Next build, and OpenNext build.
+1. Review Draft PR #744 and use its automatic Cloudflare check as the remote confirmation of the locally green strict typecheck, lint, Next build, and OpenNext build. Merge remains separately approval-gated.
 2. Keep NC-M1/NC-M2/NC-H1 migration apply, production token/capability/history read/write, live issue/redemption/share/feed/entitlement operations, authenticated real-feed/browser smoke, activation, deploy, merge, and cleanup blocked behind their own explicit approvals. Keep the existing NC-O1/NC-O2 external-operation gates unchanged.
 3. Roadmap work beyond NC-H1 remains not started in this branch. Treat NC-V1, production/Creator activation, live token/share/history operations, and any retention/storage/read-volume budget as closed until their authority explicitly opens them.
 4. Continue to monitor the Supabase future-default-privileges support/risk boundary. New `public` database objects still require explicit object-level grants/RLS/default-privileges review.

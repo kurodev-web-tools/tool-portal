@@ -42,13 +42,14 @@ export type CommentTranslatorCreatorSignedEvidenceRequest = {
   readonly stripeCustomerReference: string;
   readonly stripeSubscriptionReference: string;
   readonly stripeEventReference: string;
+  readonly checkoutReservationId: string;
   readonly signatureVerified: boolean;
   readonly planKey: "creator";
   readonly productCompatibilityKey: "comment_translator_creator_v1";
   readonly priceCompatibilityKey: "creator_monthly_jpy_980_v1";
   readonly status: "active" | "inactive";
-  readonly periodStartIso: string;
-  readonly periodEndIso: string;
+  readonly periodStartIso: string | null;
+  readonly periodEndIso: string | null;
   readonly eventCreatedAtIso: string;
 };
 
@@ -56,8 +57,63 @@ export type CommentTranslatorCreatorSignedEvidenceResult =
   | { readonly status: "applied" }
   | { readonly status: "rejected"; readonly reason: string };
 
+export type CommentTranslatorCreatorBillingOwnershipRead =
+  | { readonly status: "ready"; readonly customerReference: string }
+  | { readonly status: "unavailable"; readonly reason: "missing" | "unreadable" | "malformed" };
+
+export type CommentTranslatorCreatorCheckoutReservationRead =
+  | {
+      readonly status: "reserved";
+      readonly reservationId: string;
+      readonly idempotencyKey: string;
+      readonly expiresAtMs: number;
+    }
+  | { readonly status: "duplicate" }
+  | { readonly status: "owned" }
+  | { readonly status: "unavailable" };
+
+export type CommentTranslatorCreatorCheckoutFinalizeRead =
+  | { readonly status: "finalized" }
+  | { readonly status: "unavailable" };
+
+export type CommentTranslatorCreatorCheckoutReleaseRead =
+  | { readonly status: "released" }
+  | { readonly status: "unavailable" };
+
+export type CommentTranslatorCreatorSignedCheckoutLifecycleRequest = {
+  readonly ownerUserId: string;
+  readonly checkoutReservationId: string;
+  readonly stripeCheckoutSessionReference: string;
+  readonly stripeEventReference: string;
+  readonly signatureVerified: boolean;
+  readonly lifecycle: "completed" | "expired";
+  readonly eventCreatedAtIso: string;
+};
+
+export type CommentTranslatorCreatorSignedCheckoutLifecycleResult =
+  | { readonly status: "applied" }
+  | { readonly status: "rejected"; readonly reason: string };
+
 export type CommentTranslatorCreatorEntitlementStore = {
   readEntitlement(request: { readonly ownerUserId: string }): Promise<CommentTranslatorCreatorEntitlementRead>;
+  readBillingOwnership(request: { readonly ownerUserId: string }): Promise<CommentTranslatorCreatorBillingOwnershipRead>;
+  reserveCheckout(request: {
+    readonly ownerUserId: string;
+    readonly priceCompatibilityKey: "creator_monthly_jpy_980_v1";
+    readonly ttlSeconds: number;
+  }): Promise<CommentTranslatorCreatorCheckoutReservationRead>;
+  finalizeCheckout(request: {
+    readonly ownerUserId: string;
+    readonly reservationId: string;
+    readonly stripeCheckoutSessionReference: string;
+  }): Promise<CommentTranslatorCreatorCheckoutFinalizeRead>;
+  releaseCheckout(request: {
+    readonly ownerUserId: string;
+    readonly reservationId: string;
+  }): Promise<CommentTranslatorCreatorCheckoutReleaseRead>;
+  applySignedCheckoutLifecycle(
+    request: CommentTranslatorCreatorSignedCheckoutLifecycleRequest
+  ): Promise<CommentTranslatorCreatorSignedCheckoutLifecycleResult>;
   applySignedEvidence(
     request: CommentTranslatorCreatorSignedEvidenceRequest
   ): Promise<CommentTranslatorCreatorSignedEvidenceResult>;
@@ -87,6 +143,10 @@ type SupabaseSingleResult = {
   readonly data: CommentTranslatorCreatorEntitlementRow | null;
   readonly error: SupabaseError;
 };
+type SupabaseBillingOwnershipSingleResult = {
+  readonly data: { readonly stripe_customer_reference: string | null } | null;
+  readonly error: SupabaseError;
+};
 type SupabaseRpcResult = {
   readonly data: unknown;
   readonly error: SupabaseError;
@@ -96,13 +156,17 @@ type SupabaseEntitlementQuery = {
   eq(column: "owner_user_id", value: string): SupabaseEntitlementQuery;
   single(): Promise<SupabaseSingleResult>;
 };
+type SupabaseBillingOwnershipQuery = {
+  select(columns: typeof commentTranslatorCreatorEntitlementStoreContract.billingOwnershipSelectColumns): SupabaseBillingOwnershipQuery;
+  eq(column: "owner_user_id", value: string): SupabaseBillingOwnershipQuery;
+  single(): Promise<SupabaseBillingOwnershipSingleResult>;
+};
 
 export type CommentTranslatorCreatorEntitlementSupabaseClient = {
-  from(tableName: typeof commentTranslatorCreatorEntitlementStoreContract.tableName): SupabaseEntitlementQuery;
-  rpc(
-    functionName: typeof commentTranslatorCreatorEntitlementStoreContract.signedEvidenceRpc,
-    parameters: Record<string, unknown>
-  ): Promise<SupabaseRpcResult>;
+  from(
+    tableName: typeof commentTranslatorCreatorEntitlementStoreContract.tableName
+  ): SupabaseEntitlementQuery & SupabaseBillingOwnershipQuery;
+  rpc(functionName: CommentTranslatorCreatorEntitlementRpcName, parameters: Record<string, unknown>): Promise<SupabaseRpcResult>;
 };
 
 export const commentTranslatorCreatorEntitlementStoreContract = {
@@ -110,7 +174,12 @@ export const commentTranslatorCreatorEntitlementStoreContract = {
   runtime: "server-only",
   tableName: "comment_translator_creator_paid_entitlements",
   evidenceTableName: "comment_translator_creator_entitlement_evidence",
+  checkoutReservationsTableName: "comment_translator_creator_checkout_reservations",
   signedEvidenceRpc: "apply_comment_translator_creator_signed_entitlement_evidence",
+  reserveCheckoutRpc: "reserve_comment_translator_creator_checkout",
+  finalizeCheckoutRpc: "finalize_comment_translator_creator_checkout",
+  releaseCheckoutRpc: "release_comment_translator_creator_checkout",
+  signedCheckoutLifecycleRpc: "apply_comment_translator_creator_signed_checkout_lifecycle",
   writeAuthority: "signed-stripe-webhook-evidence-only",
   rowAccess: "trusted-server-service-role-only",
   writeMode: "atomic-rpc-only",
@@ -121,9 +190,17 @@ export const commentTranslatorCreatorEntitlementStoreContract = {
   remoteSupabaseReadWrite: "not-run-in-this-thread",
   creatorActivation: "disabled-nc-f1-boundary-unchanged",
   containerFallback: "forbidden",
+  billingOwnershipSelectColumns: "stripe_customer_reference",
   trustedSelectColumns:
     "id, plan_key, product_compatibility_key, price_compatibility_key, status, period_start, period_end, last_event_created_at, created_at, updated_at"
 } as const;
+
+type CommentTranslatorCreatorEntitlementRpcName =
+  | typeof commentTranslatorCreatorEntitlementStoreContract.signedEvidenceRpc
+  | typeof commentTranslatorCreatorEntitlementStoreContract.reserveCheckoutRpc
+  | typeof commentTranslatorCreatorEntitlementStoreContract.finalizeCheckoutRpc
+  | typeof commentTranslatorCreatorEntitlementStoreContract.releaseCheckoutRpc
+  | typeof commentTranslatorCreatorEntitlementStoreContract.signedCheckoutLifecycleRpc;
 
 export function createTrustedCommentTranslatorCreatorEntitlementStore({
   env,
@@ -215,6 +292,89 @@ export function createCommentTranslatorCreatorEntitlementSupabaseStore({
         authority: "signed-stripe-evidence"
       };
     },
+    async readBillingOwnership(request) {
+      let result: SupabaseBillingOwnershipSingleResult;
+      try {
+        result = await supabase
+          .from(commentTranslatorCreatorEntitlementStoreContract.tableName)
+          .select(commentTranslatorCreatorEntitlementStoreContract.billingOwnershipSelectColumns)
+          .eq("owner_user_id", request.ownerUserId)
+          .single();
+      } catch {
+        return { status: "unavailable", reason: "unreadable" };
+      }
+
+      if (!result.data && (!result.error || result.error.code === "PGRST116")) {
+        return { status: "unavailable", reason: "missing" };
+      }
+      if (result.error || !result.data) {
+        return { status: "unavailable", reason: "unreadable" };
+      }
+      const customerReference = result.data.stripe_customer_reference?.trim();
+      if (!customerReference) {
+        return { status: "unavailable", reason: "malformed" };
+      }
+      return { status: "ready", customerReference };
+    },
+    async reserveCheckout(request) {
+      let result: SupabaseRpcResult;
+      try {
+        result = await supabase.rpc(commentTranslatorCreatorEntitlementStoreContract.reserveCheckoutRpc, {
+          p_owner_user_id: request.ownerUserId,
+          p_price_compatibility_key: request.priceCompatibilityKey,
+          p_ttl_seconds: request.ttlSeconds
+        });
+      } catch {
+        return { status: "unavailable" };
+      }
+      if (result.error) return { status: "unavailable" };
+      return readCheckoutReservationResult(result.data);
+    },
+    async finalizeCheckout(request) {
+      let result: SupabaseRpcResult;
+      try {
+        result = await supabase.rpc(commentTranslatorCreatorEntitlementStoreContract.finalizeCheckoutRpc, {
+          p_owner_user_id: request.ownerUserId,
+          p_reservation_id: request.reservationId,
+          p_stripe_checkout_session_reference: request.stripeCheckoutSessionReference
+        });
+      } catch {
+        return { status: "unavailable" };
+      }
+      if (result.error) return { status: "unavailable" };
+      return readCheckoutFinalizeResult(result.data);
+    },
+    async releaseCheckout(request) {
+      let result: SupabaseRpcResult;
+      try {
+        result = await supabase.rpc(commentTranslatorCreatorEntitlementStoreContract.releaseCheckoutRpc, {
+          p_owner_user_id: request.ownerUserId,
+          p_reservation_id: request.reservationId
+        });
+      } catch {
+        return { status: "unavailable" };
+      }
+      if (result.error) return { status: "unavailable" };
+      return readCheckoutReleaseResult(result.data);
+    },
+    async applySignedCheckoutLifecycle(request) {
+      let result: SupabaseRpcResult;
+      try {
+        result = await supabase.rpc(commentTranslatorCreatorEntitlementStoreContract.signedCheckoutLifecycleRpc, {
+          p_owner_user_id: request.ownerUserId,
+          p_checkout_reservation_id: request.checkoutReservationId,
+          p_stripe_checkout_session_reference: request.stripeCheckoutSessionReference,
+          p_stripe_event_reference: request.stripeEventReference,
+          p_signature_verified: request.signatureVerified,
+          p_lifecycle: request.lifecycle,
+          p_event_created_at: request.eventCreatedAtIso
+        });
+      } catch {
+        return { status: "rejected", reason: "rpc-unavailable" };
+      }
+      if (result.error) return { status: "rejected", reason: "rpc-unavailable" };
+      return readSignedEvidenceResult(result.data);
+    },
     async applySignedEvidence(request) {
       let result: SupabaseRpcResult;
       try {
@@ -223,6 +383,7 @@ export function createCommentTranslatorCreatorEntitlementSupabaseStore({
           p_stripe_customer_reference: request.stripeCustomerReference,
           p_stripe_subscription_reference: request.stripeSubscriptionReference,
           p_stripe_event_reference: request.stripeEventReference,
+          p_checkout_reservation_id: request.checkoutReservationId,
           p_signature_verified: request.signatureVerified,
           p_plan_key: request.planKey,
           p_product_compatibility_key: request.productCompatibilityKey,
@@ -293,6 +454,35 @@ function readSignedEvidenceResult(data: unknown): CommentTranslatorCreatorSigned
   return { status: "rejected", reason: "malformed-rpc-result" };
 }
 
+function readCheckoutReservationResult(data: unknown): CommentTranslatorCreatorCheckoutReservationRead {
+  const result = asResultRecord(data);
+  if (result?.status === "duplicate") return { status: "duplicate" };
+  if (result?.status === "owned") return { status: "owned" };
+  if (result?.status !== "reserved") return { status: "unavailable" };
+  const reservationId = readNonEmptyString(result.reservationId);
+  const idempotencyKey = readNonEmptyString(result.idempotencyKey);
+  const expiresAtIso = readNonEmptyString(result.expiresAtIso);
+  const expiresAtMs = expiresAtIso ? Date.parse(expiresAtIso) : Number.NaN;
+  if (!reservationId || !idempotencyKey || !Number.isFinite(expiresAtMs)) return { status: "unavailable" };
+  return { status: "reserved", reservationId, idempotencyKey, expiresAtMs };
+}
+
+function readCheckoutFinalizeResult(data: unknown): CommentTranslatorCreatorCheckoutFinalizeRead {
+  return asResultRecord(data)?.status === "finalized" ? { status: "finalized" } : { status: "unavailable" };
+}
+
+function readCheckoutReleaseResult(data: unknown): CommentTranslatorCreatorCheckoutReleaseRead {
+  return asResultRecord(data)?.status === "released" ? { status: "released" } : { status: "unavailable" };
+}
+
+function asResultRecord(data: unknown): { readonly status?: unknown; readonly reservationId?: unknown; readonly idempotencyKey?: unknown; readonly expiresAtIso?: unknown } | null {
+  return data && typeof data === "object" ? (data as { readonly status?: unknown; readonly reservationId?: unknown; readonly idempotencyKey?: unknown; readonly expiresAtIso?: unknown }) : null;
+}
+
+function readNonEmptyString(value: unknown): string | null {
+  return typeof value === "string" && value.trim().length > 0 ? value : null;
+}
+
 function isOrderedIsoPeriod(periodStartIso: string, periodEndIso: string): boolean {
   const periodStart = Date.parse(periodStartIso);
   const periodEnd = Date.parse(periodEndIso);
@@ -324,7 +514,7 @@ function createTrustedSupabaseServiceRoleClient(
 
   return {
     from(tableName) {
-      return client.from(tableName) as unknown as SupabaseEntitlementQuery;
+      return client.from(tableName) as unknown as SupabaseEntitlementQuery & SupabaseBillingOwnershipQuery;
     },
     rpc(functionName, parameters) {
       return client.rpc(functionName, parameters) as unknown as Promise<SupabaseRpcResult>;

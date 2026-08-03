@@ -1,8 +1,11 @@
+import "server-only";
+
 import { NextResponse, type NextRequest } from "next/server";
 import {
-  createCommentTranslatorStripeWebhookVerifier,
-  readCommentTranslatorStripeWebhookResult
-} from "@/lib/comment-translator-billing-runtime";
+  applyCommentTranslatorCreatorSignedWebhookCommand,
+  commentTranslatorCreatorBillingActivationPolicy,
+  createCommentTranslatorCreatorProductionSignedWebhookDependencies
+} from "@/lib/comment-translator-creator-billing-runtime";
 import {
   assertCommentTranslatorAbuseRequestAllowed,
   readCommentTranslatorRequestIp
@@ -10,15 +13,11 @@ import {
 
 export const dynamic = "force-dynamic";
 
-const stripeWebhookSecretEnvReference = "STRIPE_WEBHOOK_SECRET";
-
 export async function POST(request: NextRequest) {
   const abuseCheck = assertCommentTranslatorAbuseRequestAllowed({
     surface: "/api/comment-translator/billing/webhook",
     action: "billing-webhook",
-    callerAuthorization: {
-      status: "unauthenticated"
-    },
+    callerAuthorization: { status: "unauthenticated" },
     requestIp: readCommentTranslatorRequestIp(request.headers)
   });
   if (abuseCheck.status === "blocked") {
@@ -32,22 +31,26 @@ export async function POST(request: NextRequest) {
       { status: 429 }
     );
   }
-
-  const payload = await request.text();
-  const signature = request.headers.get("stripe-signature");
-  const result = await readCommentTranslatorStripeWebhookResult({
-    payload,
-    signature,
-    env: {
-      ...process.env,
-      STRIPE_WEBHOOK_SECRET: process.env[stripeWebhookSecretEnvReference]
-    },
-    verifier: {
-      constructEvent: (payloadToVerify, signatureToVerify, webhookSecret) =>
-        createCommentTranslatorStripeWebhookVerifier().constructEvent(payloadToVerify, signatureToVerify, webhookSecret)
+  const productionDependencies = createCommentTranslatorCreatorProductionSignedWebhookDependencies();
+  const rawBody =
+    productionDependencies.activationPolicy.status === "closed" ? "" : await request.text();
+  const result = await applyCommentTranslatorCreatorSignedWebhookCommand({
+    rawBody,
+    signature: request.headers.get("stripe-signature"),
+    dependencies: {
+      ...productionDependencies,
+      activationPolicy: commentTranslatorCreatorBillingActivationPolicy
     }
   });
+  const retryable = "retryable" in result && result.retryable;
+  const responseStatus = retryable ? 503 : result.status === "rejected" ? 400 : 200;
 
-  const status = result.status === "rejected" ? 400 : 200;
-  return NextResponse.json(result, { status });
+  return NextResponse.json(
+    {
+      status: result.status,
+      reason: "reason" in result ? result.reason : "processed",
+      retryable
+    },
+    { status: responseStatus }
+  );
 }

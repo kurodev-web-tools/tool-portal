@@ -15,6 +15,12 @@ import {
   requestCommentTranslatorDataDeletionAction as requestCommentTranslatorDataDeletion
 } from "./retention-waitlist-actions";
 import {
+  captureCommentTranslatorCreatorSafeHistoryAction as captureCommentTranslatorCreatorSafeHistory,
+  cleanupCommentTranslatorCreatorSafeHistoryForAccountDeletionAction as cleanupCommentTranslatorCreatorSafeHistoryForAccountDeletion,
+  cleanupCommentTranslatorCreatorSafeHistoryForDisconnectAction as cleanupCommentTranslatorCreatorSafeHistoryForDisconnect,
+  readCommentTranslatorCreatorSafeHistoryAction as readCommentTranslatorCreatorSafeHistory
+} from "./history-actions";
+import {
   getCommentTranslatorSessionStatusAction as getCommentTranslatorSessionStatus,
   heartbeatCommentTranslatorSessionAction as heartbeatCommentTranslatorSession,
   startCommentTranslatorSessionAction as startCommentTranslatorSession,
@@ -79,4 +85,20 @@ export async function heartbeatCommentTranslatorSessionAction(
   ...args: Parameters<typeof heartbeatCommentTranslatorSession>
 ) {
   return heartbeatCommentTranslatorSession(...args);
+}
+
+export async function readCommentTranslatorCreatorSafeHistoryAction() {
+  return readCommentTranslatorCreatorSafeHistory();
+}
+
+export async function captureCommentTranslatorCreatorSafeHistoryAction() {
+  return captureCommentTranslatorCreatorSafeHistory();
+}
+
+export async function cleanupCommentTranslatorCreatorSafeHistoryForDisconnectAction() {
+  return cleanupCommentTranslatorCreatorSafeHistoryForDisconnect();
+}
+
+export async function cleanupCommentTranslatorCreatorSafeHistoryForAccountDeletionAction() {
+  return cleanupCommentTranslatorCreatorSafeHistoryForAccountDeletion();
 }

@@ -360,8 +360,9 @@ assert.match(ncQ1Checklist, /Keep activation closed/);
 
 for (const marker of [
   "current_goal=comment-translator-creator-nc-r1-paid-launch-readiness",
-  "current_pr=none",
-  "current_pr_state=not-created",
+  "current_pr=748",
+  "current_pr_state=draft-open",
+  "current_pr_implementation_head=d2823b3ba0fd5b92b86db14507ced67430999958",
   "previous_pr=747",
   "previous_pr_state=merged",
   "previous_pr_merge_commit=16eb30f09ae19216eafc34e124ac12ab885dbe5e",
@@ -369,13 +370,13 @@ for (const marker of [
   "current_branch=codex/comment-translator-creator-nc-r1",
   "current_lane=NC-R1",
   "launch_readiness_decision=no-go",
+  "publication_status=committed-pushed-draft-pr-open",
   "base_deploy_status=not-confirmed-for-pr-747-integration-tip",
   readinessPath,
   checklistPath
 ]) {
   assert.match(task, new RegExp(escapeRegExp(marker)), `missing current task marker: ${marker}`);
 }
-assert.doesNotMatch(task, /current_pr_state=draft-open/, "task.md must not retain PR #747 as the current Draft PR");
 
 const legacyIds = [
   ...Array.from({ length: 12 }, (_, index) => `C${index + 1}`),

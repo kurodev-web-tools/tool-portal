@@ -6,7 +6,7 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0-implementation | Comment Translator Creator NC-Q1 Creator Closed-Beta Integrated QA | Local-only integrated fixture/matrix implementation, root verification, and fresh read-only semantic review are complete on `codex/comment-translator-creator-nc-q1`; the final review reports no concrete in-scope finding. Evidence remains fixture/local only, all activation gates remain closed, and Free remains permanent. PR #746 is merged at the integration tip, but deployment success is unconfirmed and is not inferred. | `docs/active/COMMENT_TRANSLATOR_CREATOR_NC_Q1_QA_AUTHORITY.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NC_Q1_OPERATOR_CHECKLIST.md`, `scripts/comment-translator-creator-nc-q1-integrated-qa-contract.mjs` |
+| P0-implementation | Comment Translator Creator NC-R1 Creator Paid Launch Readiness | Local readiness authority, executable contract, and operator checklist are implemented on `codex/comment-translator-creator-nc-r1`. Public-source limits/prices remain separate from gated or blocked target measurements; fixture/local/public-source evidence is not production proof. The current launch decision is `no-go` with 16 unresolved hard requirements, all activation gates closed, and Free permanent. PR #747 is merged at the exact integration tip; deployment success is unconfirmed and is not inferred. | `docs/active/COMMENT_TRANSLATOR_CREATOR_NC_R1_PAID_LAUNCH_READINESS.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NC_R1_OPERATOR_CHECKLIST.md`, `scripts/comment-translator-creator-nc-r1-paid-launch-readiness-contract.mjs` |
 | P0-operations | Comment Translator Cloudflare legacy Durable Object retirement | PR #733 is merged at integration commit `db328816e0cb0d2e8e8235cc4716095070392451`; the user confirmed the automatic Cloudflare build and deployment succeeded. No further retirement operation is active here. | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md`, `scripts/comment-translator-cloudflare-legacy-do-retirement-contract.mjs` |
 | P1-operations | Comment Translator Free public beta | Released and final production smoke complete; `public_release_capable=yes`. No release-chain operator action remains. | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
 | P1-maintenance | 配信カンペボード | MVP and custom delete-dialog follow-up are merged to `main`; no active follow-up is recorded here. | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
@@ -15,31 +15,32 @@
 ## Current Goal
 
 ```text
-current_goal=comment-translator-creator-nc-q1-local-integrated-qa
-current_pr=747
-current_pr_state=draft-open
+current_goal=comment-translator-creator-nc-r1-paid-launch-readiness
+current_pr=none
+current_pr_state=not-created
 current_pr_merge_commit=none
-current_pr_implementation_head=297a64f45c8d452a0236671384c7d62156a930d6
-previous_pr=746
+current_pr_implementation_head=none
+previous_pr=747
 previous_pr_state=merged
-previous_pr_merge_commit=10c3adf507d21d61891f62a3b2ee9a24f28ea56d
-previous_pr_final_head=ce1d064190de3a2db147bc2fedc2633054e1c78e
+previous_pr_merge_commit=16eb30f09ae19216eafc34e124ac12ab885dbe5e
+previous_pr_final_head=df1a92f123d5cd3ec30b1d43e5eb0d0efacb6a71
 current_base=codex/comment-translator-free-public-beta-integration
-current_branch=codex/comment-translator-creator-nc-q1
+current_branch=codex/comment-translator-creator-nc-r1
 feasibility_decision=conditional-go
+launch_readiness_decision=no-go
 selected_runtime=cloudflare-workers-open-next
 selected_persistence=supabase-postgres-existing-server-only-boundary
 container_disposition=rejected-not-a-candidate
-current_approved_boundary=creator-nc-q1-local-implementation-and-verification
-current_lane=NC-Q1
-implementation_status=local-implementation-root-verification-and-semantic-review-complete
-publication_status=committed-pushed-draft-pr-open
-base_deploy_status=not-confirmed-for-pr-746-integration-tip
-deploy_status=not-approved-for-nc-q1
+current_approved_boundary=creator-nc-r1-local-implementation-and-verification
+current_lane=NC-R1
+implementation_status=local-readiness-authority-contract-and-runbook-implemented
+publication_status=uncommitted-unpublished
+base_deploy_status=not-confirmed-for-pr-747-integration-tip
+deploy_status=not-approved-for-nc-r1
 ```
 
-- PR #746 final head `ce1d064190de3a2db147bc2fedc2633054e1c78e` is merged into `codex/comment-translator-free-public-beta-integration` at exact integration tip `10c3adf507d21d61891f62a3b2ee9a24f28ea56d`. A successful post-merge deployment for PR #746 was not confirmed and is not inferred from merge state.
-- Draft PR #747 was opened from NC-Q1 implementation commit `297a64f45c8d452a0236671384c7d62156a930d6` against `codex/comment-translator-free-public-beta-integration`. Merge, deployment, activation, migration apply, live operations, and cleanup remain separate approval boundaries.
+- PR #747 final head `df1a92f123d5cd3ec30b1d43e5eb0d0efacb6a71` is merged into `codex/comment-translator-free-public-beta-integration` at exact integration tip `16eb30f09ae19216eafc34e124ac12ab885dbe5e`. A successful post-merge deployment for PR #747 was not confirmed and is not inferred from merge state.
+- NC-R1 classifies fixture, local, public-source, gated, blocked, live, and deployed evidence without cross-class promotion. Public official sources were refreshed read-only on 2026-08-04, but they do not prove account headroom, selected target state, live behavior, deployment, or approval. Worker CPU/request, Supabase size/egress/pause/backup posture, provider/Stripe cost, legal/copy/support/SLA, live paid flow, and deployed-target evidence remain gated or missing; the local Worker bundle-size measurement is setup-blocked by absent `node_modules`. The existing architecture's `3MiB` Worker boundary and the refreshed official source's `3 MB after compression` wording remain an explicit target-mismatched reconciliation gate. Sixteen hard requirements remain unresolved, so the current release decision is NO-GO, not conditional-go. Product/Price/tax/legal/copy/support/SLA/risk acceptance were not invented. All billing/provider/Creator/public activation gates remain closed and Free remains permanent.
 - NC-Q1 adds a deterministic fixture-only integration harness, an executable 14-lane local matrix, a five-class evidence authority (`fixture / local / gated / blocked / live`), and an operator/manual QA checklist. The behavioral composition invokes actual B1→D1→E1→C1/P1/U1→V1/H1 projection/store/runtime exports plus actual O1→O2 and M1→M2 capability pairs without editing production sources. The effective path always observes fixed-closed activation and performs zero paid side effects; the hypothetical Paid path requires an explicit fixture-only marker with production/deployed proof false. Checkout completion remains non-evidence, only signed active subscription evidence can create the Paid control, pre-provider budget/quota rejection prevents provider work, provider failure makes no usage call, and post-provider usage commit rejection suppresses output and records no success. The actual H1 store adapter/parser enforces exact RPC/read-row allowlists, removes raw owner/session/message/unexpected/correlation fields, retains translated text, and preserves the existing safe `standard` priority downgrade for persisted rows.
 - Focused NC-Q1 RED detected the missing entrypoint, then corrected GREEN passed. Root rejected an initial self-contained fake/static-lane implementation after semantic review and replaced it with the actual runtime composition above; deployed-proof bypass, pre-budget/post-usage conflation, incomplete H1 safe-key assertions, and the handwritten H1 store gap were also closed. Root reruns pass Node syntax, the focused integrated entrypoint, the exact 14 Creator lane contracts, and the broader 17/17 no-container/login/OAuth public-info set. Legacy 23 completeness, branch/base ancestry, changed-scope, manifest/lock/config, migration, UI/CSS, secret literal, private fixture identifier, raw-payload persistence, browser storage/query/log API, network-import, and trailing-whitespace scans pass. `node_modules` and the eslint/tsc/next/OpenNext executables are absent, so lint, strict typecheck, Next build, OpenNext build, and dependency-backed contracts remain setup-blocked; no install was performed. No UI/CSS changed, so deterministic width QA is not applicable.
 - The final fresh read-only Sol review reports no concrete in-scope finding after the actual H1 store/parser correction. Residual uncertainty is limited to dependency-backed checks blocked by absent `node_modules` and external/live/deployed evidence that was not authorized or performed.
@@ -126,6 +127,8 @@ The following require a separately stated target, ready preflight where applicab
 - Architecture: `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md`
 - Dependency-ordered task board: `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_IMPLEMENTATION_TASK_BOARD.md`
 - Legacy C1-C12 / CP1-CP2 / P1-1-P1-9 crosswalk: `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_LEGACY_CROSSWALK.md`
+- NC-R1 paid readiness: `docs/active/COMMENT_TRANSLATOR_CREATOR_NC_R1_PAID_LAUNCH_READINESS.md`
+- NC-R1 operator checklist: `docs/active/COMMENT_TRANSLATOR_CREATOR_NC_R1_OPERATOR_CHECKLIST.md`
 
 ### Free public beta
 
@@ -141,9 +144,9 @@ The following require a separately stated target, ready preflight where applicab
 
 ## Next Reviewable Candidates
 
-1. If requested, approve dependency installation separately so NC-Q1 lint, strict typecheck, Next/OpenNext builds, and dependency-backed historical contracts can run; otherwise retain the exact setup-blocked classification.
-2. Keep NC-R1 and later roadmap work out of scope until a separate task and approval are provided.
-3. Keep the NC-B1 migration apply, live Stripe pagination/API, production database read/write, authenticated browser smoke, activation, deploy, publication, and cleanup blocked behind their own explicit approvals. Keep all NC-D1/E1/U1/P1/C1/O1/O2/M1/M2/H1/V1 external-operation gates unchanged.
+1. Keep NC-R1 at NO-GO while any hard requirement is missing, stale, incomplete, target-mismatched, or unapproved. Public-source, fixture, and local evidence do not satisfy live or deployed proof.
+2. Keep dependency installation unapproved. While `node_modules` is absent, lint, strict typecheck, Next/OpenNext builds, and local Worker bundle-size measurement remain setup-blocked rather than passed.
+3. Keep every Cloudflare/Supabase/provider/Stripe/account/browser/deploy/activation/public-paid evidence unit independently approval-gated. Product/Price/tax/legal/copy/support/SLA/risk acceptance require named release-owner decisions; do not begin NC-L1 until NC-R1 has an explicit GO.
 4. Continue to monitor the Supabase future-default-privileges support/risk boundary. New `public` database objects still require explicit object-level grants/RLS/default-privileges review.
 5. Do not reopen completed Free release or prompt-board history unless new evidence creates a current action.
 

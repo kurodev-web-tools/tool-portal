@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { CommentTranslatorCreatorCallerAuthority } from "./comment-translator-creator-entitlement-runtime";
+import type { CommentTranslatorProjectedPriority } from "./comment-translator-priority-classification";
 
 export type CommentTranslatorCreatorSafeHistoryFields = {
   readonly sourceAttributionLabel: "Source: YouTube Live Chat";
@@ -18,6 +19,7 @@ export type CommentTranslatorCreatorSafeHistoryFields = {
     | "provider-error-f10-terminal"
     | "skipped-f12-usage-limit";
   readonly moderationLabel: "visible" | "deleted" | "banned" | "ended" | "system";
+  readonly priority: CommentTranslatorProjectedPriority;
   readonly badgeLabel: "owner" | "moderator" | "member" | "super-chat" | "super-sticker" | "system" | null;
   readonly purchaseLabel: string | null;
 };

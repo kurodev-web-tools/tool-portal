@@ -290,11 +290,11 @@ assert.match(pageSource, /authorizeCommentTranslatorCreatorModeratorBrowserSessi
 assert.match(pageSource, /readCommentTranslatorRealCommentsFeedForActiveSession/, "the page uses the existing safe active-session feed projection");
 assert.match(pageSource, /projectModeratorSafeFeed/, "the server projects only required safe fields before passing data to the browser");
 assert.doesNotMatch(componentSource, /messageReferenceId|rawProviderPayload|rawComments|authorChannelMaterial|providerTargetMetadata|serverOnlyCursor|memberMonthCount/, "the client receives no extra feed identifiers or private fields");
-assert.doesNotMatch(componentSource, /priority|filter|useState|moderation action|onClick|onChange|timeout/i, "NC-M2 excludes NC-V1 priority work and moderation actions");
+assert.doesNotMatch(componentSource, /moderation action|onClick|timeout/i, "the read-only moderator surface has no moderation actions or uncontrolled timers");
 assert.match(componentSource, /action="\/api\/comment-translator\/moderator-share\/session\/"/, "the credential form submits only to the NC-M2 redemption boundary");
 assert.match(componentSource, /method="post"/, "the credential form has no GET redemption path");
 assert.match(componentSource, /name="moderatorShareCredential"/, "the form uses the POST-body-only credential field");
-for (const field of ["translatedText", "originalText", "authorDisplayName", "authorLabel", "badgeLabel", "purchaseLabel", "sourceAttributionLabel", "translationStatus", "moderationLabel"]) {
+for (const field of ["translatedText", "originalText", "authorDisplayName", "authorLabel", "priority", "badgeLabel", "purchaseLabel", "sourceAttributionLabel", "translationStatus", "moderationLabel"]) {
   assert.match(componentSource, new RegExp(escapeRegExp(field)), `moderator safe-feed rendering is bounded to existing safe ${field}`);
 }
 const moderationStateLabels = {

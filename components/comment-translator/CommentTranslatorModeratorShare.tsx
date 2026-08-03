@@ -1,7 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import {
+  filterCommentTranslatorPriorityRows,
+  readCommentTranslatorPriorityFilter,
+  readCommentTranslatorProjectedPriority,
+  type CommentTranslatorPriorityFilter
+} from "@/lib/comment-translator-priority-classification";
 import type { CommentTranslatorRealCommentsDisplayRow } from "@/lib/comment-translator-real-comments-feed-shared";
 
 const moderatorRefreshIntervalMs = 15_000;
@@ -17,6 +23,7 @@ type ModeratorSafeRow = Pick<
   | "sourceAttributionLabel"
   | "translationStatus"
   | "moderationLabel"
+  | "priority"
 >;
 
 export type CommentTranslatorModeratorShareFeed =
@@ -38,6 +45,7 @@ export function CommentTranslatorModeratorShare({
   readonly feed: CommentTranslatorModeratorShareFeed;
   readonly showCredentialForm: boolean;
 }) {
+  const [priorityFilter, setPriorityFilter] = useState<CommentTranslatorPriorityFilter>("all");
   const router = useRouter();
   useEffect(() => {
     const refreshHandle = window.setInterval(() => router.refresh(), moderatorRefreshIntervalMs);
@@ -45,6 +53,8 @@ export function CommentTranslatorModeratorShare({
   }, [router]);
 
   if (feed.status !== "ready") return <CommentTranslatorModeratorShareUnavailable showCredentialForm={showCredentialForm} />;
+  const filteredRows = filterCommentTranslatorPriorityRows(feed.rows, priorityFilter);
+  const priorityOnlyEmpty = priorityFilter === "priority" && feed.rows.length > 0 && filteredRows.length === 0;
 
   return (
     <main className="comment-translator-moderator-share-canvas" aria-live="polite">
@@ -53,13 +63,20 @@ export function CommentTranslatorModeratorShare({
           <p>Comment Translator</p>
           <h1>Moderator share</h1>
           <span>Read-only safe feed</span>
+          <label>
+            <span>Priority</span>
+            <select value={priorityFilter} onChange={(event) => setPriorityFilter(readCommentTranslatorPriorityFilter(event.target.value))}>
+              <option value="all">All safe comments</option>
+              <option value="priority">Priority only</option>
+            </select>
+          </label>
         </header>
-        {feed.rows.length > 0 ? (
+        {filteredRows.length > 0 ? (
           <ol className="comment-translator-moderator-share-rows">
-            {feed.rows.map((row, index) => <ModeratorFeedRow key={`${index}-${row.sourceAttributionLabel}`} row={row} />)}
+            {filteredRows.map((row, index) => <ModeratorFeedRow key={`${index}-${row.sourceAttributionLabel}`} row={row} />)}
           </ol>
         ) : (
-          <p className="comment-translator-moderator-share-empty">No safe comments are currently available.</p>
+          <p className="comment-translator-moderator-share-empty">{priorityOnlyEmpty ? "No priority safe comments are currently available." : "No safe comments are currently available."}</p>
         )}
       </section>
     </main>
@@ -68,6 +85,8 @@ export function CommentTranslatorModeratorShare({
 
 function ModeratorFeedRow({ row }: { readonly row: ModeratorSafeRow }) {
   const unavailable = row.moderationLabel !== "visible";
+  const priority = readCommentTranslatorProjectedPriority(row.priority);
+  const safeBadgeLabel = priority.badgeLabel ?? row.badgeLabel;
   const moderationStateLabel = resolveModeratorStateLabel(row.moderationLabel);
   const translationLabel = row.translationStatus === "translated-f10" ? "Translated" : "Translation unavailable";
   const safeText = unavailable ? "Comment unavailable" : row.translatedText ?? row.originalText ?? "Comment unavailable";
@@ -75,7 +94,7 @@ function ModeratorFeedRow({ row }: { readonly row: ModeratorSafeRow }) {
     <li className="comment-translator-moderator-share-row">
       <div className="comment-translator-moderator-share-row-header">
         <strong>{row.authorDisplayName ?? row.authorLabel}</strong>
-        {row.badgeLabel ? <span>{row.badgeLabel}</span> : null}
+        {safeBadgeLabel ? <span>{safeBadgeLabel}</span> : null}
         {row.purchaseLabel ? <span>{row.purchaseLabel}</span> : null}
       </div>
       <p className="comment-translator-moderator-share-text">{safeText}</p>

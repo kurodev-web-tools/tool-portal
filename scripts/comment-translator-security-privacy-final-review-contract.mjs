@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { execSync } from "node:child_process";
 import fs from "node:fs";
 import Module from "node:module";
 import path from "node:path";
@@ -9,7 +8,10 @@ const root = process.cwd();
 
 const finalReviewRuntimePath = "lib/comment-translator-security-privacy-final-review.ts";
 const finalReviewDocPath = "docs/active/COMMENT_TRANSLATOR_SECURITY_PRIVACY_FINAL_REVIEW.md";
-const taskPath = "task.md";
+const toolActionFacadePath = "app/tools/comment-translator/actions.ts";
+const toolAccountActionPath = "app/tools/comment-translator/account-actions.ts";
+const toolActionContextPath = "app/tools/comment-translator/action-context.ts";
+const toolCredentialSourcePath = "lib/comment-translator-youtube-tool-credential-source.ts";
 
 const routePaths = [
   "app/api/comment-translator/session/route.ts",
@@ -18,10 +20,11 @@ const routePaths = [
   "app/api/comment-translator/billing/webhook/route.ts"
 ];
 
-const actionPaths = ["app/tools/comment-translator/actions.ts", "app/account/billing/actions.ts"];
+const actionPaths = [toolActionFacadePath, toolAccountActionPath, "app/account/billing/actions.ts"];
 
 const boundaryRuntimePaths = [
   "lib/comment-translator-youtube-credential-status-boundary.ts",
+  toolCredentialSourcePath,
   "lib/comment-translator-youtube-token-store-runtime.ts",
   "lib/comment-translator-youtube-token-store-supabase-adapter.ts",
   "lib/comment-translator-session-runtime.ts",
@@ -69,32 +72,6 @@ function exists(relativePath) {
 
 function escapedFragment(fragment) {
   return fragment.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function changedFiles() {
-  const committedDiff = execSync("git diff --name-only archive/comment-translator-preview-2026-07-21...HEAD", {
-    cwd: root,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "ignore"]
-  })
-    .split(/\r?\n/)
-    .filter(Boolean);
-  const uncommittedDiff = execSync("git diff --name-only", {
-    cwd: root,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "ignore"]
-  })
-    .split(/\r?\n/)
-    .filter(Boolean);
-  const untracked = execSync("git ls-files --others --exclude-standard", {
-    cwd: root,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "ignore"]
-  })
-    .split(/\r?\n/)
-    .filter(Boolean);
-
-  return [...new Set([...committedDiff, ...uncommittedDiff, ...untracked])].map((file) => file.replace(/\\/g, "/"));
 }
 
 function loadTsModule(relativePath) {
@@ -160,9 +137,9 @@ function assertNoSensitiveValues(source, label) {
 for (const requiredPath of [
   finalReviewRuntimePath,
   finalReviewDocPath,
-  taskPath,
   ...routePaths,
   ...actionPaths,
+  toolActionContextPath,
   ...boundaryRuntimePaths,
   ...activeDocPaths,
   ...browserStorageSurfacePaths
@@ -172,9 +149,18 @@ for (const requiredPath of [
 
 const finalReviewSource = read(finalReviewRuntimePath);
 const finalReviewDoc = read(finalReviewDocPath);
-const taskSource = read(taskPath);
+const toolActionFacadeSource = read(toolActionFacadePath);
+const toolAccountActionSource = read(toolAccountActionPath);
+const toolActionContextSource = read(toolActionContextPath);
+const toolCredentialSource = read(toolCredentialSourcePath);
 const combinedRouteSource = routePaths.map(read).join("\n");
 const combinedActionSource = actionPaths.map(read).join("\n");
+const combinedCredentialDelegationSource = [
+  toolActionFacadeSource,
+  toolAccountActionSource,
+  toolActionContextSource,
+  toolCredentialSource
+].join("\n");
 const combinedBrowserSurfaceSource = browserStorageSurfacePaths.map(read).join("\n");
 const combinedBoundarySource = boundaryRuntimePaths.map(read).join("\n");
 const combinedActiveDocs = activeDocPaths.map(read).join("\n");
@@ -226,7 +212,87 @@ assert.match(combinedRouteSource, /stripe-signature/, "billing webhook requires 
 
 assert.match(combinedActionSource, /readCommentTranslatorPrivateLaunchAccess/, "server actions enforce private launch access");
 assert.match(combinedActionSource, /assertCommentTranslatorAbuseRequestAllowed/, "server actions apply abuse/rate-limit guard");
-assert.match(combinedActionSource, /createTrustedYouTubeOAuthCredentialSupabaseStatusReader/, "server actions keep credential reads behind trusted server-only adapters");
+assert.match(toolActionFacadeSource, /^"use server";$/m, "credential-status action facade remains server-only");
+assert.match(
+  toolActionFacadeSource,
+  /getYouTubeOAuthCredentialStatusAction as getYouTubeOAuthCredentialStatus[\s\S]*?return getYouTubeOAuthCredentialStatus\(\);/,
+  "credential-status action facade delegates without browser-selected authority"
+);
+assert.match(toolAccountActionSource, /^"use server";$/m, "credential-status account action remains server-only");
+assert.match(toolAccountActionSource, /readCommentTranslatorActionCallerAuthorization\(\)/, "account action derives caller authorization server-side");
+assert.match(
+  toolAccountActionSource,
+  /if \(actionAbuseCheck\.status === "blocked"\) return unavailableCredentialStatus\(\);/,
+  "abuse-blocked credential status fails closed with sanitized output"
+);
+assert.match(
+  toolAccountActionSource,
+  /if \(launchAccess\.status === "blocked"\) \{[\s\S]*?return unavailableCredentialStatus\(\);/,
+  "launch-gated credential status fails closed with sanitized output"
+);
+assert.match(
+  toolAccountActionSource,
+  /return readCommentTranslatorToolCredentialStatus\(\{ callerAuthorization \}\);/,
+  "account action delegates credential status through the trusted source boundary"
+);
+assert.match(toolActionContextSource, /^import "server-only";$/m, "credential action context is server-only");
+assert.match(toolActionContextSource, /createServerSupabaseClient\(\)/, "credential action context derives account identity through server Supabase auth");
+assert.match(
+  toolActionContextSource,
+  /if \(!supabase\)[\s\S]*?authUnavailable: true/,
+  "unreadable account authority fails closed before credential resolution"
+);
+function assertCredentialReadinessGuards(source) {
+  assert.match(source, /export async function readCommentTranslatorActionCredentialReadiness\(/, "credential readiness boundary remains explicit");
+  assert.match(
+    source,
+    /const credentialResolutionDisabled = isYouTubeOAuthCredentialResolutionDisabled\([\s\S]*?const trustedStatusReader = credentialResolutionDisabled \|\| callerAuthorization\.status !== "authorized"\s*\? null\s*:\s*createTrustedYouTubeOAuthCredentialSupabaseStatusReader\(\);/,
+    "disabled or unauthorized readiness never constructs the trusted status reader"
+  );
+  assert.match(
+    source,
+    /const trustedTokenMaterialRuntime = credentialResolutionDisabled \|\| callerAuthorization\.status !== "authorized"\s*\? null\s*:\s*createTrustedYouTubeOAuthCredentialSupabaseTokenMaterialRuntime\(\);/,
+    "disabled or unauthorized readiness never constructs the trusted token runtime"
+  );
+  assert.match(
+    source,
+    /readYouTubeOAuthCredentialStatus\(\{[\s\S]*?trustedAdapter: trustedStatusReader\?\.trustedAdapter \?\? null,[\s\S]*?callerAuthorization,[\s\S]*?credentialResolutionDisabled[\s\S]*?\}\);/,
+    "credential readiness passes fail-closed authority and disable state to the trusted reader boundary"
+  );
+}
+assertCredentialReadinessGuards(toolActionContextSource);
+assert.throws(
+  () => assertCredentialReadinessGuards(
+    toolActionContextSource.replaceAll(
+      'credentialResolutionDisabled || callerAuthorization.status !== "authorized"',
+      "false"
+    )
+  ),
+  /disabled or unauthorized readiness/,
+  "negative fixture proves the contract rejects trusted-reader construction after guard removal"
+);
+assert.match(toolCredentialSource, /^import "server-only";$/m, "trusted credential source is server-only");
+assert.match(
+  toolCredentialSource,
+  /reference\.status === "unavailable"[\s\S]*?createUnavailableStatusForReferenceResolution/,
+  "unavailable credential reference resolves to a sanitized fail-closed status"
+);
+assert.match(
+  toolCredentialSource,
+  /trustedAdapter === undefined \? createTrustedYouTubeOAuthCredentialSupabaseStatusReader\(\)\.trustedAdapter : trustedAdapter/,
+  "trusted credential source alone constructs the server-only status reader"
+);
+assert.match(
+  toolCredentialSource,
+  /trustedAdapter: trustedStatusReader \?\? null/,
+  "missing trusted reader remains unavailable rather than falling back to browser authority"
+);
+assert.match(toolCredentialSource, /payloadBoundary: "sanitized-credential-status-metadata-only"/, "trusted credential output remains sanitized metadata only");
+assert.doesNotMatch(
+  combinedCredentialDelegationSource,
+  /localStorage\.|sessionStorage\.|indexedDB\.|document\.cookie|searchParams|URLSearchParams|console\.(?:log|info|warn|error)/i,
+  "credential delegation chain has no browser storage, query authority, or private logging"
+);
 
 assert.doesNotMatch(
   combinedBrowserSurfaceSource,
@@ -237,9 +303,9 @@ assert.doesNotMatch(
 for (const [label, source] of [
   ["Task 26 runtime", finalReviewSource],
   ["Task 26 doc", finalReviewDoc],
-  ["task.md", taskSource],
   ["comment translator route source", combinedRouteSource],
   ["comment translator action source", combinedActionSource],
+  ["comment translator credential delegation source", combinedCredentialDelegationSource],
   ["comment translator boundary runtime source", combinedBoundarySource],
   ["comment translator active docs", combinedActiveDocs]
 ]) {
@@ -366,7 +432,7 @@ const webhookRejected = await billingRuntime.readCommentTranslatorStripeWebhookR
   }
 });
 assert.equal(webhookRejected.status, "rejected");
-assert.equal(webhookRejected.reason, "missing-signature");
+assert.equal(webhookRejected.reason, "activation-closed", "fixed-closed billing rejects webhooks before signature processing");
 
 const rateLimitStore = abuseRuntime.createInMemoryCommentTranslatorAbuseRateLimitStoreForTests();
 let finalAbuseCheck = null;
@@ -431,14 +497,7 @@ for (const [label, value] of [
   );
 }
 
-const allowedChangedFiles = new Set([finalReviewRuntimePath, finalReviewDocPath, "scripts/comment-translator-security-privacy-final-review-contract.mjs", taskPath]);
-for (const file of changedFiles()) {
-  assert.ok(allowedChangedFiles.has(file), `Task 26 change stays in allowed files: ${file}`);
-  assertNoSensitiveValues(read(file), `changed file ${file}`);
-}
-
-assert.match(taskSource, /Task 26[\s\S]*Security and privacy final review[\s\S]*Status: complete/i, "task.md records Task 26 completion");
-assert.match(taskSource, /width checks skipped[\s\S]*no visible UI\/CSS\/layout change/i, "task.md records width-check skip reason");
-assert.match(taskSource, /public-release capable: no/i, "task.md keeps public release capability blocked");
+// The one-time Task 26 changed-file and task-board scope checks are retired.
+// This reusable contract verifies current authorization, sanitization, and browser-isolation invariants directly.
 
 console.log("comment translator security/privacy final review contract checks passed");

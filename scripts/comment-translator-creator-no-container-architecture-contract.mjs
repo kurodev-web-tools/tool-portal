@@ -15,13 +15,17 @@ const crosswalk = read(crosswalkPath);
 const task = read("task.md");
 
 for (const marker of [
-  "verified_at=2026-08-01",
+  "verified_at=2026-08-06",
   "feasibility_decision=conditional-go",
+  "launch_readiness_decision=no-go",
+  "conditional-go=forbidden-while-release-hard-requirement-unresolved",
   "selected_runtime=cloudflare-workers-open-next",
   "selected_persistence=supabase-postgres-existing-server-only-boundary",
   "container_disposition=rejected-not-a-candidate",
-  "implementation_status=not-started",
+  "implementation_status=implemented-through-nc-r1-local-readiness",
   "deploy_status=not-approved",
+  "worker_bundle_internal_acceptance_ceiling_bytes=3000000",
+  "worker_bundle_internal_ceiling_scope=local-acceptance-only",
   "## Current Free Architecture Inventory",
   "## Cost Boundary",
   "## No-Container Options",
@@ -34,6 +38,10 @@ for (const marker of [
 ]) {
   assert.match(architecture, new RegExp(escapeRegExp(marker)), `missing architecture marker: ${marker}`);
 }
+assert.match(architecture, /official wording `3 MB after compression`/, "architecture must retain the official Worker size wording");
+assert.match(architecture, /internal acceptance ceiling.*3,000,000 gzip-compressed bytes/, "architecture must retain the conservative exact internal Worker byte ceiling");
+assert.match(architecture, /provider の binary\/decimal semantics.*主張しない/, "architecture must not infer provider binary or decimal size semantics");
+assert.doesNotMatch(architecture, /\b3MiB\b/, "architecture must not retain the ambiguous 3MiB Worker size assertion");
 
 for (const url of [
   "https://developers.cloudflare.com/workers/platform/pricing/",
@@ -161,6 +169,17 @@ for (const marker of [
 ]) {
   assert.match(`${taskBoard}\n${task}`, new RegExp(escapeRegExp(marker)), `missing task authority marker: ${marker}`);
 }
+
+for (const currentVerification of [
+  "NC-B1 billing、public entitlement、security/privacy、NC-R1、NC-Q1 are pass",
+  "strict TypeScript、Next build、OpenNext build are pass",
+  "Total Upload: 9477.87 KiB / gzip: 2032.88 KiB",
+  "approved lockfile install: 691 packages",
+  "package.json` / `package-lock.json` are unchanged"
+]) {
+  assert.match(architecture, new RegExp(escapeRegExp(currentVerification)), `missing current verification evidence: ${currentVerification}`);
+}
+assert.doesNotMatch(architecture, /2 pass \/ 6 dependency-blocked|fresh worktreeに`typescript` packageがなく|install非承認/);
 
 process.stdout.write("comment translator Creator no-container architecture contract passed\n");
 

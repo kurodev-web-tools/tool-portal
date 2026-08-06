@@ -143,14 +143,16 @@ export function resolveCommentTranslatorCreatorOpaqueOwnerReference({
     decipher.setAuthTag(tag);
     const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
     const parsed = JSON.parse(plaintext) as { purpose?: unknown; ownerUserId?: unknown; reservationId?: unknown };
+    const ownerUserId = stringValue(parsed.ownerUserId);
+    const reservationId = stringValue(parsed.reservationId);
     if (
       parsed.purpose !== ownerReferencePurpose ||
-      !isNonEmptyString(parsed.ownerUserId) ||
-      !isNonEmptyString(parsed.reservationId)
+      !isNonEmptyString(ownerUserId) ||
+      !isNonEmptyString(reservationId)
     ) {
       return { status: "mismatch" };
     }
-    return { status: "resolved", ownerUserId: parsed.ownerUserId, reservationId: parsed.reservationId };
+    return { status: "resolved", ownerUserId, reservationId };
   } catch {
     return { status: "mismatch" };
   }
@@ -236,6 +238,8 @@ export function normalizeCommentTranslatorCreatorStripeWebhookEvent({
       periodStartIso: creatorLine.status === "matched" ? unixSecondsToIso(creatorLine.periodStart) : null,
       periodEndIso: creatorLine.status === "matched" ? unixSecondsToIso(creatorLine.periodEnd) : null,
       ownerReference,
+      checkoutLifecycle: null,
+      checkoutSessionReference: null,
       normalizationStatus: "ready"
     };
   }
@@ -266,6 +270,8 @@ export function normalizeCommentTranslatorCreatorStripeWebhookEvent({
       periodStartIso: creatorLine.status === "matched" ? unixSecondsToIso(creatorLine.periodStart) : null,
       periodEndIso: creatorLine.status === "matched" ? unixSecondsToIso(creatorLine.periodEnd) : null,
       ownerReference,
+      checkoutLifecycle: null,
+      checkoutSessionReference: null,
       normalizationStatus: "ready"
     };
   }

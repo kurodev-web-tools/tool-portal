@@ -212,6 +212,11 @@ assert.deepEqual(
   },
   "exact verified Stripe Price preserves distinct product and price compatibility keys"
 );
+assert.deepEqual(
+  [exactPriceCanonicalEvent.checkoutLifecycle, exactPriceCanonicalEvent.checkoutSessionReference],
+  [null, null],
+  "subscription evidence cannot claim Checkout-only lifecycle or session authority"
+);
 const multiplePriceCanonicalEvent = stripeAdapter.normalizeCommentTranslatorCreatorStripeWebhookEvent({
   event: {
     id: "fixture-multiple-price-event",
@@ -473,6 +478,11 @@ assert.deepEqual(
     periodStartIso: new Date(1_785_000_000 * 1_000).toISOString()
   },
   "invoice proration uses the uniquely matched Creator line rather than the first line"
+);
+assert.deepEqual(
+  [invoiceProrationCanonicalEvent.checkoutLifecycle, invoiceProrationCanonicalEvent.checkoutSessionReference],
+  [null, null],
+  "invoice evidence cannot claim Checkout-only lifecycle or session authority"
 );
 const incompleteInvoiceWithoutCreatorEvent = stripeAdapter.normalizeCommentTranslatorCreatorStripeWebhookEvent({
   event: {

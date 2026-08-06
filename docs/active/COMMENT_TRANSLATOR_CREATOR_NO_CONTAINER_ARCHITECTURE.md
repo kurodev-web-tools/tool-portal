@@ -1,24 +1,28 @@
 # Comment Translator Creator No-Container Architecture
 
 ```text
-verified_at=2026-08-01
+verified_at=2026-08-06
 feasibility_decision=conditional-go
+launch_readiness_decision=no-go
+conditional-go=forbidden-while-release-hard-requirement-unresolved
 selected_runtime=cloudflare-workers-open-next
 selected_persistence=supabase-postgres-existing-server-only-boundary
 container_disposition=rejected-not-a-candidate
-implementation_status=not-started
+implementation_status=implemented-through-nc-r1-local-readiness
 deploy_status=not-approved
+worker_bundle_internal_acceptance_ceiling_bytes=3000000
+worker_bundle_internal_ceiling_scope=local-acceptance-only
 ```
 
 ## Decision
 
-Comment Translator Creator は、Cloudflare Containers、Docker image、managed Container Registry、Container binding、Container-backed Durable Object、paid Container permissionを一切使わず再設計できる。ただし「継続的なplatform infrastructure costを無料枠内に抑えられる」は条件付きの判断であり、製品全体が完全無料という意味ではない。
+Comment Translator Creator は、Cloudflare Containers、Docker image、managed Container Registry、Container binding、Container-backed Durable Object、paid Container permissionを一切使わず再設計できる。ただしこれは selected local architecture であり、NC-R1 の paid launch readiness は **NO-GO** のままである。「継続的なplatform infrastructure costを無料枠内に抑えられる」は未測定の条件であり、製品全体が完全無料という意味ではない。
 
 推奨は、現行の単一Cloudflare Worker / OpenNext境界を維持し、認証・RLS・service-role-only永続化・atomic RPCを既存Supabase projectへ集約する案である。Cloudflare上に新しい永続化製品を追加しない。翻訳providerとStripeは従量費用の別境界として扱う。
 
 次の条件をすべて満たす間だけ、platform infrastructureを無料枠内に保てる可能性がある。
 
-1. Cloudflare accountがWorkers Freeで、account全体のWorker requestが100,000/day以内、各HTTP invocationが原則10ms CPU以内、bundleがFreeの3MiB compressed limit以内に収まる。
+1. Cloudflare accountがWorkers Freeで、account全体のWorker requestが100,000/day以内、各HTTP invocationが原則10ms CPU以内、bundleがこの authority の internal acceptance ceiling である **3,000,000 gzip-compressed bytes** 以内に収まる。この ceiling は official public wording `3 MB after compression` に安全側で留まるために選んだ internal acceptance boundary であり、provider の binary/decimal semantics、bundle measurement、account headroom、deployed proof を主張しない。
 2. Supabase Freeの2 active projects制約内で既存projectを継続利用し、database size 500MB/project、egress 5GB/month、Storage 1GB、50,000 MAU等の該当quota内に収まる。
 3. Supabase Freeの低活動pause、downloadable backup不在、SLA不在をCreatorの運用リスクとして受容するか、公開paid launch前に人間が有料化を選択する。
 4. provider利用量とStripe取引手数料をplatform free-tierと混同せず、server-owned hard stopを先に適用する。
@@ -57,9 +61,9 @@ Archiveはlegacy要件を読むためだけの資料である。archiveのruntim
 
 「無料」はplatform infrastructureのfree-tier利用を指す。翻訳/AI provider利用、Stripe決済、メール・監視等の外部サービスは別会計である。
 
-| Cost class | Free/included boundary confirmed 2026-08-01 | Trigger | Required response |
+| Cost class | Public-source observation refreshed 2026-08-06 | Trigger | Required response |
 | --- | --- | --- | --- |
-| Cloudflare platform/runtime cost | Workers Free: 100,000 requests/day, 10ms CPU/invocation, 128MB memory, 50 external subrequests/invocation, 3MiB compressed Worker | request/CPU/bundle/subrequest limitへ接近、またはPaid機能が必要 | 80%で新Creator sessionを抑制、90%で新規/継続Creator処理をfail-closed。最適化か明示的paid承認。Free超過は自動課金ではなくエラーとして扱う |
+| Cloudflare platform/runtime cost | Workers Free: 100,000 requests/day, 10ms CPU/invocation, 128MB memory, 50 subrequests/invocation, official wording `3 MB after compression`; local acceptance ceiling is 3,000,000 gzip-compressed bytes only | request/CPU/bundle/subrequest limitへ接近、またはPaid機能が必要 | 80%で新Creator sessionを抑制、90%で新規/継続Creator処理をfail-closed。最適化か明示的paid承認。Free超過は自動課金ではなくエラーとして扱う |
 | Supabase/database cost | Free: 2 active projects、500MB database/project、5GB egress、1GB Storage、50,000 MAU、shared Nano compute | database/egress/storage/MAU接近、read-only、pause warning、性能不足 | 80%でretention/export/新規Creator開始を抑制、90%でwrite-heavy Creator機能を閉じる。archive/削除/upgradeは別承認 |
 | translation/AI provider cost | Azure F0は2M characters/month、DeepL API Freeは500,000 characters/month。OpenAIはtoken従量で、repoはmodelをserver envで選ぶ | provider quota、account budget、model価格、paid fallback | provider call前のserver-owned soft/hard stop。Freeはpaid LLMへ自動fallbackしない。OpenAI/paid providerは売上原価として別予算 |
 | Stripe/payment processing cost | Japan standard domestic card successful charge 3.6%; BillingはBilling取引額の0.7%という別料金。Checkout自体はPayments利用時追加なし | successful payment、Billing利用、FX、refund/dispute、追加product | 原価として価格設計へ反映。platform無料枠に算入しない。費用/税/契約確認後だけlive activation |
@@ -203,7 +207,7 @@ The `CommentTranslatorC1Container` delete migration is not a new Creator runtime
 
 Before implementation may be called release-ready, a human must decide or approve:
 
-- whether Workers Free 10ms CPU and 3MiB compressed bundle are acceptable after measured characterization;
+- whether Workers Free 10ms CPU and the local 3,000,000 gzip-compressed-byte acceptance ceiling are acceptable after measured characterization;
 - whether Supabase Free pause/no-downloadable-backup/no-SLA posture is acceptable for a paid product;
 - retention volumes that keep database and egress within thresholds;
 - exact paid entitlements and provider monthly budget/soft/hard stop values;
@@ -213,7 +217,7 @@ Before implementation may be called release-ready, a human must decide or approv
 
 ## Official Sources
 
-All sources below were checked as public official documentation on 2026-08-01. Prices and limits are drift-prone and must be rechecked before implementation, deploy, or paid launch.
+The Worker, Supabase, Azure, DeepL, OpenAI, and Stripe observations used by NC-R1 were refreshed as public official sources on 2026-08-06 in `docs/active/COMMENT_TRANSLATOR_CREATOR_NC_R1_PAID_LAUNCH_READINESS.md`. Supabase's production checklist still states that database backups are not available for download for Free Plan projects. These remain public-source observations only and do not prove account headroom, target configuration, actual backup/recovery state, approval, live behavior, or deployment. The remaining architecture reference URLs below must be rechecked for their own later operation; they are not silently refreshed by this document.
 
 - Cloudflare Workers pricing: https://developers.cloudflare.com/workers/platform/pricing/
 - Cloudflare Workers limits: https://developers.cloudflare.com/workers/platform/limits/
@@ -240,16 +244,13 @@ All sources below were checked as public official documentation on 2026-08-01. P
 
 ## Non-Claims
 
-This authority does not claim Creator implementation complete、deploy-ready、production-ready、canonical live proof complete、all external costs free、PR merged、or any new external-operation approval. It authorizes documentation review only.
+This authority does not claim Creator implementation complete、deploy-ready、production-ready、canonical live proof complete、all external costs free、PR #748 deployment success、or any new external-operation approval. PR #748 merge is a repository fact, not deployment proof. It authorizes documentation review only.
 
 ## Verification Evidence
 
-- focused RED: architecture doc不存在で`ENOENT`となり、contractが要件欠落を検出することを確認。
-- focused GREEN: `node scripts/comment-translator-creator-no-container-architecture-contract.mjs` pass。
-- Node syntax: changed contractの`node --check` pass。
-- relevant existing contracts: `2 pass / 6 dependency-blocked / 2 known historical`。
-  - pass: no-container architecture、login-only runtime access。
-  - dependency-blocked: fresh worktreeに`typescript` packageがなく、install非承認のためpublic entitlement、durable session、durable usage、provider alignment、security/privacy、session start/stopを実行できない。
-  - known historical: provider-boundaryのlegacy `MockTranslationProvider` assertionとprovider-cost-policyのlegacy `task.md Task 19` assertion。どちらも本docs-only差分前から現integrationで不一致となる範囲であり、本PRでは修正しない。
-- UI/browser QA: runtime、route、component、CSS、copy、browser storageを変更していないため不要。Markdown rendering reviewだけをmanual surfaceとする。
-- dependency install、manifest/lockfile change、remote product/database/account observation、provider/Stripe/live operation、deployは0。
+- focused contracts: no-container architecture、NC-B1 billing、public entitlement、security/privacy、NC-R1、NC-Q1 are pass。
+- local toolchain: lint、strict TypeScript、Next build、OpenNext build are pass after the approved bounded Stripe type repair。
+- local Worker measurement: Wrangler dry-run reports `Total Upload: 9477.87 KiB / gzip: 2032.88 KiB`; the conservative rounded upper bound `2,081,675 bytes` is below the internal `3,000,000-byte` ceiling。This remains local evidence, not account headroom、live/deployed proof、or production proof。
+- UI/browser QA: UI/CSS変更なしのためwidth-based QAはN/Aであり、passとは扱わない。
+- approved lockfile install: 691 packages。`package.json` / `package-lock.json` are unchanged。
+- remote product/database/account observation、provider/Stripe live operation、deploy、activation、commit、push are 0。

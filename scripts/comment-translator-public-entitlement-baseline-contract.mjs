@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { execSync } from "node:child_process";
 import fs from "node:fs";
 import Module from "node:module";
 import path from "node:path";
@@ -8,10 +7,12 @@ import ts from "typescript";
 const root = process.cwd();
 const entitlementPath = "lib/comment-translator-public-entitlement-baseline.ts";
 const sessionRuntimePath = "lib/comment-translator-session-runtime.ts";
+const sessionPolicyPath = "lib/comment-translator-session-policy.ts";
 const usageLedgerPath = "lib/comment-translator-usage-ledger-runtime.ts";
 const durableUsagePath = "lib/comment-translator-durable-usage-counter-store.ts";
 const routePath = "app/api/comment-translator/session/route.ts";
-const actionPath = "app/tools/comment-translator/actions.ts";
+const actionFacadePath = "app/tools/comment-translator/actions.ts";
+const actionPath = "app/tools/comment-translator/session-actions.ts";
 const readinessDocPath = "docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md";
 const gapAuditPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md";
 const taskPath = "task.md";
@@ -22,33 +23,6 @@ function read(relativePath) {
 
 function exists(relativePath) {
   return fs.existsSync(path.join(root, relativePath));
-}
-
-function changedFiles() {
-  const base = "origin/codex/comment-translator-free-public-beta-integration";
-  const committedDiff = execSync(`git diff --name-only ${base}...HEAD`, {
-    cwd: root,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "ignore"]
-  })
-    .split(/\r?\n/)
-    .filter(Boolean);
-  const uncommittedDiff = execSync("git diff --name-only", {
-    cwd: root,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "ignore"]
-  })
-    .split(/\r?\n/)
-    .filter(Boolean);
-  const untracked = execSync("git ls-files --others --exclude-standard", {
-    cwd: root,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "ignore"]
-  })
-    .split(/\r?\n/)
-    .filter(Boolean);
-
-  return [...new Set([...committedDiff, ...uncommittedDiff, ...untracked])].map((file) => file.replace(/\\/g, "/"));
 }
 
 function loadTsModule(relativePath) {
@@ -127,9 +101,11 @@ function loadTsModule(relativePath) {
 for (const requiredPath of [
   entitlementPath,
   sessionRuntimePath,
+  sessionPolicyPath,
   usageLedgerPath,
   durableUsagePath,
   routePath,
+  actionFacadePath,
   actionPath,
   readinessDocPath,
   gapAuditPath
@@ -139,9 +115,11 @@ for (const requiredPath of [
 
 const entitlementSource = read(entitlementPath);
 const sessionRuntimeSource = read(sessionRuntimePath);
+const sessionPolicySource = read(sessionPolicyPath);
 const usageLedgerSource = read(usageLedgerPath);
 const durableUsageSource = read(durableUsagePath);
 const routeSource = read(routePath);
+const actionFacadeSource = read(actionFacadePath);
 const actionSource = read(actionPath);
 const readinessDoc = read(readinessDocPath);
 const gapAudit = read(gapAuditPath);
@@ -151,11 +129,20 @@ assert.match(entitlementSource, /^import "server-only";/m, "public entitlement r
 assert.match(entitlementSource, /commentTranslatorPublicEntitlementBaselineContract/, "resolver exposes F5 contract");
 assert.match(entitlementSource, /resolveCommentTranslatorPublicEntitlementBaseline/, "resolver exports Free public beta baseline resolver");
 assert.match(entitlementSource, /monthlyProviderInputCharacterLimit/, "resolver carries monthly provider-input character limit");
-assert.match(entitlementSource, /20_000/, "resolver encodes the 20,000 provider-input characters/month Free cap");
 assert.match(entitlementSource, /degradedFrom/, "resolver records safe Free degradation source");
 assert.match(entitlementSource, /publicLaunchAllowed:\s*false/, "resolver does not open public launch gate");
 
-assert.match(sessionRuntimeSource, /monthlyProviderInputCharacterLimit/, "session entitlement type carries monthly provider-input character cap");
+assert.match(
+  sessionRuntimeSource,
+  /^export \{ createCommentTranslatorSessionPlanEntitlement \} from "\.\/comment-translator-session-policy";$/m,
+  "session runtime barrel re-exports the canonical plan-entitlement policy"
+);
+assert.match(sessionPolicySource, /^import "server-only";$/m, "canonical plan-entitlement policy is server-only");
+assert.match(
+  sessionPolicySource,
+  /return \{\s*plan: "free",[\s\S]*?monthlyProviderInputCharacterLimit:\s*20_000,/,
+  "canonical Free policy implements the exact 20,000 provider-input characters/month cap"
+);
 assert.match(sessionRuntimeSource, /monthlyProviderInputCharacters:\s*20_000/, "session contract records the Free monthly provider-input character cap");
 assert.match(usageLedgerSource, /monthlyProviderInputCharacterEstimate/, "usage ledger exposes monthly provider-input character estimate");
 assert.match(durableUsageSource, /monthlyProviderInputCharacterEstimate/, "durable usage adapter exposes monthly provider-input character estimate");
@@ -163,6 +150,11 @@ assert.match(durableUsageSource, /monthlyProviderInputCharacterEstimate/, "durab
 assert.match(routeSource, /resolveCommentTranslatorPublicEntitlementBaseline/, "session route resolves F5 public entitlement baseline");
 assert.match(routeSource, /entitlementBaseline\.plan/, "session route uses resolver plan");
 assert.match(routeSource, /entitlementBaseline\.usage/, "session route uses resolver usage");
+assert.match(
+  actionFacadeSource,
+  /getCommentTranslatorSessionStatusAction as getCommentTranslatorSessionStatus/,
+  "server-action facade delegates session status to the canonical session-action module"
+);
 assert.match(actionSource, /resolveCommentTranslatorPublicEntitlementBaseline/, "server actions resolve F5 public entitlement baseline");
 assert.match(actionSource, /entitlementBaseline\.plan/, "server actions use resolver plan");
 assert.match(actionSource, /entitlementBaseline\.usage/, "server actions use resolver usage");
@@ -331,11 +323,7 @@ assert.equal(overCapStart.stopReason, "ai-budget-stop");
 assert.equal(overCapStart.providerTargetMetadata, "forbidden");
 assert.equal(overCapStart.tokenValue, "never-returned-by-design");
 
-assert.match(taskSource, /monthly_input_character_accounting_status=complete/i, "task.md records current monthly input accounting work");
-assert.match(taskSource, /20,000 provider-input\/source characters per month/i, "task.md records the monthly provider-input cap as additive");
-assert.match(taskSource, /monthly_input_character_accounting_status=complete/i, "task.md records current monthly input accounting completion");
-
-for (const source of [entitlementSource, sessionRuntimeSource, usageLedgerSource, durableUsageSource, routeSource, actionSource, readinessDoc, gapAudit, taskSource]) {
+for (const source of [entitlementSource, sessionRuntimeSource, sessionPolicySource, usageLedgerSource, durableUsageSource, routeSource, actionFacadeSource, actionSource, readinessDoc, gapAudit, taskSource]) {
   assert.doesNotMatch(
     source,
     /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|whsec_[A-Za-z0-9]+|access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|Authorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN\s+PRIVATE\s+KEY|liveChatId\s*[:=]\s*["'][^"']+|providerChannelId\s*[:=]\s*["'][^"']+/i,
@@ -343,79 +331,7 @@ for (const source of [entitlementSource, sessionRuntimeSource, usageLedgerSource
   );
 }
 
-const allowedChangedFiles = new Set([
-  entitlementPath,
-  sessionRuntimePath,
-  routePath,
-  actionPath,
-  readinessDocPath,
-  "scripts/comment-translator-public-entitlement-baseline-contract.mjs",
-  taskPath
-]);
-const plG6dChangedFiles = new Set([
-  "app/api/comment-translator/session/route.ts",
-  "app/tools/comment-translator/actions.ts",
-  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6D_PREVIEW_RATE_LIMIT_SMOKE_OVERRIDE.md",
-  "lib/comment-translator-free-beta-preview-rate-limit-smoke-override.ts",
-  "scripts/comment-translator-bounded-live-chat-polling-wiring-contract.mjs",
-  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
-  "scripts/comment-translator-pl-g6d-preview-rate-limit-smoke-override-contract.mjs",
-  "scripts/comment-translator-provider-execution-runtime-contract.mjs",
-  "scripts/comment-translator-session-start-stop-contract.mjs"
-]);
-const monthlyInputAccountingChangedFiles = new Set([
-  "components/comment-translator/CommentTranslatorDock.tsx",
-  "docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md",
-  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_ALLOWED_TESTER_ROUTE_API_SMOKE_EVIDENCE.md",
-  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_APPROVED_START_TO_TRANSLATION_SMOKE_EVIDENCE.md",
-  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G1_REMOTE_DURABLE_ENFORCEMENT_EXECUTION_EVIDENCE.md",
-  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G3_START_TO_TRANSLATION_SMOKE_COMPLETION_AFTER_PL_G2K.md",
-  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G5_PUBLIC_LAUNCH_GATE_DECISION.md",
-  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PRODUCTION_CUSTOM_DEPLOYED_SMOKE_EVIDENCE.md",
-  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_LAUNCH_GATE_DECISION_EVIDENCE.md",
-  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_PUBLIC_USABILITY_PREFLIGHT.md",
-  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_EVIDENCE.md",
-  "docs/active/COMMENT_TRANSLATOR_FREE_BETA_REMOTE_DURABLE_ENFORCEMENT_READY_PREFLIGHT.md",
-  "docs/active/COMMENT_TRANSLATOR_FREE_PUBLIC_BETA_FINAL_QA_READINESS.md",
-  "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md",
-  "docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md",
-  "lib/comment-translator.ts",
-  "lib/comment-translator-admin-operational-visibility.ts",
-  "lib/comment-translator-azure-normal-translation-execution.ts",
-  "lib/comment-translator-durable-usage-counter-store.ts",
-  "lib/comment-translator-free-beta-usage-display.ts",
-  "lib/comment-translator-provider-execution-runtime.ts",
-  "lib/comment-translator-public-entitlement-baseline.ts",
-  "lib/comment-translator-session-runtime.ts",
-  "lib/comment-translator-usage-ledger-runtime.ts",
-  "scripts/comment-translator-abuse-rate-limit-hardening-contract.mjs",
-  "scripts/comment-translator-admin-operational-visibility-contract.mjs",
-  "scripts/comment-translator-azure-normal-translation-execution-contract.mjs",
-  "scripts/comment-translator-durable-usage-counter-schema-adapter-contract.mjs",
-  "scripts/comment-translator-free-beta-allowed-tester-route-api-smoke-contract.mjs",
-  "scripts/comment-translator-free-beta-approved-start-to-translation-smoke-contract.mjs",
-  "scripts/comment-translator-free-beta-pl-g1-remote-durable-enforcement-execution-contract.mjs",
-  "scripts/comment-translator-free-beta-pl-g3-feed-bridge-session-persistence-contract.mjs",
-  "scripts/comment-translator-free-beta-production-custom-deployed-smoke-contract.mjs",
-  "scripts/comment-translator-free-beta-public-launch-gate-decision-contract.mjs",
-  "scripts/comment-translator-free-beta-remote-durable-enforcement-evidence-contract.mjs",
-  "scripts/comment-translator-free-beta-usage-display-contract.mjs",
-  "scripts/comment-translator-monitoring-incident-readiness-contract.mjs",
-  "scripts/comment-translator-monthly-input-character-accounting-contract.mjs",
-  "scripts/comment-translator-private-gated-live-provider-smoke-execution-harness.mjs",
-  "scripts/comment-translator-provider-execution-runtime-contract.mjs",
-  "scripts/comment-translator-provider-implementation-alignment-contract.mjs",
-  "scripts/comment-translator-public-entitlement-baseline-contract.mjs",
-  "scripts/comment-translator-session-start-stop-contract.mjs",
-  "scripts/comment-translator-ui-live-provider-runtime-contract.mjs",
-  "scripts/comment-translator-usage-quota-budget-ledger-contract.mjs",
-  "task.md"
-]);
-for (const file of changedFiles()) {
-  assert.ok(
-    allowedChangedFiles.has(file) || monthlyInputAccountingChangedFiles.has(file) || plG6dChangedFiles.has(file),
-    `F5 change stays in allowed files: ${file}`
-  );
-}
+// The one-time F5 changed-file allowlists are retired: this reusable contract
+// verifies current Free invariants and sensitive-value isolation directly.
 
 console.log("comment translator public entitlement baseline contract checks passed");

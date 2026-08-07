@@ -1026,7 +1026,7 @@ const canonicalCurrentContinuationLocalVerificationFields = {
   current_continuation_worktree_worker_conservative_remaining_bytes: "904040",
   current_continuation_worktree_opennext_artifact_file_count: "1881",
   current_continuation_worktree_opennext_artifact_total_bytes: "128538687",
-  current_continuation_worktree_opennext_artifact_tree_manifest_sha256: "EFD15C472669EF6DE17241FDE5BF9954CD59DE3E2688D01CB9F161D30CD9E6F7",
+  current_continuation_worktree_opennext_artifact_tree_manifest_sha256: "A7DDD9243821CD194A217971CECD71534D2CE03731638735D093A30FC1552B07",
   current_continuation_worktree_opennext_artifact_fingerprint_algorithm: "unicode-code-point-sorted-relative-forward-slash-path-tab-byte-length-tab-lowercase-file-sha256-joined-lf-then-sha256",
   current_continuation_worktree_worker_entry_sha256: "D05223BF4D44C84108A102AB62AA3BC9C5568F0C3AC2064C37BE5CC65C64BC45",
   current_continuation_worktree_worker_entry_bytes: "2278",
@@ -3651,10 +3651,16 @@ assert.match(readiness, /source and release-window drift are not derivable/, "hi
 for (const [field, expected] of Object.entries(canonicalCurrentContinuationLocalVerificationFields)) {
   assert.equal(readUniqueTextField(readiness, field), expected, `${field} must retain the completed current-worktree local verification record`);
 }
-assert.equal(
-  runReadOnlyCommand("git", ["rev-parse", "HEAD"]),
-  canonicalCurrentContinuationLocalVerificationFields.current_continuation_worktree_observed_head,
-  "current Git HEAD must retain the source binding used by local evidence"
+const currentGitHead = runReadOnlyCommand("git", ["rev-parse", "HEAD"]);
+const observedLocalEvidenceHead = canonicalCurrentContinuationLocalVerificationFields.current_continuation_worktree_observed_head;
+const publishedImplementationHead = readUniqueTextField(task, "current_pr_implementation_head");
+assert.doesNotThrow(
+  () => runReadOnlyCommand("git", ["merge-base", "--is-ancestor", observedLocalEvidenceHead, currentGitHead]),
+  "current Git HEAD must descend from the exact source binding used by local evidence"
+);
+assert.doesNotThrow(
+  () => runReadOnlyCommand("git", ["merge-base", "--is-ancestor", publishedImplementationHead, currentGitHead]),
+  "current Git HEAD must contain the published NC-R1 implementation head"
 );
 assert.deepEqual(
   currentRuntimeSourceChangesOutsideAuthority(),
@@ -3741,8 +3747,11 @@ assert.match(ncQ1Checklist, /Keep activation closed/);
 
 for (const marker of [
   "current_goal=comment-translator-creator-nc-r1-paid-launch-readiness",
-  "current_pr=none",
-  "current_pr_state=not-created-unapproved",
+  "current_pr=750",
+  "current_pr_state=draft-open",
+  "current_pr_final_head=pending-final-review",
+  "current_pr_merge_commit=not-applicable",
+  "current_pr_implementation_head=938031a56ea51bf6fee0eeecded95fb5efc38a71",
   "previous_pr=749",
   "previous_pr_state=merged",
   "previous_pr_merge_commit=60d8b86f98bfe9465afdf9fa22e7052c0169b993",

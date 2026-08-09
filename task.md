@@ -6,7 +6,7 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0-implementation | Comment Translator Creator NC-R1 Creator Paid Launch Readiness | PR #750 final head `80e97d42812d8cb30fc75535aab375676a6fad61` is merged at exact integration tip `78ab5908df8bf39427b6a929d375d7df93bf13a9`; deployment remains not-confirmed. The approved documentation-only A1 Worker CPU source-disposition judgment is satisfied only as a prerequisite. The subsequently approved A1 GraphQL attempt is a partial stop: transport failed before response classification, no data query occurred, and schema/dataset capability plus target remain unconfirmed; it closes no row. The approved documentation-only A1 execution-path disposition records only a future safe no-secret path and authorizes no operation. Nine hard requirements remain unresolved. B1 deployed-target proof has only a contract-only independent-result bridge: no actual B1 approval, sanitized proof record, deploy, or EVID-DEPLOYED-TARGET closure exists; target remains 0/8, NO-GO, activation closed, Free permanent, and NC-L1 not-started. The approved-not-started Worker CPU GraphQL schema-capability-only packet permits only Kurodev's manual schema capability inspection/query on the named existing authenticated Cloudflare GraphQL-client-or-GraphiQL schema-only path; it has not started, authorizes no Codex command, data query, credential action, or row closure, and gives Codex no browser or client control. The fresh isolated worktree has no `node_modules`, so dependency-backed checks are setup-blocked and no install is authorized. Product/Price, legal, copy, risk, live paid flow, deployed target, provider cost, Stripe cost, and all activation remain unresolved/closed. Free is permanent and NC-L1 is not started. | `docs/active/COMMENT_TRANSLATOR_CREATOR_NC_R1_PAID_LAUNCH_READINESS.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NC_R1_OPERATOR_CHECKLIST.md`, `scripts/comment-translator-creator-nc-r1-paid-launch-readiness-contract.mjs` |
+| P0-implementation | Comment Translator Creator NC-R1 Creator Paid Launch Readiness | Draft PR #751 publishes the reviewed non-executable eight-row staged-resolution control plane from implementation head `f95399e67e73cdb9a86ab830dac9f5865b585226` against `codex/comment-translator-free-public-beta-integration`; merge and deployment are unconfirmed and unapproved. Previous PR #750 final head `80e97d42812d8cb30fc75535aab375676a6fad61` remains merged at exact integration tip `78ab5908df8bf39427b6a929d375d7df93bf13a9`, with deployment not-confirmed. The target remains 0/8, nine hard requirements remain unresolved, decision is NO-GO, activation is closed, Free is permanent, and NC-L1 is not-started. The manifest has approval effect none and authorizes no external operation. After merge, continuation uses one fresh task for one row or one prerequisite child step, with a truthful closure or partial stop before another row is selected. The fresh isolated worktree has no `node_modules`, so dependency-backed checks are setup-blocked and no install is authorized. | `docs/active/COMMENT_TRANSLATOR_CREATOR_NC_R1_PAID_LAUNCH_READINESS.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NC_R1_OPERATOR_CHECKLIST.md`, `scripts/comment-translator-creator-nc-r1-paid-launch-readiness-contract.mjs` |
 | P0-operations | Comment Translator Cloudflare legacy Durable Object retirement | PR #733 is merged at integration commit `db328816e0cb0d2e8e8235cc4716095070392451`; the user confirmed the automatic Cloudflare build and deployment succeeded. No further retirement operation is active here. | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md`, `scripts/comment-translator-cloudflare-legacy-do-retirement-contract.mjs` |
 | P1-operations | Comment Translator Free public beta | Released and final production smoke complete; `public_release_capable=yes`. No release-chain operator action remains. | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
 | P1-maintenance | 配信カンペボード | MVP and custom delete-dialog follow-up are merged to `main`; no active follow-up is recorded here. | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
@@ -16,17 +16,17 @@
 
 ```text
 current_goal=comment-translator-creator-nc-r1-paid-launch-readiness
-current_pr=750
-current_pr_state=merged
-current_pr_final_head=80e97d42812d8cb30fc75535aab375676a6fad61
-current_pr_merge_integration_tip=78ab5908df8bf39427b6a929d375d7df93bf13a9
-current_pr_deployment_status=not-confirmed
-previous_pr=749
+current_pr=751
+current_pr_state=draft-open
+current_pr_implementation_head=f95399e67e73cdb9a86ab830dac9f5865b585226
+current_pr_final_head=pending-final-review
+current_pr_deployment_status=not-applicable-unmerged
+previous_pr=750
 previous_pr_state=merged
-previous_pr_merge_commit=60d8b86f98bfe9465afdf9fa22e7052c0169b993
-previous_pr_final_head=742165b0fb67bb2e47f3d7f9db37e2ac774579ff
+previous_pr_merge_integration_tip=78ab5908df8bf39427b6a929d375d7df93bf13a9
+previous_pr_final_head=80e97d42812d8cb30fc75535aab375676a6fad61
 current_base=codex/comment-translator-free-public-beta-integration
-current_worktree=isolated-detached-head-at-integration-tip
+current_worktree=isolated-feature-branch-codex-comment-translator-creator-nc-r1-staged-resolution
 feasibility_decision=conditional-go
 launch_readiness_decision=no-go
 selected_runtime=cloudflare-workers-open-next
@@ -34,8 +34,8 @@ selected_persistence=supabase-postgres-existing-server-only-boundary
 container_disposition=rejected-not-a-candidate
 current_approved_boundary=creator-nc-r1-approved-evid-sla-posture-closure-worker-cpu-reread-partial-stop-a1-source-disposition-satisfied-a1-graphql-transport-partial-stop-completed-and-a1-graphql-execution-path-disposition-approved-and-a1-graphql-schema-manual-approved-not-started
 current_lane=NC-R1
-implementation_status=pr750-merged-evid-sla-satisfied-worker-cpu-reread-partial-stop-a1-source-disposition-satisfied-a1-graphql-partial-stop-execution-path-disposition-approved-schema-manual-approved-not-started
-publication_status=not-requested
+implementation_status=pr751-draft-nc-r1-staged-resolution-control-plane
+publication_status=draft-pr-open
 base_deploy_status=not-confirmed-for-pr750-merge-tip
 deploy_status=not-confirmed-for-pr750
 current_dependencies=absent-setup-blocked-no-install-authorized

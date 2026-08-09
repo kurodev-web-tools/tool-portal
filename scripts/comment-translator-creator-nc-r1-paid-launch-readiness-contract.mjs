@@ -42,13 +42,16 @@ const operationalAuthorityPaths = new Set([
 
 function assertChangedPathsForPhase(paths, phase) {
   const normalized = [...new Set(paths)].sort();
-  if (phase === "manifest-creation") {
-    assert.deepEqual(normalized, [...authorityOnlyPaths].sort(), "manifest creation must change exactly the approved six paths");
-  } else if (phase === "child-result-run") {
-    assert.deepEqual(normalized, [...operationalAuthorityPaths].sort(), "child-result run must change exactly the four approved operational paths");
-  } else {
+  const allowedPaths = phase === "manifest-creation"
+    ? authorityOnlyPaths
+    : phase === "child-result-run"
+      ? operationalAuthorityPaths
+      : undefined;
+  if (!allowedPaths) {
     assert.fail("unknown changed-path phase");
   }
+  const outsideAllowedPaths = normalized.filter((entry) => !allowedPaths.has(entry));
+  assert.deepEqual(outsideAllowedPaths, [], `${phase} must not change a path outside its approved allowlist`);
 }
 
 function read(relativePath) {
@@ -785,7 +788,7 @@ const canonicalA1WorkerCpuObservedResultTemplateFields = {
 const a1WorkerCpuObservedResultRecordFields = Object.keys(canonicalA1WorkerCpuObservedResultTemplateFields);
 const canonicalTaskOperationalFields = {
   current_approved_boundary: "creator-nc-r1-approved-evid-sla-posture-closure-worker-cpu-reread-partial-stop-a1-source-disposition-satisfied-a1-graphql-transport-partial-stop-completed-and-a1-graphql-execution-path-disposition-approved-and-a1-graphql-schema-manual-approved-not-started",
-  implementation_status: "pr750-merged-evid-sla-satisfied-worker-cpu-reread-partial-stop-a1-source-disposition-satisfied-a1-graphql-partial-stop-execution-path-disposition-approved-schema-manual-approved-not-started"
+  implementation_status: "pr751-draft-nc-r1-staged-resolution-control-plane"
 };
 const canonicalHistoricalPr750LocalApprovalPacketFields = {
   packet_execution_status: "completed-local",
@@ -5327,20 +5330,20 @@ assert.match(ncQ1Checklist, /Keep activation closed/);
 
 for (const marker of [
   "current_goal=comment-translator-creator-nc-r1-paid-launch-readiness",
-  "current_pr=750",
-  "current_pr_state=merged",
-  "current_pr_final_head=80e97d42812d8cb30fc75535aab375676a6fad61",
-  "current_pr_merge_integration_tip=78ab5908df8bf39427b6a929d375d7df93bf13a9",
-  "current_pr_deployment_status=not-confirmed",
-  "previous_pr=749",
+  "current_pr=751",
+  "current_pr_state=draft-open",
+  "current_pr_implementation_head=f95399e67e73cdb9a86ab830dac9f5865b585226",
+  "current_pr_final_head=pending-final-review",
+  "current_pr_deployment_status=not-applicable-unmerged",
+  "previous_pr=750",
   "previous_pr_state=merged",
-  "previous_pr_merge_commit=60d8b86f98bfe9465afdf9fa22e7052c0169b993",
-  "previous_pr_final_head=742165b0fb67bb2e47f3d7f9db37e2ac774579ff",
+  "previous_pr_merge_integration_tip=78ab5908df8bf39427b6a929d375d7df93bf13a9",
+  "previous_pr_final_head=80e97d42812d8cb30fc75535aab375676a6fad61",
   "current_base=codex/comment-translator-free-public-beta-integration",
-  "current_worktree=isolated-detached-head-at-integration-tip",
+  "current_worktree=isolated-feature-branch-codex-comment-translator-creator-nc-r1-staged-resolution",
   "current_lane=NC-R1",
   "launch_readiness_decision=no-go",
-  "publication_status=not-requested",
+  "publication_status=draft-pr-open",
   "deploy_status=not-confirmed-for-pr750",
   "current_dependencies=absent-setup-blocked-no-install-authorized",
   "unresolved_hard_requirements=9",
@@ -8251,7 +8254,10 @@ const parsedManifestFields = parseExactTextBlock(stagedManifestSection);
 assert.deepEqual(parsedManifestFields, stagedManifestFields, "readiness manifest fields must be exact");
 assert.equal(parsedManifestFields.manifest_phase, "manifest-creation");
 assert.match(checklist, /manifest_phase=manifest-creation/, "checklist must retain the readiness manifest phase");
-assert.throws(() => assertChangedPathsForPhase(parseExactTextBlock(sectionBody(readiness.replace("manifest_phase=manifest-creation", "manifest_phase=child-result-run"), "## NC-R1 Eight-Row Staged Resolution Control-Plane Manifest")).manifest_phase ? currentChangedPaths() : [], "child-result-run"), /exactly the four/);
+assert.throws(() => assertChangedPathsForPhase([
+  ...currentChangedPaths(),
+  "docs/superpowers/specs/2026-08-09-nc-r1-eight-row-staged-resolution-design.md"
+], "child-result-run"), /outside its approved allowlist/);
 assert.match(stagedManifestSection, /approval effect `none`, closes no evidence row, and authorizes no operation/i, "manifest must retain zero-effect boundary");
 assert.match(stagedManifestSection, /Migration, configuration\/binding, Git, merge, and deploy execution remain outside NC-R1/, "external execution must remain outside NC-R1");
 assert.match(stagedManifestSection, /A1-worker-cpu-source-disposition.*required prerequisite child.*A1-worker-cpu-evidence-read/, "manifest must bind Worker CPU source disposition before read");
@@ -11378,15 +11384,13 @@ assert.deepEqual([...authorityOnlyPaths].sort(), [
   "task.md"
 ], "changed-path allowlist must be exact six paths");
 assertChangedPathsForPhase(currentChangedPaths(), parsedManifestFields.manifest_phase);
+assert.doesNotThrow(() => assertChangedPathsForPhase([], "manifest-creation"), "a clean committed checkout must remain contract-runnable");
+assert.doesNotThrow(() => assertChangedPathsForPhase(["task.md", "scripts/comment-translator-creator-nc-r1-paid-launch-readiness-contract.mjs"], "manifest-creation"), "a publication follow-up may change an approved subset");
 assert.doesNotThrow(() => assertChangedPathsForPhase([...operationalAuthorityPaths], "child-result-run"));
-assert.throws(() => assertChangedPathsForPhase(["task.md", "scripts/comment-translator-creator-nc-r1-paid-launch-readiness-contract.mjs"], "child-result-run"), /exactly the four/);
-assert.throws(() => assertChangedPathsForPhase([...operationalAuthorityPaths, "docs/superpowers/specs/2026-08-09-nc-r1-eight-row-staged-resolution-design.md"], "child-result-run"), /exactly the four/);
-assert.throws(() => assertChangedPathsForPhase(currentChangedPaths(), "child-result-run"), /exactly the four/);
+assert.doesNotThrow(() => assertChangedPathsForPhase(["task.md", "scripts/comment-translator-creator-nc-r1-paid-launch-readiness-contract.mjs"], "child-result-run"));
+assert.throws(() => assertChangedPathsForPhase([...operationalAuthorityPaths, "docs/superpowers/specs/2026-08-09-nc-r1-eight-row-staged-resolution-design.md"], "child-result-run"), /outside its approved allowlist/);
 assert.throws(() => assertChangedPathsForPhase(currentChangedPaths(), "invalid-phase"), /unknown changed-path phase/);
-assert.throws(() => {
-  const seventhPathFixture = new Set([...authorityOnlyPaths, "src/unrelated-runtime-change.ts"]);
-  assert.deepEqual([...seventhPathFixture].sort(), [...authorityOnlyPaths].sort(), "a seventh or unrelated path is forbidden");
-}, /seventh or unrelated path/);
+assert.throws(() => assertChangedPathsForPhase([...authorityOnlyPaths, "src/unrelated-runtime-change.ts"], "manifest-creation"), /outside its approved allowlist/);
 assert.throws(() => validateStagedRows(parseStagedRows(checklist).slice(0, 7)), /exactly eight/);
 assert.throws(() => validateStagedChild({ approvalUnit: "authenticated-private-read", approvalId: "<required-unique-approval-id-A1-worker-cpu-evidence-read>", decision: "<required-explicit-approved-or-rejected-decision>", targetScope: "<required-exact-worker-cpu-target-and-scope>", execution: "<required-exact-operation-window-operator>", judgment: "N/A", kind: "executable", stopOwner: "kurodev", rollbackOwner: "kurodev", retention: "<required-sanitized-retention-location>" }, new Set(["<required-unique-approval-id-A1-worker-cpu-evidence-read>"])), /batch approval/);
 const prerequisiteStateMap = new Map(stagedChildDefinitions.map((child) => [child.id, satisfiedPrerequisite()]));

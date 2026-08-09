@@ -16,8 +16,17 @@ continuation_pr_state=merged
 continuation_pr_final_head=742165b0fb67bb2e47f3d7f9db37e2ac774579ff
 continuation_merge_integration_tip=60d8b86f98bfe9465afdf9fa22e7052c0169b993
 continuation_deployment_status=not-confirmed
+sla_posture_pr=750
+sla_posture_pr_state=merged
+sla_posture_pr_final_head=80e97d42812d8cb30fc75535aab375676a6fad61
+sla_posture_merge_integration_tip=78ab5908df8bf39427b6a929d375d7df93bf13a9
+sla_posture_deployment_status=not-confirmed
+current_fresh_isolated_worktree_base=78ab5908df8bf39427b6a929d375d7df93bf13a9
+current_fresh_isolated_worktree_node_modules=absent
+current_fresh_isolated_worktree_dependency_backed_checks=setup-blocked-no-install-authorized
 source_checked_at=2026-08-06
 source_max_age_days=7
+evaluation_at=2026-08-10T23:59:59Z
 source_freshness_timezone=Asia/Tokyo
 decision=no-go
 activation_status=closed
@@ -25,58 +34,60 @@ release_owner_decision=missing
 final_release_owner_decision=missing
 production_proof_status=incomplete
 original_external_owner_live_deployed_hard_requirement_count=16
-current_unresolved_hard_requirement_count=10
+current_unresolved_hard_requirement_count=9
 historical_pr749_worktree_dependencies=present-lockfile-installed
 historical_pr749_worktree_lint=passed
 historical_pr749_worktree_strict_typecheck=passed
 historical_pr749_worktree_next_build=passed
 historical_pr749_worktree_opennext_build=passed
 historical_pr749_worktree_worker_bundle_measurement=passed-wrangler-reported-gzip-2032.88-kib
-current_continuation_worktree_node_modules=present-lockfile-matched
-current_continuation_worktree_dependency_checks=completed-current-local
-current_continuation_worktree_dependency_install=approved-completed-local
-current_continuation_worktree_lint=passed-local
-current_continuation_worktree_strict_typecheck=passed-local
-current_continuation_worktree_next_build=passed-local
-current_continuation_worktree_opennext_build=passed-local
-current_continuation_worktree_public_entitlement_contract=passed-local
-current_continuation_worktree_security_privacy_contract=passed-local
-current_continuation_worktree_product_check_status=passed-local-no-product-failure-claim
-current_continuation_worktree_local_approval_id=NC-R1-LOCAL-DEPS-20260806-01
-current_continuation_worktree_local_approval_status=completed-local
-current_continuation_worktree_local_observed_at=2026-08-06T19:38+09:00
-current_continuation_worktree_local_target_alias=dcb5-nc-r1-evidence-clearance
-current_continuation_worktree_local_operator=Codex-root-agent-current-task
-current_continuation_worktree_local_evidence_retention_location=current-Codex-task-sanitized-report
-current_continuation_worktree_local_required_approver=kurodev
-current_continuation_worktree_local_stop_owner=kurodev
-current_continuation_worktree_local_rollback_owner=kurodev
-current_continuation_worktree_package_json_sha256=D28E0445B69199FB639E7EE193313D2E82DE15B9300C06CE179A3CD25AE80E91
-current_continuation_worktree_package_lock_sha256=0F3B1074691B8296E1E6C957C469DCB536B6C67B90890170600D7F50AEA138C8
-current_continuation_worktree_node_version=v22.22.2
-current_continuation_worktree_npm_version=10.9.7
-current_continuation_worktree_runtime_source_changes_outside_authority_files=none
-current_continuation_worktree_observed_head=60d8b86f98bfe9465afdf9fa22e7052c0169b993
-current_continuation_worktree_wrangler_version=4.95.0
-current_continuation_worktree_worker_dry_run_exit=0
-current_continuation_worktree_worker_reported_total_kib=9477.99
-current_continuation_worktree_worker_reported_gzip_kib=2046.83
-current_continuation_worktree_worker_conservative_upper_bound_bytes=2095960
-current_continuation_worktree_worker_internal_ceiling_bytes=3000000
-current_continuation_worktree_worker_conservative_remaining_bytes=904040
-current_continuation_worktree_opennext_artifact_file_count=1881
-current_continuation_worktree_opennext_artifact_total_bytes=128538687
-current_continuation_worktree_opennext_artifact_tree_manifest_sha256=A7DDD9243821CD194A217971CECD71534D2CE03731638735D093A30FC1552B07
-current_continuation_worktree_opennext_artifact_fingerprint_algorithm=unicode-code-point-sorted-relative-forward-slash-path-tab-byte-length-tab-lowercase-file-sha256-joined-lf-then-sha256
-current_continuation_worktree_worker_entry_sha256=D05223BF4D44C84108A102AB62AA3BC9C5568F0C3AC2064C37BE5CC65C64BC45
-current_continuation_worktree_worker_entry_bytes=2278
-current_continuation_worktree_worker_size_evidence_scope=local-artifact-acceptance-only-not-account-headroom-deployed-or-production-proof
-current_continuation_worktree_command_results_authority=root-observed-sanitized-snapshot-with-contract-enforced-source-toolchain-manifest-and-artifact-drift
+historical_pr750_worktree_node_modules=present-lockfile-matched
+historical_pr750_worktree_dependency_checks=completed-local
+historical_pr750_worktree_dependency_install=approved-completed-local
+historical_pr750_worktree_lint=passed-local
+historical_pr750_worktree_strict_typecheck=passed-local
+historical_pr750_worktree_next_build=passed-local
+historical_pr750_worktree_opennext_build=passed-local
+historical_pr750_worktree_public_entitlement_contract=passed-local
+historical_pr750_worktree_security_privacy_contract=passed-local
+historical_pr750_worktree_product_check_status=passed-local-no-product-failure-claim
+historical_pr750_worktree_local_approval_id=NC-R1-LOCAL-DEPS-20260806-01
+historical_pr750_worktree_local_approval_status=completed-local
+historical_pr750_worktree_local_observed_at=2026-08-06T19:38+09:00
+historical_pr750_worktree_local_target_alias=dcb5-nc-r1-evidence-clearance
+historical_pr750_worktree_local_operator=Codex-root-agent-current-task
+historical_pr750_worktree_local_evidence_retention_location=current-Codex-task-sanitized-report
+historical_pr750_worktree_local_required_approver=kurodev
+historical_pr750_worktree_local_stop_owner=kurodev
+historical_pr750_worktree_local_rollback_owner=kurodev
+historical_pr750_worktree_package_json_sha256=D28E0445B69199FB639E7EE193313D2E82DE15B9300C06CE179A3CD25AE80E91
+historical_pr750_worktree_package_lock_sha256=0F3B1074691B8296E1E6C957C469DCB536B6C67B90890170600D7F50AEA138C8
+historical_pr750_worktree_node_version=v22.22.2
+historical_pr750_worktree_npm_version=10.9.7
+historical_pr750_worktree_runtime_source_changes_outside_authority_files=none
+historical_pr750_worktree_observed_head=60d8b86f98bfe9465afdf9fa22e7052c0169b993
+historical_pr750_worktree_wrangler_version=4.95.0
+historical_pr750_worktree_worker_dry_run_exit=0
+historical_pr750_worktree_worker_reported_total_kib=9477.99
+historical_pr750_worktree_worker_reported_gzip_kib=2046.83
+historical_pr750_worktree_worker_conservative_upper_bound_bytes=2095960
+historical_pr750_worktree_worker_internal_ceiling_bytes=3000000
+historical_pr750_worktree_worker_conservative_remaining_bytes=904040
+historical_pr750_worktree_opennext_artifact_file_count=1881
+historical_pr750_worktree_opennext_artifact_total_bytes=128538687
+historical_pr750_worktree_opennext_artifact_tree_manifest_sha256=A7DDD9243821CD194A217971CECD71534D2CE03731638735D093A30FC1552B07
+historical_pr750_worktree_opennext_artifact_fingerprint_algorithm=unicode-code-point-sorted-relative-forward-slash-path-tab-byte-length-tab-lowercase-file-sha256-joined-lf-then-sha256
+historical_pr750_worktree_worker_entry_sha256=D05223BF4D44C84108A102AB62AA3BC9C5568F0C3AC2064C37BE5CC65C64BC45
+historical_pr750_worktree_worker_entry_bytes=2278
+historical_pr750_worktree_worker_size_evidence_scope=local-artifact-acceptance-only-not-account-headroom-deployed-or-production-proof
+historical_pr750_worktree_command_results_authority=root-observed-sanitized-historical-snapshot
 ```
 
 PR #748 は上記 final head で MERGED であり、上記 merge/integration tip に含まれる。merge は deployment 成功の証跡ではないため、PR #748 deployment success は未確認のままとする。
 
 Continuation intake は PR #749 である。上記 continuation final head は上記 continuation merge/integration tip に含まれるが、merge containment から deployment を推測しない。PR #749 deployment success は `continuation_deployment_status=not-confirmed` のままである。
+
+PR #750 は final head `80e97d42812d8cb30fc75535aab375676a6fad61` で MERGED であり、exact integration tip `78ab5908df8bf39427b6a929d375d7df93bf13a9` に包含される。これは EVID-SLA の documentation-only posture record を運ぶ merged documentation layer である。merge containment、CI、build、又は prior local evidence から deployment success を推測せず、PR #750 deployment status は `not-confirmed` のままとする。現在の fresh isolated worktree は上記 exact tip の detached checkout で `node_modules` は absent であるため、lint、strict typecheck、Next build、OpenNext build を含む dependency-backed check は setup-blocked であり、install は認可されない。PR #750 より前の local evidence は、保持された exact local target に限る historical evidence であって、この fresh isolated worktree の execution 又は production/deployed proof ではない。
 
 NC-R1 は release owner が later release decision を行うための fail-closed authority であり、gate を開く authority ではない。Free behavior remains permanent. all billing/provider/Creator/public activation gates remain fixed closed. only compatible signed subscription evidence may authorize Paid. Checkout redirect/completion is not Paid evidence.
 
@@ -87,7 +98,7 @@ NC-R1 は release owner が later release decision を行うための fail-close
 | Class | Meaning | Production/live readiness を証明できる範囲 |
 | --- | --- | --- |
 | `fixture` | deterministic fake input と in-process assertion | なし |
-| `local` | explicitly named exact local checkout/snapshot/artifact target の source、contract、local command の記録 | explicitly bound current local target についてはcommand executionを証明できる。exact target、保持された場合の applicable artifact hash、source、freshness が有効な間だけ target-matched として保持できる。artifact未保持ならartifact proofを主張せず、明示したinput scopeとrerun条件に従う。live/deployed/production state、account headroom は証明しない |
+| `local` | explicitly named exact local checkout/snapshot/artifact target の source、contract、local command の記録 | explicitly bound exact local target についてはcommand executionを証明できる。exact target、保持された場合の applicable artifact hash、source、freshness が有効な間だけ target-matched として保持できる。artifact未保持ならartifact proofを主張せず、明示したinput scopeとrerun条件に従う。live/deployed/production state、account headroom は証明しない |
 | `public-source` | 公式公開ページを read-only で確認した一般的な limit/price | account headroom、selected target、live/deployed state、release approval は証明しない |
 | `gated` | 実行前に個別 approval が必要な証跡単位 | approval 前はなし |
 | `blocked` | approval 済みだが prerequisite 不在で実行不能な check | prerequisite 解消前はなし |
@@ -99,16 +110,16 @@ fixture, local, and public-source evidence are not production proof. `gated`、`
 ```text
 local_class_scope=explicitly-named-exact-local-checkout-snapshot-or-artifact-target
 local_class_retention=exact-target-applicable-artifact-hashes-source-and-freshness-remain-valid
-local_class_current_continuation_execution_claim=allowed-only-for-explicitly-bound-current-local-target
+local_class_historical_pr750_execution_claim=allowed-only-for-explicitly-bound-historical-pr750-local-target
 local_class_invalidation=target-artifact-hash-source-or-freshness-drift
 local_class_non_claims=not-live-deployed-production-or-account-headroom-proof
 ```
 
-`local` の satisfied row は、明示された exact local checkout/snapshot/artifact target、保持された場合の applicable artifact hash、source、freshness が有効な間だけ保持できる。current continuation worktreeのcommand executionは、current target、command、toolchain、source、applicable artifact fingerprintを明示的にbindingした場合に限ってlocal evidenceとして提示できる。artifact未保持ならartifact proofを主張せず、明示したinput scopeとrerun条件に従う。target/applicable artifact hash/source/freshness drift があれば invalidated 又は downgraded とする。
+`local` の satisfied row は、明示された exact local checkout/snapshot/artifact target、保持された場合の applicable artifact hash、source、freshness が有効な間だけ保持できる。historical PR #750 worktreeのcommand executionは、その historical target、command、toolchain、source、applicable artifact fingerprintを明示的にbindingした場合に限ってlocal evidenceとして提示できる。これはfresh isolated worktreeのcurrent executionではない。artifact未保持ならartifact proofを主張せず、明示したinput scopeとrerun条件に従う。target/applicable artifact hash/source/freshness drift があれば invalidated 又は downgraded とする。
 
 ## Evidence Ledger
 
-表の `target=exact` は明示された exact local checkout/snapshot/artifact target に限る。current continuation checkout を自動的に意味せず、target の account headroom、configured product、external live state、deployed target を意味しない。
+表の `target=exact` は明示された exact local checkout/snapshot/artifact target に限る。fresh isolated checkout を自動的に意味せず、target の account headroom、configured product、external live state、deployed target を意味しない。
 
 | Evidence ID | Class | Freshness | Target | Approval | Hard requirement | Production proof | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -134,7 +145,7 @@ local_class_non_claims=not-live-deployed-production-or-account-headroom-proof
 | EVID-LEGAL | gated | missing | missing | unapproved | yes | no | missing |
 | EVID-COPY | gated | missing | missing | unapproved | yes | no | missing |
 | EVID-SUPPORT | gated | fresh | exact | approved | yes | no | satisfied |
-| EVID-SLA | gated | missing | missing | unapproved | yes | no | missing |
+| EVID-SLA | gated | fresh | exact | approved | yes | no | satisfied |
 | EVID-RISK-ACCEPTANCE | gated | missing | missing | unapproved | yes | no | missing |
 | EVID-ROLLBACK | local | fresh | exact | not-required | yes | no | satisfied |
 | EVID-LIVE-PAID-FLOW | live | missing | missing | unapproved | yes | no | missing |
@@ -168,23 +179,23 @@ original_external_owner_live_deployed_16=exact
 original_external_owner_live_deployed_16_label=original-external-owner-live-deployed-16
 original_external_owner_live_deployed_16_composition=7-authenticated-private-read,7-release-owner-judgment,1-live-operation,1-deploy-deployed-proof
 original_external_owner_live_deployed_16_public_closeable_hard_requirement_count=0
-current_unresolved_hard_requirements_count=10
-current_unresolved_hard_requirements_composition=3-authenticated-private-read,5-release-owner-judgment,1-live-operation,1-deploy-deployed-proof
+current_unresolved_hard_requirements_count=9
+current_unresolved_hard_requirements_composition=3-authenticated-private-read,4-release-owner-judgment,1-live-operation,1-deploy-deployed-proof
 public_read_only_closeable_hard_requirement_count=0
 public_read_only_closeable_hard_requirements=none
 ```
 
 public-source refresh supports Worker/Supabase/provider/Stripe source rows only and closes none of the original external/owner/live/deployed 16 hard rows. すなわち `EVID-WORKER-SOURCE`、`EVID-SUPABASE-SOURCE`、`EVID-PROVIDER-SOURCE`、`EVID-STRIPE-SOURCE` の support row は refreshできるが、account headroom、live/deployed/production state、approval、または hard requirement の closure を証明しない。
 
-## Completed Current Continuation Local Revalidation
+## Historical PR #750 Worktree Local Revalidation
 
-次の3行は approved packet `NC-R1-LOCAL-DEPS-20260806-01` の dependency install で setup blockerを解消し、その後の existing task verification authority による current-worktree local read-only revalidationで `completed-local-dependency-revalidation` として closeした。approval packetはinstallだけを許可し、local check、external/private/live/deployed operationの追加承認を意味しない。これは original external/owner/live/deployed 16-row classification set に混在させない。記録は current worktree の exact local target、approved install、fresh local command result、sanitized artifact facts に限る。historical PR #749 metadata は non-authoritative reference only のままであり、この3行の closure source ではない。
+次の3行は historical PR #750 worktree で approved packet `NC-R1-LOCAL-DEPS-20260806-01` の dependency install により setup blockerを解消し、その後の existing task verification authority による historical PR #750 worktree local read-only revalidationで `completed-local-dependency-revalidation` として closeした。approval packetはinstallだけを許可し、local check、external/private/live/deployed operationの追加承認を意味しない。これは original external/owner/live/deployed 16-row classification set に混在させない。記録は historical PR #750 worktree の exact local target、approved install、historical local command result、sanitized artifact facts に限る。historical PR #749 metadata は non-authoritative reference only のままであり、この3行の closure source ではない。
 
-| Evidence ID | Classification | Current local closure evidence |
+| Evidence ID | Classification | Historical PR #750 local closure evidence |
 | --- | --- | --- |
-| EVID-LOCAL-PUBLIC-ENTITLEMENT-CONTRACT | completed-local-dependency-revalidation | current-worktree public-entitlement contract passed after approved install |
-| EVID-LOCAL-SECURITY-PRIVACY-CONTRACT | completed-local-dependency-revalidation | current-worktree security/privacy final-review contract passed after approved install |
-| EVID-WORKER-SIZE | completed-local-dependency-revalidation | current-worktree OpenNext build and Wrangler dry-run passed; local artifact acceptance only |
+| EVID-LOCAL-PUBLIC-ENTITLEMENT-CONTRACT | completed-local-dependency-revalidation | historical PR #750 worktree public-entitlement contract passed after approved install |
+| EVID-LOCAL-SECURITY-PRIVACY-CONTRACT | completed-local-dependency-revalidation | historical PR #750 worktree security/privacy final-review contract passed after approved install |
+| EVID-WORKER-SIZE | completed-local-dependency-revalidation | historical PR #750 worktree OpenNext build and Wrangler dry-run passed; local artifact acceptance only |
 
 ## Acquisition And Decision Contract
 
@@ -209,9 +220,9 @@ public-source refresh supports Worker/Supabase/provider/Stripe source rows only 
 | EVID-LIVE-PAID-FLOW | release-owner-approved-live-paid-flow-target-alias | separately-approved-live-operation-with-signed-compatible-subscription-evidence | within-7-days-of-final-release-decision-or-stricter-approved-window | sanitized-live-flow-result-free-fallback-and-entitlement-classification | target-mismatch,incomplete-or-stale-evidence,unapproved-access,exposure-risk-or-scope-expansion | named-release-owner-and-rollback-owner-required | named-sanitized-evidence-retention-location-required | named-live-operation-owner-and-release-owner-required |
 | EVID-DEPLOYED-TARGET | release-owner-approved-deployed-target-commit-alias | separately-approved-deploy-deployed-target-proof | within-7-days-of-final-release-decision-or-stricter-approved-window | sanitized-deployed-target-commit-and-proof-classification | target-mismatch,incomplete-or-stale-evidence,unapproved-access,exposure-risk-or-scope-expansion | named-release-owner-and-rollback-owner-required | named-sanitized-evidence-retention-location-required | named-deploy-owner-and-release-owner-required |
 
-The completed EVID-SUPABASE-PAUSE partial-stop observation is an approved authenticated-private read. Its completed `release-owner-judgment-pause-posture-only` supplement accepted the factual input and closes exactly EVID-SUPABASE-PAUSE. The supplement is not a replacement primary approval unit and does not change the original-16 or current-12 composition; it is limited to whether the active-at-observation, non-quantifiable future-pause-headroom, and Free auto-pause-risk input is acceptable for this row alone. The residual auto-pause risk remains carried to EVID-RISK-ACCEPTANCE.
+The completed EVID-SUPABASE-PAUSE partial-stop observation is an approved authenticated-private read. Its completed `release-owner-judgment-pause-posture-only` supplement accepted the factual input and closes exactly EVID-SUPABASE-PAUSE. The supplement is not a replacement primary approval unit and does not change the original-16 primary approval-unit classification; the current unresolved composition is derived from the canonical row statuses. The supplement is limited to whether the active-at-observation, non-quantifiable future-pause-headroom, and Free auto-pause-risk input is acceptable for this row alone. The residual auto-pause risk remains carried to EVID-RISK-ACCEPTANCE.
 
-`EVID-WORKER-SIZE-LIMIT-ALIGNMENT` は dependency-free local authority evidence として satisfied のままである。`docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md` は official public wording `3 MB after compression` に安全側で留まる internal acceptance ceiling を **3,000,000 gzip-compressed bytes** と明示した。`worker_bundle_internal_acceptance_ceiling_bytes=3000000` は provider binary/decimal semantics を主張せず、bundle measurement/headroom/deployed proofではなく local acceptance boundaryだけを定義する。`EVID-WORKER-SIZE` は approved current-worktree OpenNext build と Wrangler dry-run の fresh local result により satisfied だが、reported gzip `2046.83 KiB` の conservative upper bound `2,095,960 bytes` と remaining `904,040 bytes` は local artifact acceptanceだけである。これは account headroom、live/deployed state、deployment success、又は production proofではない。worker.js entry `2,278 bytes` は bundle size ではない。
+`EVID-WORKER-SIZE-LIMIT-ALIGNMENT` は dependency-free local authority evidence として satisfied のままである。`docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md` は official public wording `3 MB after compression` に安全側で留まる internal acceptance ceiling を **3,000,000 gzip-compressed bytes** と明示した。`worker_bundle_internal_acceptance_ceiling_bytes=3000000` は provider binary/decimal semantics を主張せず、bundle measurement/headroom/deployed proofではなく local acceptance boundaryだけを定義する。`EVID-WORKER-SIZE` は approved historical PR #750 worktree OpenNext build と Wrangler dry-run の historical local result により satisfied だが、reported gzip `2046.83 KiB` の conservative upper bound `2,095,960 bytes` と remaining `904,040 bytes` は local artifact acceptanceだけである。これは account headroom、live/deployed state、deployment success、又は production proofではない。worker.js entry `2,278 bytes` は bundle size ではない。
 
 EVID-SUPABASE-BACKUP は approved authenticated-private target-posture input を fresh/exact/approved で保持した後、named release owner が current Free posture を明示的に accept した。この documentation-only decision は Backup row だけを `satisfied` にし、no-scheduled-backup/recovery risk を EVID-RISK-ACCEPTANCE に carry forwardする。明示された Free Plan note が一般的な scheduled backup/restore wording より優先し、actual Free backup は `not-included-on-Free` と分類する。`SRC-SUPABASE-BACKUP` が記録する Free Plan の database backup download 制約と Free pause/no-SLA posture は、その owner decision の input であり、公開ページまたは private read は actual target の backup/recovery state、product selection、recovery outcome、または risk acceptance を証明しない。
 
@@ -221,7 +232,7 @@ EVID-SUPABASE-BACKUP は approved authenticated-private target-posture input を
 
 ## Public Official Source Ledger
 
-公開ページは 2026-08-06 に read-only で freshness 確認した。freshness は `source_freshness_timezone=Asia/Tokyo` の current calendar date で評価する。`source_max_age_days=7` を越えた source、future-dated source、または日付が欠ける source は stale/failure として fail-closed にする。ページは一般の plan limit/price を補助できるが、private account usage、selected target configuration、actual spend、headroom、live state、deployment、approval は示さない。
+公開ページは 2026-08-06 に read-only で freshness 確認した。freshness は `evaluation_at=2026-08-10T23:59:59Z` を固定 sanitized evaluation anchor、`source_freshness_timezone=Asia/Tokyo` を表示上の timezone、`source_max_age_days=7` を canonical 最大年齢として評価する。source timestamp は `Date.parse`-valid、evaluation_at 以下、かつ evaluation_at から 7 日以内でなければならず、source のない値、future-dated 値、または stale 値は fail-closed とする。ページは一般の plan limit/price を補助できるが、private account usage、selected target configuration、actual spend、headroom、live state、deployment、approval は示さない。
 
 | Source ID | Official URL | Checked | Class | Production proof |
 | --- | --- | --- | --- | --- |
@@ -269,7 +280,7 @@ OpenAI pricing is model/token based. The repository-selected model and account s
 
 Historical PR #749 worktree results are non-authoritative reference only for current closure. That historical worktree recorded lint, strict TypeScript, Next build, and OpenNext build as passed after a separately approved lockfile-matched install and bounded local regression fix. No deploy or external read occurred in that historical evidence run. The result record is retained for investigation context only; it cannot satisfy any current hard row.
 
-The historical PR #749 worktree Wrangler dry-run reported `Total Upload: 9477.87 KiB / gzip: 2032.88 KiB` and exit 0. The rounded report does not prove an exact actual byte count, account headroom, live/deployed state, production readiness, or current Worker size. Historical dependency-backed public-entitlement and security/privacy contracts likewise do not prove their current-worktree results. These historical results do not alter current evidence class or current setup state.
+The historical PR #749 worktree Wrangler dry-run reported `Total Upload: 9477.87 KiB / gzip: 2032.88 KiB` and exit 0. The rounded report does not prove an exact actual byte count, account headroom, live/deployed state, production readiness, or current Worker size. Historical dependency-backed public-entitlement and security/privacy contracts likewise do not prove results in this fresh isolated worktree. These historical results do not alter current evidence class or the fresh isolated worktree setup state.
 
 ### Historical PR #749 Worktree Sanitized Evidence Record
 
@@ -316,13 +327,13 @@ historical_pr749_security_privacy_contract_exit=0
 
 This historical PR #749 worktree record targets the dirty worktree snapshot based on commit `1b98aa28429cb82a188dee628cf71ea0a4d50c16`; it does not claim that the commit alone reproduces the result. `historical_pr749_final_head` and `historical_pr749_tree_fingerprint` are historical merge references, not a cryptographic binding from the dirty snapshot to final runtime inputs. The dirty snapshot runtime-input equality to final head is unproven. No bundle artifact was retained and no artifact hash was recorded. Node/npm/toolchain identity is missing, and source and release-window drift are not derivable. Therefore no live-path drift validator may retain a current `satisfied` status from this record.
 
-The record contains only historical approved scope, snapshot fingerprint, immutable manifest hashes, commands, exit classifications, and assertion identifiers. It contains no secret, private target identifier, raw payload, browser state, or configuration value. It is non-authoritative reference only for current closure and must not be used to promote `EVID-LOCAL-PUBLIC-ENTITLEMENT-CONTRACT`, `EVID-LOCAL-SECURITY-PRIVACY-CONTRACT`, or `EVID-WORKER-SIZE`; each requires fresh current-worktree dependency-backed revalidation after separately approved installation.
+The record contains only historical approved scope, snapshot fingerprint, immutable manifest hashes, commands, exit classifications, and assertion identifiers. It contains no secret, private target identifier, raw payload, browser state, or configuration value. It is non-authoritative reference only for current closure and must not be used to promote `EVID-LOCAL-PUBLIC-ENTITLEMENT-CONTRACT`, `EVID-LOCAL-SECURITY-PRIVACY-CONTRACT`, or `EVID-WORKER-SIZE`; each would require fresh isolated-worktree dependency-backed revalidation after separately approved installation.
 
-## Completed Current Continuation Local Revalidation
+## Historical PR #750 Worktree Local Revalidation
 
-The status record above is canonical for this current continuation worktree. The individually approved lockfile-matched install completed within its window at the sanitized observation time `2026-08-06T19:38+09:00`; pre/post `package.json` and `package-lock.json` SHA-256 values are equal, and no runtime source changed outside the four NC-R1 authority files. public-entitlement, security/privacy, lint, strict typecheck, Next, OpenNext, and Wrangler dry-run passed as current local checks. UI/CSS changes are absent, so width-based QA is N/A rather than passed.
+The status record above is canonical for the historical PR #750 worktree, not this fresh isolated worktree. The individually approved lockfile-matched install completed within its window at the sanitized observation time `2026-08-06T19:38+09:00`; pre/post `package.json` and `package-lock.json` SHA-256 values are equal, and no runtime source changed outside the four NC-R1 authority files. public-entitlement, security/privacy, lint, strict typecheck, Next, OpenNext, and Wrangler dry-run passed there as historical local checks. UI/CSS changes were absent, so width-based QA was N/A rather than passed. The fresh isolated worktree has absent dependencies and retains setup-blocked dependency-backed checks.
 
-The OpenNext artifact record contains 1,881 files, 128,538,687 total bytes, and deterministic Unicode-code-point-sorted relative-forward-slash-path/byte-length/lowercase-file-SHA-256 tree-manifest SHA-256 `A7DDD9243821CD194A217971CECD71534D2CE03731638735D093A30FC1552B07`. The worker.js entry SHA-256 is `D05223BF4D44C84108A102AB62AA3BC9C5568F0C3AC2064C37BE5CC65C64BC45` at 2,278 bytes; it is not the bundle-size measurement. Wrangler `--dry-run` exit 0 reported total `9477.99 KiB` / gzip `2046.83 KiB`; the conservative rounded upper bound is 2,095,960 bytes, below the internal 3,000,000-byte ceiling with 904,040 bytes remaining. Command exit labels are root-observed sanitized snapshot records rather than commands silently rerun by the NC-R1 contract. The executable contract instead recomputes current Git HEAD, authority-only diff isolation including untracked files, Node/npm/Wrangler toolchain versions, package/lock hashes, and the retained `.open-next` artifact fingerprint from disk; missing or drifted inputs fail closed. This is local artifact acceptance only, not account headroom, deployed, or production proof.
+The historical local OpenNext artifact record contains 1,881 files, 128,538,687 total bytes, and deterministic Unicode-code-point-sorted relative-forward-slash-path/byte-length/lowercase-file-SHA-256 tree-manifest SHA-256 `A7DDD9243821CD194A217971CECD71534D2CE03731638735D093A30FC1552B07`. The historical worker.js entry SHA-256 is `D05223BF4D44C84108A102AB62AA3BC9C5568F0C3AC2064C37BE5CC65C64BC45` at 2,278 bytes; it is not the bundle-size measurement. The historical Wrangler `--dry-run` exit 0 reported total `9477.99 KiB` / gzip `2046.83 KiB`; the conservative rounded upper bound is 2,095,960 bytes, below the internal 3,000,000-byte ceiling with 904,040 bytes remaining. Command exit labels are retained sanitized snapshot records and are not silently rerun by the NC-R1 contract. The fresh isolated worktree has absent dependencies, so its dependency-backed artifact/toolchain checks are setup-blocked and not current execution proof. This is local artifact acceptance only, not account headroom, deployed, or production proof.
 
 ## Completed Authenticated-Private Worker Request Evidence
 
@@ -660,6 +671,55 @@ stop_result=predeclared-partial-stop-aggregation-and-request-completeness-not-di
 ```
 
 No raw URL, account, deployment/version identifier, private identifier, subrequest host, log, raw payload, or other metric was retained. No command, SQL, write, settings mutation, plan change, deployment, or activation occurred or is authorized by this record. Percentage and remaining-capacity inferences are forbidden. The `CPU-time-limit-exceeded` displayed count is not converted into an explanation, request-level completion claim, or satisfaction signal.
+
+## Completed Authenticated-Private Worker CPU Re-Read Partial-Stop Evidence
+
+The separately approved EVID-WORKER-CPU re-read was limited to the approved Worker CPU surface and exact sanitized target. A percentile summary and selected range were visible, but no explicit aggregation completeness, sampling disclosure, request-level completeness, request rows, or request table was displayed. This is a fresh, exact, approved partial stop only: it closes no row, retains EVID-WORKER-CPU as incomplete, and does not establish headroom, production proof, deployment, activation, or Workers Paid eligibility. No Trace, Log Explorer, logs, raw requests, other service, settings, plan, or configuration surface was opened.
+
+```text
+packet_execution_status=approved-partial-stop-authenticated-private-read
+packet_item_count=1
+approval_unit=authenticated-private-read
+evidence_ids=EVID-WORKER-CPU
+requested_operation=authenticated-private-re-read-worker-cpu-aggregation-and-request-completeness-only
+target_alias=creator-production-worker
+verification_scope=sanitized-aggregation-complete-indicator-and-request-level-completeness-only
+time_window=2026-08-09-current-Codex-task-only
+operator=Codex-root-agent-current-task
+required_approver=kurodev
+approval_id=NC-R1-WORKER-CPU-REREAD-20260809-01
+evidence_retention_location=current-Codex-task-sanitized-report
+stop_owner=kurodev
+rollback_owner=kurodev
+partial_stop_result=required-if-aggregation-or-request-completeness-unavailable
+prohibited_bundle=provider,Stripe,Supabase,Product-or-Price,legal,copy,risk,live-paid-flow,deploy,activation,git-publication,cleanup
+approval_decision=approved
+observed_at=2026-08-09T12:55:12+09:00
+target_match=yes
+authenticated_dashboard_read=completed-approved-worker-cpu-surface-only
+percentile_summary_visible=yes
+selected_range_visible=yes
+explicit_aggregation_completeness=not-displayed
+explicit_sampling_disclosure=not-displayed
+explicit_request_level_completeness=not-displayed
+request_rows_visible=no
+request_table_visible=no
+trace_log_explorer_logs_raw_requests_other_service_settings_plan_configuration_surface_opened=no
+settings_write_plan_deploy_activation_action=none
+raw_url_account_service_deployment_version_private_identifier_metric_value_request_data_raw_log_raw_payload_incidental_dashboard_content_retained=no
+evidence_class=gated
+freshness=fresh
+target=exact
+approval=approved
+hard_requirement=yes
+production_proof=no
+status=incomplete
+row_closure=none
+activation_status=closed
+result=partial-stop-completeness-unavailable
+```
+
+No secret, private identifier, raw URL, raw payload, browser storage, query, log, metric value, request data, migration, or configuration value is retained. No settings, write, plan, deploy, activation, or other external action occurred. The same displayed completeness gap must not be replaced by inference or a newly opened evidence surface.
 
 ## Completed Authenticated-Private Supabase Backup Prerequisite Input
 
@@ -1002,15 +1062,56 @@ raw_email_address_account_url_private_identifier_retained=no
 
 No raw email address, account identifier, or URL is retained. This record is an approved best-effort support posture only; SLA, legal, copy, Product/Price, risk acceptance, messaging, channel/account mutation, and external action remain outside this record.
 
+## Completed Release-Owner SLA Posture Decision
+
+The explicit owner approval below records only the independent documentation-only SLA posture. It closes exactly EVID-SLA and no other row. It authorizes no external operation, deploy, activation, Git publication, legal/copy/Product/Price/risk decision, or Support reopening. It does not establish contractual availability, maintenance notice, response time, or restoration time.
+
+```text
+packet_execution_status=approved-completed-release-owner-judgment
+packet_item_count=1
+approval_unit=release-owner-judgment
+evidence_ids=EVID-SLA
+requested_operation=release-owner-judgment-sla-posture-only
+command=<no-command-authorized>
+external_action=none
+required_approver=kurodev
+approval_id=NC-R1-SLA-POSTURE-20260807-01
+scope_alias=creator-paid-sla-posture
+effective_date=2026-08-07
+decision_input=independent-sla-posture-only
+service_owner=kurodev
+availability_commitment=explicit-no-contractual-availability-sla
+maintenance_exclusion=best-effort-maintenance-without-advance-notice-guarantee-and-provider-platform-network-exclusions
+response_or_restoration_target=explicit-no-guaranteed-response-or-restoration-time
+measurement_source=none-no-contractual-sla
+owner_decision=approved-no-guaranteed-sla-posture
+evidence_retention_location=current-Codex-task-sanitized-report
+stop_owner=kurodev
+rollback_owner=kurodev
+prohibited_bundle=support-reopening,legal-or-copy-or-product-price-or-risk-judgment,external-operation,deploy,activation,git-publication
+row_closure=EVID-SLA
+activation_status=closed
+approval_decision=approved
+evidence_class=gated
+freshness=fresh
+target=exact
+hard_requirement=yes
+production_proof=no
+status=satisfied
+stop_result=completed-documentation-only-sla-posture-decision
+```
+
+No secret, private identifier, raw payload, browser storage, query, log, migration, or configuration value is retained. This approved posture is not Product/Price, legal, copy, risk acceptance, live paid-flow, deployed-target, Worker CPU, provider-cost, or Stripe-cost evidence.
+
 ## Headroom Measurement Contract
 
-Release eligibility requires separately approved, target-matched, fresh, sanitized inputs before a release owner may evaluate cost headroom. Worker request, Supabase database-size, Supabase Egress, and Supabase Pause evidence are satisfied only by their completed bounded records, and Worker size is separately satisfied as local artifact acceptance only. EVID-WORKER-CPU remains incomplete after its approved partial-stop record: the effective Free/custom 10ms/request limit, retained percentile values, displayed zero exceeded count, unknown aggregation completeness, and unavailable request-level completeness are not reconcilable into satisfaction. The completed Backup posture input was separately accepted by the named owner for EVID-SUPABASE-BACKUP only; scheduled project backups remain `not-included-on-Free`, and the no-scheduled-backup/recovery risk remains for EVID-RISK-ACCEPTANCE. The accepted Pause posture decision supports only active-at-observation, unknown/not-quantifiable future pause headroom, and present Free auto-pause risk; it does not make that residual risk final-accepted or remove EVID-RISK-ACCEPTANCE. EVID-PROVIDER-COST has its approved partial-stop summary and the later named owner judgment to keep its blocker; zero credit and no payment details remain `zero-funded-headroom-at-observation`, no row closes, and Product/Price plus cost model readiness remain unresolved. EVID-STRIPE-COST now has an approved partial account-specific cost configuration record, but the exact Paid-flow base payment-processing fee was not displayed and full cost-model completeness is unknown; no row closes. The completed Supabase Size classification is only `under-max` / `positive-headroom-at-observation`; it does not calculate remaining bytes, a percentage, or a cross-unit conversion. The completed Egress record classifies its retained uncached and newly observed cached summaries independently as `under-public-limit` / `positive-headroom-at-observation`; it does not sum, convert, calculate remaining capacity, infer a percentage, or infer rounding. The Worker size-limit wording is reconciled only by the local internal 3,000,000 gzip-compressed-byte acceptance boundary; it is not account-headroom evidence. A public plan limit is a ceiling description, not a measurement of remaining capacity. An unapproved actual target measurement remains `gated`; an approved local measurement with an unavailable prerequisite remains `blocked`.
+Release eligibility requires separately approved, target-matched, fresh, sanitized inputs before a release owner may evaluate cost headroom. Worker request, Supabase database-size, Supabase Egress, and Supabase Pause evidence are satisfied only by their completed bounded records, and Worker size is separately satisfied as local artifact acceptance only. EVID-WORKER-CPU remains incomplete after the approved re-read partial stop: summary/range visibility does not display aggregation completeness, sampling disclosure, request-level completeness, request rows, or a request table, so it cannot be reconciled into satisfaction. The completed Backup posture input was separately accepted by the named owner for EVID-SUPABASE-BACKUP only; scheduled project backups remain `not-included-on-Free`, and the no-scheduled-backup/recovery risk remains for EVID-RISK-ACCEPTANCE. The accepted Pause posture decision supports only active-at-observation, unknown/not-quantifiable future pause headroom, and present Free auto-pause risk; it does not make that residual risk final-accepted or remove EVID-RISK-ACCEPTANCE. EVID-PROVIDER-COST has its approved partial-stop summary and the later named owner judgment to keep its blocker; zero credit and no payment details remain `zero-funded-headroom-at-observation`, no row closes, and Product/Price plus cost model readiness remain unresolved. EVID-STRIPE-COST now has an approved partial account-specific cost configuration record, but the exact Paid-flow base payment-processing fee was not displayed and full cost-model completeness is unknown; no row closes. The completed Supabase Size classification is only `under-max` / `positive-headroom-at-observation`; it does not calculate remaining bytes, a percentage, or a cross-unit conversion. The completed Egress record classifies its retained uncached and newly observed cached summaries independently as `under-public-limit` / `positive-headroom-at-observation`; it does not sum, convert, calculate remaining capacity, infer a percentage, or infer rounding. The Worker size-limit wording is reconciled only by the local internal 3,000,000 gzip-compressed-byte acceptance boundary; it is not account-headroom evidence. A public plan limit is a ceiling description, not a measurement of remaining capacity. An unapproved actual target measurement remains `gated`; an approved local measurement with an unavailable prerequisite remains `blocked`.
 
 Every future measurement record must identify its exact target, collection time, evidence class, approval unit, observed class/count only, reviewer, and stop result. It must omit secrets, private identifiers, raw payloads, browser-selected authority, and configuration values. Missing target identity, stale timestamp, incomplete collection, mismatched target, or absent approval is a NO-GO result for the affected hard requirement.
 
 ## Risk Acceptance
 
-Product/Price/tax/legal/copy/SLA/risk acceptance are not inferred. The completed EVID-SUPPORT decision records only its approved best-effort posture and does not establish an SLA or reopen any other decision area. No Product decision, Price, tax treatment, legal basis, public copy, SLA, cost envelope, or risk acceptance is approved by this authority. `EVID-PRODUCT-PRICE` and `EVID-RISK-ACCEPTANCE` remain independent missing hard requirements; legal/tax remains under `EVID-LEGAL`.
+Product/Price/tax/legal/copy/risk acceptance are not inferred. The completed EVID-SUPPORT decision records only its approved best-effort posture and does not establish an SLA or reopen any other decision area. The completed EVID-SLA decision records only its approved no-guaranteed-SLA posture and does not establish Product/Price, legal, copy, cost envelope, risk acceptance, live evidence, deployment, activation, or final GO. `EVID-PRODUCT-PRICE` and `EVID-RISK-ACCEPTANCE` remain independent missing hard requirements; legal/tax remains under `EVID-LEGAL`.
 
 ## Ordered Judgment And Final Release Decision Sequence
 
@@ -1018,9 +1119,9 @@ Product/Price/tax/legal/copy/SLA/risk acceptance are not inferred. The completed
 ordinary_row_judgment_ids=EVID-SUPABASE-BACKUP,EVID-PRODUCT-PRICE,EVID-LEGAL,EVID-COPY,EVID-SUPPORT,EVID-SLA
 ordinary_row_judgment_precondition=exact-row-scope-inputs-named-approver-effective-date-retention-stop-rollback-complete
 ordinary_row_judgment_zero_unresolved_requirement=not-required
-risk_acceptance_precondition=other-9-hard-requirements-satisfied-and-residual-risks-enumerated
+risk_acceptance_precondition=other-8-hard-requirements-satisfied-and-residual-risks-enumerated
 risk_acceptance_row_effect=closes-EVID-RISK-ACCEPTANCE-only
-final_release_go_precondition=all-10-current-unresolved-hard-requirements-satisfied-zero-unresolved-and-explicit-go
+final_release_go_precondition=all-9-current-unresolved-hard-requirements-satisfied-zero-unresolved-and-explicit-go
 final_release_no_go=recordable-at-any-time
 final_release_current_state=missing
 nc_l1_start_precondition=explicit-final-release-go-after-zero-unresolved
@@ -1028,9 +1129,9 @@ row_closure_activation_effect=none-activation-remains-closed
 ```
 
 1. `EVID-PRODUCT-PRICE`、`EVID-LEGAL`、`EVID-COPY`、`EVID-SUPPORT`、`EVID-SLA` の row-level named owner judgment は、その row の exact scope、inputs、named approver、effective date、retention、stop、rollback が complete なら individually recordできる。zero unresolved を待たず、各判断は自分の row だけを close し、activation を開かず、GO を意味しない。
-2. EVID-SUPABASE-PAUSE、EVID-SUPABASE-BACKUP、EVID-SUPPORT の completed owner decisions はそれぞれの row だけを closeした。Backup decision は current Free posture を accept し、no-scheduled-backup/recovery risk を EVID-RISK-ACCEPTANCE に carry forwardした。Support decision はbest-effort postureだけを記録し、SLAはseparate unapprovedのままである。EVID-PROVIDER-COST の completed funding-posture judgment はexact partial-stop inputをbindingしてblockerをkeepし、rowをcloseしない。いずれも final risk acceptance、final GO、activation、external/browser actionを意味しない。
-3. `EVID-RISK-ACCEPTANCE` は他の9 current unresolved hard requirement が satisfied で、residual risks が列挙された後にだけ named release owner が recordする row-level judgment である。これは `EVID-RISK-ACCEPTANCE` だけを close し、activation 又は final GO を開かない。
-4. Final release GO/NO-GO decision は row-level judgment と別である。final GO は現在の10 unresolved hard requirement すべてが satisfied で unresolved が zero の後に explicit に記録する。NO-GO はいつでも記録できる。current final release owner decision は missing、current decision は NO-GO、activation は closed のままである。
+2. EVID-SUPABASE-PAUSE、EVID-SUPABASE-BACKUP、EVID-SUPPORT、EVID-SLA の completed owner decisions はそれぞれの row だけを closeした。Backup decision は current Free posture を accept し、no-scheduled-backup/recovery risk を EVID-RISK-ACCEPTANCE に carry forwardした。Support decision はbest-effort postureだけを記録し、SLA decision はno-guaranteed postureだけを記録する。EVID-PROVIDER-COST の completed funding-posture judgment はexact partial-stop inputをbindingしてblockerをkeepし、rowをcloseしない。いずれも final risk acceptance、final GO、activation、external/browser actionを意味しない。
+3. `EVID-RISK-ACCEPTANCE` は他の8 current unresolved hard requirement が satisfied で、residual risks が列挙された後にだけ named release owner が recordする row-level judgment である。これは `EVID-RISK-ACCEPTANCE` だけを close し、activation 又は final GO を開かない。
+4. Final release GO/NO-GO decision は row-level judgment と別である。final GO は現在の9 unresolved hard requirement すべてが satisfied で unresolved が zero の後に explicit に記録する。NO-GO はいつでも記録できる。current final release owner decision は missing、current decision は NO-GO、activation は closed のままである。
 5. NC-L1 は zero unresolved 後の explicit final release GO なしには開始しない。この sequence は operation、activation、又は public Paid gate を許可しない。
 
 ## Go Or No-Go Decision
@@ -1040,10 +1141,10 @@ decision=no-go
 conditional-go=forbidden-while-hard-requirement-unresolved
 activation_status=closed
 release_owner_decision=missing
-unresolved_hard_requirements=EVID-WORKER-CPU,EVID-PROVIDER-COST,EVID-STRIPE-COST,EVID-PRODUCT-PRICE,EVID-LEGAL,EVID-COPY,EVID-SLA,EVID-RISK-ACCEPTANCE,EVID-LIVE-PAID-FLOW,EVID-DEPLOYED-TARGET
+unresolved_hard_requirements=EVID-WORKER-CPU,EVID-PROVIDER-COST,EVID-STRIPE-COST,EVID-PRODUCT-PRICE,EVID-LEGAL,EVID-COPY,EVID-RISK-ACCEPTANCE,EVID-LIVE-PAID-FLOW,EVID-DEPLOYED-TARGET
 ```
 
-Current decision is **NO-GO**. It is not a conditional-go because 10 current unresolved hard requirements remain. Public source observations and NC-Q1 fixture/local success do not reduce this result. The existing Free behavior stays available under its own permanent boundary; this readiness authority grants no Paid path.
+Current decision is **NO-GO**. It is not a conditional-go because 9 current unresolved hard requirements remain. Public source observations and NC-Q1 fixture/local success do not reduce this result. The existing Free behavior stays available under its own permanent boundary; this readiness authority grants no Paid path.
 
 ## Rollback And Stop Conditions
 
@@ -1053,9 +1154,811 @@ Stop immediately and retain activation closed when any of the following occurs: 
 
 The later rollback action, if individually approved, is to close the relevant paid/public entry gate, suppress new Creator cost-bearing work, preserve Free behavior, retain only sanitized evidence, and record the result as `live` or `deployed` only for its exact approved target. It must not use a general source page, fixture, local run, or redirect as rollback proof.
 
+## Completed A1 Worker CPU Source-Disposition Approval
+
+The one-item documentation-only release-owner judgment `NC-R1-WORKER-CPU-SOURCE-DISPOSITION-20260809-01` satisfies only the A1 prerequisite with a deterministic sanitized fingerprint. It closes no evidence row: EVID-WORKER-CPU remains incomplete, the exact unresolved-hard count remains 9, decision remains NO-GO, activation remains closed, Free remains permanent, and NC-L1 remains not-started.
+
+```text
+packet_execution_status=approved-completed-release-owner-judgment
+packet_item_count=1
+approval_unit=release-owner-judgment
+child_id=A1-worker-cpu-source-disposition
+evidence_id=EVID-WORKER-CPU
+requested_operation=release-owner-judgment-worker-cpu-evidence-source-disposition-only
+command=<no-command-authorized>
+external_action=none
+required_approver=kurodev
+approval_id=NC-R1-WORKER-CPU-SOURCE-DISPOSITION-20260809-01
+scope_alias=creator-production-worker-cpu-source-disposition
+effective_date=2026-08-09
+decision_input=completed-worker-cpu-reread-partial-stop-plus-official-cloudflare-public-source-assessment
+owner_decision=approved-safe-source-selected
+next_evidence_source=cloudflare-graphql-workersInvocationsAdaptive-aggregated-only
+target_alias=creator-production-worker
+sampling_posture=adaptive-sampling-disclosure-required
+request_completeness_posture=partial-stop-unless-explicit-completeness-is-provable
+evidence_retention_location=current-Codex-task-sanitized-report
+stop_owner=kurodev
+rollback_owner=kurodev
+default_incremental_spend_jpy=0
+stop_before_any_incremental_charge=yes
+prohibited_bundle=Trace,Workers-Logs,raw-requests,private-identifiers,provider,Stripe,Supabase,Product-or-Price,legal,copy,risk,live,deploy,activation,git-publication,cleanup
+row_closure=none-this-packet
+production_proof=no
+activation_status=closed
+approval_decision=approved
+```
+
+## Unapproved A2 Provider Funding-Requirement Disposition Proposal
+
+This unapproved, non-executable, documentation-only proposal asks the release owner to classify the Provider funding requirement against the exact approved A0 input and the retained zero-funded-headroom-at-observation posture. `proposed_funding_requirement_state=needed-absent` is a proposed judgment only; it does not change the current `undetermined` registry state, approve the dependent external-prerequisite child, or establish that funding was performed. It does not authorize funding, payment, credit, provider API access, external prerequisite execution, row closure, activation, or final GO. If later approved, it records only the funding-requirement disposition and requires a separate exact approval before any cost-bearing prerequisite.
+
+```text
+packet_execution_status=unapproved-non-executable
+packet_item_count=1
+approval_unit=release-owner-judgment
+decision_record_id=A2-provider-funding-requirement-disposition
+dependent_child_id=A2-provider-funding-external-prerequisite-reference
+evidence_id=EVID-PROVIDER-COST
+requested_operation=release-owner-judgment-provider-funding-requirement-disposition-only
+command=<no-command-authorized>
+external_action=none
+required_approver=kurodev
+approval_id=NC-R1-A2-PROVIDER-FUNDING-REQUIREMENT-DISPOSITION-20260810-01
+exact_target_or_scope=creator-paid-primary-openai-provider-funding-requirement-v1
+bound_a0_approval_id=NC-R1-A0-PROVISIONAL-COST-MODEL-20260809-01
+bound_a0_cost_model_input_fingerprint=sha256:d8f403f21571bc48098f9989394c3bef547455090dc922efaa071d0aa7938531
+prior_funding_posture_approval_id=NC-R1-PROVIDER-FUNDING-POSTURE-20260807-01
+decision_input=a0-provisional-cost-model-plus-zero-funded-headroom-at-observation
+effective_date=2026-08-10
+proposed_funding_requirement_state=needed-absent
+proposed_owner_decision=retain-no-go-require-separate-external-funding-prerequisite
+evidence_retention_location=current-Codex-task-sanitized-report
+stop_owner=kurodev
+rollback_owner=kurodev
+cost_guard=zero-incremental-spend-and-separate-budget-approval-required
+default_incremental_spend_jpy=0
+stop_before_any_incremental_charge=yes
+funding_authorization=none
+provider_api_authorization=none
+payment_or_credit_authorization=none
+external_prerequisite_approval=none
+dependent_child_status_effect=none-remains-unapproved
+row_closure=none
+production_proof=no
+activation_status=closed
+approval_decision=unapproved
+```
+
+## Unapproved A3 Stripe Account-Pricing Document Manual Packet
+
+This unapproved, non-executable, authenticated-private-read proposal permits nothing until the exact owner approval is recorded. Its future surface is limited to a Kurodev-operated existing account-specific pricing agreement or contract document, materially different from the two completed Plans/Fees partial-stop reads. It does not authorize payment, refund, customer, event, settings, API, export, credential, browser, or Stripe operation; Codex receives no browser or Stripe control. It retains no raw document, contract text, URL, account identifier, or private identifier, substitutes no public pricing, incurs no incremental charge, and closes no row. An actual sanitized result is required separately.
+
+```text
+packet_execution_status=unapproved-non-executable
+packet_item_count=1
+approval_unit=authenticated-private-read
+child_id=A3-stripe-source-applicability-read-or-judgment
+selected_mode=read
+selected_approval_unit=authenticated-private-read
+evidence_id=EVID-STRIPE-COST
+requested_operation=kurodev-manual-read-existing-stripe-account-specific-pricing-agreement-or-contract-applicability-only
+permitted_execution_surface=kurodev-operated-existing-stripe-account-pricing-agreement-or-contract-document-only
+command=<no-Codex-command-authorized>
+external_action=none-unapproved-not-started
+operator=kurodev-manual-current-task
+required_approver=kurodev
+approval_id=NC-R1-A3-STRIPE-ACCOUNT-PRICING-DOCUMENT-MANUAL-20260810-01
+exact_target_or_scope=creator-paid-primary-stripe-account-pricing-document-scope-v1
+time_window=2026-08-10T00:00:00+09:00/2026-08-10T23:59:59+09:00
+bound_a0_approval_id=NC-R1-A0-PROVISIONAL-COST-MODEL-20260809-01
+bound_a0_cost_model_input_fingerprint=sha256:d8f403f21571bc48098f9989394c3bef547455090dc922efaa071d0aa7938531
+prior_stripe_cost_approval_ids=NC-R1-STRIPE-COST-20260807-01,NC-R1-STRIPE-BASE-FEE-20260807-01
+verification_scope=source-document-availability-and-exact-base-processing-fee-availability-and-standard-custom-applicability-and-full-cost-model-completeness-only
+evidence_retention_location=current-Codex-task-sanitized-report
+stop_owner=kurodev
+rollback_owner=kurodev
+cost_guard=zero-incremental-spend-and-stop-before-any-charge
+default_incremental_spend_jpy=0
+stop_before_any_incremental_charge=yes
+payment_refund_client_or_event_settings_api_export_action=none
+credential_creation_retrieval_disclosure=none
+raw_document_contract_text_url_account_identifier_private_identifier_retention=none
+codex_browser_or_stripe_control=none
+public_pricing_substitution=forbidden
+partial_stop_condition=source-absent-or-fee-unavailable-or-applicability-unknown-or-full-cost-model-incomplete-or-private-exposure-or-charge-required
+row_closure=none-this-packet
+production_proof=no
+activation_status=closed
+approval_decision=unapproved
+```
+
+## Exact Non-Evidence A2 Provider Funding-Requirement Disposition Owner Approval Template
+
+This template-only, non-evidence block defines a separately parsed owner-approval record for a future A2 disposition. It cannot create an approval: the current proposal remains unapproved and this template is not an actual record. A future result may bind only this independent deterministic owner-approval fingerprint; it cannot self-authenticate. It authorizes no funding, provider, payment, credit, external lane, command, row closure, production proof, or activation.
+
+```text
+record_status=<required-approved-completed-release-owner-judgment>
+record_type=sanitized-provider-funding-requirement-disposition-owner-approval
+evidence_id=EVID-PROVIDER-COST
+decision_record_id=A2-provider-funding-requirement-disposition
+dependent_child_id=A2-provider-funding-external-prerequisite-reference
+approval_id=<required-exact-approved-A2-funding-disposition-approval-id>
+approval_decision=<required-approved>
+exact_target_or_scope=<required-exact-approved-target-or-scope>
+bound_a0_approval_id=<required-exact-A0-approval-id>
+bound_a0_cost_model_input_fingerprint=<required-exact-A0-cost-model-input-fingerprint>
+prior_funding_posture_approval_id=<required-exact-prior-funding-posture-approval-id>
+decision_input=<required-exact-approved-decision-input>
+effective_date=<required-Asia-Tokyo-effective-date>
+required_approver=kurodev
+decision_owner=kurodev
+funding_requirement_state=<required-not-needed-or-already-available-or-needed-absent>
+owner_decision=<required-exact-owner-disposition>
+evidence_retention_location=<required-sanitized-retention-location>
+stop_owner=kurodev
+rollback_owner=kurodev
+cost_guard=zero-incremental-spend-and-separate-budget-approval-required
+default_incremental_spend_jpy=0
+stop_before_any_incremental_charge=yes
+command=<no-command-authorized>
+external_action=none
+funding_authorization=none
+provider_api_authorization=none
+payment_or_credit_authorization=none
+external_prerequisite_approval=none
+row_closure=none
+production_proof=no
+activation_status=closed
+owner_approval_record_fingerprint=<required-sha256-owner-approval-record-fingerprint>
+```
+
+## Exact Non-Evidence A2 Provider Funding-Requirement Disposition Result Template
+
+This template-only, non-evidence block defines the closed sanitized result shape for a future separately parsed owner approval. It does not record an approved disposition, cannot create an approval, and binds only the independent owner approval fingerprint. `needed-absent` keeps the external lane unapproved and needs a separate exact external-lane approval/result before A2 can start; `not-needed` and `already-available` do not authorize that lane or supply external evidence. It cannot close EVID-PROVIDER-COST.
+
+```text
+record_status=<required-approved-completed-release-owner-judgment>
+record_type=sanitized-provider-funding-requirement-disposition-result
+evidence_id=EVID-PROVIDER-COST
+decision_record_id=A2-provider-funding-requirement-disposition
+dependent_child_id=A2-provider-funding-external-prerequisite-reference
+owner_approval_record_fingerprint=<required-exact-owner-approval-record-fingerprint>
+funding_requirement_state=<required-not-needed-or-already-available-or-needed-absent>
+owner_decision=<required-exact-owner-disposition>
+external_prerequisite_approval=none
+row_closure=none
+production_proof=no
+activation_status=closed
+disposition_record_fingerprint=<required-sha256-disposition-record-fingerprint>
+```
+
+## Exact Non-Evidence A2 Provider Cost Observed Result Template
+
+This is a template-only, non-evidence schema. It does not record an observed result and cannot close EVID-PROVIDER-COST. A complete result requires a separately parsed observed record bound to the exact approved A2 packet. The observed-record fingerprint is part of the A2 result fingerprint, so material drift invalidates downstream dependents.
+
+```text
+record_status=<required-approved-completed-or-approved-partial-stop-authenticated-private-read>
+evidence_id=EVID-PROVIDER-COST
+child_id=A2-provider-cost-evidence-read
+approval_id=<required-exact-approved-A2-approval-id>
+approval_decision=<required-approved>
+approval_fingerprint=<required-sha256-approval-fingerprint>
+exact_target_or_scope=<required-exact-approved-target-or-scope>
+time_window=<required-exact-approved-time-window>
+operator=<required-exact-approved-operator>
+bound_a0_cost_model_input_fingerprint=<required-exact-A0-cost-model-input-fingerprint>
+funding_prerequisite_fingerprint=<required-exact-funding-prerequisite-fingerprint>
+observed_at=<required-rfc3339-Asia-Tokyo-observed-at>
+target_match=<required-exact-or-unconfirmed-or-mismatched>
+funded_headroom_classification=<required-positive-funded-headroom-or-zero-funded-headroom-or-unavailable-or-unconfirmed>
+aggregation_completeness=<required-complete-or-incomplete-or-unknown>
+sanitized_exact_cost_classification=<required-available-or-unavailable-or-unconfirmed>
+applicability=<required-applicable-or-not-applicable-or-unknown>
+provider_api_write_payment_credit_budget_or_settings_action=none
+credential_creation_retrieval_disclosure=none
+raw_url_org_project_account_identifier_private_identifier_payload_retained_or_shared=no
+codex_browser_or_provider_control=none
+incremental_charge=no
+stop_result=<required-sanitized-stop-result>
+result_status=<required-complete-or-partial-stop>
+row_closure=<required-EVID-PROVIDER-COST-for-complete-or-none-for-partial-stop>
+a2_result_fingerprint=<required-sha256-A2-result-fingerprint>
+observed_record_fingerprint=<required-sha256-observed-record-fingerprint>
+```
+
+## Exact Non-Evidence A3 Stripe Account-Pricing Manual-Read Owner Approval Template
+
+This template-only, non-evidence block defines the separately parsed independent owner-approval record required before any future A3 manual read can start. It cannot create approval: the current A3 child remains unapproved, its collection is empty, and this template is not an actual record. A future approved-not-started or running A3 requires exactly one such record bound to the actual child’s exact requested operation, deterministic approval fingerprint, target, window, and operator; a terminal A3 also requires exactly one separate observed result bound to that same fingerprint. It authorizes no command, browser, Stripe control, payment, refund, customer, event, settings, API, export, credential action, public-pricing substitution, incremental charge, row closure, production proof, or activation.
+
+```text
+record_status=<required-approved-owner-approval-authenticated-private-read>
+record_type=sanitized-a3-stripe-account-pricing-manual-read-owner-approval
+evidence_id=EVID-STRIPE-COST
+child_id=A3-stripe-source-applicability-read-or-judgment
+selected_mode=read
+selected_approval_unit=authenticated-private-read
+requested_operation=<required-exact-approved-requested-operation>
+permitted_execution_surface=<required-exact-approved-permitted-execution-surface>
+command=<no-Codex-command-authorized>
+external_action=none
+operator=kurodev-manual-current-task
+required_approver=kurodev
+approval_id=<required-exact-approved-A3-approval-id>
+approval_decision=approved
+approval_fingerprint=<required-exact-approved-A3-approval-fingerprint>
+exact_target_or_scope=<required-exact-approved-target-or-scope>
+time_window=<required-exact-approved-time-window>
+bound_a0_approval_id=<required-exact-A0-approval-id>
+bound_a0_cost_model_input_fingerprint=<required-exact-A0-cost-model-input-fingerprint>
+prior_stripe_cost_approval_ids=<required-exact-prior-stripe-cost-approval-ids>
+verification_scope=<required-exact-approved-verification-scope>
+evidence_retention_location=<required-sanitized-retention-location>
+stop_owner=kurodev
+rollback_owner=kurodev
+cost_guard=zero-incremental-spend-and-stop-before-any-charge
+default_incremental_spend_jpy=0
+stop_before_any_incremental_charge=yes
+payment_refund_client_or_event_settings_api_export_action=none
+credential_creation_retrieval_disclosure=none
+raw_document_contract_text_url_account_identifier_private_identifier_retention=none
+codex_browser_or_stripe_control=none
+public_pricing_substitution=forbidden
+partial_stop_condition=<required-exact-approved-partial-stop-condition>
+row_closure=none
+production_proof=no
+activation_status=closed
+owner_approval_record_fingerprint=<required-sha256-owner-approval-record-fingerprint>
+```
+
+## Exact Non-Evidence A3 Stripe Account-Pricing Document Result Template
+
+This template-only, non-evidence block defines the closed sanitized result shape for the later Kurodev-operated manual document check. It does not record an observed result, does not prove that a source exists or a read occurred, and cannot close EVID-STRIPE-COST. A separately parsed observed record bound to the exact approved A3 packet binds the actual child’s exact requested operation, deterministic approval fingerprint, target, window, operator, and independent owner-approval fingerprint; it cannot self-authorize by setting `approval_decision=approved` or recomputing child-controlled fingerprints. Complete status requires the exact target, source availability, account-specific base-fee availability, known standard/custom applicability, available sanitized exact-cost classification, deterministic sanitized account-specific terms fingerprint plus complete terms coverage, `private_exposure_detected=no`, `incremental_charge_required=no`, complete base/fixed/effective coverage, complete-or-not-applicable optional coverage, and complete full-cost-model classification. Otherwise the truthful result is partial-stop with `row_closure=none` and a fixed ordered sanitized reason derived only from the incomplete or unconfirmed source, fee, applicability, terms, private-exposure, incremental-charge-required, and coverage signals. The exact safe `incremental-charge-required-yes` or `incremental-charge-required-unknown` classification is nonauthorizing; deployment, activation, performed/authorized charge, permission, or other authority aliases are forbidden. A `partial-stop` or `complete-not-closure-eligible` A3 accepts only that nonclosing partial-stop result, while only `satisfied` may close EVID-STRIPE-COST. The observed-record fingerprint is part of the A3 result fingerprint so owner, terms, or coverage drift invalidates dependent A4/A5/A6/B1/B2 evidence.
+
+```text
+record_status=<required-approved-completed-or-approved-partial-stop-authenticated-private-read>
+evidence_id=EVID-STRIPE-COST
+child_id=A3-stripe-source-applicability-read-or-judgment
+requested_operation=<required-exact-approved-requested-operation>
+approval_id=<required-exact-approved-A3-approval-id>
+approval_decision=<required-approved>
+approval_fingerprint=<required-sha256-approval-fingerprint>
+exact_target_or_scope=<required-exact-approved-target-or-scope>
+time_window=<required-exact-approved-time-window>
+operator=<required-exact-approved-operator>
+bound_a0_cost_model_input_fingerprint=<required-exact-A0-cost-model-input-fingerprint>
+owner_approval_record_fingerprint=<required-exact-owner-approval-record-fingerprint>
+observed_at=<required-rfc3339-observed-at>
+target_match=<required-exact-or-unconfirmed-or-mismatched>
+source_document_available=<required-available-or-unavailable-or-unconfirmed>
+direct_account_specific_base_processing_fee_available=<required-available-or-unavailable-or-unconfirmed>
+standard_custom_applicability=<required-standard-or-custom-or-unknown>
+full_cost_model_completeness=<required-complete-or-incomplete-or-unknown>
+sanitized_exact_cost_classification=<required-available-or-unavailable-or-unconfirmed>
+account_specific_pricing_terms_fingerprint=<required-sha256-sanitized-account-specific-pricing-terms-fingerprint>
+account_specific_pricing_terms_coverage=<required-complete-or-incomplete-or-unknown>
+private_exposure_detected=<required-yes-or-no-or-unknown>
+incremental_charge_required=<required-yes-or-no-or-unknown>
+base_processing_fee_coverage=<required-complete-or-not-applicable-or-incomplete-or-unknown>
+fixed_and_variable_components_coverage=<required-complete-or-not-applicable-or-incomplete-or-unknown>
+refunds_disputes_chargebacks_coverage=<required-complete-or-not-applicable-or-incomplete-or-unknown>
+international_currency_conversion_coverage=<required-complete-or-not-applicable-or-incomplete-or-unknown>
+tax_and_other_account_specific_fee_coverage=<required-complete-or-not-applicable-or-incomplete-or-unknown>
+effective_scope_coverage=<required-complete-or-not-applicable-or-incomplete-or-unknown>
+raw_document_contract_text_url_account_identifier_private_identifier_retained_or_shared=no
+payment_refund_client_or_event_settings_api_export_action=none
+credential_creation_retrieval_disclosure=none
+codex_browser_or_stripe_control=none
+public_pricing_substitution=no
+incremental_charge=no
+stop_result=<required-sanitized-stop-result>
+result_status=<required-complete-or-partial-stop>
+row_closure=<required-EVID-STRIPE-COST-for-complete-or-none-for-partial-stop>
+a3_result_fingerprint=<required-sha256-A3-result-fingerprint>
+observed_record_fingerprint=<required-sha256-observed-record-fingerprint>
+```
+
+## Exact Non-Evidence A4 Product/Price Judgment Result Template
+
+This is a template-only, non-evidence schema. It records no owner judgment and cannot close EVID-PRODUCT-PRICE. A2 and A3 must already be satisfied through their separate parsed independent result records before any future A4 closure can be evaluated. No actual A4 approval packet, owner decision, or judgment result record exists here. This template cannot substitute for the separately parsed actual sanitized owner-judgment result bound to the exact approved A4 child; it authorizes no legal, tax, copy, risk, deploy, live, GO, activation, or publication action.
+
+```text
+record_status=<required-approved-completed-release-owner-judgment>
+record_type=product-price-release-owner-judgment-result
+evidence_id=EVID-PRODUCT-PRICE
+child_id=A4-product-price-judgment
+judgment_record_id=<required-unique-sanitized-judgment-record-id>
+approval_id=<required-exact-approved-A4-approval-id>
+approval_decision=approved
+approval_fingerprint=<required-sha256-approval-fingerprint>
+exact_target_or_scope=<required-exact-approved-product-price-scope>
+required_approver=kurodev
+decision_owner=kurodev
+effective_date=<required-exact-approved-effective-date>
+bound_a2_result_fingerprint=<required-exact-A2-result-fingerprint>
+bound_a3_result_fingerprint=<required-exact-A3-result-fingerprint>
+dependency_fingerprint_composite=<required-exact-a2-result-a3-result-composite>
+product_scope_disposition=approved-exact-scope
+price_posture_disposition=approved-exact-posture
+exclusions_bound=yes
+material_change_revalidation=required
+evidence_retention_location=<required-exact-approved-sanitized-retention-location>
+stop_owner=kurodev
+rollback_owner=kurodev
+legal_tax_copy_risk_deploy_live_go_activation_publication_authorization=none
+judgment_output=approved
+row_closure=EVID-PRODUCT-PRICE-only
+a4_result_fingerprint=<required-exact-final-A4-result-fingerprint>
+judgment_record_fingerprint=<required-sha256-judgment-record-fingerprint>
+```
+
+## Exact Non-Evidence A5 Legal/Tax Judgment Result Template
+
+This is a template-only, non-evidence schema. It records no legal/tax conclusion and cannot close EVID-LEGAL. A4 must already be satisfied through its separate parsed independent actual sanitized Kurodev owner-judgment result record and actual artifact before any future A5 closure can be evaluated. Any future A5 child `bound_input` must exactly equal that actual A4 artifact. No actual A5 approval packet, owner decision, or judgment result record exists here. This template cannot substitute for the separately parsed actual sanitized legal/tax owner-judgment result bound to the exact approved A5 child; no inference is permitted from Product/Price, public pricing, SLA, Support, Copy, or Risk. It authorizes no copy, risk, deploy, live, GO, activation, publication, tax, payment, or external action.
+
+```text
+record_status=<required-approved-completed-release-owner-judgment>
+record_type=legal-tax-release-owner-judgment-result
+evidence_id=EVID-LEGAL
+child_id=A5-legal-judgment
+judgment_record_id=<required-unique-sanitized-judgment-record-id>
+approval_id=<required-exact-approved-A5-approval-id>
+approval_decision=approved
+approval_fingerprint=<required-sha256-approval-fingerprint>
+exact_target_or_scope=<required-exact-approved-legal-tax-scope>
+required_approver=kurodev
+decision_owner=kurodev
+effective_date=<required-exact-approved-effective-date>
+bound_a4_artifact_fingerprint=<required-exact-A4-artifact-fingerprint>
+legal_scope_disposition=approved-exact-scope
+legal_tax_posture_disposition=approved-exact-posture
+exclusions_bound=yes
+material_change_revalidation=required
+evidence_retention_location=<required-exact-approved-sanitized-retention-location>
+stop_owner=kurodev
+rollback_owner=kurodev
+copy_risk_deploy_live_go_activation_publication_authorization=none
+judgment_output=approved
+row_closure=EVID-LEGAL-only
+a5_result_fingerprint=<required-exact-final-A5-result-fingerprint>
+judgment_record_fingerprint=<required-sha256-judgment-record-fingerprint>
+```
+
+If a future exact A5 child is `complete-not-closure-eligible`, it still requires one separately parsed actual sanitized A5 record bound to the actual A4 artifact. That record retains the same approved documentation-judgment authority and bindings, but only `legal_scope_disposition=reviewed-exact-scope`, `legal_tax_posture_disposition=rejected-exact-posture`, `judgment_output=rejected`, and `row_closure=none` are valid; it never closes EVID-LEGAL or authorizes an action. This is lifecycle contract only, not an actual record or conclusion.
+
+## Exact Non-Evidence A6 Copy Judgment Result Template
+
+This is a template-only, non-evidence schema. It records no copy decision, copy artifact content, or publication and cannot close EVID-COPY. A4 Product/Price and A5 Legal/Tax must already be satisfied through their separate parsed independent actual sanitized result records and artifacts before any future A6 closure can be evaluated. An actual A6 record requires the exact public-copy artifact identifier or content fingerprint and cannot infer a copy conclusion from Product/Price, Legal, a public page, SLA, Support, or Risk. No actual A6 approval packet, Copy decision, artifact, owner-judgment result record, publication, public Paid gate, GO, activation, deployment, live, or external authority exists here. This template cannot substitute for the separately parsed actual sanitized Copy owner-judgment result bound to the exact approved A6 child and it authorizes no action.
+
+```text
+record_status=<required-approved-completed-release-owner-judgment>
+record_type=copy-release-owner-judgment-result
+evidence_id=EVID-COPY
+child_id=A6-copy-judgment
+judgment_record_id=<required-unique-sanitized-judgment-record-id>
+approval_id=<required-exact-approved-A6-approval-id>
+approval_decision=approved
+approval_fingerprint=<required-sha256-approval-fingerprint>
+exact_target_or_scope=<required-exact-approved-copy-artifact-scope>
+required_approver=kurodev
+decision_owner=kurodev
+effective_date=<required-exact-approved-effective-date>
+copy_artifact_identifier_or_content_fingerprint=<required-exact-public-copy-artifact-identifier-or-content-fingerprint>
+bound_a4_artifact_fingerprint=<required-exact-A4-artifact-fingerprint>
+bound_a5_artifact_fingerprint=<required-exact-A5-artifact-fingerprint>
+dependency_fingerprint_composite=<required-exact-copy-a4-a5-artifact-composite>
+copy_scope_disposition=<required-approved-exact-scope-or-reviewed-exact-scope>
+copy_posture_disposition=<required-approved-exact-posture-or-rejected-exact-posture>
+exclusions_bound=yes
+material_change_revalidation=required
+evidence_retention_location=<required-exact-approved-sanitized-retention-location>
+stop_owner=kurodev
+rollback_owner=kurodev
+publication_public_paid_gate_risk_deploy_live_go_activation_external_action_authorization=none
+judgment_output=<required-approved-or-rejected>
+row_closure=<required-EVID-COPY-only-or-none>
+a6_result_fingerprint=<required-exact-final-A6-result-fingerprint>
+judgment_record_fingerprint=<required-sha256-judgment-record-fingerprint>
+```
+
+If a future exact A6 child is `satisfied`, only `copy_scope_disposition=approved-exact-scope`, `copy_posture_disposition=approved-exact-posture`, `judgment_output=approved`, and `row_closure=EVID-COPY-only` are valid. If it is `complete-not-closure-eligible`, only `copy_scope_disposition=reviewed-exact-scope`, `copy_posture_disposition=rejected-exact-posture`, `judgment_output=rejected`, and `row_closure=none` are valid. Both modes require one separately parsed actual sanitized A6 record, deterministic record and result fingerprints, and the exact actual A4/A5 artifacts; this lifecycle contract is not an actual record or conclusion.
+
+
+## Completed Approved Worker CPU GraphQL Partial-Stop
+
+The approved one-item A1 Worker CPU GraphQL read attempted only the schema-capability surface once through the available authenticated in-app dashboard session. Transport stopped before an HTTP or GraphQL response could be classified, so schema/dataset capability, target confirmation, and every CPU/request/sampling/confidence metric remain unconfirmed. No data query was executed. This partial stop closes no row and keeps EVID-WORKER-CPU incomplete, NO-GO, activation closed, Free permanent, and NC-L1 not-started.
+
+```text
+packet_execution_status=approved-partial-stop-authenticated-private-read
+packet_item_count=1
+approval_unit=authenticated-private-read
+child_id=A1-worker-cpu-evidence-read
+evidence_id=EVID-WORKER-CPU
+requested_operation=cloudflare-graphql-schema-capability-and-one-workersInvocationsAdaptive-aggregated-query-only
+target_alias=creator-production-worker
+verification_scope=cpuTimeP50,cpuTimeP99,sum.requests,sampling-metadata,confidence-metadata,response-errors-and-query-completeness-only
+query_time_range=2026-08-08T00:00:00+09:00/2026-08-08T23:59:59+09:00
+operator=Codex-root-agent-current-task
+required_approver=kurodev
+approval_id=NC-R1-WORKER-CPU-GRAPHQL-20260809-01
+evidence_retention_location=current-Codex-task-sanitized-report
+stop_owner=kurodev
+rollback_owner=kurodev
+default_incremental_spend_jpy=0
+stop_before_any_incremental_charge=yes
+observed_at=2026-08-09T19:53:27+09:00
+credential_account_worker_env_path=absent-boolean-only
+cloudflare_connector=unavailable
+authenticated_in_app_dashboard_session=available
+schema_capability_query_attempt_count=1
+account_tag_or_worker_script_identifier_retained=no
+transport_result=failed-before-http-or-graphql-response-classification
+schema_type_dataset_capability=unconfirmed
+data_query_execution=not-executed
+cpu_request_sampling_confidence_metrics_observed=none
+query_completeness=unavailable
+raw_response_credential_token_account_tag_private_script_name_retained=no
+prohibited_surfaces_opened=none
+incremental_charge_authorized=no
+incremental_charge_accepted=no
+stop_condition=schema-unavailable-response-unavailable
+row_closure=none
+production_proof=no
+activation_status=closed
+result=partial-stop-no-data-query
+```
+
+## Completed A1 Worker CPU GraphQL Execution-Path Disposition Approval
+
+The approved documentation-only release-owner judgment records only the owner-selected future execution path. It does not authorize GraphQL, GraphiQL, Chrome, query, credential, or external action, and it closes no row. A1 evidence remains a partial stop and EVID-WORKER-CPU remains incomplete; NO-GO, activation closed, Free permanent, and NC-L1 not-started remain unchanged.
+
+```text
+packet_execution_status=approved-completed-release-owner-judgment
+packet_item_count=1
+approval_unit=release-owner-judgment
+evidence_id=EVID-WORKER-CPU
+requested_operation=release-owner-judgment-worker-cpu-graphql-execution-path-disposition-only
+command=<no-command-authorized>
+external_action=none
+required_approver=kurodev
+approval_id=NC-R1-WORKER-CPU-GRAPHQL-PATH-20260809-01
+scope_alias=creator-production-worker-graphql-execution-path-disposition
+effective_date=2026-08-09
+decision_input=completed-graphql-schema-transport-partial-stop-no-data-query
+owner_decision=approved-safe-no-secret-execution-path-selected
+safe_execution_path=kurodev-operated-cloudflare-graphiql-existing-analytics-read-credential-never-shared-sanitized-result-only
+credential_creation=not-authorized
+credential_retrieval_or_disclosure=not-authorized
+next_operation_authorization=none-separate-authenticated-private-read-packet-required
+evidence_retention_location=current-Codex-task-sanitized-report
+stop_owner=kurodev
+rollback_owner=kurodev
+default_incremental_spend_jpy=0
+stop_before_any_incremental_charge=yes
+prohibited_bundle=credentials,tokens,API-keys,GraphiQL,Chrome,raw-response-output,account-tag-output,token-output,private-script-name-output,Workers-Logs,Trace,Query-Builder,Logpush,Tail,raw-events,raw-requests,settings,configuration,deploy,activation,provider,Stripe,Supabase,Product-or-Price,legal,copy,risk,live,git-publication,cleanup
+row_closure=none-this-packet
+production_proof=no
+activation_status=closed
+approval_decision=approved
+```
+
+## Approved-Not-Started Worker CPU Manual Schema-Capability Packet
+
+This approved, not-started, authenticated-private-read schema-capability-only packet authorizes only Kurodev's manual schema capability inspection/query on the named existing authenticated Cloudflare GraphQL-client-or-GraphiQL schema-only surface. No Codex browser or client control is authorized, and the existing credential is never shared. It does not authorize a data query or credential creation, retrieval, or disclosure; it records no Codex command and no action has started. It is limited to schema capability for `workersInvocationsAdaptive`, the listed field names, sampling disclosure, confidence metadata, exact target scope, full-window aggregation, and node-limit/pagination/non-truncation checks. Schema-only cannot close the row or authorize a data query. The current owner message satisfies the separate explicit approval requirement, but an observed sanitized result is still required before any evidence status can change.
+
+```text
+packet_execution_status=approved-not-started-authenticated-private-read
+packet_item_count=1
+approval_unit=authenticated-private-read
+child_id=A1-worker-cpu-evidence-read
+evidence_id=EVID-WORKER-CPU
+requested_operation=kurodev-operated-cloudflare-graphiql-schema-capability-only
+command=<no-Codex-command-authorized>
+external_action=authorized-not-started-kurodev-manual-schema-capability-only
+target_alias=creator-production-worker
+operator=kurodev-manual-current-task
+required_approver=kurodev
+approval_id=NC-R1-WORKER-CPU-GRAPHQL-SCHEMA-MANUAL-20260809-01
+owner_confirmation=explicit-approval-id-current-Codex-task
+execution_surface=kurodev-operated-cloudflare-graphql-client-existing-credential-never-shared
+permitted_execution_surface=kurodev-operated-cloudflare-graphql-client-or-graphiql-existing-credential-never-shared-schema-only
+browser_execution_scope=kurodev-operated-named-existing-authenticated-client-schema-only-no-Codex-control
+prohibited_operator=Codex
+schema_dataset=workersInvocationsAdaptive
+required_schema_fields=sum.requests,quantiles.cpuTimeP50,quantiles.cpuTimeP99
+sampling_disclosure=required
+confidence_metadata=required
+exact_target_scope=required
+full_window_aggregation=required
+node_limit_pagination_non_truncation=required
+schema_capability_only=yes
+data_query_authorization=none
+credential_creation=not-authorized
+credential_retrieval_or_disclosure=not-authorized
+evidence_retention_location=current-Codex-task-sanitized-report
+stop_owner=kurodev
+rollback_owner=kurodev
+default_incremental_spend_jpy=0
+stop_before_any_incremental_charge=yes
+prohibited_bundle=credentials,tokens,API-keys,Codex-operated-GraphiQL,Codex-operated-Chrome,raw-response-output,account-tag-output,token-output,private-script-name-output,Workers-Logs,Trace,Query-Builder,Logpush,Tail,raw-events,raw-requests,settings,configuration,deploy,activation,provider,Stripe,Supabase,Product-or-Price,legal,copy,risk,live,git-publication,cleanup
+partial_stop_condition=auth-or-schema-or-dataset-or-field-or-sampling-or-confidence-or-target-or-limit-or-pagination-or-private-or-paid-gap
+raw_response_credential_account_tag_private_script_name_retained=no
+raw_response_credential_account_tag_private_script_name_shared=no
+row_closure=none-this-packet
+production_proof=no
+activation_status=closed
+approval_decision=approved
+separate_explicit_approval_required=satisfied-by-current-owner-message
+```
+
+## Exact Non-Evidence Worker CPU Manual Schema-Capability Result Template
+
+This template-only, non-evidence block defines the exact sanitized result shape for a later Kurodev-only manual schema-capability inspection. Its fixed Asia/Tokyo current-task freshness anchor/window is template metadata only, not an observed timestamp or an expansion of operation authority. It explicitly records no credential/token/API-key action or retention, no Codex browser/GraphQL control, no logs/Trace/Query Builder/Logpush/Tail surface, no raw events/requests, no settings/configuration action, and no provider/Stripe/Supabase/Product-or-Price/legal/copy/risk/live/deploy/activation/Git/cleanup action. It does not record an observed result, does not represent a query having run, and cannot close EVID-WORKER-CPU. Until an actual sanitized result is separately recorded, A1 remains partial-stop and EVID-WORKER-CPU remains incomplete.
+
+```text
+template_status=not-observed-non-evidence
+observed_at=<required-rfc3339-observed-at>
+freshness_time_zone=Asia/Tokyo
+freshness_anchor=2026-08-09T23:59:59+09:00
+freshness_window=2026-08-09T00:00:00+09:00/2026-08-09T23:59:59+09:00
+target_match=<required-exact-or-mismatched-or-unconfirmed>
+authentication_result=<required-authenticated-or-unavailable-or-unconfirmed>
+schema_transport_result=<required-available-or-unavailable-or-unconfirmed>
+schema_dataset_available=<required-available-or-unavailable-or-unconfirmed>
+sum_requests_available=<required-available-or-unavailable-or-unconfirmed>
+quantiles_cpu_time_p50_available=<required-available-or-unavailable-or-unconfirmed>
+quantiles_cpu_time_p99_available=<required-available-or-unavailable-or-unconfirmed>
+sampling_disclosure_capability=<required-available-or-unavailable-or-unconfirmed>
+confidence_metadata_capability=<required-available-or-unavailable-or-unconfirmed>
+exact_target_filter_capability=<required-available-or-unavailable-or-unconfirmed>
+full_window_aggregation_capability=<required-available-or-unavailable-or-unconfirmed>
+node_limit_disclosure=<required-available-or-unavailable-or-unconfirmed>
+pagination_capability=<required-available-or-unavailable-or-unconfirmed>
+non_truncation_provable=<required-available-or-unavailable-or-unconfirmed>
+raw_response_credential_account_tag_private_script_name_retained=no
+raw_response_credential_account_tag_private_script_name_shared=no
+credential_creation_retrieval_disclosure=no
+credential_token_api_key_retained_or_shared=no
+codex_browser_or_graphql_control=no
+workers_logs_trace_query_builder_logpush_tail_opened=no
+raw_events_raw_requests_retained_or_shared=no
+settings_configuration_read_action=none
+settings_configuration_write_action=none
+provider_stripe_supabase_product_price_legal_copy_risk_acceptance_live_flow_deploy_activation_git_cleanup_action=none
+incremental_charge=no
+stop_result=<required-sanitized-stop-result>
+result_status=<required-complete-or-partial-stop>
+data_query_executed=no
+row_closure=none
+```
+
+## Exact Non-Evidence A1 Worker CPU Observed Result Template
+
+This template-only, non-evidence block defines the closed sanitized result shape for a later actual Worker CPU read. It does not record an observed result and cannot close EVID-WORKER-CPU; the schema-capability template/result and synthetic child self-claims cannot substitute. Only a separately parsed actual sanitized observed record bound to the exact approved A1 child can close the row. The observed-record fingerprint is part of the A1 result fingerprint, so material observed-record drift invalidates B1 and downstream evidence. For `partial-stop`, `stop_result` is the exact `--`-joined canonical reason list in this fixed order: non-exact `target_match`, non-yes `aggregation_complete`, non-complete `request_completeness`, non-approved `headroom_disposition`, then non-complete `sampling_confidence_completeness`; each reason is the literal field name plus `-value` (for example, `target_match-unconfirmed`). No raw numeric metric, response, account tag, private script, or credential is retained; no Trace, logs, or dashboard surface is reopened outside the exact approved surface; no provider, billing, configuration, or write action and no Codex browser/control is permitted by this template.
+
+```text
+record_status=<required-approved-completed-or-approved-partial-stop-authenticated-private-read>
+evidence_id=EVID-WORKER-CPU
+child_id=A1-worker-cpu-evidence-read
+approval_id=<required-exact-approved-A1-approval-id>
+approval_decision=<required-approved>
+approval_fingerprint=<required-sha256-approval-fingerprint>
+exact_target_or_scope=<required-exact-approved-target-or-scope>
+time_window=<required-exact-approved-time-window>
+operator=<required-exact-approved-operator>
+source_disposition_fingerprint=<required-exact-A1-source-disposition-fingerprint>
+observed_at=<required-rfc3339-Asia-Tokyo-observed-at>
+target_match=<required-exact-or-unconfirmed-or-mismatched>
+aggregation_complete=<required-yes-or-no-or-unknown>
+request_completeness=<required-complete-or-incomplete-or-unknown>
+headroom_disposition=<required-approved-or-insufficient-or-unconfirmed>
+sampling_confidence_completeness=<required-complete-or-incomplete-or-unknown>
+raw_numeric_metrics_response_account_tag_private_script_credential_retained_or_shared=no
+trace_logs_dashboard_reopened_outside_exact_approved_surface=no
+provider_billing_configuration_or_write_action=none
+codex_browser_or_control=none
+incremental_charge=no
+stop_result=<required-sanitized-stop-result>
+result_status=<required-complete-or-partial-stop>
+row_closure=<required-EVID-WORKER-CPU-for-complete-or-none-for-partial-stop>
+a1_result_fingerprint=<required-sha256-A1-result-fingerprint>
+observed_record_fingerprint=<required-sha256-observed-record-fingerprint>
+```
+
+## Exact Non-Evidence B1 Deployed-Target Proof Result Template
+
+This template-only, non-evidence block defines the closed sanitized shape for a later separately parsed actual B1 deployed-target proof result. It records no observed result, authorizes no external operation, and cannot substitute for the actual result or close EVID-DEPLOYED-TARGET. Only one fresh, exact, approved, complete record bound to the exact approved B1 target alias, commit alias, operation, window, operator, retention, stop/rollback owners, and prerequisite fingerprints can close that row. It retains no raw URL, account, binding, configuration, private identifier, or raw payload. Merge, CI, build, local evidence, migration, configuration/binding, Git, deploy, live/public-paid gate, GO, and activation are not inferred, authorized, or executed by this template.
+
+```text
+record_status=<required-approved-completed-or-approved-complete-not-closure-eligible-deployed-target-proof>
+record_type=sanitized-deployed-target-proof-result
+evidence_id=EVID-DEPLOYED-TARGET
+child_id=B1-deployed-target-proof
+proof_record_id=<required-unique-B1-proof-record-id>
+approval_id=<required-exact-approved-B1-approval-id>
+approval_decision=approved
+approval_fingerprint=<required-exact-approved-B1-approval-fingerprint>
+exact_target_or_scope=<required-exact-approved-B1-target-scope>
+expected_target_alias=<required-exact-approved-deployed-target-alias>
+expected_commit_alias=<required-exact-approved-deployed-commit-alias>
+requested_operation=sanitized-deployed-target-proof-read-only
+time_window=<required-exact-approved-window>
+operator=<required-exact-approved-operator>
+required_approver=kurodev
+evidence_retention_location=<required-sanitized-retention-location>
+stop_owner=kurodev
+rollback_owner=kurodev
+source_timestamp=<required-date-parse-valid-source-timestamp>
+observed_deployed_target_binding=<required-sanitized-observed-target-alias>
+observed_deployed_commit_binding=<required-sanitized-observed-commit-alias>
+target_match=<required-exact-or-mismatched-or-unconfirmed>
+commit_match=<required-exact-or-mismatched-or-unconfirmed>
+proof_completeness=<required-complete-or-incomplete>
+freshness=<required-fresh-or-stale>
+no_merge_ci_build_local_inference=yes
+migration_config_binding_git_merge_deploy_live_public_paid_go_activation_external_authorization_or_execution=none
+closure_outcome=<required-EVID-DEPLOYED-TARGET-only-or-none>
+proof_record_fingerprint=<required-sha256-proof-record-fingerprint>
+```
+
+## Exact Non-Evidence B1 External Prerequisite Completed-Result Template
+
+This closed sanitized template is non-evidence and non-authorizing. It cannot substitute for one independently authorized external-lane completed result, authorize execution, or close any row. It retains no raw, private, configuration, or binding values.
+
+```text
+record_status=<required-approved-completed-external-prerequisite-result>
+record_type=sanitized-external-prerequisite-completed-result
+external_result_record_id=<required-unique-B1-external-result-record-id>
+reference_child_id=B1-external-prerequisite-sanitized-result-reference
+reference_child_approval_id=<required-exact-approved-reference-child-approval-id>
+reference_child_approval_fingerprint=<required-sha256-reference-child-approval-fingerprint>
+exact_target_or_scope=<required-exact-approved-reference-scope>
+external_lane_approval_id=<required-separate-external-lane-approval-id>
+external_lane_approval_decision=approved
+source=independently-authorized-external-lane-sanitized-result
+time_window=<required-exact-approved-external-window>
+source_timestamp=<required-strict-rfc3339-source-timestamp>
+completion_status=complete
+outcome=sanitized-external-result-approved
+evidence_retention_location=<required-sanitized-retention-location>
+stop_owner=kurodev
+rollback_owner=kurodev
+nc_r1_execution_or_authorization=none
+sensitive_configuration_binding_value_retention=none
+external_result_record_fingerprint=<required-sha256-external-result-record-fingerprint>
+```
+
+## Exact Non-Evidence B2 Aggregate Live-Operation Result Template
+
+This exact closed sanitized template is non-evidence and non-authorizing. It cannot substitute for an independently approved and separately parsed aggregate live-operation result, enable any live operation, deployment, activation, public Paid gate, or row closure. It retains no secret, private identifier, raw payload, raw URL, browser storage, query, log, migration, configuration, or binding value.
+
+```text
+record_status=<required-approved-completed-or-complete-not-closure-eligible-live-operation-result>
+record_type=sanitized-aggregate-live-operation-result
+aggregate_record_id=<required-unique-B2-aggregate-record-id>
+evidence_id=EVID-LIVE-PAID-FLOW
+child_id=B2-live-paid-flow-evidence
+approval_id=<required-exact-approved-B2-approval-id>
+approval_fingerprint=<required-sha256-B2-approval-fingerprint>
+requested_operation=bounded-non-public-live-paid-flow-verification-only
+b2_execution_id=<required-exact-B2-execution-id>
+exact_target_or_scope=<required-exact-approved-B2-scope>
+target_scope_alias=<required-exact-approved-B2-target-alias>
+time_window=<required-exact-approved-B2-window>
+b1_deployed_fingerprint=<required-sha256-validated-B1-deployed-fingerprint>
+signed_evidence_record_id=<required-separate-signed-evidence-record-id>
+signed_evidence_source=<required-exact-separate-signed-evidence-source>
+signed_evidence_classification=<required-exact-separate-signed-evidence-classification>
+signed_evidence_authority=<required-exact-separate-signed-evidence-authority>
+signed_evidence_fingerprint=<required-sha256-separate-signed-evidence-fingerprint>
+ordered_b2_scenario_result_ids=<required-exact-ordered-19-scenario-result-ids>
+ordered_b2_scenario_result_fingerprints=<required-exact-ordered-19-scenario-result-fingerprints>
+scenario_results_aggregate_fingerprint=<required-sha256-deterministic-19-scenario-aggregate>
+source_timestamp=<required-strict-rfc3339-source-timestamp>
+freshness=<required-fresh>
+aggregate_outcome=<required-sanitized-terminal-outcome>
+side_effect_summary=<required-sanitized-canonical-19-scenario-summary>
+positive_paid_result=<required-Paid>
+compatible_active_signed_subscription=<required-compatible-active-signed-subscription>
+signed_authority_status=<required-complete-unambiguous>
+b1_deployed_binding=<required-approved-deployed-target-and-commit>
+expected_paid_transition_count=<required-1>
+provider_calls_after_budget_quota_rejection=<required-0>
+usage_commits_after_provider_failure=<required-0>
+output_after_post_provider_commit_rejection=<required-suppressed>
+success_after_post_provider_commit_rejection=<required-absent>
+final_state=<required-Free-fail-closed>
+unexpected_paid_transitions=<required-0>
+closure_eligibility=<required-eligible-or-ineligible>
+nonclosure_reason=<required-none-or-bound-approval-withholds-row-closure>
+closure_disposition=<required-EVID-LIVE-PAID-FLOW-only-or-none>
+evidence_retention_location=<required-sanitized-retention-location>
+stop_owner=kurodev
+rollback_owner=kurodev
+extra_authorization_or_execution=none
+aggregate_record_fingerprint=<required-sha256-aggregate-record-fingerprint>
+```
+
+## Completed A0 Provisional Cost-Model Input Approval
+
+This approved, completed, documentation-only parallel A0 release-owner judgment records the exact provisional non-closing cost-model input. It authorizes no external operation and does not authorize A2, A3, funding, payment, external action, command execution, row closure, activation, or final GO. The authoritative A0 registry is now `satisfied` / `fresh` / `exact` / `approved` / `fingerprint_bound=yes`; all fingerprints are deterministically derived only from the sanitized approved fields. EVID-PROVIDER-COST, EVID-STRIPE-COST, and EVID-PRODUCT-PRICE remain incomplete because their closing children remain unapproved. The canonical nine unresolved hard requirements, NO-GO, closed activation, permanent Free posture, and NC-L1 not-started state remain unchanged.
+
+```text
+packet_execution_status=approved-completed-release-owner-judgment
+packet_item_count=1
+approval_unit=release-owner-judgment
+child_id=A0-provisional-cost-model-input
+row_group_references=EVID-PROVIDER-COST,EVID-STRIPE-COST,EVID-PRODUCT-PRICE
+requested_operation=release-owner-judgment-provisional-cost-model-input-only
+command=<no-command-authorized>
+external_action=none
+required_approver=kurodev
+approval_id=NC-R1-A0-PROVISIONAL-COST-MODEL-20260809-01
+exact_target_or_scope=creator-paid-comment-translator-provisional-cost-model-v1
+bound_input=candidate-paid-scope:authenticated-creator-comment-translator-only;provisional-price-posture:no-numeric-price-margin-tax-or-cost-claim-pending-A2-A3;provider-usage-boundary:provider-executed-success-only-cache-hit-skip-failure-and-usage-commit-rejection-excluded;stripe-charge-path:server-owned-checkout-reservation-to-compatible-active-signed-subscription-authority-only;exclusions:provider-funding-payment-tax-legal-copy-risk-deploy-live-final-go-activation
+effective_date=2026-08-09
+cost_model_decision=approved-provisional-non-closing-input-awaiting-A2-A3-no-spend
+judgment_output=approved
+evidence_retention_location=current-Codex-task-sanitized-report
+stop_owner=kurodev
+rollback_owner=kurodev
+cost_guard=zero-incremental-spend-and-separate-budget-approval-required
+default_incremental_spend_jpy=0
+stop_before_any_incremental_charge=yes
+provider_funding_authorization=none
+stripe_payment_or_refund_authorization=none
+product_or_price_row_closure=none
+row_closure=none
+production_proof=no
+activation_status=closed
+approval_decision=approved
+```
+
 ## Non-Claims
 
 - This document does not prove account headroom, selected configuration, live account status, production browser behavior, deployed binding/state, deployment success, or public paid readiness.
-- It does not authorize any additional authenticated dashboard/account/private quota read, remote Supabase work beyond the completed Size, Egress, partial-stop Pause read, accepted Pause posture judgment, partial-stop Worker CPU read, completed Backup prerequisite input, accepted Backup posture decision, approved partial-stop Provider Cost read, completed Provider funding-posture judgment, approved partial-stop Stripe Cost read, approved post-read Stripe Base-Fee partial-stop read, or completed Support posture decision; nor any live provider or Stripe operation, browser smoke, deploy, activation, public gate change, migration, additional dependency installation, or Git publication action. The next minimum packet is exactly one unapproved, non-executable EVID-SLA `release-owner-judgment-sla-posture-only` request. It authorizes no command or action now and bundles no Support reopening, legal, copy, Product/Price, risk decision, external action, deploy, activation, or Git publication. No SLA claim is invented.
+- It does not authorize any additional authenticated dashboard/account/private quota read, remote Supabase work beyond the completed Size, Egress, partial-stop Pause read, accepted Pause posture judgment, completed Backup posture decision, partial-stop Provider Cost read, completed Provider funding-posture judgment, partial-stop Stripe Cost read, post-read Stripe Base-Fee partial-stop read, completed Support posture decision, completed SLA posture decision, Worker CPU re-read partial stop, A1 source-disposition judgment, completed A1 GraphQL partial stop, completed A1 execution-path disposition, and the one approved-not-started Kurodev-only Worker CPU manual schema-capability inspection/query; nor any live provider or Stripe operation, browser smoke, deploy, activation, public gate change, migration, additional dependency installation, or Git publication action. That manual packet has not started, permits only Kurodev's named existing authenticated Cloudflare GraphQL-client-or-GraphiQL schema-only surface with credential never shared, and gives Codex no browser or client control. It does not authorize a data query or credential creation, retrieval, or disclosure, and cannot close the row.
 - It does not alter Free behavior, runtime, data schema, configuration, or previously rejected runtime alternatives.
 - It records only sanitized classification and decision evidence; it contains no credentials, private identifiers, raw payloads, browser persistence authority, query authority, logs, or configuration values.
+
+## NC-R1 Eight-Row Staged Resolution Control-Plane Manifest
+
+```text
+manifest_execution_status=unapproved-non-executable
+manifest_phase=manifest-creation
+manifest_type=multi-unit-staged-resolution-control-plane
+approval_effect=none
+row_group_count=8
+row_groups=EVID-WORKER-CPU,EVID-PROVIDER-COST,EVID-STRIPE-COST,EVID-PRODUCT-PRICE,EVID-LEGAL,EVID-COPY,EVID-DEPLOYED-TARGET,EVID-LIVE-PAID-FLOW
+row_isolation=required
+closure_rule=per-row-only-after-fresh-exact-approved-complete-target-matched-evidence
+cross_row_approval=forbidden
+cross_row_closure=forbidden
+dependency_skip=forbidden
+partial_stop_rule=stop-current-row-and-all-dependent-child-units
+global_stop_rule=private-exposure,target-mismatch,scope-expansion,unsigned-paid-transition,activation-drift,migration-drift,unapproved-cost-bearing-action,rollback-unavailable
+default_incremental_spend_jpy=0
+stop_before_any_incremental_charge=yes
+unapproved_cost_bearing_action=partial-stop-and-request-separate-budget-approval
+risk_acceptance=excluded
+final_release_go=excluded
+activation_status=closed
+free_behavior=permanent
+nc_l1_status=not-started
+child_approval_unit=required-per-child
+child_approval_id=required-unique-per-child
+child_explicit_decision=required-per-child
+child_target_scope_stop_rollback=required-exact-per-child
+```
+
+This manifest has approval effect `none`, closes no evidence row, and authorizes no operation. It is a control-plane index only: each child needs its own canonical approval unit, unique approval ID, explicit decision, exact target or scope, retention location, stop/rollback boundary, and its own completed result. Batch approval, cross-row approval, cross-row closure, and dependency skipping are forbidden.
+
+Migration, configuration/binding, Git, merge, and deploy execution remain outside NC-R1. This manifest may refer only to a sanitized completed external prerequisite result and never authorizes that prerequisite. Wave A remains `gated` with `production_proof=no`; B1 is `deployed` only and B2 is `live` only. A stale or invalidated row is returned to the canonical unresolved set and preserves NO-GO, closed activation, permanent Free, and NC-L1 not-started.
+
+The authoritative per-child registry is the `NC-R1 Staged Child-Unit Registry` in the operator checklist. It records every prerequisite and closing child independently, including non-authorizing external-lane references; row groups may reference only those exact child IDs.
+
+`A1-worker-cpu-source-disposition` is the required prerequisite child for `A1-worker-cpu-evidence-read`. Its completed documentation-only judgment is fresh/exact/approved/fingerprint-bound with `approved-safe-source-selected`, but it closes no row and does not make the closing A1 evidence child eligible without separately approved complete read evidence. `A2-provider-funding-external-prerequisite-reference` is required only when positive funded headroom is required and absent; it is not required when funding is not needed or already available. The registry and contract guard model all three states explicitly without authorizing funding.
+
+`A0-provisional-cost-model-input` is a satisfied documentation-only prerequisite bound to approval `NC-R1-A0-PROVISIONAL-COST-MODEL-20260809-01`. Its sanitized approval, input, result, and artifact fingerprints are deterministically retained in the operator checklist registry. It closes no evidence row and does not authorize A2, A3, provider funding, Stripe payment or refund, Product/Price closure, or any external operation.
+
+Any future satisfied child result follows the operator checklist’s parsed binding rule: `evaluation_at=2026-08-10T23:59:59Z` and `source_max_age_days=7` reject stale/future source timestamps and operation-window endpoints; judgment effective dates are equally bounded. A3 has exactly one mode: authenticated-private-read requires source timestamp plus exact time window, while release-owner-judgment requires judgment output, bound artifact fingerprint, and an effective date exactly matching the child; both/neither/mismatch fail closed. A0/A2/A3/A4/A5/A6/B1/B2 retain the exact actual-fingerprint graph defined in the checklist, so `fingerprint_bound=yes` alone cannot start or close a dependent child. B1 retains independent deployed target, commit, and fingerprint fields; B2 compares those parsed B1 fields with one separately parsed active-compatible, complete-unambiguous signed-evidence record and 19 uniquely identified scenario results. These checks document closure eligibility only and do not authorize a deployment, live operation, activation, or other child execution.

@@ -6,7 +6,7 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0-implementation | Comment Translator Creator NC-X3 Safe CSV Export | PR #753 は merged済みで、integration tip `2e584819618d83fb50ae7f9f9a69e8306009386b` を次laneのbaseに固定。NC-X3を唯一の現行laneとして、既存NC-H1 safe historyのserver-owned CSV exportを実装中。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_IMPLEMENTATION_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md` |
+| P0-implementation | Comment Translator Creator NC-X3 Safe CSV Export | PR #753 は merged済みで、integration tip `2e584819618d83fb50ae7f9f9a69e8306009386b` を次laneのbaseに固定。NC-X3を唯一の現行laneとして実装し、Draft PR #754 を作成済み。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_IMPLEMENTATION_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md` |
 | P1-readiness | Comment Translator Creator Paid launch readiness | NC-R1 control planeはmerged済みだが、Paid launch readinessはpaused NO-GO。NC-X3はPaid launch、activation、NC-L1を進めない。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_NC_R1_PAID_LAUNCH_READINESS.md` |
 | P1-operations | Comment Translator Free public beta | Released and final production smoke complete; `public_release_capable=yes`。release-chain operator action は残っていない。 | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md` |
 | P1-maintenance | 配信カンペボード | MVP と custom delete-dialog follow-up は `main` へ merged。active follow-up は未選択。 | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
@@ -19,8 +19,8 @@ current_goal=comment-translator-creator-nc-x3-safe-csv-export
 current_branch=codex/comment-translator-creator-nc-x3-safe-csv-export
 current_base=codex/comment-translator-free-public-beta-integration
 current_base_tip=2e584819618d83fb50ae7f9f9a69e8306009386b
-current_pr=not-created
-current_pr_state=local-implementation-in-progress
+current_pr=754
+current_pr_state=draft-open
 previous_pr=753
 previous_pr_state=merged
 previous_pr_final_head=5cc5c893c592d47c0680f99347730f6aa239ca2d

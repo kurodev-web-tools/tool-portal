@@ -31,8 +31,8 @@ const historicalTask = read(historicalTaskPath);
 for (const marker of [
   "current_goal=comment-translator-creator-nc-x3-safe-csv-export",
   "current_base_tip=2e584819618d83fb50ae7f9f9a69e8306009386b",
-  "current_pr=not-created",
-  "current_pr_state=local-implementation-in-progress",
+  "current_pr=754",
+  "current_pr_state=draft-open",
   "previous_pr=753",
   "previous_pr_state=merged",
   "previous_pr_final_head=5cc5c893c592d47c0680f99347730f6aa239ca2d",

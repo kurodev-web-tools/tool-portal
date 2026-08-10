@@ -1,15 +1,20 @@
 # Comment Translator Creator No-Container Implementation Task Board
 
 ```text
-verified_at=2026-08-10
+verified_at=2026-08-11
+repository_state_reconciled_at=2026-08-11
 architecture_authority=docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md
 crosswalk_authority=docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_LEGACY_CROSSWALK.md
 first_implementation_pr=NC-F1-completed-pr726
-implementation_status=implemented-through-nc-r1-local-readiness
+implementation_status=implemented-through-nc-x2a
 paid_launch_readiness_status=paused-no-go
-next_implementation_status=owner-selection-required
-candidate_lanes=NC-X2,NC-X3,NC-X4,NC-X5,NC-X6,NC-X7
-deploy_status=no-new-creator-deploy-proof
+next_implementation_status=nc-x2b-capacity-decision-preflight-local-docs-only
+candidate_lanes=NC-X2B-P0,NC-X1,NC-X6,NC-X7
+deploy_status=unconfirmed
+migration_apply_status=unconfirmed
+production_activation=closed
+account_headroom=unconfirmed
+provider_stripe_cloudflare_supabase_state=unconfirmed
 ```
 
 ## Operating Rules
@@ -43,9 +48,13 @@ This ledger records repository merge state only. It does not prove deployment、
 | NC-V1 | PR #745 | merged |
 | NC-B1 | PR #746 | merged |
 | NC-Q1 | PR #747 | merged |
-| NC-R1 | PR #748-#751 | merged-control-plane-paused-no-go |
-| NC-L1 | N/A | not-started-blocked-by-nc-r1-no-go |
-| NC-X1-NC-X9 | N/A | not-started-selection-required |
+| NC-R1 | 0/8 staged rows; 9 unresolved hard requirements | no-go; activation=closed; Free=permanent |
+| NC-X4 | PR #753 | merged |
+| NC-X3 | PR #754 | merged |
+| NC-X5 | PR #755 | merged |
+| NC-X2A | PR #756 | merged |
+| NC-L1 | N/A | not-started; blocked by NC-R1 no-go |
+| NC-X2B | N/A | capacity-preflight-only; thirty-day switch unapproved-unimplemented |
 
 ## Dependency Map
 
@@ -347,6 +356,21 @@ flowchart TD
 - **External operations:** approved production operations only。
 - **Completion criteria:** release owner pass + rollback evidence; otherwise gate closed。
 
+## NC-X2B-P0: Retention Capacity Decision Preflight
+
+- `nc-x2b_p0_scope=capacity decision preflight; local documentation contract only`
+- **Goal:** 30-day retention候補の容量を local/documentation-only の design model として評価し、次の separate approval 判断へ fail-closed に渡す。
+- **Scope:** S1 design assumptions、storage/egress arithmetic、evidence-class separation、seven-day rollback、residual-risk/approval packet、contract。
+- **Out of scope:** 7-dayから30-dayへのcutoff変更、retention runtime、schema/migration/apply、remote read/write、EXPLAIN/headroom query、provider/Stripe/Cloudflare/Supabase/account read、deploy、activation、browser QA、public gate、NC-L1。
+- **Expected files/interfaces:** `docs/active/COMMENT_TRANSLATOR_CREATOR_NC_X2B_RETENTION_CAPACITY_DECISION.md`、`scripts/comment-translator-creator-nc-x2b-retention-capacity-decision-contract.mjs`、current task/roadmap reconciliation。
+- **Evidence boundary:** `repository-local`、`synthetic-design`、`external-account`、`deployed-live` は別クラス。S1 はすべて `synthetic-design` の design assumption であり、account/production evidenceではない。
+- **Decision:** `eligible-for-separate-switch-approval` は design preflight のみ。retention switch は `unapproved-unimplemented` であり、exact separate approval がなければ seven-day を維持する。
+- deployment success, migration apply, production activation, and account headroom remain unconfirmed; provider/Stripe/Cloudflare/Supabase state is also unconfirmed.
+- **RED/GREEN:** authority doc不存在でRED、capacity arithmetic/non-authorization/residual-risk markersでGREEN。
+- **Rollback:** `rollback_baseline=keep-seven-days`、`rollback_window=seven-day`。実装変更はなく、既存の7-day cutoffを維持する。
+- **Approval implications:** switch、migration apply、remote read/write、deploy、activation、NC-L1 はこのpreflightから認可されない。
+- **Completion criteria:** one fail-closed decision、S1 assumption labels、evidence-class separation、capacity formulas、seven-day rollback、six residual risks、non-authorization が契約で確認できる。
+
 ## NC-X1: StreamList Primary Migration
 
 - **Goal:** `liveChatMessages.streamList` primary + bounded `list` fallback。
@@ -495,4 +519,4 @@ flowchart TD
 
 NC-A0 through NC-Q1 are merged repository implementation history. NC-R1's authority and staged-resolution control plane are merged, but paid launch readiness is paused at NO-GO with `0/8` staged rows satisfied, nine unresolved hard requirements, activation closed, Free permanent, and NC-L1 not-started. No next implementation lane is approved automatically.
 
-Dependency-eligible candidates are NC-X2、NC-X3、NC-X4、NC-X5、NC-X6、and NC-X7. Each remains `owner-selection-required`; this list creates no product、implementation、dependency-install、migration、provider / Stripe、browser、deploy、activation、or publication authority. NC-X1 requires NC-L1 or a separate explicit post-MVP approval. NC-X8 and NC-X9 remain outside the current paused readiness boundary.
+Post-PR #756 repository state is: NC-X2A、NC-X3、NC-X4、and NC-X5 are merged; NC-X2B-P0 is the selected local/docs-only capacity preflight; the NC-X2B thirty-day retention switch remains unapproved and unimplemented. NC-X1 remains gated by NC-L1 or a separate explicit post-MVP approval, NC-X6 remains gated by a product decision, and NC-X7 remains gated by exact provider、cost/data-use、and separate live-call approvals. NC-X8 and NC-X9 remain outside the current paused readiness boundary. These repository and selection facts create no product、runtime implementation、dependency-install、migration/apply、remote read/write、provider / Stripe、browser、deploy、activation、publication、or other external-operation authority.

@@ -31,6 +31,8 @@ const historicalTask = read(historicalTaskPath);
 for (const marker of [
   "current_goal=comment-translator-current-task-roadmap-reconciliation",
   "current_base_tip=8c86200d915a792488b61a535fb895da88d61f57",
+  "current_pr=752",
+  "current_pr_state=draft-open",
   "previous_pr=751",
   "previous_pr_state=merged",
   "previous_pr_final_head=82c075ec8a4153e9a08a3a6b35f3c3f8a13c6fd8",
@@ -49,7 +51,7 @@ for (const marker of [
   assert.match(task, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), `missing current task marker: ${marker}`);
 }
 
-assert.doesNotMatch(task, /current_pr_state=draft-open|implementation_status=not-started|Only NC-A0 is in progress|NC-F1 is the next approved/i);
+assert.doesNotMatch(task, /current_pr=pending-create|current_pr_state=local-docs-only|implementation_status=not-started|Only NC-A0 is in progress|NC-F1 is the next approved/i);
 assert.ok(task.split(/\r?\n/).length <= 140, "task.md must remain a compact current-state source");
 assert.match(historicalTask, /current_pr_state=draft-open/);
 assert.match(historicalTask, /current_goal=comment-translator-creator-nc-r1-paid-launch-readiness/);

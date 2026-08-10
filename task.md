@@ -6,8 +6,8 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0-implementation | Comment Translator Creator NC-X3 Safe CSV Export | PR #753 は merged済みで、integration tip `2e584819618d83fb50ae7f9f9a69e8306009386b` を次laneのbaseに固定。NC-X3を唯一の現行laneとして実装し、Draft PR #754 を作成済み。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_IMPLEMENTATION_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md` |
-| P1-readiness | Comment Translator Creator Paid launch readiness | NC-R1 control planeはmerged済みだが、Paid launch readinessはpaused NO-GO。NC-X3はPaid launch、activation、NC-L1を進めない。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_NC_R1_PAID_LAUNCH_READINESS.md` |
+| P0-implementation | Comment Translator Creator NC-X5 Bounded CSV Import | PR #754 は merged済みで、merge/integration tip `72d57b978d7e75f7e923486cb39189d0b510ca8c` をfresh implementation baseとして確認。承認済みNC-X5をlocal実装し、read-only review待ち。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_IMPLEMENTATION_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md`, `docs/superpowers/specs/2026-08-10-comment-translator-creator-nc-x5-bounded-csv-import-design.md` |
+| P1-readiness | Comment Translator Creator Paid launch readiness | NC-R1 control planeはmerged済みだが、Paid launch readinessはpaused NO-GO。NC-X5はPaid launch、activation、NC-L1を進めない。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_NC_R1_PAID_LAUNCH_READINESS.md` |
 | P1-operations | Comment Translator Free public beta | Released and final production smoke complete; `public_release_capable=yes`。release-chain operator action は残っていない。 | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md` |
 | P1-maintenance | 配信カンペボード | MVP と custom delete-dialog follow-up は `main` へ merged。active follow-up は未選択。 | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
 | Workflow | New-tool preview development | Task PR は tool-specific preview / integration branch を対象とし、promotion は readiness と明示承認後に行う。 | `docs/active/TOOL_PREVIEW_DEVELOPMENT_WORKFLOW.md` |
@@ -15,29 +15,31 @@
 ## Current Goal
 
 ```text
-current_goal=comment-translator-creator-nc-x3-safe-csv-export
-current_branch=codex/comment-translator-creator-nc-x3-safe-csv-export
-current_base=codex/comment-translator-free-public-beta-integration
-current_base_tip=2e584819618d83fb50ae7f9f9a69e8306009386b
-current_pr=754
-current_pr_state=draft-open
-previous_pr=753
+current_goal=comment-translator-creator-nc-x5-bounded-csv-import
+current_branch=detached-worktree-at-72d57b978d7e75f7e923486cb39189d0b510ca8c
+current_base=origin/codex/comment-translator-free-public-beta-integration
+current_base_tip=72d57b978d7e75f7e923486cb39189d0b510ca8c
+current_pr=not-created
+current_pr_state=local-implementation-awaiting-review
+previous_pr=754
 previous_pr_state=merged
-previous_pr_final_head=5cc5c893c592d47c0680f99347730f6aa239ca2d
-previous_pr_merge_integration_tip=2e584819618d83fb50ae7f9f9a69e8306009386b
+previous_pr_final_head=0ce37f7a1053367490d2959d2910a883ed17f98f
+previous_pr_merge_integration_tip=72d57b978d7e75f7e923486cb39189d0b510ca8c
 previous_pr_deployment_status=not-confirmed
 implementation_baseline=merged-through-nc-q1
 readiness_control_plane=merged-through-pr751
 paid_launch_readiness=paused-no-go
-next_implementation_status=nc-x3-selected-and-in-progress
-selected_lane=NC-X3
-selected_lane_scope=bounded-server-owned-nc-h1-safe-history-csv-download
-safe_csv_columns=author,badge,purchase,translated_text,original_text,moderation,source
-safe_csv_row_bound=500-fail-closed-on-over-bound
-safe_csv_encoding=utf8-bom-crlf-rfc4180-quoting-formula-guard
-safe_csv_filename=comment-translator-safe-history.csv
+next_implementation_status=nc-x5-implemented-awaiting-read-only-review
+selected_lane=NC-X5
+selected_lane_scope=bounded-server-owned-nc-c1-glossary-csv-import-preview-atomic-apply
+csv_import_header=language_scope,term,replacement,note
+csv_import_max_bytes=131072-fail-closed-before-decode
+csv_import_max_rows=30-fail-closed-on-over-bound
+csv_import_encoding=utf8-only-optional-bom-strict-decode
+csv_import_apply=all-replacement-atomic-runtime-replace-exactly-once
+csv_import_browser_authority=file-bytes-and-previewed-expectedVersion-only
 implementation_parent_profile=gpt-5.6-luna/max
-implementation_child=luna-implementer
+implementation_child=none-direct-owner
 current_staged_rows_satisfied=0/8
 current_unresolved_hard_requirements=9
 activation_status=closed
@@ -51,25 +53,25 @@ dependencies=absent-no-install-approved
 
 - PR #725 から PR #747 までに、NC-A0、NC-F1、NC-D1、NC-E1、NC-U1、NC-C1、NC-P1、NC-O1、NC-O2、NC-M1、NC-M2、NC-H1、NC-V1、NC-B1、NC-Q1 の repository implementation chain が merged 済みである。
 - PR #748 から PR #751 までに NC-R1 Paid launch readiness authority と staged-resolution control plane が merged 済みである。merge、CI、build、fixture、local evidence から deployment success や production activation を推測しない。
-- PR #753 は NC-X4 Overlay Templates として merged 済みで、head `5cc5c893c592d47c0680f99347730f6aa239ca2d` は integration tip `2e584819618d83fb50ae7f9f9a69e8306009386b` に含まれる。deployment success は未確認である。
+- PR #753 は NC-X4 Overlay Templates として merged 済みで、PR #754 は NC-X3 Safe CSV Export として merged 済みである。PR #754 head `0ce37f7a1053367490d2959d2910a883ed17f98f` は integration tip `72d57b978d7e75f7e923486cb39189d0b510ca8c` に含まれる。deployment success は未確認である。
 - NC-R1 は `0/8`、unresolved hard requirements `9`、NO-GO、activation closed、Free permanent、NC-L1 not-started のまま paused とする。Paid launch を進めること自体は次 implementation task の前提ではない。
 - 別 worktree の未公開 A3 successor draft は repository authority ではなく、この task へ取り込まない。account-specific pricing document の存在、manual read、result、row closure を推測しない。
 - NC-L1 は NC-R1 explicit GO と zero unresolved hard requirements が揃うまで開始しない。
 
 ## Current Implementation Selection
 
-NC-X3 Safe CSV Export がこのtaskの唯一のimplementation laneとして選択・承認済みである。他候補は未選択のままであり、このtaskから実装権限を得ない。
+NC-X5 Bounded CSV Import がこのtaskの唯一のimplementation laneとして選択・承認済みである。他候補は未選択のままであり、このtaskから実装権限を得ない。
 
 | Candidate | Purpose | Additional decision before implementation |
 | --- | --- | --- |
 | NC-X2 | 30-day history and search | retention volume、database / egress budget、search boundary |
-| NC-X3 | safe CSV export | **selected current lane**: existing NC-H1 safe projection、bounded CSV、formula guard、retention/deletion notice |
+| NC-X3 | safe CSV export | existing NC-H1 safe projection、bounded CSV、formula guard、retention/deletion notice |
 | NC-X4 | overlay templates | static variants、server-safe preference、required width QA |
-| NC-X5 | dictionary import and suggestions | import format、validation、suggestion provider boundary |
+| NC-X5 | dictionary import and suggestions | **selected current lane**: bounded CSV、preview、all-replacement atomic apply、no AI suggestion |
 | NC-X6 | AI operations helpers decision | product decision first; production implementation is out of scope until approved |
 | NC-X7 | provider comparison | exact provider、cost/data-use boundary、live calls remain separate |
 
-NC-X1 は NC-L1 または別の明示的 post-MVP approval が必要。NC-X8 / NC-X9 は current paused readiness と追加 product decision に依存する。NC-X3以外は未承認で、`1 reviewable goal = 1 PR` を維持する。
+NC-X1 は NC-L1 または別の明示的 post-MVP approval が必要。NC-X8 / NC-X9 は current paused readiness と追加 product decision に依存する。NC-X5以外は未承認で、`1 reviewable goal = 1 PR` を維持する。
 
 ## Standing Product And Security Boundaries
 

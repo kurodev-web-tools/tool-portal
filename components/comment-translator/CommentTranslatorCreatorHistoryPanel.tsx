@@ -61,6 +61,10 @@ export function CommentTranslatorCreatorHistoryPanel({
             <span>{filteredRows.length} safe items</span>
           </div>
         </header>
+        <div className="mb-4 rounded-md bg-slate-50 p-3 text-sm text-slate-600">
+          <p>Only the existing seven-day safe-history window is exported. Current retention and deletion rules continue to apply. Downloading does not delete server history or local copies.</p>
+          <a href="/api/comment-translator/history/export" download className="mt-2 inline-block font-medium text-indigo-700 underline">Download safe history CSV</a>
+        </div>
         {filteredRows.length === 0 ? (
           <p role="status" className="rounded-md bg-slate-50 p-3 text-sm">{priorityOnlyEmpty ? "No priority safe history is available." : "No safe history is available yet."}</p>
         ) : (

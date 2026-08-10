@@ -6,7 +6,7 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0-implementation | Comment Translator Creator NC-X2A Seven-Day History Search | PR #755 の merge/integration tip `e79944142cf0fcb817895ba7ead2fbe5db8e277b` をfresh implementation baseとして確認。承認済みNC-X2Aをlocal実装し、read-only review と root 再検証を完了。PRは未作成。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_IMPLEMENTATION_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md`, `scripts/comment-translator-creator-nc-x2-thirty-day-history-search-contract.mjs` |
+| P0-implementation | Comment Translator Creator NC-X2A Seven-Day History Search | PR #755 の merge/integration tip `e79944142cf0fcb817895ba7ead2fbe5db8e277b` をfresh implementation baseとして確認。承認済みNC-X2Aをlocal実装し、read-only review と root 再検証を完了。Draft PR #756 を作成済み。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_IMPLEMENTATION_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md`, `scripts/comment-translator-creator-nc-x2-thirty-day-history-search-contract.mjs` |
 | P1-readiness | Comment Translator Creator Paid launch readiness | NC-R1 control planeはmerged済みだが、Paid launch readinessはpaused NO-GO。NC-X2AはPaid launch、activation、NC-L1を進めない。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_NC_R1_PAID_LAUNCH_READINESS.md` |
 | P1-operations | Comment Translator Free public beta | Released and final production smoke complete; `public_release_capable=yes`。release-chain operator action は残っていない。 | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md` |
 | P1-maintenance | 配信カンペボード | MVP と custom delete-dialog follow-up は `main` へ merged。active follow-up は未選択。 | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
@@ -16,11 +16,13 @@
 
 ```text
 current_goal=comment-translator-creator-nc-x2a-seven-day-history-search
-current_branch=detached-worktree-at-e79944142cf0fcb817895ba7ead2fbe5db8e277b
+current_branch=codex/comment-translator-creator-nc-x2a-seven-day-search
 current_base=origin/codex/comment-translator-free-public-beta-integration
 current_base_tip=e79944142cf0fcb817895ba7ead2fbe5db8e277b
-current_pr=not-created
-current_pr_state=local-implementation-review-passed-no-pr
+current_pr=756
+current_pr_state=draft-open
+current_pr_head=6b54f342599ca6a1a138ac12874488875cf7c749
+current_pr_base=codex/comment-translator-free-public-beta-integration
 previous_pr=755
 previous_pr_state=merged
 previous_pr_final_head=c0f7108867080af65bd0f407e98ea9b253207d77
@@ -29,7 +31,7 @@ previous_pr_deployment_status=not-confirmed
 implementation_baseline=merged-through-nc-x5
 readiness_control_plane=merged-through-pr751
 paid_launch_readiness=paused-no-go
-next_implementation_status=nc-x2a-review-passed-awaiting-user-integration
+next_implementation_status=nc-x2a-draft-pr-open-awaiting-review
 selected_lane=NC-X2A
 selected_lane_scope=index-backed-bounded-search-over-existing-seven-day-safe-history
 search_query_fields=author_display_name,original_text,translated_text

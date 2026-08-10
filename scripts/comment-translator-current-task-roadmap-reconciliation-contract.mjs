@@ -29,26 +29,31 @@ const board = read(boardPath);
 const historicalTask = read(historicalTaskPath);
 
 for (const marker of [
-  "current_goal=comment-translator-creator-nc-x5-bounded-csv-import",
-  "current_base_tip=72d57b978d7e75f7e923486cb39189d0b510ca8c",
-  "current_pr=not-created",
-  "current_pr_state=local-implementation-awaiting-review",
-  "previous_pr=754",
+  "current_goal=comment-translator-creator-nc-x2a-seven-day-history-search",
+  "current_base_tip=e79944142cf0fcb817895ba7ead2fbe5db8e277b",
+  "current_pr=756",
+  "current_pr_state=draft-open",
+  "current_pr_implementation_head=6b54f342599ca6a1a138ac12874488875cf7c749",
+  "current_pr_base=codex/comment-translator-free-public-beta-integration",
+  "current_pr_final_head=pending-final-review",
+  "previous_pr=755",
   "previous_pr_state=merged",
-  "previous_pr_final_head=0ce37f7a1053367490d2959d2910a883ed17f98f",
-  "previous_pr_merge_integration_tip=72d57b978d7e75f7e923486cb39189d0b510ca8c",
-  "implementation_baseline=merged-through-nc-q1",
+  "previous_pr_final_head=c0f7108867080af65bd0f407e98ea9b253207d77",
+  "previous_pr_merge_integration_tip=e79944142cf0fcb817895ba7ead2fbe5db8e277b",
+  "implementation_baseline=merged-through-nc-x5",
   "readiness_control_plane=merged-through-pr751",
   "paid_launch_readiness=paused-no-go",
-  "next_implementation_status=nc-x5-implemented-awaiting-read-only-review",
-  "selected_lane=NC-X5",
-  "selected_lane_scope=bounded-server-owned-nc-c1-glossary-csv-import-preview-atomic-apply",
-  "csv_import_header=language_scope,term,replacement,note",
-  "csv_import_max_bytes=131072-fail-closed-before-decode",
-  "csv_import_max_rows=30-fail-closed-on-over-bound",
-  "csv_import_encoding=utf8-only-optional-bom-strict-decode",
-  "csv_import_apply=all-replacement-atomic-runtime-replace-exactly-once",
-  "csv_import_browser_authority=file-bytes-and-previewed-expectedVersion-only",
+  "next_implementation_status=nc-x2a-draft-pr-open-awaiting-review",
+  "selected_lane=NC-X2A",
+  "selected_lane_scope=index-backed-bounded-search-over-existing-seven-day-safe-history",
+  "search_query_fields=author_display_name,original_text,translated_text",
+  "search_normalization=rpc-owned-utf8-trim-collapse-whitespace-lower-c-collation",
+  "search_bound=50-rows-fetch-51-next-cursor-no-total-count",
+  "search_retention=inclusive-seven-days-server-clock-unchanged",
+  "search_cursor=opaque-random-pagination-key-owner-query-bound-stale-fail-closed",
+  "search_storage=additive-local-migration-not-applied",
+  "cleanup_wiring=oauth-disconnect-owner-derived-cleanup-wired-account-deletion-seam-missing",
+  "browser_search_authority=props-only-fixed-closed-optional-server-callback",
   "implementation_parent_profile=gpt-5.6-luna/max",
   "implementation_child=none-direct-owner",
   "current_staged_rows_satisfied=0/8",
@@ -60,7 +65,7 @@ for (const marker of [
   assert.match(task, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), `missing current task marker: ${marker}`);
 }
 
-assert.doesNotMatch(task, /current_pr=pending-create|current_pr_state=local-docs-only|implementation_status=not-started|Only NC-A0 is in progress|NC-F1 is the next approved/i);
+assert.doesNotMatch(task, /current_pr=pending-create|current_pr_state=local-docs-only|implementation_status=not-started|Only NC-A0 is in progress|NC-F1 is the next approved|NC-X5 Bounded CSV Import がこのtaskの唯一/i);
 assert.ok(task.split(/\r?\n/).length <= 140, "task.md must remain a compact current-state source");
 assert.match(historicalTask, /current_pr_state=draft-open/);
 assert.match(historicalTask, /current_goal=comment-translator-creator-nc-r1-paid-launch-readiness/);

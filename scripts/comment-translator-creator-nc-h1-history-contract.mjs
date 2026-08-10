@@ -380,7 +380,7 @@ for (const name of [
   "cleanupCommentTranslatorCreatorSafeHistoryForDisconnectAction",
   "cleanupCommentTranslatorCreatorSafeHistoryForAccountDeletionAction"
 ]) assert.match(historyActionsSource, new RegExp(`export\\s+async\\s+function\\s+${name}\\s*\\(\\s*\\)`), `history action takes no browser authority input: ${name}`);
-assert.match(runtimeSource, /cleanupWiring:\s*["']server-orchestration-seam-not-wired/, "cleanup is explicitly an unwired server orchestration seam");
+assert.match(runtimeSource, /cleanupWiring:\s*["']oauth-disconnect-wired-account-deletion-seam-not-authoritative/, "cleanup distinguishes the wired OAuth disconnect seam from the missing account-deletion execution seam");
 assert.match(aggregateActionsSource, /from "\.\/history-actions"/, "the aggregate action module exposes the disconnected NC-H1 actions");
 assert.doesNotMatch(aggregateActionsSource, /NC-H1|history.*(?:localStorage|sessionStorage|indexedDB|console\.)/i, "the aggregate action module adds no browser authority or logging");
 

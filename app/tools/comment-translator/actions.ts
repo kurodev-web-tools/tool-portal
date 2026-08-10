@@ -18,7 +18,8 @@ import {
   captureCommentTranslatorCreatorSafeHistoryAction as captureCommentTranslatorCreatorSafeHistory,
   cleanupCommentTranslatorCreatorSafeHistoryForAccountDeletionAction as cleanupCommentTranslatorCreatorSafeHistoryForAccountDeletion,
   cleanupCommentTranslatorCreatorSafeHistoryForDisconnectAction as cleanupCommentTranslatorCreatorSafeHistoryForDisconnect,
-  readCommentTranslatorCreatorSafeHistoryAction as readCommentTranslatorCreatorSafeHistory
+  readCommentTranslatorCreatorSafeHistoryAction as readCommentTranslatorCreatorSafeHistory,
+  searchCommentTranslatorCreatorSafeHistoryAction as searchCommentTranslatorCreatorSafeHistory
 } from "./history-actions";
 import {
   getCommentTranslatorSessionStatusAction as getCommentTranslatorSessionStatus,
@@ -89,6 +90,10 @@ export async function heartbeatCommentTranslatorSessionAction(
 
 export async function readCommentTranslatorCreatorSafeHistoryAction() {
   return readCommentTranslatorCreatorSafeHistory();
+}
+
+export async function searchCommentTranslatorCreatorSafeHistoryAction(input: unknown) {
+  return searchCommentTranslatorCreatorSafeHistory(input);
 }
 
 export async function captureCommentTranslatorCreatorSafeHistoryAction() {

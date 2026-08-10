@@ -31,8 +31,8 @@ const historicalTask = read(historicalTaskPath);
 for (const marker of [
   "current_goal=comment-translator-creator-nc-x4-overlay-templates",
   "current_base_tip=76e80178c7f2f63d013e04d2d063de9a6c1db62f",
-  "current_pr=none-local-review-before-publication",
-  "current_pr_state=not-created",
+  "current_pr=753",
+  "current_pr_state=draft-open",
   "previous_pr=752",
   "previous_pr_state=merged",
   "previous_pr_final_head=7d145d19956f3f5cc197909199d5aa351b936795",

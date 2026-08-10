@@ -6,7 +6,7 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0-implementation | Comment Translator Creator NC-X4 Overlay Templates | PR #752 の roadmap reconciliation は mergedし、現行laneは NC-X4 として選択済み。Luna bounded実装、focused/broad local contract、fresh Sol reviewは完了。visual QAとdependency-backed checksはsetup-blocked、publicationは未実施。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_IMPLEMENTATION_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md` |
+| P0-implementation | Comment Translator Creator NC-X4 Overlay Templates | PR #752 の roadmap reconciliation は mergedし、現行laneは NC-X4 として選択済み。Luna bounded実装、focused/broad local contract、fresh Sol reviewは完了。Draft PR #753 を作成済み。visual QAとdependency-backed checksはsetup-blocked、merge/deploy/activationは未実施。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_IMPLEMENTATION_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md` |
 | P1-readiness | Comment Translator Creator Paid launch readiness | NC-R1 control planeはmerged済みだが、Paid launch readinessはpaused NO-GO。NC-X4はPaid launch、activation、NC-L1を進めない。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_NC_R1_PAID_LAUNCH_READINESS.md` |
 | P1-operations | Comment Translator Free public beta | Released and final production smoke complete; `public_release_capable=yes`。release-chain operator action は残っていない。 | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md` |
 | P1-maintenance | 配信カンペボード | MVP と custom delete-dialog follow-up は `main` へ merged。active follow-up は未選択。 | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
@@ -19,8 +19,8 @@ current_goal=comment-translator-creator-nc-x4-overlay-templates
 current_branch=codex/comment-translator-creator-nc-x4-overlay-templates
 current_base=codex/comment-translator-free-public-beta-integration
 current_base_tip=76e80178c7f2f63d013e04d2d063de9a6c1db62f
-current_pr=none-local-review-before-publication
-current_pr_state=not-created
+current_pr=753
+current_pr_state=draft-open
 previous_pr=752
 previous_pr_state=merged
 previous_pr_final_head=7d145d19956f3f5cc197909199d5aa351b936795

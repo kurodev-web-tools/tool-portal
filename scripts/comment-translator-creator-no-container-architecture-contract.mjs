@@ -16,6 +16,7 @@ const task = read("task.md");
 
 for (const marker of [
   "verified_at=2026-08-06",
+  "repository_state_reconciled_at=2026-08-10",
   "feasibility_decision=conditional-go",
   "launch_readiness_decision=no-go",
   "conditional-go=forbidden-while-release-hard-requirement-unresolved",
@@ -160,15 +161,21 @@ for (const field of [
 }
 
 for (const marker of [
-  "first_implementation_pr=NC-F1",
-  "implementation_status=not-started",
-  "deploy_status=not-approved",
+  "first_implementation_pr=NC-F1-completed-pr726",
+  "implementation_status=implemented-through-nc-r1-local-readiness",
+  "paid_launch_readiness_status=paused-no-go",
+  "next_implementation_status=owner-selection-required",
+  "candidate_lanes=NC-X2,NC-X3,NC-X4,NC-X5,NC-X6,NC-X7",
+  "deploy_status=no-new-creator-deploy-proof",
   architecturePath,
   taskBoardPath,
   crosswalkPath
 ]) {
   assert.match(`${taskBoard}\n${task}`, new RegExp(escapeRegExp(marker)), `missing task authority marker: ${marker}`);
 }
+assert.doesNotMatch(taskBoard, /implementation_status=not-started|Only NC-A0 is in progress|NC-F1 is the next approved/i, "task board must not retain the superseded pre-implementation boundary");
+assert.match(task, /current_goal=comment-translator-current-task-roadmap-reconciliation/, "task.md must select current-state reconciliation instead of a completed implementation lane");
+assert.match(task, /next_implementation_status=owner-selection-required/, "task.md must require an explicit next implementation selection");
 
 for (const currentVerification of [
   "NC-B1 billing、public entitlement、security/privacy、NC-R1、NC-Q1 are pass",

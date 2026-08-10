@@ -4,13 +4,16 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { readCommentTranslatorProjectedPriority } from "@/lib/comment-translator-priority-classification";
 import type { CommentTranslatorRealCommentsFeedState } from "@/lib/comment-translator-real-comments-feed-shared";
+import type { CommentTranslatorCreatorObsOverlayTemplate } from "@/lib/comment-translator-creator-obs-overlay-template";
 
 const overlayRefreshIntervalMs = 15_000;
 
 export function CommentTranslatorObsOverlay({
-  feed
+  feed,
+  template = "default"
 }: {
   readonly feed: CommentTranslatorRealCommentsFeedState;
+  readonly template?: CommentTranslatorCreatorObsOverlayTemplate;
 }) {
   const router = useRouter();
   useEffect(() => {
@@ -24,7 +27,7 @@ export function CommentTranslatorObsOverlay({
     : [];
 
   return (
-    <main className="comment-translator-obs-overlay-canvas" aria-live="polite">
+    <main className="comment-translator-obs-overlay-canvas" data-overlay-template={template} aria-live="polite">
       <section className="comment-translator-obs-overlay-feed" aria-label="Translated live comments">
         {translatedRows.map(({ row, priority }) => (
           <article key={row.id} className="comment-translator-obs-overlay-row">

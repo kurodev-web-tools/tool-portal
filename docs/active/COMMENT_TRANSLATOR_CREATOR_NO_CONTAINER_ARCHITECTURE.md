@@ -2,6 +2,7 @@
 
 ```text
 verified_at=2026-08-06
+repository_state_reconciled_at=2026-08-10
 feasibility_decision=conditional-go
 launch_readiness_decision=no-go
 conditional-go=forbidden-while-release-hard-requirement-unresolved
@@ -34,12 +35,14 @@ Comment Translator Creator は、Cloudflare Containers、Docker image、managed 
 | Evidence | Verified result |
 | --- | --- |
 | PR #724 | `MERGED`, merge commit `f2300ec083f283fed714d7ef4962b4e61cc82e05` |
-| integration | `origin/codex/comment-translator-free-public-beta-integration` = `f2300ec083f283fed714d7ef4962b4e61cc82e05` |
+| implementation chain | PR #725 through PR #747 are merged; NC-A0 through NC-Q1 repository implementation is present in integration history |
+| readiness chain | PR #748 through PR #751 are merged; NC-R1 remains a paused NO-GO control plane, not production activation |
+| PR #751 | final head `82c075ec8a4153e9a08a3a6b35f3c3f8a13c6fd8` is contained in integration tip `8c86200d915a792488b61a535fb895da88d61f57` |
+| integration | `origin/codex/comment-translator-free-public-beta-integration` = `8c86200d915a792488b61a535fb895da88d61f57` |
 | main | `origin/main` = `2c92a37bb3ba4c472c3470b8db77594a4b0fca65` |
-| integration/main tree | both `30e9a45e0761f003c4884e3d798e3ef7fcd9f74b` |
 | read-only archive | `origin/codex/archive-comment-translator-free-public-beta-integration-20260801` = `51bbba0ca9f087d590219a15a7c1516d6ec17e86` |
 | archive tree | `a2ee756bb9be8a4c7886f1ac6e3427d6334e5de4` |
-| current worktree | fresh isolated branch `codex/comment-translator-creator-no-container-architecture` from the integration tip |
+| current roadmap reconciliation | fresh isolated branch `codex/comment-translator-current-task-roadmap-reconciliation` from the exact integration tip |
 
 Archiveはlegacy要件を読むためだけの資料である。archiveのruntime code、migration、contract、Dockerfile、Container設定、binding、proof、authorityはcherry-pick・復元・新設計の根拠にしない。
 
@@ -244,7 +247,7 @@ The Worker, Supabase, Azure, DeepL, OpenAI, and Stripe observations used by NC-R
 
 ## Non-Claims
 
-This authority does not claim Creator implementation complete、deploy-ready、production-ready、canonical live proof complete、all external costs free、PR #748 deployment success、or any new external-operation approval. PR #748 merge is a repository fact, not deployment proof. It authorizes documentation review only.
+Repository implementation is merged through NC-Q1 and the NC-R1 control plane is merged through PR #751. Paid launch readiness remains paused at NO-GO. This authority does not claim deploy-ready、production-ready、canonical live proof complete、all external costs free、PR #751 deployment success、or any new external-operation approval. PR #751 merge is a repository fact, not deployment proof. It authorizes documentation review only.
 
 ## Verification Evidence
 

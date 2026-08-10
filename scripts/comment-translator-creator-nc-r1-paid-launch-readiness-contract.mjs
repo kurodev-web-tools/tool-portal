@@ -10,6 +10,7 @@ const checklistPath = "docs/active/COMMENT_TRANSLATOR_CREATOR_NC_R1_OPERATOR_CHE
 const ncQ1AuthorityPath = "docs/active/COMMENT_TRANSLATOR_CREATOR_NC_Q1_QA_AUTHORITY.md";
 const ncQ1ChecklistPath = "docs/active/COMMENT_TRANSLATOR_CREATOR_NC_Q1_OPERATOR_CHECKLIST.md";
 const crosswalkPath = "docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_LEGACY_CROSSWALK.md";
+const historicalTaskPath = "docs/archive/task-board-pre-2026-08-10-current-state-reconciliation.md";
 const sourceCheckedAt = "2026-08-06";
 const sourceMaxAgeDays = 7;
 const sourceFreshnessTimeZone = "Asia/Tokyo";
@@ -4336,7 +4337,9 @@ const checklist = read(checklistPath);
 const ncQ1Authority = read(ncQ1AuthorityPath);
 const ncQ1Checklist = read(ncQ1ChecklistPath);
 const crosswalk = read(crosswalkPath);
-const task = read("task.md");
+// NC-R1 remains a paused historical control plane. Validate the exact task snapshot
+// that accompanied it instead of forcing current task selection to retain old history.
+const task = read(historicalTaskPath);
 const stagedDesign = read("docs/superpowers/specs/2026-08-09-nc-r1-eight-row-staged-resolution-design.md");
 const stagedPlan = read("docs/superpowers/plans/2026-08-09-nc-r1-eight-row-staged-resolution.md");
 assert.doesNotThrow(

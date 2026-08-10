@@ -1,12 +1,15 @@
 # Comment Translator Creator No-Container Implementation Task Board
 
 ```text
-verified_at=2026-08-01
+verified_at=2026-08-10
 architecture_authority=docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md
 crosswalk_authority=docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_LEGACY_CROSSWALK.md
-first_implementation_pr=NC-F1
-implementation_status=not-started
-deploy_status=not-approved
+first_implementation_pr=NC-F1-completed-pr726
+implementation_status=implemented-through-nc-r1-local-readiness
+paid_launch_readiness_status=paused-no-go
+next_implementation_status=owner-selection-required
+candidate_lanes=NC-X2,NC-X3,NC-X4,NC-X5,NC-X6,NC-X7
+deploy_status=no-new-creator-deploy-proof
 ```
 
 ## Operating Rules
@@ -17,6 +20,32 @@ deploy_status=not-approved
 - Free behavior、auth/privacy/quota/fail-closedをcharacterizationで固定してからCreator seamを追加する。
 - dependency install、manifest/lockfile change、remote query/mutation、migration apply、binding/env/secret change、deploy、provider/Stripe/live/browser operation、mergeはそれぞれ明示承認が必要。
 - Container、Docker、Registry、Container binding、Container-backed DO、paid Container permissionは全taskでout of scope。
+
+## Merged Implementation Ledger
+
+This ledger records repository merge state only. It does not prove deployment、production activation、live provider / Stripe behavior、migration apply、or external account state.
+
+| Lane | PR | Repository state |
+| --- | --- | --- |
+| NC-A0 | PR #725 | merged |
+| NC-F1 | PR #726 | merged |
+| NC-D1 | PR #727 | merged |
+| NC-E1 | PR #728 | merged |
+| NC-U1 | PR #729 | merged |
+| NC-C1 | PR #730-#732 | merged |
+| NC-P1 | PR #734 | merged |
+| NC-O1 | PR #735-#737 | merged |
+| NC-O2 | PR #739-#740 | merged |
+| NC-M1 | PR #741 | merged |
+| NC-M2 | PR #742 | merged |
+| NC-H1 | PR #743 | merged |
+| cross-lane build repair | PR #744 | merged |
+| NC-V1 | PR #745 | merged |
+| NC-B1 | PR #746 | merged |
+| NC-Q1 | PR #747 | merged |
+| NC-R1 | PR #748-#751 | merged-control-plane-paused-no-go |
+| NC-L1 | N/A | not-started-blocked-by-nc-r1-no-go |
+| NC-X1-NC-X9 | N/A | not-started-selection-required |
 
 ## Dependency Map
 
@@ -464,4 +493,6 @@ flowchart TD
 
 ## Current Boundary
 
-Only NC-A0 is in progress in this PR. NC-F1 is the next approved *designated* boundary, not an implementation approval. All implementation remains not-started. Deploy, merge, remote mutation/read, dependency install, live provider/Stripe/browser operation and public paid access remain not-approved.
+NC-A0 through NC-Q1 are merged repository implementation history. NC-R1's authority and staged-resolution control plane are merged, but paid launch readiness is paused at NO-GO with `0/8` staged rows satisfied, nine unresolved hard requirements, activation closed, Free permanent, and NC-L1 not-started. No next implementation lane is approved automatically.
+
+Dependency-eligible candidates are NC-X2、NC-X3、NC-X4、NC-X5、NC-X6、and NC-X7. Each remains `owner-selection-required`; this list creates no product、implementation、dependency-install、migration、provider / Stripe、browser、deploy、activation、or publication authority. NC-X1 requires NC-L1 or a separate explicit post-MVP approval. NC-X8 and NC-X9 remain outside the current paused readiness boundary.

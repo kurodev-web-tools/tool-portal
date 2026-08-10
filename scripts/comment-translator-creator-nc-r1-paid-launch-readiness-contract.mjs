@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const readinessPath = "docs/active/COMMENT_TRANSLATOR_CREATOR_NC_R1_PAID_LAUNCH_READINESS.md";
+const currentTaskPath = "task.md";
 const checklistPath = "docs/active/COMMENT_TRANSLATOR_CREATOR_NC_R1_OPERATOR_CHECKLIST.md";
 const ncQ1AuthorityPath = "docs/active/COMMENT_TRANSLATOR_CREATOR_NC_Q1_QA_AUTHORITY.md";
 const ncQ1ChecklistPath = "docs/active/COMMENT_TRANSLATOR_CREATOR_NC_Q1_OPERATOR_CHECKLIST.md";
@@ -76,10 +77,15 @@ function currentChangedPaths() {
     .sort();
 }
 
-function currentRuntimeSourceChangesOutsideAuthority() {
-  return currentChangedPaths()
-    .filter((entry) => !authorityOnlyPaths.has(entry.replaceAll("\\", "/")))
-    .sort();
+function isCurrentNcR1StagedResolutionTask(markdown) {
+  return /^current_goal=comment-translator-creator-nc-r1-paid-launch-readiness$/m.test(markdown)
+    && /^current_lane=NC-R1$/m.test(markdown)
+    && /^implementation_status=pr751-draft-nc-r1-staged-resolution-control-plane$/m.test(markdown);
+}
+
+function assertCurrentWorktreePathSafety({ currentTask, changedPaths, phase }) {
+  if (!isCurrentNcR1StagedResolutionTask(currentTask)) return;
+  assertChangedPathsForPhase(changedPaths, phase);
 }
 
 function escapeRegExp(value) {
@@ -4333,6 +4339,7 @@ function runNegativeHelperAssertions(evidenceRows, numericRows, documentedUnreso
 }
 
 const readiness = read(readinessPath);
+const currentTask = read(currentTaskPath);
 const checklist = read(checklistPath);
 const ncQ1Authority = read(ncQ1AuthorityPath);
 const ncQ1Checklist = read(ncQ1ChecklistPath);
@@ -5296,11 +5303,11 @@ assert.match(readiness, /source and release-window drift are not derivable/, "hi
 for (const [field, expected] of Object.entries(canonicalHistoricalPr750LocalVerificationFields)) {
   assert.equal(readUniqueTextField(readiness, field), expected, `${field} must retain the completed historical PR #750 worktree local verification record`);
 }
-assert.deepEqual(
-  currentRuntimeSourceChangesOutsideAuthority(),
-  [],
-  "runtime source or untracked input drift outside the exact six staged-resolution authority paths invalidates the documentation-only transition"
-);
+assertCurrentWorktreePathSafety({
+  currentTask,
+  changedPaths: currentChangedPaths(),
+  phase: "manifest-creation"
+});
 assert.equal(existsSync(join(repositoryRoot, "node_modules")), false, "fresh isolated worktree must not hide absent dependencies");
 assert.match(readiness, /current_fresh_isolated_worktree_dependency_backed_checks=setup-blocked-no-install-authorized/, "fresh isolated worktree must classify dependency-backed checks as setup-blocked");
 assert.match(readiness, /prior local evidence.*fresh isolated worktree/i, "prior local evidence must not become fresh isolated worktree proof");
@@ -11386,7 +11393,11 @@ assert.deepEqual([...authorityOnlyPaths].sort(), [
   "scripts/comment-translator-creator-nc-r1-paid-launch-readiness-contract.mjs",
   "task.md"
 ], "changed-path allowlist must be exact six paths");
-assertChangedPathsForPhase(currentChangedPaths(), parsedManifestFields.manifest_phase);
+assertCurrentWorktreePathSafety({
+  currentTask,
+  changedPaths: currentChangedPaths(),
+  phase: parsedManifestFields.manifest_phase
+});
 assert.doesNotThrow(() => assertChangedPathsForPhase([], "manifest-creation"), "a clean committed checkout must remain contract-runnable");
 assert.doesNotThrow(() => assertChangedPathsForPhase(["task.md", "scripts/comment-translator-creator-nc-r1-paid-launch-readiness-contract.mjs"], "manifest-creation"), "a publication follow-up may change an approved subset");
 assert.doesNotThrow(() => assertChangedPathsForPhase([...operationalAuthorityPaths], "child-result-run"));
@@ -11574,6 +11585,25 @@ assert.throws(() => assertStateObjectPrerequisites("A1-worker-cpu-evidence-read"
 assert.throws(
   () => validateA3ManualReadOwnerApprovalCollection({ child_status: "approved-not-started" }, [], completedA0RegistryChild),
   /exactly one independent A3 owner approval record/
+);
+
+// Regression: a current unrelated lane must not be treated as an NC-R1 staged-resolution transition.
+assert.doesNotThrow(
+  () => assertCurrentWorktreePathSafety({
+    currentTask: "current_goal=comment-translator-creator-post-pr757-authority-contract-reconciliation\ncurrent_lane=NC-X2B-P0\nimplementation_status=post-pr757-authority-reconciliation",
+    changedPaths: ["docs/active/COMMENT_TRANSLATOR_CREATOR_NC_X2B_RETENTION_CAPACITY_DECISION.md"],
+    phase: "manifest-creation"
+  }),
+  "unrelated current lanes must not inherit the NC-R1 exact-path transition guard"
+);
+assert.throws(
+  () => assertCurrentWorktreePathSafety({
+    currentTask: "current_goal=comment-translator-creator-nc-r1-paid-launch-readiness\ncurrent_lane=NC-R1\nimplementation_status=pr751-draft-nc-r1-staged-resolution-control-plane",
+    changedPaths: ["docs/active/COMMENT_TRANSLATOR_CREATOR_NC_X2B_RETENTION_CAPACITY_DECISION.md"],
+    phase: "manifest-creation"
+  }),
+  /outside its approved allowlist/,
+  "the exact-path guard must remain active for the NC-R1 staged-resolution lane"
 );
 
 process.stdout.write(

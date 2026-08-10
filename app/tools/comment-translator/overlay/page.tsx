@@ -32,6 +32,11 @@ import {
 import {
   createUnavailableCommentTranslatorRealCommentsFeedState
 } from "@/lib/comment-translator-real-comments-feed-shared";
+import {
+  commentTranslatorCreatorObsOverlayTemplateCookieName,
+  commentTranslatorCreatorObsOverlayTemplateDefault,
+  readCommentTranslatorCreatorObsOverlayTemplate
+} from "@/lib/comment-translator-creator-obs-overlay-template";
 
 export const metadata: Metadata = {
   title: "Comment Translator OBS Overlay",
@@ -41,8 +46,12 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function CommentTranslatorObsOverlayPage() {
+  const routeClosed = isCommentTranslatorCreatorObsOverlayBrowserRouteClosed();
   const feed = await loadAuthorizedObsFeed();
-  return <CommentTranslatorObsOverlay feed={feed} />;
+  const template = routeClosed
+    ? commentTranslatorCreatorObsOverlayTemplateDefault
+    : readCommentTranslatorCreatorObsOverlayTemplate((await cookies()).get(commentTranslatorCreatorObsOverlayTemplateCookieName)?.value);
+  return <CommentTranslatorObsOverlay feed={feed} template={template} />;
 }
 
 async function loadAuthorizedObsFeed() {

@@ -13,6 +13,13 @@ import {
 import {
   isCommentTranslatorCreatorObsOverlayBrowserRouteClosed
 } from "@/lib/comment-translator-creator-obs-overlay-session-authority";
+import {
+  commentTranslatorCreatorObsOverlayTemplateCookieName,
+  createCommentTranslatorCreatorObsOverlayTemplateCookieOptions,
+  createExpiredCommentTranslatorCreatorObsOverlayTemplateCookieOptions,
+  isCommentTranslatorCreatorObsOverlayTemplate,
+  readCommentTranslatorCreatorObsOverlayTemplate
+} from "@/lib/comment-translator-creator-obs-overlay-template";
 
 export const dynamic = "force-dynamic";
 
@@ -22,25 +29,30 @@ export async function POST(request: NextRequest) {
     return redirectWithExpiredCapability(overlayUrl);
   }
   const browserSessionStoreResult = createTrustedCommentTranslatorCreatorObsOverlayBrowserSessionStore();
+  const form = await readForm(request);
   const result = await redeemCommentTranslatorCreatorObsOverlayBrowserSession({
-    presentedToken: await readPresentedToken(request),
+    presentedToken: form.overlayCredential,
     browserSessionStore: browserSessionStoreResult.status === "ready" ? browserSessionStoreResult.store : null,
     nowMs: Date.now()
   });
   const response = NextResponse.redirect(overlayUrl, 303);
   response.headers.set("Cache-Control", "no-store");
   if (result.status === "ready") {
+    const overlayTemplate = isCommentTranslatorCreatorObsOverlayTemplate(form.overlayTemplate)
+      ? form.overlayTemplate
+      : readCommentTranslatorCreatorObsOverlayTemplate(form.overlayTemplate);
     response.cookies.set(
       commentTranslatorCreatorObsOverlayBrowserSessionCookieName,
       result.capability,
       createCommentTranslatorCreatorObsOverlayBrowserSessionCookieOptions(result.expiresAtIso)
     );
-  } else {
     response.cookies.set(
-      commentTranslatorCreatorObsOverlayBrowserSessionCookieName,
-      "",
-      createExpiredCommentTranslatorCreatorObsOverlayBrowserSessionCookieOptions()
+      commentTranslatorCreatorObsOverlayTemplateCookieName,
+      overlayTemplate,
+      createCommentTranslatorCreatorObsOverlayTemplateCookieOptions(result.expiresAtIso)
     );
+  } else {
+    expireOverlayCookies(response);
   }
   return response;
 }
@@ -48,20 +60,33 @@ export async function POST(request: NextRequest) {
 function redirectWithExpiredCapability(overlayUrl: URL) {
   const response = NextResponse.redirect(overlayUrl, 303);
   response.headers.set("Cache-Control", "no-store");
+  expireOverlayCookies(response);
+  return response;
+}
+
+async function readForm(request: NextRequest): Promise<{ overlayCredential: string; overlayTemplate: unknown }> {
+  try {
+    const formData = await request.formData();
+    const credential = formData.get("overlayCredential");
+    const overlayTemplate = formData.get("overlayTemplate");
+    return {
+      overlayCredential: typeof credential === "string" ? credential.trim() : "",
+      overlayTemplate: typeof overlayTemplate === "string" ? overlayTemplate.trim() : null
+    };
+  } catch {
+    return { overlayCredential: "", overlayTemplate: null };
+  }
+}
+
+function expireOverlayCookies(response: NextResponse) {
   response.cookies.set(
     commentTranslatorCreatorObsOverlayBrowserSessionCookieName,
     "",
     createExpiredCommentTranslatorCreatorObsOverlayBrowserSessionCookieOptions()
   );
-  return response;
-}
-
-async function readPresentedToken(request: NextRequest): Promise<string> {
-  try {
-    const formData = await request.formData();
-    const value = formData.get("overlayCredential");
-    return typeof value === "string" ? value.trim() : "";
-  } catch {
-    return "";
-  }
+  response.cookies.set(
+    commentTranslatorCreatorObsOverlayTemplateCookieName,
+    "",
+    createExpiredCommentTranslatorCreatorObsOverlayTemplateCookieOptions()
+  );
 }

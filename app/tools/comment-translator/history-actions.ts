@@ -21,6 +21,11 @@ export async function readCommentTranslatorCreatorSafeHistoryAction() {
   return context.runtime.read({ callerAuthority: context.callerAuthority, nowMs: Date.now() });
 }
 
+export async function searchCommentTranslatorCreatorSafeHistoryAction(input: unknown) {
+  const context = await createCommentTranslatorCreatorSafeHistoryActionContext();
+  return context.runtime.search({ callerAuthority: context.callerAuthority, nowMs: Date.now(), input });
+}
+
 export async function captureCommentTranslatorCreatorSafeHistoryAction() {
   const context = await createCommentTranslatorCreatorSafeHistoryActionContext();
   return context.runtime.capture({ callerAuthority: context.callerAuthority, nowMs: Date.now() });

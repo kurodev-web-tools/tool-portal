@@ -3,6 +3,7 @@ import "server-only";
 import { createClient } from "@supabase/supabase-js";
 import type {
   CommentTranslatorCreatorSafeHistoryRow,
+  CommentTranslatorCreatorSafeHistorySearchPage,
   CommentTranslatorCreatorSafeHistorySnapshot,
   CommentTranslatorCreatorSafeHistoryStore
 } from "./comment-translator-creator-history-types";
@@ -16,12 +17,16 @@ export type CommentTranslatorCreatorSafeHistorySupabaseClient = {
 };
 
 export const commentTranslatorCreatorSafeHistoryStoreContract = {
-  implementationStage: "nc-h1-local-safe-history-store",
+  implementationStage: "nc-x2a-local-seven-day-bounded-search-store",
   runtime: "server-only",
   tableName: "comment_translator_creator_safe_history",
   rowAccess: "trusted-service-role-rpc-only",
   writeAuthority: "atomic-rpc-current-paid-active-owner-session-only",
   readAuthority: "atomic-rpc-current-paid-active-owner-session-only",
+  searchAuthority: "atomic-rpc-current-paid-active-owner-session-only",
+  searchBound: "50-rows-fetch-51-no-total-count",
+  searchFields: "author-display-name-original-text-translated-text-only",
+  cursor: "opaque-owner-and-query-bound-pagination-key-only",
   cleanupAuthority: "atomic-rpc-owner-derived-server-only",
   retention: "seven-days-inclusive-server-clock-only",
   directTableCrud: "forbidden",
@@ -76,6 +81,15 @@ export function createCommentTranslatorCreatorSafeHistorySupabaseStore({
       });
       return parseRead(result);
     },
+    async searchSafeHistory({ ownerUserId, sessionReferenceId, query, cursor }) {
+      const result = await callRpc(supabase, "search_comment_translator_creator_safe_history", {
+        p_owner_user_id: ownerUserId,
+        p_session_reference_id: sessionReferenceId,
+        p_query: query,
+        p_cursor: cursor
+      });
+      return parseSearch(result);
+    },
     async cleanupOwner({ ownerUserId }) {
       const result = await callRpc(supabase, "cleanup_comment_translator_creator_safe_history_for_owner", {
         p_owner_user_id: ownerUserId
@@ -123,6 +137,21 @@ function parseRead(result: RpcResult | null): { readonly status: "ready"; readon
   const rows = result.data.rows.map(parseRow);
   return rows.every((row): row is CommentTranslatorCreatorSafeHistoryRow => row !== null)
     ? { status: "ready", evaluatedAtIso: result.data.evaluated_at, rows }
+    : unavailable();
+}
+
+function parseSearch(result: RpcResult | null): CommentTranslatorCreatorSafeHistorySearchPage {
+  if (!result || result.error || !isRecord(result.data) || result.data.status !== "ready" ||
+    !isTimestamp(result.data.evaluated_at) || !Array.isArray(result.data.rows) ||
+    !(result.data.next_cursor === null || isOpaqueCursor(result.data.next_cursor))) return unavailable();
+  const rows = result.data.rows.map(parseRow);
+  return rows.every((row): row is CommentTranslatorCreatorSafeHistoryRow => row !== null)
+    ? {
+        status: "ready",
+        evaluatedAtIso: result.data.evaluated_at,
+        rows,
+        nextCursor: result.data.next_cursor
+      }
     : unavailable();
 }
 
@@ -175,6 +204,10 @@ function isTimestamp(value: unknown): value is string {
 
 function isCount(value: unknown): value is number {
   return typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
+}
+
+function isOpaqueCursor(value: unknown): value is string {
+  return typeof value === "string" && value.length > 0 && value.length <= 2048 && /^[A-Za-z0-9_-]+=*$/.test(value);
 }
 
 function isTranslationStatus(value: unknown): value is CommentTranslatorCreatorSafeHistorySnapshot["translationStatus"] {

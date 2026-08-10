@@ -6,6 +6,7 @@ import type {
   CommentTranslatorCreatorHistorySafeFeed,
   CommentTranslatorCreatorHistorySessionAuthority,
   CommentTranslatorCreatorSafeHistoryRow,
+  CommentTranslatorCreatorSafeHistorySearchInput,
   CommentTranslatorCreatorSafeHistorySnapshot,
   CommentTranslatorCreatorSafeHistoryStore
 } from "./comment-translator-creator-history-types";
@@ -25,7 +26,7 @@ const moderationLabels = new Set(["visible", "deleted", "banned", "ended", "syst
 const badgeLabels = new Set(["owner", "moderator", "member", "super-chat", "super-sticker", "system"]);
 
 export const commentTranslatorCreatorSafeHistoryRuntimeContract = {
-  implementationStage: "nc-h1-local-seven-day-safe-history-runtime",
+  implementationStage: "nc-x2a-local-seven-day-safe-history-runtime",
   runtime: "server-only",
   paidAuthority: "nc-d1-nc-e1-server-owned-paid-active-only",
   currentSessionAuthority: "durable-server-owned-active-session-only",
@@ -35,7 +36,9 @@ export const commentTranslatorCreatorSafeHistoryRuntimeContract = {
   productionLiveOperation: "fixed-closed",
   browserAuthority: "forbidden",
   cleanup: "owner-derived-idempotent-disconnect-and-account-seams",
-  cleanupWiring: "server-orchestration-seam-not-wired-to-existing-oauth-or-deletion-request",
+  cleanupWiring: "oauth-disconnect-wired-account-deletion-seam-not-authoritative",
+  search: "server-owned-safe-fields-only-seven-day-bounded-50-plus-one",
+  searchCursor: "opaque-owner-query-bound-stale-fail-closed",
   scheduler: "forbidden"
 } as const;
 
@@ -55,6 +58,8 @@ export function createCommentTranslatorCreatorSafeHistoryRuntime({
       captureSafeHistory({ historyStore, paidAuthority, sessionAuthority, readSafeFeed, ...request }),
     read: (request: { readonly callerAuthority: CommentTranslatorCreatorCallerAuthority; readonly nowMs: number }) =>
       readSafeHistory({ historyStore, paidAuthority, sessionAuthority, ...request }),
+    search: (request: { readonly callerAuthority: CommentTranslatorCreatorCallerAuthority; readonly nowMs: number; readonly input: unknown }) =>
+      searchSafeHistory({ historyStore, paidAuthority, sessionAuthority, ...request }),
     cleanupForDisconnect: (request: { readonly callerAuthority: CommentTranslatorCreatorCallerAuthority }) =>
       cleanupOwnerHistory({ historyStore, callerAuthority: request.callerAuthority }),
     cleanupForAccountDeletion: (request: { readonly callerAuthority: CommentTranslatorCreatorCallerAuthority }) =>
@@ -141,6 +146,42 @@ async function readSafeHistory({
   }
 }
 
+async function searchSafeHistory({
+  historyStore,
+  paidAuthority,
+  sessionAuthority,
+  callerAuthority,
+  nowMs,
+  input
+}: {
+  readonly historyStore: CommentTranslatorCreatorSafeHistoryStore | null;
+  readonly paidAuthority: CommentTranslatorCreatorHistoryPaidAuthority["authorize"];
+  readonly sessionAuthority: CommentTranslatorCreatorHistorySessionAuthority;
+  readonly callerAuthority: CommentTranslatorCreatorCallerAuthority;
+  readonly nowMs: number;
+  readonly input: unknown;
+}) {
+  const searchInput = readSearchInput(input);
+  if (!searchInput) return unavailable();
+  const context = await readAuthorizedContext({ historyStore, paidAuthority, sessionAuthority, callerAuthority, nowMs });
+  if (!context) return unavailable();
+  try {
+    const result = await context.historyStore.searchSafeHistory({
+      ownerUserId: context.ownerUserId,
+      sessionReferenceId: context.sessionReferenceId,
+      query: searchInput.query,
+      cursor: searchInput.cursor
+    });
+    const evaluatedAtMs = result.status === "ready" ? Date.parse(result.evaluatedAtIso) : Number.NaN;
+    if (result.status !== "ready" || !Number.isFinite(evaluatedAtMs) ||
+      !result.rows.every((row) => isSafeHistoryRow(row, evaluatedAtMs)) ||
+      !isNullableOpaqueCursor(result.nextCursor)) return unavailable();
+    return { status: "ready" as const, rows: result.rows, nextCursor: result.nextCursor };
+  } catch {
+    return unavailable();
+  }
+}
+
 async function cleanupOwnerHistory({
   historyStore,
   callerAuthority
@@ -220,12 +261,31 @@ function isNullableString(value: unknown): value is string | null {
   return value === null || typeof value === "string";
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
 function isNonEmpty(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
 
 function isCorrelationDigest(value: unknown): value is string {
   return typeof value === "string" && /^[a-f0-9]{64}$/.test(value);
+}
+
+function readSearchInput(input: unknown): CommentTranslatorCreatorSafeHistorySearchInput | null {
+  if (!isRecord(input) || typeof input.query !== "string") return null;
+  if (Object.keys(input).some((key) => key !== "query" && key !== "cursor")) return null;
+  if (input.cursor !== undefined && input.cursor !== null && !isOpaqueCursor(input.cursor)) return null;
+  return { query: input.query, cursor: input.cursor ?? null };
+}
+
+function isNullableOpaqueCursor(value: unknown): value is string | null {
+  return value === null || isOpaqueCursor(value);
+}
+
+function isOpaqueCursor(value: unknown): value is string {
+  return typeof value === "string" && value.length > 0 && value.length <= 2048 && /^[A-Za-z0-9_-]+=*$/.test(value);
 }
 
 function unavailable() {

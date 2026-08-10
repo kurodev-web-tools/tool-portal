@@ -34,6 +34,18 @@ export type CommentTranslatorCreatorSafeHistoryRow = CommentTranslatorCreatorSaf
   readonly recordedAtIso: string;
 };
 
+export type CommentTranslatorCreatorSafeHistorySearchInput = {
+  readonly query: string;
+  readonly cursor: string | null;
+};
+
+export type CommentTranslatorCreatorSafeHistorySearchPage = {
+  readonly status: "ready";
+  readonly evaluatedAtIso: string;
+  readonly rows: readonly CommentTranslatorCreatorSafeHistoryRow[];
+  readonly nextCursor: string | null;
+} | { readonly status: "unavailable" };
+
 export type CommentTranslatorCreatorSafeHistoryStore = {
   appendSafeHistory(request: {
     readonly ownerUserId: string;
@@ -48,6 +60,12 @@ export type CommentTranslatorCreatorSafeHistoryStore = {
     readonly evaluatedAtIso: string;
     readonly rows: readonly CommentTranslatorCreatorSafeHistoryRow[];
   } | { readonly status: "unavailable" }>;
+  searchSafeHistory(request: {
+    readonly ownerUserId: string;
+    readonly sessionReferenceId: string;
+    readonly query: string;
+    readonly cursor: string | null;
+  }): Promise<CommentTranslatorCreatorSafeHistorySearchPage>;
   cleanupOwner(request: {
     readonly ownerUserId: string;
   }): Promise<{ readonly status: "deleted"; readonly removedCount: number } | { readonly status: "unavailable" }>;

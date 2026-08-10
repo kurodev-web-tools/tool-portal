@@ -16,6 +16,7 @@ import {
 import { isYouTubeOAuthCredentialResolutionDisabled } from "@/lib/comment-translator-youtube-token-store-runtime";
 import { readCommentTranslatorToolCredentialStatus } from "@/lib/comment-translator-youtube-tool-credential-source";
 import { readCommentTranslatorActionCallerAuthorization } from "./action-context";
+import { cleanupCommentTranslatorCreatorSafeHistoryForDisconnectAction } from "./history-actions";
 
 const credentialResolutionDisabledEnv = "YOUTUBE_OAUTH_CREDENTIAL_RESOLUTION_DISABLED";
 
@@ -71,12 +72,23 @@ export async function disconnectYouTubeOAuthCredentialAction() {
   const trustedDisconnectRuntime = credentialResolutionDisabled || callerAuthorization.status !== "authorized"
     ? null
     : createTrustedYouTubeOAuthCredentialSupabaseDisconnectRuntime();
-  return readYouTubeOAuthCredentialDisconnectResult({
+  const disconnectResult = await readYouTubeOAuthCredentialDisconnectResult({
     credentialReferenceId: credentialReference.credentialReferenceId,
     trustedDisconnectAdapter: trustedDisconnectRuntime?.trustedDisconnectAdapter ?? null,
     callerAuthorization,
     credentialResolutionDisabled
   });
+  if (disconnectResult.status === "disconnected" || disconnectResult.status === "already-disconnected") {
+    let historyCleanupStatus: "deleted" | "unavailable" = "unavailable";
+    try {
+      const cleanupResult = await cleanupCommentTranslatorCreatorSafeHistoryForDisconnectAction();
+      if (cleanupResult.status === "deleted") historyCleanupStatus = "deleted";
+    } catch {
+      // Keep the OAuth disconnect result authoritative while surfacing residual history as unavailable.
+    }
+    return { ...disconnectResult, historyCleanupStatus };
+  }
+  return disconnectResult;
 }
 
 function unavailableCredentialStatus() {

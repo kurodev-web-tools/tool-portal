@@ -29,16 +29,16 @@ const capacityDecision = read(paths.capacityDecision);
 const contractSource = read("scripts/comment-translator-creator-nc-x2b-retention-capacity-decision-contract.mjs");
 
 const requiredTaskMarkers = [
-  "current_goal=comment-translator-creator-nc-x2b-capacity-decision-preflight",
-  "current_base_tip=3bb4b4c4ba6f7ce76fda082f12cdefbcd41d5d1c",
-  "current_pr=756",
+  "current_goal=comment-translator-creator-post-pr757-authority-contract-reconciliation",
+  "current_base_tip=fd363cac334ad397f9d5ee7eb23bc25a0d860c4b",
+  "current_pr=757",
   "current_pr_state=merged",
-  "current_pr_implementation_head=9f5e456ae05e47e7043cd63d3d93d41bd51cc0e4",
-  "current_pr_final_head=9f5e456ae05e47e7043cd63d3d93d41bd51cc0e4",
-  "current_pr_merge_integration_tip=3bb4b4c4ba6f7ce76fda082f12cdefbcd41d5d1c",
-  "next_implementation_status=nc-x2b-capacity-decision-preflight-local-docs-only",
-  "selected_lane=NC-X2B-P0",
-  "selected_lane_scope=capacity-preflight-only-no-retention-switch",
+  "current_pr_implementation_head=cf5dfaf058a184c304de3ed972c08273367b50c2",
+  "current_pr_final_head=cf5dfaf058a184c304de3ed972c08273367b50c2",
+  "current_pr_merge_integration_tip=fd363cac334ad397f9d5ee7eb23bc25a0d860c4b",
+  "next_implementation_status=owner-approval-required-before-any-next-lane",
+  "selected_lane=none-pending-explicit-owner-approval",
+  "selected_lane_scope=post-merge-authority-contract-reconciliation-only",
   "search_retention=inclusive-seven-days-server-clock-unchanged",
   "retention_switch=unapproved-unimplemented",
   "retention_decision=eligible-for-separate-switch-approval",
@@ -63,12 +63,13 @@ assert.match(task, /deployment success.*migration apply.*production activation.*
 for (const marker of [
   "verified_at=2026-08-11",
   "repository_state_reconciled_at=2026-08-11",
-  "implementation_status=implemented-through-nc-x2a",
-  "next_implementation_status=nc-x2b-capacity-decision-preflight-local-docs-only",
+  "implementation_status=implemented-through-nc-x2b-p0",
+  "next_implementation_status=owner-approval-required-before-any-next-lane",
   "| NC-X4 | PR #753 | merged |",
   "| NC-X3 | PR #754 | merged |",
   "| NC-X5 | PR #755 | merged |",
   "| NC-X2A | PR #756 | merged |",
+  "| NC-X2B-P0 | PR #757 | merged |",
   "| NC-R1 | 0/8 staged rows; 9 unresolved hard requirements | no-go; activation=closed; Free=permanent |",
   "| NC-L1 | N/A | not-started; blocked by NC-R1 no-go |"
 ]) {
@@ -81,12 +82,13 @@ assert.match(board, /deployment success.*migration apply.*production activation.
 for (const marker of [
   "verified_at=2026-08-11",
   "repository_state_reconciled_at=2026-08-11",
-  "implementation_status=implemented-through-nc-x2a",
+  "implementation_status=implemented-through-nc-x2b-p0",
   "PR #753",
   "PR #754",
   "PR #755",
   "PR #756",
-  "3bb4b4c4ba6f7ce76fda082f12cdefbcd41d5d1c",
+  "PR #757",
+  "fd363cac334ad397f9d5ee7eb23bc25a0d860c4b",
   "NC-R1 remains 0/8 staged rows, 9 unresolved hard requirements, decision=no-go, activation=closed, Free permanent, NC-L1 not-started",
   "NC-X2B thirty-day cutoff/switch remains unapproved and unimplemented"
 ]) {
@@ -96,10 +98,10 @@ assert.match(architecture, /deployment success.*migration apply.*production acti
 assert.match(architecture, /NC-X2B-P0.*Capacity Decision Preflight/s);
 
 for (const marker of [
-  "current_goal=comment-translator-creator-nc-x2b-capacity-decision-preflight",
+  "current_goal=comment-translator-creator-post-pr757-authority-contract-reconciliation",
   "current_pr_state=merged",
-  "current_pr_merge_integration_tip=3bb4b4c4ba6f7ce76fda082f12cdefbcd41d5d1c",
-  "next_implementation_status=nc-x2b-capacity-decision-preflight-local-docs-only",
+  "current_pr_merge_integration_tip=fd363cac334ad397f9d5ee7eb23bc25a0d860c4b",
+  "next_implementation_status=owner-approval-required-before-any-next-lane",
   "NC-X2B-P0",
   "COMMENT_TRANSLATOR_CREATOR_NC_X2B_RETENTION_CAPACITY_DECISION.md"
 ]) {

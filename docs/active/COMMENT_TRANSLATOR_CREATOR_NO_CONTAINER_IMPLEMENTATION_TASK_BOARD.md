@@ -6,10 +6,10 @@ repository_state_reconciled_at=2026-08-11
 architecture_authority=docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md
 crosswalk_authority=docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_LEGACY_CROSSWALK.md
 first_implementation_pr=NC-F1-completed-pr726
-implementation_status=implemented-through-nc-x2a
+implementation_status=implemented-through-nc-x2b-p0
 paid_launch_readiness_status=paused-no-go
-next_implementation_status=nc-x2b-capacity-decision-preflight-local-docs-only
-candidate_lanes=NC-X2B-P0,NC-X1,NC-X6,NC-X7
+next_implementation_status=owner-approval-required-before-any-next-lane
+candidate_lanes=NC-X2B-separate-switch-approval,NC-X1,NC-X6,NC-X7
 deploy_status=unconfirmed
 migration_apply_status=unconfirmed
 production_activation=closed
@@ -53,8 +53,9 @@ This ledger records repository merge state only. It does not prove deployment、
 | NC-X3 | PR #754 | merged |
 | NC-X5 | PR #755 | merged |
 | NC-X2A | PR #756 | merged |
+| NC-X2B-P0 | PR #757 | merged |
 | NC-L1 | N/A | not-started; blocked by NC-R1 no-go |
-| NC-X2B | N/A | capacity-preflight-only; thirty-day switch unapproved-unimplemented |
+| NC-X2B | PR #757 | capacity-preflight-only; thirty-day switch unapproved-unimplemented |
 
 ## Dependency Map
 
@@ -519,4 +520,4 @@ flowchart TD
 
 NC-A0 through NC-Q1 are merged repository implementation history. NC-R1's authority and staged-resolution control plane are merged, but paid launch readiness is paused at NO-GO with `0/8` staged rows satisfied, nine unresolved hard requirements, activation closed, Free permanent, and NC-L1 not-started. No next implementation lane is approved automatically.
 
-Post-PR #756 repository state is: NC-X2A、NC-X3、NC-X4、and NC-X5 are merged; NC-X2B-P0 is the selected local/docs-only capacity preflight; the NC-X2B thirty-day retention switch remains unapproved and unimplemented. NC-X1 remains gated by NC-L1 or a separate explicit post-MVP approval, NC-X6 remains gated by a product decision, and NC-X7 remains gated by exact provider、cost/data-use、and separate live-call approvals. NC-X8 and NC-X9 remain outside the current paused readiness boundary. These repository and selection facts create no product、runtime implementation、dependency-install、migration/apply、remote read/write、provider / Stripe、browser、deploy、activation、publication、or other external-operation authority.
+Post-PR #757 repository state is: NC-X2A、NC-X3、NC-X4、NC-X5、and NC-X2B-P0 are merged; the post-merge authority/contract reconciliation is the only current task and no next implementation lane is selected. The NC-X2B thirty-day retention switch remains unapproved and unimplemented, with seven-day retention as the safe baseline. NC-X1 remains gated by NC-L1 or a separate explicit post-MVP approval, NC-X6 remains gated by a product decision, and NC-X7 remains gated by exact provider、cost/data-use、and separate live-call approvals. NC-X8 and NC-X9 remain outside the current paused readiness boundary. These repository and selection facts create no product、runtime implementation、dependency-install、migration/apply、remote read/write、provider / Stripe、browser、deploy、activation、publication、or other external-operation authority。

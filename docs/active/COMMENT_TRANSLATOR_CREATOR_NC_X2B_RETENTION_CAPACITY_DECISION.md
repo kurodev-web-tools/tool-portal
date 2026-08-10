@@ -29,7 +29,7 @@ deployed-live=unconfirmed-deployment-and-activation
 
 | Class | What this preflight may observe | What it does not prove |
 | --- | --- | --- |
-| `repository-local` | PR #753 NC-X4, PR #754 NC-X3, PR #755 NC-X5, PR #756 NC-X2A merge facts and local contract results | deployment, migration apply, production behavior, or account headroom |
+| `repository-local` | PR #753 NC-X4, PR #754 NC-X3, PR #755 NC-X5, PR #756 NC-X2A, and PR #757 NC-X2B-P0 merge facts and local contract results | deployment, migration apply, production behavior, or account headroom |
 | `synthetic-design` | S1 row/workload assumptions and deterministic arithmetic below | actual row bytes, bloat, query cost, egress, or account utilization |
 | `external-account` | no account-specific observation in this scope; status is unconfirmed | Supabase, Cloudflare, provider, Stripe configuration, quota, headroom, or approval |
 | `deployed-live` | no deployed/live observation in this scope; status is unconfirmed | deployment success, activation, browser behavior, or public availability |

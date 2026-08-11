@@ -9,10 +9,13 @@ conditional-go=forbidden-while-release-hard-requirement-unresolved
 selected_runtime=cloudflare-workers-open-next
 selected_persistence=supabase-postgres-existing-server-only-boundary
 container_disposition=rejected-not-a-candidate
-implementation_status=implemented-through-nc-x2b-p0
-deploy_status=not-approved
+implementation_status=repository-implemented-not-applied
+current_lane=NC-X2B-R1
+repository_retention_policy=inclusive-thirty-days-server-clock
+effective_deployed_retention=inclusive-seven-days-server-clock-unconfirmed
+deploy_status=not-run
 deployment_success=unconfirmed
-migration_apply_status=unconfirmed
+migration_apply_status=not-run
 production_activation=closed
 account_headroom=unconfirmed
 provider_stripe_cloudflare_supabase_state=unconfirmed
@@ -42,13 +45,15 @@ Comment Translator Creator は、Cloudflare Containers、Docker image、managed 
 | PR #724 | `MERGED`, merge commit `f2300ec083f283fed714d7ef4962b4e61cc82e05` |
 | implementation chain | PR #725 through PR #747 are merged; NC-A0 through NC-Q1 repository implementation is present in integration history |
 | readiness chain | PR #748 through PR #751 are merged; NC-R1 remains a paused NO-GO control plane, not production activation |
-| PR #751 | final head `82c075ec8a4153e9a08a3a6b35f3c3f8a13c6fd8` is contained in integration tip `fd363cac334ad397f9d5ee7eb23bc25a0d860c4b` |
+| PR #751 | final head `82c075ec8a4153e9a08a3a6b35f3c3f8a13c6fd8` is contained in current integration tip `57b16284094dbe83d9ed3867f5a44602f26ec939` |
 | PR #753 | NC-X4 Overlay Templates | merged repository fact |
 | PR #754 | NC-X3 Safe CSV Export | merged repository fact |
 | PR #755 | NC-X5 Bounded CSV Import | merged repository fact |
-| PR #756 | NC-X2A Seven-Day History Search; head `9f5e456ae05e47e7043cd63d3d93d41bd51cc0e4` | merged; contained in integration tip `3bb4b4c4ba6f7ce76fda082f12cdefbcd41d5d1c` |
-| PR #757 | NC-X2B-P0 Retention Capacity Decision Preflight; head `cf5dfaf058a184c304de3ed972c08273367b50c2` | merged; contained in integration tip `fd363cac334ad397f9d5ee7eb23bc25a0d860c4b` |
-| integration | `origin/codex/comment-translator-free-public-beta-integration` = `fd363cac334ad397f9d5ee7eb23bc25a0d860c4b` |
+| PR #756 | NC-X2A Seven-Day History Search; head `9f5e456ae05e47e7043cd63d3d93d41bd51cc0e4` | historical merged fact; contained in current integration |
+| PR #757 | NC-X2B-P0 Retention Capacity Decision Preflight; head `cf5dfaf058a184c304de3ed972c08273367b50c2` | historical merged fact; contained in current integration |
+| PR #758 | NC-X2B-R1 predecessor integration preparation; head `c70dc9548cb9eaee8d35533445d5021b79378262` | merged; contained in current integration |
+| PR #759 | NC-X2B-R1 implementation base; head `a53db3ff1d9af6df8ea60c0162ccc265989bc807` | merged; current implementation tip contains it |
+| integration | `origin/codex/comment-translator-free-public-beta-integration` = `57b16284094dbe83d9ed3867f5a44602f26ec939` |
 | main | `origin/main` = `2c92a37bb3ba4c472c3470b8db77594a4b0fca65` |
 | read-only archive | `origin/codex/archive-comment-translator-free-public-beta-integration-20260801` = `51bbba0ca9f087d590219a15a7c1516d6ec17e86` |
 | archive tree | `a2ee756bb9be8a4c7886f1ac6e3427d6334e5de4` |
@@ -194,15 +199,15 @@ flowchart LR
 
 ## NC-X2B-P0 Capacity Decision Preflight
 
-The post-PR #757 repository state is reconciled here as local authority only. PR #753 (NC-X4), PR #754 (NC-X3), PR #755 (NC-X5), PR #756 (NC-X2A), and PR #757 (NC-X2B-P0) are merged repository facts. NC-R1 remains 0/8 staged rows, 9 unresolved hard requirements, decision=no-go, activation=closed, Free permanent, NC-L1 not-started. Deployment success, migration apply, production activation, account headroom, and provider/Stripe/Cloudflare/Supabase state remain unconfirmed.
+The NC-X2B-R1 repository state is reconciled here as local authority only. PR #753 (NC-X4), PR #754 (NC-X3), PR #755 (NC-X5), PR #756 (NC-X2A), PR #757 (NC-X2B-P0), PR #758, and PR #759 are merged repository facts. The thirty-day switch is repository-implemented-not-applied; the deployed effective seven-day server-clock baseline remains unconfirmed and unchanged by this task. NC-R1 remains 0/8 staged rows, 9 unresolved hard requirements, decision=no-go, activation=closed, Free permanent, NC-L1 not-started. Deployment success, migration apply, production activation, account headroom, and provider/Stripe/Cloudflare/Supabase state remain unconfirmed.
 
-NC-X2B thirty-day cutoff/switch remains unapproved and unimplemented. The capacity preflight is local/documentation-only and records exactly one fail-closed decision: `eligible-for-separate-switch-approval`. This means the design model may be presented to a separate owner approval step; it is not a retention switch authorization or a production/account capacity claim. The post-merge authority/contract reconciliation is the only current task; no next implementation lane is selected without explicit owner approval.
+NC-X2B-R1 is approved only for repository implementation. The capacity decision remains exactly `eligible-for-separate-switch-approval`; the implementation status is `repository-implemented-not-applied`. The additive migration is present but unapplied, and runtime/store/UI/contracts are synchronized to the inclusive thirty-day DB-server-clock policy. This is not a migration-apply authorization or a production/account capacity claim. Apply, remote observation, deploy, browser proof, activation, public gate, and NC-L1 remain separately approved lanes.
 
 Evidence classes remain distinct: `repository-local`, `synthetic-design`, `external-account`, and `deployed-live`. S1 retained-row, row-size, index-overhead, page-count, and rows-per-page values are `synthetic-design` design assumptions, not account/production evidence. The detailed arithmetic, non-authorization proof, seven-day rollback, and residual-risk packet live in `docs/active/COMMENT_TRANSLATOR_CREATOR_NC_X2B_RETENTION_CAPACITY_DECISION.md`.
 
 The storage model is `30,000 retained rows * average 1 KiB * (1 + 1.5 index-additional-overhead) ≈ 73.2 MiB`, rounded about `75 MiB`. The `1.5` multiplier means index additional overhead: it estimates index bytes in addition to the base row bytes; it is not a database utilization or account-headroom measurement. The egress model is `2,000 pages/month * 50 rows/page * 1 KiB/row ≈ 97.7 MiB`, rounded about `98 MiB`.
 
-This preflight authorizes no retention switch, migration apply, remote read/write, deploy, activation, or NC-L1 permission. Seven-day retention remains the rollback baseline, and any future switch must carry a separately approved seven-day rollback packet. Actual row size, index bloat, query/egress overhead, account headroom, evidence freshness, and approvals remain residual risks.
+This repository scope authorizes no migration apply, remote read/write, deploy, activation, or NC-L1 permission. Seven-day retention remains the deployed rollback baseline, and any future applied rollback must carry a separately approved forward migration restoring the three RPCs to the seven-day cutoff. Actual row size, index bloat, query/egress overhead, account headroom, evidence freshness, and approvals remain residual risks.
 
 Migration is additive and lane-by-lane: characterization → schema → disconnected adapters → server authorization → feature wiring → live evidence. No lane may make browser state authoritative or require a bulk cutover. Each new schema must be service-role-only, RLS/grant reviewed, additive, and reversible by leaving the feature gate closed; destructive rollback is a separate approval.
 
@@ -269,7 +274,7 @@ The Worker, Supabase, Azure, DeepL, OpenAI, and Stripe observations used by NC-R
 
 ## Non-Claims
 
-Repository implementation includes the merged NC-A0-through-NC-Q1 chain, the NC-R1 control plane through PR #751, and repository merge facts PR #753 (NC-X4), PR #754 (NC-X3), PR #755 (NC-X5), PR #756 (NC-X2A), and PR #757 (NC-X2B-P0). Paid launch readiness remains paused at NO-GO. This authority does not claim deploy-ready、production-ready、canonical live proof complete、all external costs free、deployment success for PR #751 or PR #753-#757、production activation、or any new external-operation approval. Every listed merge is a repository fact, not deployment or production proof. It authorizes documentation review only.
+Repository implementation includes the merged NC-A0-through-NC-Q1 chain, the NC-R1 control plane through PR #751, and repository merge facts PR #753 (NC-X4), PR #754 (NC-X3), PR #755 (NC-X5), PR #756 (NC-X2A), PR #757 (NC-X2B-P0), PR #758, and PR #759 (NC-X2B-R1). The NC-X2B-R1 thirty-day switch is repository-implemented-not-applied. Paid launch readiness remains paused at NO-GO. This authority does not claim deploy-ready、production-ready、canonical live proof complete、all external costs free、deployment success for any listed PR、migration apply、production activation、or any new external-operation approval. Every listed merge and the R1 working diff are repository facts, not deployment or production proof. It authorizes repository-local implementation review only.
 
 ## Verification Evidence
 

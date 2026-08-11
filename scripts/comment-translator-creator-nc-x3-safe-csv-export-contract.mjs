@@ -254,7 +254,7 @@ await assertUnavailableResponse(await route.GET(), "malformed row", privateSenti
 delete globalThis[Symbol.for(historyActionMockKey)];
 
 assert.match(panelSource, /<a\s+[^>]*href=["']\/api\/comment-translator\/history\/export["']/, "panel uses a fixed native download anchor");
-assert.match(panelSource, /Only the existing seven-day safe-history window is exported\./, "panel states the seven-day export window");
+assert.match(panelSource, /Only the existing thirty-day safe-history window is exported\./, "panel states the effective thirty-day export window");
 assert.match(panelSource, /Current retention and deletion rules continue to apply\./, "panel states the current retention/deletion rules");
 assert.match(panelSource, /Downloading does not delete server history or local copies\./, "panel states downloading is non-destructive");
 assert.doesNotMatch(panelSource, /fetch\s*\(|useEffect|localStorage|sessionStorage|indexedDB|searchParams|console\./, "panel remains deterministic-props-only without new authority");

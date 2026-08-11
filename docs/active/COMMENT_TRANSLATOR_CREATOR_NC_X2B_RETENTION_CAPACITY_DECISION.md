@@ -1,20 +1,22 @@
 # Comment Translator Creator NC-X2B Retention Capacity Decision
 
 ```text
-authority_scope=local-documentation-only
+authority_scope=repository-only-switch-implementation
 verified_at=2026-08-11
 decision=eligible-for-separate-switch-approval
 decision_basis=synthetic-design-capacity-model-only
-switch_status=unapproved-unimplemented
-retention_cutoff=seven-day-unchanged
+implementation_status=repository-implemented-not-applied
+switch_status=repository-implemented-not-applied
+retention_cutoff=thirty-day-repository-policy-not-applied
+effective_deployed_retention=inclusive-seven-days-server-clock-unconfirmed
 evidence_classes=repository-local|synthetic-design|external-account|deployed-live
 ```
 
 ## Decision boundary
 
-NC-X2B is a capacity-decision preflight, not a 30-day retention implementation. The only recorded decision is `eligible-for-separate-switch-approval`: the S1 design model is suitable to take to a separately approved capacity/switch decision, but it does not authorize that switch. If any required input is missing, stale, contradictory, or not approved, the result fails closed to either `keep-seven-days` or `no-go`; no other decision value is valid.
+NC-X2B remains a capacity-decision preflight whose recorded decision is `eligible-for-separate-switch-approval`. NC-X2B-R1 is separately approved only for a repository-local, unapplied thirty-day switch implementation. This repository status is not migration application, deployment, activation, account capacity proof, or production behavior. If any required input is missing, stale, contradictory, or not approved, future apply/activation remains fail-closed to either `keep-seven-days` or `no-go`; no other capacity decision value is valid.
 
-The 30-day cutoff/switch remains unapproved and unimplemented. The existing seven-day server-clock retention remains unchanged. No migration, runtime, schema, RPC, cleanup, UI, account, provider, or deployment change is part of this preflight.
+The thirty-day cutoff is implemented in repository runtime/store metadata, local guards, UI copy, focused contracts, and one unapplied additive migration. The deployed effective seven-day server-clock retention remains unconfirmed and unchanged by this task. Migration apply, remote/account/provider observation, deployment, activation, and browser proof are not part of this task.
 
 ## Evidence classes
 
@@ -29,7 +31,7 @@ deployed-live=unconfirmed-deployment-and-activation
 
 | Class | What this preflight may observe | What it does not prove |
 | --- | --- | --- |
-| `repository-local` | PR #753 NC-X4, PR #754 NC-X3, PR #755 NC-X5, PR #756 NC-X2A, and PR #757 NC-X2B-P0 merge facts and local contract results | deployment, migration apply, production behavior, or account headroom |
+| `repository-local` | PR #753 NC-X4, PR #754 NC-X3, PR #755 NC-X5, PR #756 NC-X2A, PR #757 NC-X2B-P0, PR #758, PR #759, the NC-X2B-R1 migration text, and local contract results | deployment, migration apply, production behavior, or account headroom |
 | `synthetic-design` | S1 row/workload assumptions and deterministic arithmetic below | actual row bytes, bloat, query cost, egress, or account utilization |
 | `external-account` | no account-specific observation in this scope; status is unconfirmed | Supabase, Cloudflare, provider, Stripe configuration, quota, headroom, or approval |
 | `deployed-live` | no deployed/live observation in this scope; status is unconfirmed | deployment success, activation, browser behavior, or public availability |
@@ -60,24 +62,25 @@ The egress calculation is `2,000 × 50 × 1 KiB = 100,000 KiB ≈ 97.7 MiB`, the
 
 ```text
 deployment_success=unconfirmed
-migration_apply=unconfirmed
+migration_apply=not-run
+deploy_status=not-run
 production_activation=closed
 account_headroom=unconfirmed
 provider_state=unconfirmed
 stripe_state=unconfirmed
 cloudflare_state=unconfirmed
 supabase_state=unconfirmed
-retention_switch_authorization=none
+retention_switch_authorization=repository-only-implementation-approved-no-apply
 migration_apply_authorization=none
 remote_read_write_authorization=none
 deploy_authorization=none
 activation_authorization=none
 nc_l1_permission=none
-runtime_change=none
-schema_or_migration_apply=none
+runtime_change=repository-only-metadata-and-local-age-guard
+schema_or_migration_apply=repository-migration-present-not-applied
 ```
 
-No retention switch is authorized; migration apply, remote read/write, deploy, activation, and NC-L1 are not authorized. This preflight performed no remote read/write and grants no permission to perform one later. It also does not grant provider, Stripe, Cloudflare, or Supabase observation or mutation permission.
+No applied or deployed retention switch is authorized; migration apply, remote read/write, deploy, activation, and NC-L1 are not authorized. This preflight performed no remote read/write and grants no permission to perform one later. It also does not grant provider, Stripe, Cloudflare, or Supabase observation or mutation permission.
 
 ## Rollback and residual risks
 
@@ -93,4 +96,4 @@ The seven-day rollback is the safe baseline. A future, separately approved switc
 
 ## Approval and execution boundary
 
-Separate approval for the retention switch is required. Separate approval is also required for schema or migration apply, remote read/write, account observation, deploy, browser verification, activation, public gate, or NC-L1. This document records no approval, performs no execution, and does not change the 7-day retention behavior.
+Repository-only implementation approval has been granted for NC-X2B-R1; separate approval remains required for schema or migration apply, remote read/write, account observation, deploy, browser verification, activation, public gate, or NC-L1. This document records the repository implementation only, performs no external execution, and does not change deployed seven-day behavior.

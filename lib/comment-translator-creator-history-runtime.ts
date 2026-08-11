@@ -11,7 +11,7 @@ import type {
   CommentTranslatorCreatorSafeHistoryStore
 } from "./comment-translator-creator-history-types";
 
-const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
 const translationStatuses = new Set([
   "not-run-f9",
   "translated-f10",
@@ -26,18 +26,18 @@ const moderationLabels = new Set(["visible", "deleted", "banned", "ended", "syst
 const badgeLabels = new Set(["owner", "moderator", "member", "super-chat", "super-sticker", "system"]);
 
 export const commentTranslatorCreatorSafeHistoryRuntimeContract = {
-  implementationStage: "nc-x2a-local-seven-day-safe-history-runtime",
+  implementationStage: "nc-x2b-r1-local-thirty-day-safe-history-runtime",
   runtime: "server-only",
   paidAuthority: "nc-d1-nc-e1-server-owned-paid-active-only",
   currentSessionAuthority: "durable-server-owned-active-session-only",
   safeFeedAuthority: "existing-server-owned-safe-feed-only",
-  retention: "inclusive-seven-days-server-clock-rpc",
+  retention: "inclusive-thirty-days-server-clock-rpc",
   productionActivation: "fixed-closed",
   productionLiveOperation: "fixed-closed",
   browserAuthority: "forbidden",
   cleanup: "owner-derived-idempotent-disconnect-and-account-seams",
   cleanupWiring: "oauth-disconnect-wired-account-deletion-seam-not-authoritative",
-  search: "server-owned-safe-fields-only-seven-day-bounded-50-plus-one",
+  search: "server-owned-safe-fields-only-thirty-day-bounded-50-plus-one",
   searchCursor: "opaque-owner-query-bound-stale-fail-closed",
   scheduler: "forbidden"
 } as const;
@@ -75,7 +75,7 @@ export function isCommentTranslatorCreatorSafeHistoryWithinInclusiveCutoff({
   readonly nowMs: number;
 }): boolean {
   const sourcePublishedAtMs = Date.parse(sourcePublishedAtIso);
-  return Number.isFinite(nowMs) && Number.isFinite(sourcePublishedAtMs) && sourcePublishedAtMs <= nowMs && sourcePublishedAtMs >= nowMs - sevenDaysMs;
+  return Number.isFinite(nowMs) && Number.isFinite(sourcePublishedAtMs) && sourcePublishedAtMs <= nowMs && sourcePublishedAtMs >= nowMs - thirtyDaysMs;
 }
 
 async function captureSafeHistory({

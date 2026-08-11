@@ -32,16 +32,16 @@ const historicalTask = read(historicalTaskPath);
 
 for (const marker of [
   "current_goal=comment-translator-creator-nc-x2b-r1-thirty-day-retention-switch",
-  "current_base_tip=57b16284094dbe83d9ed3867f5a44602f26ec939",
-  "current_pr=759",
+  "current_base_tip=8e17338ce35c72ec5e18e1683666671e79321504",
+  "current_pr=760",
   "current_pr_state=merged",
-  "current_pr_implementation_head=a53db3ff1d9af6df8ea60c0162ccc265989bc807",
+  "current_pr_implementation_head=c775655d78a890c0a963da90c6803216d9fe82c8",
   "current_pr_base=codex/comment-translator-free-public-beta-integration",
-  "current_pr_final_head=a53db3ff1d9af6df8ea60c0162ccc265989bc807",
-  "current_pr_merge_integration_tip=57b16284094dbe83d9ed3867f5a44602f26ec939",
-  "previous_pr=758",
+  "current_pr_final_head=c775655d78a890c0a963da90c6803216d9fe82c8",
+  "current_pr_merge_integration_tip=8e17338ce35c72ec5e18e1683666671e79321504",
+  "previous_pr=759",
   "previous_pr_state=merged",
-  "previous_pr_final_head=c70dc9548cb9eaee8d35533445d5021b79378262",
+  "previous_pr_final_head=a53db3ff1d9af6df8ea60c0162ccc265989bc807",
   "previous_pr_merge_integration_tip=contained-in-current-integration-tip",
   "implementation_baseline=merged-through-nc-x2b-p0",
   "repository_implementation_status=repository-implemented-not-applied",
@@ -87,6 +87,9 @@ assert.match(historicalTask, /current_goal=comment-translator-creator-nc-r1-paid
 for (const marker of [
   "verified_at=2026-08-11",
   "repository_state_reconciled_at=2026-08-11",
+  "current_pr=760",
+  "current_pr_head=c775655d78a890c0a963da90c6803216d9fe82c8",
+  "current_pr_merge_integration_tip=8e17338ce35c72ec5e18e1683666671e79321504",
   "implementation_status=repository-implemented-not-applied",
   "paid_launch_readiness_status=paused-no-go",
   "current_lane=NC-X2B-R1",
@@ -101,11 +104,12 @@ for (const marker of [
   "| NC-X5 | PR #755 | merged |",
   "| NC-X2A | PR #756 | merged |",
   "| NC-X2B-P0 | PR #757 | merged |",
-  "| NC-X2B-R1 | repository-only implementation | repository-implemented-not-applied; migration not-run; deploy/activation closed |",
+  "| NC-X2B-R1 | PR #760 | merged; repository-implemented-not-applied; migration not-run; deploy/activation closed |",
   "| NC-R1 | 0/8 staged rows; 9 unresolved hard requirements | no-go; activation=closed; Free=permanent |",
   "| NC-L1 | N/A | not-started; blocked by NC-R1 no-go |",
   "nc-x2b_p0_scope=capacity decision preflight; local documentation contract only",
-  "NC-X2B-R1 | repository-only implementation | repository-implemented-not-applied"
+  "NC-X2B-R1 | PR #760 | merged; repository-implemented-not-applied",
+  "PR #759 remains a contained predecessor"
 ]) {
   assert.match(board, new RegExp(marker.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")), `missing current board marker: ${marker}`);
 }
@@ -130,7 +134,9 @@ for (const marker of [
   "PR #757",
   "PR #758",
   "PR #759",
-  "57b16284094dbe83d9ed3867f5a44602f26ec939",
+  "PR #760",
+  "c775655d78a890c0a963da90c6803216d9fe82c8",
+  "8e17338ce35c72ec5e18e1683666671e79321504",
   "NC-R1 remains 0/8 staged rows, 9 unresolved hard requirements, decision=no-go, activation=closed, Free permanent, NC-L1 not-started",
   "NC-X2B-R1 is approved only for repository implementation",
   "NC-X2B-P0 Capacity Decision Preflight"
@@ -143,6 +149,9 @@ assert.doesNotMatch(architecture, /^deployment success, migration apply, product
 
 for (const marker of [
   "authority_scope=repository-only-switch-implementation",
+  "current_pr=760",
+  "current_pr_head=c775655d78a890c0a963da90c6803216d9fe82c8",
+  "current_pr_merge_integration_tip=8e17338ce35c72ec5e18e1683666671e79321504",
   "decision=eligible-for-separate-switch-approval",
   "implementation_status=repository-implemented-not-applied",
   "switch_status=repository-implemented-not-applied",

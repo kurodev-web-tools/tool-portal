@@ -6,7 +6,7 @@
 
 | Priority | Tool / work | Current status | Detail authority |
 | --- | --- | --- | --- |
-| P0-implementation | Comment Translator Creator NC-X2B-R1 thirty-day retention switch | PR #759 のmerged integration tip `57b16284094dbe83d9ed3867f5a44602f26ec939` を基準に、repository実装を完了。新migrationは未適用で、外部laneは閉鎖。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_IMPLEMENTATION_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NC_X2B_RETENTION_CAPACITY_DECISION.md`, `scripts/comment-translator-creator-nc-x2b-thirty-day-retention-switch-contract.mjs`, `scripts/comment-translator-current-task-roadmap-reconciliation-contract.mjs`, `scripts/comment-translator-creator-nc-x2b-retention-capacity-decision-contract.mjs`, `scripts/comment-translator-creator-nc-r1-paid-launch-readiness-contract.mjs` |
+| P0-implementation | Comment Translator Creator NC-X2B-R1 thirty-day retention switch | PR #760 のmerged integration tip `8e17338ce35c72ec5e18e1683666671e79321504` を基準に、repository実装を完了。新migrationは未適用で、外部laneは閉鎖。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_IMPLEMENTATION_TASK_BOARD.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md`, `docs/active/COMMENT_TRANSLATOR_CREATOR_NC_X2B_RETENTION_CAPACITY_DECISION.md`, `scripts/comment-translator-creator-nc-x2b-thirty-day-retention-switch-contract.mjs`, `scripts/comment-translator-current-task-roadmap-reconciliation-contract.mjs`, `scripts/comment-translator-creator-nc-x2b-retention-capacity-decision-contract.mjs`, `scripts/comment-translator-creator-nc-r1-paid-launch-readiness-contract.mjs` |
 | P1-readiness | Comment Translator Creator Paid launch readiness | NC-R1 control planeはmerged済みだが、Paid launch readinessはpaused NO-GO。Current NC-X2B-R1 P1 boundaryはrepository-only implementationであり、migration apply、deploy、activation、NC-L1を認可しない。Free permanentとNC-L1 not-startedを維持する。 | `docs/active/COMMENT_TRANSLATOR_CREATOR_NC_R1_PAID_LAUNCH_READINESS.md` |
 | P1-operations | Comment Translator Free public beta | Released and final production smoke complete; `public_release_capable=yes`。release-chain operator action は残っていない。 | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md` |
 | P1-maintenance | 配信カンペボード | MVP と custom delete-dialog follow-up は `main` へ merged。active follow-up は未選択。 | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
@@ -17,18 +17,18 @@
 ```text
 current_goal=comment-translator-creator-nc-x2b-r1-thirty-day-retention-switch
 current_lane=NC-X2B-R1
-current_branch=HEAD-detached-on-merged-integration-tip
+current_branch=codex/post-merge-authority-reconciliation
 current_base=origin/codex/comment-translator-free-public-beta-integration
-current_base_tip=57b16284094dbe83d9ed3867f5a44602f26ec939
-current_pr=759
+current_base_tip=8e17338ce35c72ec5e18e1683666671e79321504
+current_pr=760
 current_pr_state=merged
-current_pr_implementation_head=a53db3ff1d9af6df8ea60c0162ccc265989bc807
+current_pr_implementation_head=c775655d78a890c0a963da90c6803216d9fe82c8
 current_pr_base=codex/comment-translator-free-public-beta-integration
-current_pr_final_head=a53db3ff1d9af6df8ea60c0162ccc265989bc807
-current_pr_merge_integration_tip=57b16284094dbe83d9ed3867f5a44602f26ec939
-previous_pr=758
+current_pr_final_head=c775655d78a890c0a963da90c6803216d9fe82c8
+current_pr_merge_integration_tip=8e17338ce35c72ec5e18e1683666671e79321504
+previous_pr=759
 previous_pr_state=merged
-previous_pr_final_head=c70dc9548cb9eaee8d35533445d5021b79378262
+previous_pr_final_head=a53db3ff1d9af6df8ea60c0162ccc265989bc807
 previous_pr_merge_integration_tip=contained-in-current-integration-tip
 previous_pr_deployment_status=not-confirmed
 current_pr_deployment_status=not-confirmed
@@ -71,7 +71,7 @@ dependencies=absent-no-install-approved
 
 - PR #725 から PR #747 までに、NC-A0、NC-F1、NC-D1、NC-E1、NC-U1、NC-C1、NC-P1、NC-O1、NC-O2、NC-M1、NC-M2、NC-H1、NC-V1、NC-B1、NC-Q1 の repository implementation chain が merged 済みである。
 - PR #748 から PR #751 までに NC-R1 Paid launch readiness authority と staged-resolution control plane が merged 済みである。merge、CI、build、fixture、local evidence から deployment success や production activation を推測しない。
-- PR #753 は NC-X4 Overlay Templates、PR #754 は NC-X3 Safe CSV Export、PR #755 は NC-X5 Bounded CSV Import、PR #756 は NC-X2A Seven-Day History Search、PR #757 は NC-X2B-P0 Capacity Decision Preflight、PR #758 はNC-X2B-R1前提のintegration準備、PR #759 はNC-X2B-R1のmerged実装基盤として merged 済みである。PR #759 head `a53db3ff1d9af6df8ea60c0162ccc265989bc807` は integration tip `57b16284094dbe83d9ed3867f5a44602f26ec939` に含まれる。
+- PR #753 は NC-X4 Overlay Templates、PR #754 は NC-X3 Safe CSV Export、PR #755 は NC-X5 Bounded CSV Import、PR #756 は NC-X2A Seven-Day History Search、PR #757 は NC-X2B-P0 Capacity Decision Preflight、PR #758 はNC-X2B-R1前提のintegration準備、PR #759 はNC-X2B-R1のmerged実装基盤、PR #760 はNC-X2B-R1のrepository implementationとして merged 済みである。PR #759 head `a53db3ff1d9af6df8ea60c0162ccc265989bc807` とPR #760 head `c775655d78a890c0a963da90c6803216d9fe82c8` は integration tip `8e17338ce35c72ec5e18e1683666671e79321504` に含まれる。
 - NC-R1 は `0/8`、unresolved hard requirements `9`、decision=no-go、activation=closed、Free permanent、NC-L1 not-started のまま paused とする。deployment success、migration apply、production activation、account headroom、provider/Stripe/Cloudflare/Supabase state は未確認である。
 - deployment success, migration apply, production activation, account headroom, and provider/Stripe/Cloudflare/Supabase state remain unconfirmed.
 - NC-X2B-R1 repository switch is implemented but not applied; decision remains `eligible-for-separate-switch-approval`, deployed effective retention remains the unconfirmed seven-day baseline, and migration apply/deploy/activation remain closed or unconfirmed.

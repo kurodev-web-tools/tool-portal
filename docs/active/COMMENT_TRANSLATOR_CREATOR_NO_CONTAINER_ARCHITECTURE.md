@@ -45,15 +45,16 @@ Comment Translator Creator は、Cloudflare Containers、Docker image、managed 
 | PR #724 | `MERGED`, merge commit `f2300ec083f283fed714d7ef4962b4e61cc82e05` |
 | implementation chain | PR #725 through PR #747 are merged; NC-A0 through NC-Q1 repository implementation is present in integration history |
 | readiness chain | PR #748 through PR #751 are merged; NC-R1 remains a paused NO-GO control plane, not production activation |
-| PR #751 | final head `82c075ec8a4153e9a08a3a6b35f3c3f8a13c6fd8` is contained in current integration tip `57b16284094dbe83d9ed3867f5a44602f26ec939` |
+| PR #751 | final head `82c075ec8a4153e9a08a3a6b35f3c3f8a13c6fd8` is contained in current integration tip `8e17338ce35c72ec5e18e1683666671e79321504` |
 | PR #753 | NC-X4 Overlay Templates | merged repository fact |
 | PR #754 | NC-X3 Safe CSV Export | merged repository fact |
 | PR #755 | NC-X5 Bounded CSV Import | merged repository fact |
 | PR #756 | NC-X2A Seven-Day History Search; head `9f5e456ae05e47e7043cd63d3d93d41bd51cc0e4` | historical merged fact; contained in current integration |
 | PR #757 | NC-X2B-P0 Retention Capacity Decision Preflight; head `cf5dfaf058a184c304de3ed972c08273367b50c2` | historical merged fact; contained in current integration |
 | PR #758 | NC-X2B-R1 predecessor integration preparation; head `c70dc9548cb9eaee8d35533445d5021b79378262` | merged; contained in current integration |
-| PR #759 | NC-X2B-R1 implementation base; head `a53db3ff1d9af6df8ea60c0162ccc265989bc807` | merged; current implementation tip contains it |
-| integration | `origin/codex/comment-translator-free-public-beta-integration` = `57b16284094dbe83d9ed3867f5a44602f26ec939` |
+| PR #759 | NC-X2B-R1 implementation base; head `a53db3ff1d9af6df8ea60c0162ccc265989bc807` | historical merged fact; contained in current integration |
+| PR #760 | NC-X2B-R1 repository implementation; head `c775655d78a890c0a963da90c6803216d9fe82c8` | merged; current implementation tip |
+| integration | `origin/codex/comment-translator-free-public-beta-integration` = `8e17338ce35c72ec5e18e1683666671e79321504` |
 | main | `origin/main` = `2c92a37bb3ba4c472c3470b8db77594a4b0fca65` |
 | read-only archive | `origin/codex/archive-comment-translator-free-public-beta-integration-20260801` = `51bbba0ca9f087d590219a15a7c1516d6ec17e86` |
 | archive tree | `a2ee756bb9be8a4c7886f1ac6e3427d6334e5de4` |
@@ -199,7 +200,7 @@ flowchart LR
 
 ## NC-X2B-P0 Capacity Decision Preflight
 
-The NC-X2B-R1 repository state is reconciled here as local authority only. PR #753 (NC-X4), PR #754 (NC-X3), PR #755 (NC-X5), PR #756 (NC-X2A), PR #757 (NC-X2B-P0), PR #758, and PR #759 are merged repository facts. The thirty-day switch is repository-implemented-not-applied; the deployed effective seven-day server-clock baseline remains unconfirmed and unchanged by this task. NC-R1 remains 0/8 staged rows, 9 unresolved hard requirements, decision=no-go, activation=closed, Free permanent, NC-L1 not-started. Deployment success, migration apply, production activation, account headroom, and provider/Stripe/Cloudflare/Supabase state remain unconfirmed.
+The NC-X2B-R1 repository state is reconciled here as local authority only. PR #753 (NC-X4), PR #754 (NC-X3), PR #755 (NC-X5), PR #756 (NC-X2A), PR #757 (NC-X2B-P0), PR #758, PR #759, and PR #760 are merged repository facts; PR #760 head `c775655d78a890c0a963da90c6803216d9fe82c8` is contained in integration tip `8e17338ce35c72ec5e18e1683666671e79321504`. The thirty-day switch is repository-implemented-not-applied; the deployed effective seven-day server-clock baseline remains unconfirmed and unchanged by this task. NC-R1 remains 0/8 staged rows, 9 unresolved hard requirements, decision=no-go, activation=closed, Free permanent, NC-L1 not-started. Deployment success, migration apply, production activation, account headroom, and provider/Stripe/Cloudflare/Supabase state remain unconfirmed.
 
 NC-X2B-R1 is approved only for repository implementation. The capacity decision remains exactly `eligible-for-separate-switch-approval`; the implementation status is `repository-implemented-not-applied`. The additive migration is present but unapplied, and runtime/store/UI/contracts are synchronized to the inclusive thirty-day DB-server-clock policy. This is not a migration-apply authorization or a production/account capacity claim. Apply, remote observation, deploy, browser proof, activation, public gate, and NC-L1 remain separately approved lanes.
 
@@ -274,7 +275,7 @@ The Worker, Supabase, Azure, DeepL, OpenAI, and Stripe observations used by NC-R
 
 ## Non-Claims
 
-Repository implementation includes the merged NC-A0-through-NC-Q1 chain, the NC-R1 control plane through PR #751, and repository merge facts PR #753 (NC-X4), PR #754 (NC-X3), PR #755 (NC-X5), PR #756 (NC-X2A), PR #757 (NC-X2B-P0), PR #758, and PR #759 (NC-X2B-R1). The NC-X2B-R1 thirty-day switch is repository-implemented-not-applied. Paid launch readiness remains paused at NO-GO. This authority does not claim deploy-ready、production-ready、canonical live proof complete、all external costs free、deployment success for any listed PR、migration apply、production activation、or any new external-operation approval. Every listed merge and the R1 working diff are repository facts, not deployment or production proof. It authorizes repository-local implementation review only.
+Repository implementation includes the merged NC-A0-through-NC-Q1 chain, the NC-R1 control plane through PR #751, and repository merge facts PR #753 (NC-X4), PR #754 (NC-X3), PR #755 (NC-X5), PR #756 (NC-X2A), PR #757 (NC-X2B-P0), PR #758, PR #759, and PR #760 (NC-X2B-R1). The NC-X2B-R1 thirty-day switch is repository-implemented-not-applied. Paid launch readiness remains paused at NO-GO. This authority does not claim deploy-ready、production-ready、canonical live proof complete、all external costs free、deployment success for any listed PR、migration apply、production activation、or any new external-operation approval. Every listed merge and the R1 implementation merged in PR #760 are repository facts, not deployment or production proof. It authorizes repository-local implementation review only.
 
 ## Verification Evidence
 

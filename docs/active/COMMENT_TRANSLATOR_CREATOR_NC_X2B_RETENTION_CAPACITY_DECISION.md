@@ -5,6 +5,9 @@ authority_scope=repository-only-switch-implementation
 verified_at=2026-08-11
 decision=eligible-for-separate-switch-approval
 decision_basis=synthetic-design-capacity-model-only
+current_pr=760
+current_pr_head=c775655d78a890c0a963da90c6803216d9fe82c8
+current_pr_merge_integration_tip=8e17338ce35c72ec5e18e1683666671e79321504
 implementation_status=repository-implemented-not-applied
 switch_status=repository-implemented-not-applied
 retention_cutoff=thirty-day-repository-policy-not-applied
@@ -14,7 +17,7 @@ evidence_classes=repository-local|synthetic-design|external-account|deployed-liv
 
 ## Decision boundary
 
-NC-X2B remains a capacity-decision preflight whose recorded decision is `eligible-for-separate-switch-approval`. NC-X2B-R1 is separately approved only for a repository-local, unapplied thirty-day switch implementation. This repository status is not migration application, deployment, activation, account capacity proof, or production behavior. If any required input is missing, stale, contradictory, or not approved, future apply/activation remains fail-closed to either `keep-seven-days` or `no-go`; no other capacity decision value is valid.
+NC-X2B remains a capacity-decision preflight whose recorded decision is `eligible-for-separate-switch-approval`. NC-X2B-R1 is separately approved only for a repository-local, unapplied thirty-day switch implementation. The implementation was merged by PR #760 (head `c775655d78a890c0a963da90c6803216d9fe82c8`) into integration tip `8e17338ce35c72ec5e18e1683666671e79321504`. This repository status is not migration application, deployment, activation, account capacity proof, or production behavior. If any required input is missing, stale, contradictory, or not approved, future apply/activation remains fail-closed to either `keep-seven-days` or `no-go`; no other capacity decision value is valid.
 
 The thirty-day cutoff is implemented in repository runtime/store metadata, local guards, UI copy, focused contracts, and one unapplied additive migration. The deployed effective seven-day server-clock retention remains unconfirmed and unchanged by this task. Migration apply, remote/account/provider observation, deployment, activation, and browser proof are not part of this task.
 
@@ -31,7 +34,7 @@ deployed-live=unconfirmed-deployment-and-activation
 
 | Class | What this preflight may observe | What it does not prove |
 | --- | --- | --- |
-| `repository-local` | PR #753 NC-X4, PR #754 NC-X3, PR #755 NC-X5, PR #756 NC-X2A, PR #757 NC-X2B-P0, PR #758, PR #759, the NC-X2B-R1 migration text, and local contract results | deployment, migration apply, production behavior, or account headroom |
+| `repository-local` | PR #753 NC-X4, PR #754 NC-X3, PR #755 NC-X5, PR #756 NC-X2A, PR #757 NC-X2B-P0, PR #758, PR #759, PR #760, the NC-X2B-R1 migration text, and local contract results | deployment, migration apply, production behavior, or account headroom |
 | `synthetic-design` | S1 row/workload assumptions and deterministic arithmetic below | actual row bytes, bloat, query cost, egress, or account utilization |
 | `external-account` | no account-specific observation in this scope; status is unconfirmed | Supabase, Cloudflare, provider, Stripe configuration, quota, headroom, or approval |
 | `deployed-live` | no deployed/live observation in this scope; status is unconfirmed | deployment success, activation, browser behavior, or public availability |

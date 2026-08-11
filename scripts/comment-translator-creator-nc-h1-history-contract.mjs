@@ -25,6 +25,7 @@ const runtimeSource = read("lib/comment-translator-creator-history-runtime.ts");
 const storeSource = read("lib/comment-translator-creator-history-store.ts");
 const typesSource = read("lib/comment-translator-creator-history-types.ts");
 const migrationSource = read("supabase/migrations/20260802040000_comment_translator_creator_safe_history.sql");
+const retentionMigrationSource = read("supabase/migrations/20260811010000_comment_translator_creator_thirty_day_history_retention.sql");
 const historyActionsSource = read("app/tools/comment-translator/history-actions.ts");
 const aggregateActionsSource = read("app/tools/comment-translator/actions.ts");
 const panelSource = read("components/comment-translator/CommentTranslatorCreatorHistoryPanel.tsx");
@@ -56,7 +57,7 @@ const projection = await importTypeScript(
 const runtime = await importTypeScript(runtimeSource.replace('import "server-only";', ""));
 
 const nowMs = Date.parse("2026-08-02T12:00:00.000Z");
-const cutoffMs = nowMs - 7 * 24 * 60 * 60 * 1000;
+const cutoffMs = nowMs - 30 * 24 * 60 * 60 * 1000;
 const safeFeedRow = {
   messageReferenceId: "fixture-message",
   sourceAttributionLabel: "Source: YouTube Live Chat",
@@ -133,7 +134,7 @@ assert.equal(
     nowMs
   }),
   null,
-  "source timestamps older than the inclusive seven-day window fail closed before persistence"
+  "source timestamps older than the inclusive thirty-day effective window fail closed before persistence"
 );
 
 const storedBoundaryRow = {
@@ -152,7 +153,7 @@ const storedBoundaryRow = {
 assert.equal(
   runtime.isCommentTranslatorCreatorSafeHistoryWithinInclusiveCutoff({ sourcePublishedAtIso: storedBoundaryRow.sourcePublishedAtIso, nowMs }),
   true,
-  "the seven-day cutoff is inclusive at the exact UTC boundary"
+  "the thirty-day effective cutoff is inclusive at the exact UTC boundary"
 );
 assert.equal(
   runtime.isCommentTranslatorCreatorSafeHistoryWithinInclusiveCutoff({ sourcePublishedAtIso: new Date(cutoffMs - 1).toISOString(), nowMs }),
@@ -401,6 +402,11 @@ for (const marker of [
   "grant execute on function",
   "to service_role"
 ]) assert.match(migrationSource, new RegExp(escapeRegExp(marker), "i"), `NC-H1 migration marker: ${marker}`);
+assert.match(runtimeSource, /retention:\s*["']inclusive-thirty-days-server-clock-rpc["']/i, "effective runtime retention is thirty days");
+assert.match(retentionMigrationSource, /create or replace function public\.append_comment_translator_creator_safe_history/i, "NC-X2B-R1 preserves the append RPC in a new migration");
+assert.match(retentionMigrationSource, /create or replace function public\.read_comment_translator_creator_safe_history/i, "NC-X2B-R1 preserves the read RPC in a new migration");
+assert.match(retentionMigrationSource, /create or replace function public\.search_comment_translator_creator_safe_history/i, "NC-X2B-R1 preserves the search RPC in a new migration");
+assert.equal((retentionMigrationSource.match(/interval\s+'30 days'/gi) ?? []).length, 3, "effective retention migration has three thirty-day cutoffs");
 assert.match(migrationSource, /message_correlation_digest\s+text\s+not\s+null/i, "the table stores only a server-side fixed-format correlation digest");
 assert.match(migrationSource, /source_published_at\s+timestamptz\s+not\s+null/i, "the table retains the safe source timestamp separately from audit time");
 assert.match(migrationSource, /'evaluated_at'\s*,\s*v_now/i, "read returns the authoritative DB evaluation clock with its rows");
@@ -456,7 +462,7 @@ assert.match(panelSource, /w-full/, "the panel has a width-safe layout class");
 for (const state of ["ready", "unavailable", "deleted"]) assert.match(panelSource, new RegExp(`status\\s*===\\s*["']${state}["']`), `panel renders the ${state} state`);
 assert.doesNotMatch(panelSource, /messageReferenceId|ownerUserId|sessionReferenceId|liveChatId|rawProviderPayload|rawComments|localStorage|sessionStorage|indexedDB|searchParams|console\./i, "the panel has no identifiers, private fields, browser storage, or logs");
 
-process.stdout.write("comment translator NC-H1 seven-day safe history contract passed\n");
+process.stdout.write("comment translator NC-H1 historical seven-day migration and effective thirty-day safe history contract passed\n");
 
 function createFixtureStore({
   nowMs = Date.parse("2026-08-02T12:00:00.000Z"),
@@ -491,7 +497,7 @@ function createFixtureStore({
           sessionReferenceId: `expired-${index}`,
           row: {
             ...toBrowserSafeRow(projected, nowMs),
-            sourcePublishedAtIso: new Date(nowMs - 7 * 24 * 60 * 60 * 1000 - 1).toISOString()
+            sourcePublishedAtIso: new Date(nowMs - 30 * 24 * 60 * 60 * 1000 - 1).toISOString()
           }
         });
       }
@@ -543,7 +549,7 @@ function createFixtureStore({
 }
 
 function removeExpiredOwnerRecords(records, ownerUserId, nowMs) {
-  const cutoffMs = nowMs - 7 * 24 * 60 * 60 * 1000;
+  const cutoffMs = nowMs - 30 * 24 * 60 * 60 * 1000;
   for (const [key, record] of records) {
     if (record.ownerUserId === ownerUserId && Date.parse(record.row.sourcePublishedAtIso) < cutoffMs) records.delete(key);
   }

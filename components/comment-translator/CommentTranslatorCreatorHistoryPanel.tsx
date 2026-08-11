@@ -73,7 +73,7 @@ export function CommentTranslatorCreatorHistoryPanel({
         <header className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
           <div>
             <p className="text-sm text-slate-600">Creator</p>
-            <h2 id="creator-history-title" className="text-lg font-semibold">Seven-day safe history</h2>
+            <h2 id="creator-history-title" className="text-lg font-semibold">Thirty-day safe history</h2>
           </div>
           <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600">
             <label className="flex items-center gap-2">
@@ -86,7 +86,7 @@ export function CommentTranslatorCreatorHistoryPanel({
             <span>{filteredRows.length} safe items</span>
           </div>
         </header>
-        <form onSubmit={submitSearch} className="mb-4 grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]" aria-label="Search seven-day safe history">
+        <form onSubmit={submitSearch} className="mb-4 grid min-w-0 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]" aria-label="Search thirty-day safe history">
           <label className="min-w-0">
             <span className="sr-only">Search safe history</span>
             <input
@@ -106,7 +106,7 @@ export function CommentTranslatorCreatorHistoryPanel({
           <p id="creator-history-search-help" className="text-xs text-slate-500 sm:col-span-2">Search uses only the safe author and comment text fields. Search is unavailable until the server-owned callback is wired.</p>
         </form>
         <div className="mb-4 rounded-md bg-slate-50 p-3 text-sm text-slate-600">
-          <p>Only the existing seven-day safe-history window is exported. Current retention and deletion rules continue to apply. Downloading does not delete server history or local copies.</p>
+          <p>Only the existing thirty-day safe-history window is exported. Current retention and deletion rules continue to apply. Downloading does not delete server history or local copies.</p>
           <a href="/api/comment-translator/history/export" download className="mt-2 inline-block font-medium text-indigo-700 underline">Download safe history CSV</a>
         </div>
         {filteredRows.length === 0 ? (
@@ -157,7 +157,7 @@ function HistoryRow({ row }: { readonly row: CommentTranslatorCreatorSafeHistory
 function HistoryUnavailable() {
   return (
     <section className="w-full max-w-3xl rounded-lg border border-slate-200 bg-white p-4 text-slate-900" aria-live="polite" aria-labelledby="creator-history-title">
-      <h2 id="creator-history-title" className="text-lg font-semibold">Seven-day safe history unavailable</h2>
+      <h2 id="creator-history-title" className="text-lg font-semibold">Thirty-day safe history unavailable</h2>
       <p role="status" className="mt-2 text-sm text-slate-600">Safe history is unavailable.</p>
     </section>
   );
@@ -166,7 +166,7 @@ function HistoryUnavailable() {
 function HistoryDeleted() {
   return (
     <section className="w-full max-w-3xl rounded-lg border border-slate-200 bg-white p-4 text-slate-900" aria-live="polite" aria-labelledby="creator-history-title">
-      <h2 id="creator-history-title" className="text-lg font-semibold">Seven-day safe history deleted</h2>
+      <h2 id="creator-history-title" className="text-lg font-semibold">Thirty-day safe history deleted</h2>
       <p role="status" className="mt-2 text-sm text-slate-600">Safe history has been deleted.</p>
     </section>
   );

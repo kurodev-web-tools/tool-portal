@@ -6,8 +6,10 @@ import { stripTypeScriptTypes } from "node:module";
 const root = process.cwd();
 const searchMigrationPath = "supabase/migrations/20260810010000_comment_translator_creator_history_search.sql";
 const h1MigrationPath = "supabase/migrations/20260802040000_comment_translator_creator_safe_history.sql";
+const retentionMigrationPath = "supabase/migrations/20260811010000_comment_translator_creator_thirty_day_history_retention.sql";
 const requiredFiles = [
   searchMigrationPath,
+  retentionMigrationPath,
   "lib/comment-translator-creator-history-types.ts",
   "lib/comment-translator-creator-history-store.ts",
   "lib/comment-translator-creator-history-runtime.ts",
@@ -28,6 +30,7 @@ const aggregateActionsSource = read("app/tools/comment-translator/actions.ts");
 const panelSource = read("components/comment-translator/CommentTranslatorCreatorHistoryPanel.tsx");
 const migrationSource = read(searchMigrationPath);
 const h1MigrationSource = read(h1MigrationPath);
+const retentionMigrationSource = read(retentionMigrationPath);
 const accountActionsSource = read("app/tools/comment-translator/account-actions.ts");
 const retentionActionsSource = read("app/tools/comment-translator/retention-waitlist-actions.ts");
 
@@ -58,8 +61,18 @@ assert.match(migrationSource, /order\s+by[\s\S]{0,160}source_published_at\s+desc
 assert.match(migrationSource, /next_cursor/i, "RPC returns at most one opaque next cursor");
 assert.doesNotMatch(migrationSource, /['"]total['"]|count\s*\(\s*\*\s*\)\s+as\s+total/i, "RPC does not expose a total count");
 assert.match(migrationSource, /source_published_at\s*>=\s*v_cutoff/i, "NC-X2A keeps the inclusive source-time cutoff");
-assert.match(migrationSource, /v_cutoff(?:\s+timestamptz)?\s*:=\s*[\s\S]{0,80}interval\s+'7 days'/i, "NC-X2A keeps seven-day retention in the server-clock RPC");
-assert.doesNotMatch(migrationSource, /interval\s+'30 days'|30[- ]day|thirty[- ]day/i, "NC-X2A does not switch retention to thirty days");
+assert.match(migrationSource, /v_cutoff(?:\s+timestamptz)?\s*:=\s*[\s\S]{0,80}interval\s+'7 days'/i, "historical NC-X2A keeps its seven-day server-clock migration fact");
+assert.doesNotMatch(migrationSource, /interval\s+'30 days'|30[- ]day|thirty[- ]day/i, "historical NC-X2A does not itself switch retention to thirty days");
+assert.deepEqual(
+  [...retentionMigrationSource.matchAll(/create\s+or\s+replace\s+function\s+public\.([a-z0-9_]+)/gi)].map((match) => match[1]),
+  [
+    "append_comment_translator_creator_safe_history",
+    "read_comment_translator_creator_safe_history",
+    "search_comment_translator_creator_safe_history"
+  ],
+  "NC-X2B-R1 adds the three-RPC thirty-day switch separately from historical NC-X2A"
+);
+assert.equal((retentionMigrationSource.match(/interval\s+'30 days'/gi) ?? []).length, 3, "NC-X2B-R1 makes the effective cutoff thirty days in all three RPCs");
 assert.match(migrationSource, /revoke\s+all\s+on\s+function[\s\S]{0,180}search_comment_translator_creator_safe_history/i, "search RPC direct execution is revoked from public roles");
 assert.match(migrationSource, /grant\s+execute\s+on\s+function[\s\S]{0,180}search_comment_translator_creator_safe_history[\s\S]{0,80}to\s+service_role/i, "only service_role receives search RPC execution");
 assert.match(migrationSource, /cursor[\s\S]{0,1800}(?:owner_digest|owner_binding)[\s\S]{0,1200}(?:query_digest|query_binding)/i, "cursor binds to the server-derived owner and normalized query without returning private identifiers");
@@ -78,7 +91,7 @@ assert.match(storeSource, /p_cursor/, "store passes only the previously returned
 assert.doesNotMatch(storeSource, /\.from\(/, "search store retains RPC-only table access");
 assert.doesNotMatch(storeSource, /console\.|reason.*(?:owner|session|query|cursor)/i, "store has no reason-detail or payload logging");
 assert.match(runtimeSource, /search:\s*\(/, "runtime exposes a search seam");
-assert.match(runtimeSource, /retention:\s*["']inclusive-seven-days-server-clock-rpc["']/, "runtime retains seven-day server-clock retention");
+assert.match(runtimeSource, /retention:\s*["']inclusive-thirty-days-server-clock-rpc["']/, "runtime records the effective thirty-day server-clock retention");
 assert.match(runtimeSource, /query:\s*unknown|input:\s*unknown/, "runtime parses untrusted search input before store access");
 assert.match(runtimeSource, /nextCursor/, "runtime validates and returns the opaque cursor only");
 assert.match(runtimeSource, /cleanupWiring:\s*["']oauth-disconnect-wired-account-deletion-seam-not-authoritative["']/, "cleanup wiring distinguishes OAuth disconnect from missing account-deletion execution");
@@ -100,8 +113,8 @@ assert.match(panelSource, /<form[\s\S]{0,800}(?:Search|search)/, "panel provides
 assert.match(panelSource, /Clear|clear/, "panel provides a clear control");
 assert.match(panelSource, /Load more|load more/i, "panel provides a bounded load-more control");
 assert.match(panelSource, /No safe history matches|No safe history is available/, "panel has a safe empty-search state");
-assert.match(panelSource, /Seven-day safe history/, "panel keeps exact seven-day copy");
-assert.doesNotMatch(panelSource, /Thirty-day|thirty-day|30-day|30 days/i, "panel does not claim thirty-day retention");
+assert.match(panelSource, /Thirty-day safe history/, "panel keeps exact thirty-day effective copy");
+assert.doesNotMatch(panelSource, /Seven-day|seven-day|7-day|7 days/i, "panel has no stale seven-day effective copy");
 assert.doesNotMatch(panelSource, /fetch\s*\(|useEffect|localStorage|sessionStorage|indexedDB|searchParams|console\.|ownerUserId|sessionReferenceId|messageReferenceId|liveChatId|rawProvider/i, "panel remains deterministic props-only with no browser authority, persistence, or logs");
 assert.match(panelSource, /min-w-0|break-words|overflow-x-auto/, "panel controls and rows are overflow-safe");
 
@@ -185,7 +198,7 @@ assert.equal(
   "missing paid authority is sanitized unavailable"
 );
 
-process.stdout.write("comment translator Creator NC-X2A bounded seven-day search contract passed\n");
+process.stdout.write("comment translator Creator NC-X2A historical search and NC-X2B-R1 thirty-day retention contract passed\n");
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");

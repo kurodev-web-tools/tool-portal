@@ -17,7 +17,7 @@ export type CommentTranslatorCreatorSafeHistorySupabaseClient = {
 };
 
 export const commentTranslatorCreatorSafeHistoryStoreContract = {
-  implementationStage: "nc-x2a-local-seven-day-bounded-search-store",
+  implementationStage: "nc-x2b-r1-local-thirty-day-bounded-search-store",
   runtime: "server-only",
   tableName: "comment_translator_creator_safe_history",
   rowAccess: "trusted-service-role-rpc-only",
@@ -28,7 +28,7 @@ export const commentTranslatorCreatorSafeHistoryStoreContract = {
   searchFields: "author-display-name-original-text-translated-text-only",
   cursor: "opaque-owner-and-query-bound-pagination-key-only",
   cleanupAuthority: "atomic-rpc-owner-derived-server-only",
-  retention: "seven-days-inclusive-server-clock-only",
+  retention: "thirty-days-inclusive-server-clock-only",
   directTableCrud: "forbidden",
   remoteSupabaseMigrationApply: "not-run-in-this-thread",
   productionLiveOperation: "fixed-closed"

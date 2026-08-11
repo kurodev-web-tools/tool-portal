@@ -4344,6 +4344,21 @@ const checklist = read(checklistPath);
 const ncQ1Authority = read(ncQ1AuthorityPath);
 const ncQ1Checklist = read(ncQ1ChecklistPath);
 const crosswalk = read(crosswalkPath);
+for (const marker of [
+  "current_goal=comment-translator-creator-nc-x2b-r1-thirty-day-retention-switch",
+  "current_lane=NC-X2B-R1",
+  "implementation_status=repository-implemented-not-applied",
+  "current_staged_rows_satisfied=0/8",
+  "current_unresolved_hard_requirements=9",
+  "activation_status=closed",
+  "free_behavior=permanent",
+  "nc_l1_status=not-started",
+  "migration_apply_status=not-run",
+  "production_activation=closed"
+]) assert.match(currentTask, new RegExp(escapeRegExp(marker)), `current authority remains reconciled: ${marker}`);
+assert.doesNotMatch(currentTask, /retention_switch=unapproved-unimplemented|search_retention=inclusive-seven-days-server-clock-unchanged/);
+assert.match(currentTask, /Current NC-X2B-R1 P1 boundary/, "current P1 readiness must use the NC-X2B-R1 repository-only boundary");
+assert.doesNotMatch(currentTask, /Current NC-X2B-P0 boundary/, "current P1 readiness must not retain the superseded NC-X2B-P0 boundary");
 // NC-R1 remains a paused historical control plane. Validate the exact task snapshot
 // that accompanied it instead of forcing current task selection to retain old history.
 const task = read(historicalTaskPath);
@@ -11590,7 +11605,7 @@ assert.throws(
 // Regression: a current unrelated lane must not be treated as an NC-R1 staged-resolution transition.
 assert.doesNotThrow(
   () => assertCurrentWorktreePathSafety({
-    currentTask: "current_goal=comment-translator-creator-post-pr757-authority-contract-reconciliation\ncurrent_lane=NC-X2B-P0\nimplementation_status=post-pr757-authority-reconciliation",
+    currentTask: "current_goal=comment-translator-creator-nc-x2b-r1-thirty-day-retention-switch\ncurrent_lane=NC-X2B-R1\nimplementation_status=repository-implemented-not-applied",
     changedPaths: ["docs/active/COMMENT_TRANSLATOR_CREATOR_NC_X2B_RETENTION_CAPACITY_DECISION.md"],
     phase: "manifest-creation"
   }),

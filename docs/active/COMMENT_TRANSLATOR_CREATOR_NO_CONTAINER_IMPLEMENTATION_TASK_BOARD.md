@@ -3,6 +3,10 @@
 ```text
 verified_at=2026-08-11
 repository_state_reconciled_at=2026-08-11
+current_pr=760
+current_pr_state=merged
+current_pr_head=c775655d78a890c0a963da90c6803216d9fe82c8
+current_pr_merge_integration_tip=8e17338ce35c72ec5e18e1683666671e79321504
 architecture_authority=docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_ARCHITECTURE.md
 crosswalk_authority=docs/active/COMMENT_TRANSLATOR_CREATOR_NO_CONTAINER_LEGACY_CROSSWALK.md
 first_implementation_pr=NC-F1-completed-pr726
@@ -57,7 +61,7 @@ This ledger records repository merge state only. It does not prove deployment、
 | NC-X5 | PR #755 | merged |
 | NC-X2A | PR #756 | merged |
 | NC-X2B-P0 | PR #757 | merged |
-| NC-X2B-R1 | repository-only implementation | repository-implemented-not-applied; migration not-run; deploy/activation closed |
+| NC-X2B-R1 | PR #760 | merged; repository-implemented-not-applied; migration not-run; deploy/activation closed |
 | NC-L1 | N/A | not-started; blocked by NC-R1 no-go |
 | NC-X2B | PR #757 + NC-X2B-R1 repository scope | capacity decision retained; repository-implemented-not-applied |
 
@@ -535,4 +539,4 @@ flowchart TD
 
 NC-A0 through NC-Q1 are merged repository implementation history. NC-R1's authority and staged-resolution control plane are merged, but paid launch readiness is paused at NO-GO with `0/8` staged rows satisfied, nine unresolved hard requirements, activation closed, Free permanent, and NC-L1 not-started. No next implementation lane is approved automatically.
 
-Current NC-X2B-R1 repository state is: PR #759 is merged into integration tip `57b16284094dbe83d9ed3867f5a44602f26ec939`; the thirty-day repository switch is implemented but not applied, and the deployed seven-day baseline remains unconfirmed. The additive migration, runtime/store metadata, UI copy, focused contracts, and authority reconciliation are repository-local evidence only. Migration apply, remote/account/provider read/write, dependency installation, deploy, browser QA, activation, publication, and other external operations remain separately gated. NC-X1 remains gated by NC-L1 or a separate explicit post-MVP approval, NC-X6 remains gated by a product decision, and NC-X7 remains gated by exact provider、cost/data-use、and separate live-call approvals. NC-X8 and NC-X9 remain outside the current paused readiness boundary。
+Current NC-X2B-R1 repository state is: PR #760 head `c775655d78a890c0a963da90c6803216d9fe82c8` is merged into integration tip `8e17338ce35c72ec5e18e1683666671e79321504`; PR #759 remains a contained predecessor. The thirty-day repository switch is implemented but not applied, and the deployed seven-day baseline remains unconfirmed. The additive migration, runtime/store metadata, UI copy, focused contracts, and authority reconciliation are repository-local evidence only. Migration apply, remote/account/provider read/write, dependency installation, deploy, browser QA, activation, publication, and other external operations remain separately gated. NC-X1 remains gated by NC-L1 or a separate explicit post-MVP approval, NC-X6 remains gated by a product decision, and NC-X7 remains gated by exact provider、cost/data-use、and separate live-call approvals. NC-X8 and NC-X9 remain outside the current paused readiness boundary。

@@ -75,7 +75,7 @@ dependencies=absent-no-install-approved
 - NC-R1 は `0/8`、unresolved hard requirements `9`、decision=no-go、activation=closed、Free permanent、NC-L1 not-started のまま paused とする。deployment success、migration apply、production activation、account headroom、provider/Stripe/Cloudflare/Supabase state は未確認である。
 - deployment success, migration apply, production activation, account headroom, and provider/Stripe/Cloudflare/Supabase state remain unconfirmed.
 - NC-X2B-R1 repository switch is implemented but not applied; decision remains `eligible-for-separate-switch-approval`, deployed effective retention remains the unconfirmed seven-day baseline, and migration apply/deploy/activation remain closed or unconfirmed.
-- 別 worktree の未公開 A3 successor draft は repository authority ではなく、この task へ取り込まない。account-specific pricing document の存在、manual read、result、row closure を推測しない。
+- 別 worktree の未公開 A3 successor draft は repository authority ではなく、この task へ取り込まない。現行 A3 は `NC-R1-A3-STRIPE-ACCOUNT-PRICING-DOCUMENT-MANUAL-20260811-01` の approved partial-stop として、source_document_available=unavailable、direct_account_specific_base_processing_fee_available=unavailable、standard_custom_applicability=standard、Custom usage=none、public standard pricing の返金/ dispute / currency-conversion coverage を記録した。ただし exact applied cost、account-specific terms、tax/effective scope は未完了で、EVID-STRIPE-COST の row_closure=none。A4 は unapproved / not rebound のままとする。
 - NC-L1 は NC-R1 explicit GO と zero unresolved hard requirements が揃うまで開始しない。
 
 ## Current Implementation Selection

@@ -2,7 +2,7 @@
 
 ## Scope
 
-- This file applies to all work under `D:/V_streamer_tools`.
+- This file applies to this repository and all checkouts and worktrees derived from it.
 - Keep tool-specific details in `task.md` and `docs/*`. Keep this file focused on project-wide operating rules.
 
 ## Execution Baseline

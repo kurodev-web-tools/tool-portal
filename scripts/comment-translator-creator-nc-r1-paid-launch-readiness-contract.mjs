@@ -15,7 +15,7 @@ const historicalTaskPath = "docs/archive/task-board-pre-2026-08-10-current-state
 const sourceCheckedAt = "2026-08-06";
 const sourceMaxAgeDays = 7;
 const sourceFreshnessTimeZone = "Asia/Tokyo";
-const parsedResultEvaluationAt = "2026-08-10T23:59:59Z";
+const parsedResultEvaluationAt = "2026-08-11T14:59:59Z";
 const fingerprintCanonicalizationVersion = "nc-r1-sanitized-fingerprint-v1";
 const sanitizedFingerprintPattern = /^sha256:[a-f0-9]{64}$/;
 const canonicalCompletedStripeCostPartialStopSectionSha256 = "31C4EDDF6D1E60F97D7CE876BD72E74E67FD78474B09BD3021364847E4F327EE";
@@ -4533,6 +4533,7 @@ for (const marker of [
   "## Completed Authenticated-Private Supabase Backup Prerequisite Input",
   "## Approved Partial-Stop Authenticated-Private Provider Cost Evidence",
   "## Completed Release-Owner Provider Funding-Posture Decision",
+  "## Completed A2 Provider Cost Sanitized Result",
   "## Approved Partial-Stop Authenticated-Private Stripe Cost Evidence",
   "## Approved Post-Read Partial-Stop Authenticated-Private Stripe Base-Fee Evidence",
   "## Completed Release-Owner Support Posture Decision",
@@ -4547,12 +4548,12 @@ for (const marker of [
 
 assert.equal(readTextField(readiness, "source_checked_at"), sourceCheckedAt, "source_checked_at must retain the task-time source check");
 assert.equal(readTextField(readiness, "source_max_age_days"), String(sourceMaxAgeDays), "source_max_age_days must retain the bounded policy");
-assert.equal(readTextField(readiness, "evaluation_at"), "2026-08-10T23:59:59Z", "readiness must retain the sanitized parsed-result evaluation anchor");
+assert.equal(readTextField(readiness, "evaluation_at"), "2026-08-11T14:59:59Z", "readiness must retain the sanitized parsed-result evaluation anchor");
 assert.equal(readTextField(readiness, "source_freshness_timezone"), sourceFreshnessTimeZone, "source freshness timezone must retain the repository policy");
 assertSourceFreshness(sourceCheckedAt);
 assert.equal(readTextField(readiness, "current_unresolved_hard_requirement_count"), "9", "readiness status must retain the current 9-row unresolved count after approved SLA posture closure");
 assert.match(checklist, /source_max_age_days=7/, "operator checklist must retain the source freshness policy");
-assert.match(checklist, /evaluation_at=2026-08-10T23:59:59Z/, "operator checklist must retain the sanitized parsed-result evaluation anchor");
+assert.match(checklist, /evaluation_at=2026-08-11T14:59:59Z/, "operator checklist must retain the sanitized parsed-result evaluation anchor");
 assert.match(checklist, /source_freshness_timezone=Asia\/Tokyo/, "operator checklist must retain the source freshness timezone");
 assert.match(checklist, /current_unresolved_hard_requirement_count=9/, "operator checklist must retain the current 9-row unresolved count after approved SLA posture closure");
 assert.equal(readUniqueTextField(readiness, "continuation_pr"), "749", "continuation PR must retain the exact intake number");
@@ -5044,6 +5045,17 @@ validateA2ProviderCostObservedResultTemplate(a2ProviderCostObservedResultTemplat
 const a2ProviderCostObservedResultTemplateReadiness = parseA2ProviderCostObservedResultTemplate(readiness);
 validateA2ProviderCostObservedResultTemplate(a2ProviderCostObservedResultTemplateReadiness);
 assert.deepEqual(a2ProviderCostObservedResultTemplateReadiness.fields, a2ProviderCostObservedResultTemplate.fields, "readiness and checklist must retain the same exact non-evidence A2 Provider Cost result template");
+const completedA2ProviderCostObservedResult = parseA2ProviderCostObservedResultRecord(checklist);
+const completedA2ProviderCostObservedResultReadiness = parseA2ProviderCostObservedResultRecord(readiness);
+assert.deepEqual(completedA2ProviderCostObservedResultReadiness.fields, completedA2ProviderCostObservedResult.fields, "readiness and checklist must retain the same exact current A2 Provider Cost observed result");
+const currentA2ProviderCostChild = parseStagedChildren(checklist).find((child) => child.headingId === "A2-provider-cost-evidence-read").fields;
+const currentA2FundingReferenceChild = parseStagedChildren(checklist).find((child) => child.headingId === "A2-provider-funding-external-prerequisite-reference").fields;
+validateA2ProviderCostObservedResultRecord(completedA2ProviderCostObservedResult, currentA2ProviderCostChild);
+assert.equal(
+  completedA2ProviderCostObservedResult.fields.funding_prerequisite_fingerprint,
+  deriveFundingPrerequisiteFingerprint(currentA2FundingReferenceChild, completedA2ProviderCostObservedResult.fields.bound_a0_cost_model_input_fingerprint, "N/A", "N/A"),
+  "current partial-stop A2 result must bind the deterministic undetermined funding-prerequisite state"
+);
 const a3StripePricingDocumentResultTemplate = parseA3StripePricingDocumentResultTemplate(checklist);
 validateA3StripePricingDocumentResultTemplate(a3StripePricingDocumentResultTemplate);
 const a3StripePricingDocumentResultTemplateReadiness = parseA3StripePricingDocumentResultTemplate(readiness);
@@ -7830,6 +7842,23 @@ function validateStagedLedgerCrossValidation(rowRecords, childRecords, ledger, s
     return [childId, record];
   }));
   assert.equal(a2ObservedResultByChildId.size, a2ObservedResultRecords.length, "A2 observed result records must keep unique independent child IDs");
+  if (a2ObservedResultRecords.length > 0) {
+    assert.equal(a2ObservedResultRecords.length, 1, "A2 observed result collection requires exactly one independent record");
+    const observedA2Child = childById.get("A2-provider-cost-evidence-read");
+    assert.ok(
+      observedA2Child?.approval === "approved"
+        && ["approved-not-started", "running", "partial-stop", "complete-not-closure-eligible", "satisfied"].includes(observedA2Child?.child_status),
+      "A2 observed result requires an approved A2 child lifecycle state"
+    );
+    validateA2ProviderCostObservedResultRecord(a2ObservedResultRecords[0], observedA2Child, { requireComplete: observedA2Child.child_status === "satisfied" });
+    if (observedA2Child.child_status === "partial-stop" && fundingReferenceChild?.funding_requirement_state === "undetermined") {
+      assert.equal(
+        observedA2Child.funding_prerequisite_fingerprint,
+        deriveFundingPrerequisiteFingerprint(fundingReferenceChild, a0Child.cost_model_input_fingerprint, "N/A", "N/A"),
+        "partial-stop A2 must bind the deterministic undetermined funding-prerequisite state"
+      );
+    }
+  }
   const a1ObservedResultByChildId = new Map(a1ObservedResultRecords.map((record) => {
     const fields = record?.fields ?? record;
     const childId = assertRequiredParsedTextField(fields, "child_id", "A1 parsed observed result record");
@@ -8591,12 +8620,28 @@ assertParsedRegistrySchema("A1-worker-cpu-evidence-read", {
   result_fingerprint: "sha256:d883c19953a44d979e89bd2790ae03ea0a04527d309063478c4ed64a47cf6c7e"
 });
 assertParsedRegistrySchema("A2-provider-cost-evidence-read", {
-  source_timestamp: "<required-date-parse-valid-source-timestamp>",
-  dependency_fingerprint: "<required-sha256-fingerprint>",
-  funding_prerequisite_fingerprint: "<required-sha256-fingerprint>",
-  cost_model_fingerprint: "<required-sha256-fingerprint>",
-  observed_record_fingerprint: "<required-sha256-fingerprint>",
-  result_fingerprint: "<required-sha256-fingerprint>"
+  approval_id: "NC-R1-A2-PROVIDER-COST-MANUAL-20260811-01",
+  explicit_decision: "approved",
+  exact_target_or_scope: "creator-paid-primary-openai-provider-account-usage-cost-scope-v1",
+  requested_operation: "authenticated-private-read-openai-provider-source-funding-usage-aggregation-and-gpt-4o-mini-standard-price-applicability-classification-only",
+  time_window: "2026-08-11T00:00:00+09:00/2026-08-11T23:59:59+09:00",
+  operator: "kurodev-manual-current-task",
+  source_timestamp: "2026-08-11T16:44:55+09:00",
+  sanitized_exact_cost: "unconfirmed",
+  applicability: "unknown",
+  dependency_fingerprint: "sha256:d8f403f21571bc48098f9989394c3bef547455090dc922efaa071d0aa7938531",
+  funding_prerequisite_fingerprint: "sha256:6bde36f178213274d44dd1891e7eb85390a58f55c322b3c91d3d99d50d7ad022",
+  cost_model_fingerprint: "sha256:556eec82d0d4427fc0f760e5f4ae3fd57e40abfd31ac6f961aef0a7dd8b82314",
+  observed_record_fingerprint: "sha256:081738a7080ec825c8b7b5604613bd00eda61d7e4e4b0acf531d0574b7c119f5",
+  result_fingerprint: "sha256:556eec82d0d4427fc0f760e5f4ae3fd57e40abfd31ac6f961aef0a7dd8b82314",
+  child_status: "partial-stop",
+  freshness: "fresh",
+  target: "unconfirmed",
+  approval: "approved",
+  fingerprint_bound: "yes",
+  prior_approved_or_started: "yes",
+  stop_or_drift_cause: "target-cost-applicability-incomplete",
+  dependent_stop_result: "derived-canonical-reverse-dependency-graph"
 });
 assertParsedRegistrySchema("A3-stripe-source-applicability-read-or-judgment", {
   source_timestamp: "<required-date-parse-valid-source-timestamp-or-N-A>",
@@ -8634,7 +8679,15 @@ assertParsedRegistrySchema("B2-live-paid-flow-evidence", {
   signed_evidence_fingerprint: "<required-sha256-fingerprint>",
   b2_scenario_result_ids: "<required-exact-19-unique-scenario-result-ids>"
 });
-assert.doesNotThrow(() => validateParsedStagedFixture(parseStagedRows(checklist), parseStagedChildren(checklist)));
+assert.doesNotThrow(() => validateParsedStagedFixture(
+  parseStagedRows(checklist),
+  parseStagedChildren(checklist),
+  evidenceRows,
+  [],
+  [],
+  [],
+  [completedA2ProviderCostObservedResult]
+));
 const fundingReferenceExpected = stagedChildDefinitions.find((child) => child.id === "A2-provider-funding-external-prerequisite-reference");
 const unapprovedFundingReference = parsedStagedChildren.find((child) => child.headingId === "A2-provider-funding-external-prerequisite-reference").fields;
 assert.throws(() => validateStagedChildRecord({ ...unapprovedFundingReference, funding_requirement_state: "not-needed" }, fundingReferenceExpected), /separate owner approval fingerprint|separate disposition record fingerprint/);
@@ -9115,7 +9168,7 @@ assert.throws(() => validateSatisfiedStructuredResult({ ...validB1StructuredResu
 assert.throws(() => validateB1ParsedEvidenceRecord({ ...validB1ProofRecord, source_timestamp: "2026-08-99T00:15:00Z" }, validB1StructuredResult), /RFC3339 calendar day|Date\.parse/);
 assert.throws(() => validateB1ParsedEvidenceRecord({ ...validB1ProofRecord, source_timestamp: "2026-08-09T02:15:00Z" }, validB1StructuredResult), /exact operation window/);
 assert.throws(() => validateB1ParsedEvidenceRecord({ ...validB1ProofRecord, source_timestamp: "2026-08-01T00:15:00Z", time_window: "2026-08-01T00:00:00Z/2026-08-01T01:00:00Z" }, validB1StructuredResult), /stale/);
-assert.throws(() => validateB1ParsedEvidenceRecord({ ...validB1ProofRecord, source_timestamp: "2026-08-11T00:15:00Z", time_window: "2026-08-11T00:00:00Z/2026-08-11T01:00:00Z" }, validB1StructuredResult), /future/);
+assert.throws(() => validateB1ParsedEvidenceRecord({ ...validB1ProofRecord, source_timestamp: "2026-08-12T00:15:00Z", time_window: "2026-08-12T00:00:00Z/2026-08-12T01:00:00Z" }, validB1StructuredResult), /future/);
 for (const judgmentChildId of ["A4-product-price-judgment", "A5-legal-judgment", "A6-copy-judgment"]) {
   const judgmentResult = {
     child_id: judgmentChildId,

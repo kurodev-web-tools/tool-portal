@@ -8,7 +8,7 @@
 current_decision=no-go
 activation_status=closed
 source_max_age_days=7
-evaluation_at=2026-08-10T23:59:59Z
+evaluation_at=2026-08-11T14:59:59Z
 source_freshness_timezone=Asia/Tokyo
 original_external_owner_live_deployed_hard_requirement_count=16
 current_unresolved_hard_requirement_count=9
@@ -406,7 +406,7 @@ This record closes exactly EVID-SUPABASE-EGRESS. It does not establish deploymen
 
 ## Read-Only Public Source Refresh
 
-この単位で許可されるのは public official source の read-only freshness 確認だけである。`evaluation_at=2026-08-10T23:59:59Z` を明示評価アンカー、`source_freshness_timezone=Asia/Tokyo` を表示上の timezone、`source_max_age_days=7` を canonical 最大年齢として用いる。source timestamp は `Date.parse`-valid で evaluation_at 以下、かつ evaluation_at から 7 日以内でなければならない。age が 7 日を超える source、future-dated source、または日付なし source は stale/failure として止める。2026-08-06 の source ledger を参照し、再確認時は source ID、URL、timestamp、public-source class、production proof=no を記録する。public-source は plan limit/price だけであり、actual target measurement は `gated`、または prerequisite 不在なら `blocked` として別記録する。
+この単位で許可されるのは public official source の read-only freshness 確認だけである。`evaluation_at=2026-08-11T14:59:59Z` を明示評価アンカー、`source_freshness_timezone=Asia/Tokyo` を表示上の timezone、`source_max_age_days=7` を canonical 最大年齢として用いる。source timestamp は `Date.parse`-valid で evaluation_at 以下、かつ evaluation_at から 7 日以内でなければならない。age が 7 日を超える source、future-dated source、または日付なし source は stale/failure として止める。2026-08-06 の source ledger を参照し、再確認時は source ID、URL、timestamp、public-source class、production proof=no を記録する。public-source は plan limit/price だけであり、actual target measurement は `gated`、または prerequisite 不在なら `blocked` として別記録する。
 
 - [ ] `SRC-WORKER-PRICING` と `SRC-WORKER-LIMITS` を確認し、Worker request、CPU、size の plan limit を account headroom に昇格させない。official `3 MB after compression` に対する architecture の internal `3,000,000 gzip-compressed bytes` ceiling は conservative local alignment であり、provider binary/decimal semantics、bundle/headroom、live/deployed、または production proof ではない。
 - [ ] `SRC-SUPABASE-BILLING`、`SRC-SUPABASE-STORAGE-BANDWIDTH`、`SRC-SUPABASE-SIZE`、`SRC-SUPABASE-PAUSE`、`SRC-SUPABASE-BACKUP` を確認し、size、uncached/cached Egress、pause、Free Plan database backup download 制約の public information を exact target measurement、backup/recovery outcome、または risk acceptance に昇格させない。
@@ -614,7 +614,7 @@ This completed decision closes exactly EVID-SUPABASE-BACKUP. It does not promote
 
 ## Approved Partial-Stop Authenticated-Private Provider Cost Evidence
 
-The approved one-item EVID-PROVIDER-COST authenticated-private read retained only the selected OpenAI provider-account summary for the approved period. The summary displayed zero spend, tokens, and requests, but payment details were not added and credit remaining was zero. The resulting funded headroom is `zero-funded-headroom-at-observation`, not satisfied headroom. The dashboard summary was displayed for the selected period; broader aggregation/display completeness remains unknown. This partial-stop record closes no row and does not establish paid entitlement, deployment, or activation.
+The historical 2026-08-07 one-item EVID-PROVIDER-COST authenticated-private read retained only the selected OpenAI provider-account summary for that approved period. The summary displayed zero spend, tokens, and requests, but payment details were not added and credit remaining was zero. The resulting historical funded headroom is `zero-funded-headroom-at-observation`, not satisfied headroom. The dashboard summary was displayed for the selected period; broader aggregation/display completeness remained unknown. This historical partial-stop record closes no row and does not establish paid entitlement, deployment, or activation.
 
 ```text
 packet_execution_status=approved-partial-stop-authenticated-private-read
@@ -711,7 +711,41 @@ raw_url_organization_project_id_private_identifier_raw_payload_retained=no
 stop_result=none-completed-within-approved-documentation-only-scope
 ```
 
-This decision keeps EVID-PROVIDER-COST blocked; it does not convert zero-funded headroom into positive or sufficient headroom, and no payment, provider API, or provider architecture change is authorized. No private identifier, raw URL, or raw payload is retained.
+This historical 2026-08-07 decision keeps EVID-PROVIDER-COST blocked; it does not convert the historical zero-funded headroom into positive or sufficient headroom, and no payment, provider API, or provider architecture change is authorized. No private identifier, raw URL, or raw payload is retained.
+
+The earlier 2026-08-07 Provider Cost packet and its bound funding-posture judgment remain historical input. The current 2026-08-11 A2 read is recorded separately below: it observed positive funded headroom and complete all-project/all-key aggregation, but target identity, exact model cost, and gpt-4o-mini standard-price applicability remain unconfirmed. It is a partial-stop result, closes no row, and leaves the funding-requirement child `undetermined`.
+
+## Completed A2 Provider Cost Sanitized Result
+
+```text
+record_status=approved-partial-stop-authenticated-private-read
+evidence_id=EVID-PROVIDER-COST
+child_id=A2-provider-cost-evidence-read
+approval_id=NC-R1-A2-PROVIDER-COST-MANUAL-20260811-01
+approval_decision=approved
+approval_fingerprint=sha256:4db42e2cc7b5cee01ff129cfa3691be4321c43402e2ed01c6b4055bed9fb5447
+exact_target_or_scope=creator-paid-primary-openai-provider-account-usage-cost-scope-v1
+time_window=2026-08-11T00:00:00+09:00/2026-08-11T23:59:59+09:00
+operator=kurodev-manual-current-task
+bound_a0_cost_model_input_fingerprint=sha256:d8f403f21571bc48098f9989394c3bef547455090dc922efaa071d0aa7938531
+funding_prerequisite_fingerprint=sha256:6bde36f178213274d44dd1891e7eb85390a58f55c322b3c91d3d99d50d7ad022
+observed_at=2026-08-11T16:44:55+09:00
+target_match=unconfirmed
+funded_headroom_classification=positive-funded-headroom
+aggregation_completeness=complete
+sanitized_exact_cost_classification=unconfirmed
+applicability=unknown
+provider_api_write_payment_credit_budget_or_settings_action=none
+credential_creation_retrieval_disclosure=none
+raw_url_org_project_account_identifier_private_identifier_payload_retained_or_shared=no
+codex_browser_or_provider_control=none
+incremental_charge=no
+stop_result=target-cost-applicability-incomplete
+result_status=partial-stop
+row_closure=none
+a2_result_fingerprint=sha256:556eec82d0d4427fc0f760e5f4ae3fd57e40abfd31ac6f961aef0a7dd8b82314
+observed_record_fingerprint=sha256:081738a7080ec825c8b7b5604613bd00eda61d7e4e4b0acf531d0574b7c119f5
+```
 
 ## Approved Partial-Stop Authenticated-Private Stripe Cost Evidence
 
@@ -1510,7 +1544,7 @@ observed_record_fingerprint=<required-sha256-observed-record-fingerprint>
 
 ## Completed A0 Provisional Cost-Model Input Approval
 
-This approved, completed, documentation-only parallel A0 release-owner judgment records the exact provisional non-closing cost-model input. It authorizes no external operation and does not authorize A2, A3, funding, payment, external action, command execution, row closure, activation, or final GO. The authoritative A0 registry is now `satisfied` / `fresh` / `exact` / `approved` / `fingerprint_bound=yes`; all fingerprints are deterministically derived only from the sanitized approved fields. EVID-PROVIDER-COST, EVID-STRIPE-COST, and EVID-PRODUCT-PRICE remain incomplete because their closing children remain unapproved. The canonical nine unresolved hard requirements, NO-GO, closed activation, permanent Free posture, and NC-L1 not-started state remain unchanged.
+This approved, completed, documentation-only parallel A0 release-owner judgment records the exact provisional non-closing cost-model input. It authorizes no external operation and does not authorize A2, A3, funding, payment, external action, command execution, row closure, activation, or final GO. The authoritative A0 registry is now `satisfied` / `fresh` / `exact` / `approved` / `fingerprint_bound=yes`; all fingerprints are deterministically derived only from the sanitized approved fields. EVID-PROVIDER-COST remains incomplete because its A2 child is partial-stop; EVID-STRIPE-COST and EVID-PRODUCT-PRICE remain incomplete because their closing children remain unapproved. The canonical nine unresolved hard requirements, NO-GO, closed activation, permanent Free posture, and NC-L1 not-started state remain unchanged.
 
 ```text
 packet_execution_status=approved-completed-release-owner-judgment
@@ -1561,7 +1595,7 @@ The following row-level decisions are currently missing and cannot be inferred f
 | Tax and legal | missing | jurisdictional legal scope, named owner, effective date, retention, stop, and rollback record |
 | Public copy | missing | named copy owner, approved scope, effective date, retention, stop, and rollback record |
 | SLA | satisfied (approved documentation-only no-guaranteed-SLA posture) | closes EVID-SLA only; no contractual availability, maintenance notice, response, or restoration time; no activation or GO |
-| Cost envelope | incomplete | EVID-WORKER-REQUEST, EVID-SUPABASE-SIZE, EVID-SUPABASE-EGRESS, and EVID-SUPABASE-PAUSE are satisfied; Worker CPU remains insufficient; Provider zero-funded blocker and Stripe partial configuration remain insufficient for a complete paid cost model |
+| Cost envelope | incomplete | EVID-WORKER-REQUEST, EVID-SUPABASE-SIZE, EVID-SUPABASE-EGRESS, and EVID-SUPABASE-PAUSE are satisfied; Worker CPU remains insufficient; current A2 Provider Cost is positive-funded-headroom but still partial-stop for target/cost/applicability/funding-disposition, and Stripe partial configuration remains insufficient for a complete paid cost model |
 | Supabase pause posture | satisfied (accepted documentation-only owner judgment) | active-at-observation only; future pause headroom unknown/not-quantifiable; Free auto-pause risk remains a residual input for EVID-RISK-ACCEPTANCE, not production proof |
 | Supabase size | satisfied (authenticated-private under-max observation only) | current database size 26.97 MB, summary display 0.028 GB, max database size 0.5 GB; no remaining-bytes, percentage, or unit-conversion inference; not deployment or production proof |
 | Worker size | satisfied (local artifact acceptance only) | approved historical PR #750 worktree dry-run is not account headroom, deployed, or production proof |
@@ -1641,25 +1675,27 @@ row_dependent_stop_result=derived-canonical-reverse-dependency-graph
 ```text
 row_group_id=EVID-PROVIDER-COST
 canonical_primary_approval_unit=authenticated-private-read
-row_group_status=unapproved
+row_group_status=partial-stop
 prerequisite_children=A0-provisional-cost-model-input
 conditional_prerequisite_children=A2-provider-funding-external-prerequisite-reference-when-funding-requirement-state-needed-absent
 row_child_ids=A0-provisional-cost-model-input,A2-provider-funding-external-prerequisite-reference,A2-provider-cost-evidence-read
 row_closing_child=A2-provider-cost-evidence-read
-child_approval_id=<required-unique-approval-id-A2-provider-cost-evidence-read>
-child_exact_target_or_scope=<required-exact-provider-cost-target-and-scope>
-child_explicit_approval_decision=<required-explicit-approved-or-rejected-decision>
-child_executable_operation_window_operator=<required-exact-operation-window-operator>
+child_approval_id=NC-R1-A2-PROVIDER-COST-MANUAL-20260811-01
+child_exact_target_or_scope=creator-paid-primary-openai-provider-account-usage-cost-scope-v1
+child_explicit_approval_decision=approved
+child_executable_operation_window_operator=authenticated-private-read-openai-provider-source-funding-usage-aggregation-and-gpt-4o-mini-standard-price-applicability-classification-only|2026-08-11T00:00:00+09:00/2026-08-11T23:59:59+09:00|kurodev-manual-current-task
 child_judgment_bound_input_effective_date_named_approver=N/A
 child_stop_owner=kurodev
 child_rollback_owner=kurodev
-child_evidence_retention_location=<required-sanitized-retention-location>
+child_evidence_retention_location=current-Codex-task-sanitized-report
 row_closure=none
-row_freshness=missing
-row_target=missing
-row_approval=unapproved
-row_fingerprint_bound=no
-row_dependent_stop_result=not-applicable
+row_freshness=fresh
+row_target=unconfirmed
+row_approval=approved
+row_fingerprint_bound=yes
+row_prior_approved_or_started=yes
+row_stop_or_drift_cause=target-cost-applicability-incomplete
+row_dependent_stop_result=derived-canonical-reverse-dependency-graph
 ```
 
 ### Row Group: EVID-STRIPE-COST
@@ -1989,35 +2025,37 @@ child_id=A2-provider-cost-evidence-read
 row_group_references=EVID-PROVIDER-COST
 canonical_child_approval_unit=authenticated-private-read
 child_type=executable
-approval_id=<required-unique-approval-id-A2-provider-cost-evidence-read>
-explicit_decision=<required-explicit-approved-or-rejected-decision>
-exact_target_or_scope=<required-exact-provider-cost-target-and-scope>
-requested_operation=<required-exact-requested-operation>
-time_window=<required-exact-time-window>
-operator=<required-exact-operator>
+approval_id=NC-R1-A2-PROVIDER-COST-MANUAL-20260811-01
+explicit_decision=approved
+exact_target_or_scope=creator-paid-primary-openai-provider-account-usage-cost-scope-v1
+requested_operation=authenticated-private-read-openai-provider-source-funding-usage-aggregation-and-gpt-4o-mini-standard-price-applicability-classification-only
+time_window=2026-08-11T00:00:00+09:00/2026-08-11T23:59:59+09:00
+operator=kurodev-manual-current-task
 bound_input=N/A
 effective_date=N/A
 required_approver=N/A
-evidence_retention_location=<required-sanitized-retention-location>
-approval_fingerprint=<required-sha256-fingerprint>
+evidence_retention_location=current-Codex-task-sanitized-report
+approval_fingerprint=sha256:4db42e2cc7b5cee01ff129cfa3691be4321c43402e2ed01c6b4055bed9fb5447
 stop_owner=kurodev
 rollback_owner=kurodev
 cost_guard=no-cost-bearing-action-authorized
-source_timestamp=<required-date-parse-valid-source-timestamp>
-sanitized_exact_cost=<required-sanitized-exact-cost-classification>
-applicability=<required-applicable-classification>
-dependency_fingerprint=<required-sha256-fingerprint>
-funding_prerequisite_fingerprint=<required-sha256-fingerprint>
-cost_model_fingerprint=<required-sha256-fingerprint>
-observed_record_fingerprint=<required-sha256-fingerprint>
-result_fingerprint=<required-sha256-fingerprint>
-child_status=unapproved
-freshness=missing
-target=missing
-approval=unapproved
-fingerprint_bound=no
+source_timestamp=2026-08-11T16:44:55+09:00
+sanitized_exact_cost=unconfirmed
+applicability=unknown
+dependency_fingerprint=sha256:d8f403f21571bc48098f9989394c3bef547455090dc922efaa071d0aa7938531
+funding_prerequisite_fingerprint=sha256:6bde36f178213274d44dd1891e7eb85390a58f55c322b3c91d3d99d50d7ad022
+cost_model_fingerprint=sha256:556eec82d0d4427fc0f760e5f4ae3fd57e40abfd31ac6f961aef0a7dd8b82314
+observed_record_fingerprint=sha256:081738a7080ec825c8b7b5604613bd00eda61d7e4e4b0acf531d0574b7c119f5
+result_fingerprint=sha256:556eec82d0d4427fc0f760e5f4ae3fd57e40abfd31ac6f961aef0a7dd8b82314
+child_status=partial-stop
+freshness=fresh
+target=unconfirmed
+approval=approved
+fingerprint_bound=yes
+prior_approved_or_started=yes
+stop_or_drift_cause=target-cost-applicability-incomplete
 row_closure_effect=EVID-PROVIDER-COST-only-after-satisfied
-dependent_stop_result=not-applicable
+dependent_stop_result=derived-canonical-reverse-dependency-graph
 ```
 
 ### Child Unit: A3-stripe-source-applicability-read-or-judgment
@@ -2402,4 +2440,4 @@ dependent_stop_result=not-applicable
 
 The B2 packet must parse one uniquely identified result (`scenario_result_id`) for each of the 19 canonical scenario IDs listed above; `b2_scenario_result_ids` is the exact ordered list of those 19 IDs. Its only Paid row is `positive-compatible-active-signed-subscription-paid`; all other rows carry their scenario-specific canonical Free/denied/fail-closed outcome. Each row has its own sanitized outcome and all six side-effect counts, so duplicate Checkout, signed-webhook idempotency, stale/replay, owner/price/subscription mismatch, cross-owner, and cross-capability cannot be proved by a scenario name alone. Aggregate B2 evidence retains `final_state=Free-fail-closed` and `unexpected_paid_transitions=0`.
 
-Future satisfied result blocks are individually parsed and bound. `evaluation_at=2026-08-10T23:59:59Z` is the fixed sanitized evaluation anchor: every source timestamp and exact operation-window endpoint is `Date.parse`-valid, no later than evaluation_at, and a source timestamp is no older than `source_max_age_days=7`; a future or stale value fails closed. A1, A2, and B1 use source-result timestamps. A3 is mode-aware: `selected_mode=read` requires `selected_approval_unit=authenticated-private-read`, source timestamp, and exact operation window, with judgment fields `N/A`; `selected_mode=judgment` requires `selected_approval_unit=release-owner-judgment`, `judgment_output`, `bound_artifact_fingerprint`, and `judgment_effective_date` exactly equal to child `effective_date`, with execution/source/cost fields `N/A`. Both modes, neither mode, or a mismatched approval unit reject the result. Judgment effective dates are `Date.parse`-valid, no later than evaluation_at, and no older than 7 days. A0 provides actual cost-model input/result/artifact fingerprints; A2/A3 bind the A0 input; A4’s exact composite binds A2/A3 results; A5/A6 bind the specified upstream artifacts; and B1 binds A1/A4/A5/A6/external fingerprints before emitting its deployed fingerprint. B2 requires actual B1 target/commit/deployed-fingerprint fields and one separately parsed signed-evidence record—not fields synthesized from B2 itself—with its own record ID, source, fingerprint, `Date.parse`-valid source timestamp inside B2’s exact approved time window, `classification=active-compatible`, and `authority=complete-unambiguous`. Missing values on either referenced record reject closure. These are sanitized classifications only and retain no secret, private identifier, raw payload, or raw authority.
+Future satisfied result blocks are individually parsed and bound. `evaluation_at=2026-08-11T14:59:59Z` is the fixed sanitized evaluation anchor: every source timestamp and exact operation-window endpoint is `Date.parse`-valid, no later than evaluation_at, and a source timestamp is no older than `source_max_age_days=7`; a future or stale value fails closed. A1, A2, and B1 use source-result timestamps. A3 is mode-aware: `selected_mode=read` requires `selected_approval_unit=authenticated-private-read`, source timestamp, and exact operation window, with judgment fields `N/A`; `selected_mode=judgment` requires `selected_approval_unit=release-owner-judgment`, `judgment_output`, `bound_artifact_fingerprint`, and `judgment_effective_date` exactly equal to child `effective_date`, with execution/source/cost fields `N/A`. Both modes, neither mode, or a mismatched approval unit reject the result. Judgment effective dates are `Date.parse`-valid, no later than evaluation_at, and no older than 7 days. A0 provides actual cost-model input/result/artifact fingerprints; A2/A3 bind the A0 input; A4’s exact composite binds A2/A3 results; A5/A6 bind the specified upstream artifacts; and B1 binds A1/A4/A5/A6/external fingerprints before emitting its deployed fingerprint. B2 requires actual B1 target/commit/deployed-fingerprint fields and one separately parsed signed-evidence record—not fields synthesized from B2 itself—with its own record ID, source, fingerprint, `Date.parse`-valid source timestamp inside B2’s exact approved time window, `classification=active-compatible`, and `authority=complete-unambiguous`. Missing values on either referenced record reject closure. These are sanitized classifications only and retain no secret, private identifier, raw payload, or raw authority.

@@ -1009,7 +1009,7 @@ approval_decision=unapproved
 
 ## Unapproved A3 Stripe Account-Pricing Document Manual Packet
 
-This unapproved, non-executable, authenticated-private-read proposal permits nothing until the exact owner approval is recorded. Its future surface is limited to a Kurodev-operated existing account-specific pricing agreement or contract document, materially different from the two completed Plans/Fees partial-stop reads. It does not authorize payment, refund, customer, event, settings, API, export, credential, browser, or Stripe operation; Codex receives no browser or Stripe control. It retains no raw document, contract text, URL, account identifier, or private identifier, substitutes no public pricing, incurs no incremental charge, and closes no row. An actual sanitized result is required separately.
+This unapproved, non-executable, authenticated-private-read proposal permits nothing until the exact owner approval is recorded. Its future surface is limited to a Kurodev-operated existing account-specific pricing agreement or contract document, materially different from the two completed Plans/Fees partial-stop reads. It does not authorize payment, refund, customer, event, settings, API, export, credential, browser, or Stripe operation; Codex receives no browser or Stripe control. It retains no raw document, contract text, URL, account identifier, or private identifier, substitutes no public pricing, incurs no incremental charge, and closes no row. The 2026-08-10 proposal remains historical non-evidence; the current approved 2026-08-11 partial-stop record is recorded separately above, and the historical packet remains an actual sanitized result requirement only for its own scope.
 
 ```text
 packet_execution_status=unapproved-non-executable
@@ -1049,6 +1049,120 @@ production_proof=no
 activation_status=closed
 approval_decision=unapproved
 ```
+
+## A3 Current Standard-Pricing Partial-Stop Interpretation
+
+The current 2026-08-11 A3 record incorporates the user-confirmed fact that no account-specific pricing document was provided at Stripe registration, the standard public Stripe Japan pricing scope, and the user-confirmed non-use of Custom pricing. The public standard source and supplied refund capture support only sanitized coverage classifications for standard pricing, refund/dispute handling, and international currency conversion. They do not establish an account-specific document, a separately displayed account-specific Paid-flow base fee, an exact applied cost, tax context, or effective account scope. The A3 child therefore remains `partial-stop`, `row_closure=none`; A4 remains unapproved and must not be rebound from this supplemental public source.
+
+## Approved A3 Stripe Account-Pricing Manual-Read Owner Approval
+
+```text
+record_status=approved-owner-approval-authenticated-private-read
+record_type=sanitized-a3-stripe-account-pricing-manual-read-owner-approval
+evidence_id=EVID-STRIPE-COST
+child_id=A3-stripe-source-applicability-read-or-judgment
+selected_mode=read
+selected_approval_unit=authenticated-private-read
+requested_operation=kurodev-manual-read-existing-stripe-account-pricing-scope-and-standard-applicability-only
+permitted_execution_surface=kurodev-operated-existing-stripe-account-plans-and-fees-surface-only
+command=<no-Codex-command-authorized>
+external_action=none
+operator=kurodev-manual-current-task
+required_approver=kurodev
+approval_id=NC-R1-A3-STRIPE-ACCOUNT-PRICING-DOCUMENT-MANUAL-20260811-01
+approval_decision=approved
+approval_fingerprint=sha256:47509ce9d578e4e5bbc1cf05a1e4436b0f4ab1f1c7d709af7a91de25a34fde71
+exact_target_or_scope=creator-paid-primary-stripe-account-pricing-document-scope-v1
+time_window=2026-08-11T00:00:00+09:00/2026-08-11T23:59:59+09:00
+bound_a0_approval_id=NC-R1-A0-PROVISIONAL-COST-MODEL-20260809-01
+bound_a0_cost_model_input_fingerprint=sha256:d8f403f21571bc48098f9989394c3bef547455090dc922efaa071d0aa7938531
+prior_stripe_cost_approval_ids=NC-R1-STRIPE-COST-20260807-01,NC-R1-STRIPE-BASE-FEE-20260807-01
+verification_scope=source-availability-and-separate-base-fee-availability-and-standard-custom-applicability-and-full-cost-model-completeness-only
+evidence_retention_location=current-Codex-task-sanitized-report
+stop_owner=kurodev
+rollback_owner=kurodev
+cost_guard=zero-incremental-spend-and-stop-before-any-charge
+default_incremental_spend_jpy=0
+stop_before_any_incremental_charge=yes
+payment_refund_client_or_event_settings_api_export_action=none
+credential_creation_retrieval_disclosure=none
+raw_document_contract_text_url_account_identifier_private_identifier_retention=none
+codex_browser_or_stripe_control=none
+public_pricing_substitution=forbidden
+partial_stop_condition=source-unavailable-or-separate-fee-unavailable-or-standard-public-model-incomplete-or-tax-or-effective-scope-unknown-or-charge-required
+row_closure=none
+production_proof=no
+activation_status=closed
+owner_approval_record_fingerprint=sha256:8549fc010de24c0f4818523ae5b8d55c1aa37df306b4a28da70c04199353ff22
+```
+
+## Completed A3 Stripe Account-Pricing Document Sanitized Result
+
+```text
+record_status=approved-partial-stop-authenticated-private-read
+evidence_id=EVID-STRIPE-COST
+child_id=A3-stripe-source-applicability-read-or-judgment
+requested_operation=kurodev-manual-read-existing-stripe-account-pricing-scope-and-standard-applicability-only
+approval_id=NC-R1-A3-STRIPE-ACCOUNT-PRICING-DOCUMENT-MANUAL-20260811-01
+approval_decision=approved
+approval_fingerprint=sha256:47509ce9d578e4e5bbc1cf05a1e4436b0f4ab1f1c7d709af7a91de25a34fde71
+exact_target_or_scope=creator-paid-primary-stripe-account-pricing-document-scope-v1
+time_window=2026-08-11T00:00:00+09:00/2026-08-11T23:59:59+09:00
+operator=kurodev-manual-current-task
+bound_a0_cost_model_input_fingerprint=sha256:d8f403f21571bc48098f9989394c3bef547455090dc922efaa071d0aa7938531
+owner_approval_record_fingerprint=sha256:8549fc010de24c0f4818523ae5b8d55c1aa37df306b4a28da70c04199353ff22
+observed_at=2026-08-11T21:46:00+09:00
+target_match=exact
+source_document_available=unavailable
+direct_account_specific_base_processing_fee_available=unavailable
+standard_custom_applicability=standard
+full_cost_model_completeness=incomplete
+sanitized_exact_cost_classification=unconfirmed
+account_specific_pricing_terms_fingerprint=sha256:8a28fec8655d75f6e799a479811c7f18b0b5dd1f8847f07662989a315395fa74
+account_specific_pricing_terms_coverage=incomplete
+private_exposure_detected=no
+incremental_charge_required=no
+base_processing_fee_coverage=complete
+fixed_and_variable_components_coverage=complete
+refunds_disputes_chargebacks_coverage=complete
+international_currency_conversion_coverage=complete
+tax_and_other_account_specific_fee_coverage=unknown
+effective_scope_coverage=incomplete
+raw_document_contract_text_url_account_identifier_private_identifier_retained_or_shared=no
+payment_refund_client_or_event_settings_api_export_action=none
+credential_creation_retrieval_disclosure=none
+codex_browser_or_stripe_control=none
+public_pricing_substitution=no
+incremental_charge=no
+stop_result=source-document-unavailable--direct-account-specific-base-processing-fee-unavailable--full-cost-model-completeness-incomplete--sanitized-exact-cost-classification-unconfirmed--account-specific-pricing-terms-coverage-incomplete--tax-and-other-account-specific-fee-coverage-unknown--effective-scope-coverage-incomplete
+result_status=partial-stop
+row_closure=none
+a3_result_fingerprint=sha256:3786fdd1745b45f1cfbe65f9284f6d0e7363f077f7f51c3a965af46e1fd1c656
+observed_record_fingerprint=sha256:2e484611bbc25e2c3ca0126d686235f68ae13aaf6086cac5bc57d41d5a5ec5e9
+```
+
+## Supplemental Public Standard Stripe Pricing Reference For A3
+
+```text
+record_type=a3-public-standard-pricing-supplement
+source_id=SRC-STRIPE-JP
+source_scope=standard-public-pricing-only
+standard_custom_classification=standard
+custom_usage=none
+currency_conversion_coverage=complete
+foreign_card_coverage=complete
+refunds_disputes_chargebacks_coverage=complete
+tax_coverage=unknown-context-dependent
+account_specific_evidence=no
+public_pricing_substitution=no
+row_closure=none
+a4_rebinding=forbidden
+observed_at=2026-08-11T21:46:00+09:00
+```
+
+## A3 Public Standard Pricing Boundary Note
+
+The supplemental standard source is retained only as public reference support: standard card pricing, foreign-card coverage, currency conversion, dispute/chargeback treatment, and the supplied standard refund capture are classified as covered; Custom pricing is not selected. This does not substitute public pricing for account-specific evidence, does not prove an exact applied fee or tax/effective scope, and does not close EVID-STRIPE-COST or rebind A4.
 
 ## Exact Non-Evidence A2 Provider Funding-Requirement Disposition Owner Approval Template
 
@@ -1146,7 +1260,7 @@ observed_record_fingerprint=<required-sha256-observed-record-fingerprint>
 
 ## Exact Non-Evidence A3 Stripe Account-Pricing Manual-Read Owner Approval Template
 
-This template-only, non-evidence block defines the separately parsed independent owner-approval record required before any future A3 manual read can start. It cannot create approval: the current A3 child remains unapproved, its collection is empty, and this template is not an actual record. A future approved-not-started or running A3 requires exactly one such record bound to the actual child’s exact requested operation, deterministic approval fingerprint, target, window, and operator; a terminal A3 also requires exactly one separate observed result bound to that same fingerprint. It authorizes no command, browser, Stripe control, payment, refund, customer, event, settings, API, export, credential action, public-pricing substitution, incremental charge, row closure, production proof, or activation.
+This template-only, non-evidence block defines the separately parsed independent owner-approval record required before a future/new A3 manual read can start. The template itself cannot create approval and is not an actual record. The current 2026-08-11 A3 has exactly one independent owner record and one sanitized partial-stop result, remains `partial-stop` with `row_closure=none`, and is recorded separately above; this template describes only a future/new read. A future approved-not-started or running A3 requires exactly one such record bound to the actual child’s exact requested operation, deterministic approval fingerprint, target, window, and operator; a terminal A3 also requires exactly one separate observed result bound to that same fingerprint. It authorizes no command, browser, Stripe control, payment, refund, customer, event, settings, API, export, credential action, public-pricing substitution, incremental charge, row closure, production proof, or activation.
 
 ```text
 record_status=<required-approved-owner-approval-authenticated-private-read>
@@ -1544,7 +1658,7 @@ observed_record_fingerprint=<required-sha256-observed-record-fingerprint>
 
 ## Completed A0 Provisional Cost-Model Input Approval
 
-This approved, completed, documentation-only parallel A0 release-owner judgment records the exact provisional non-closing cost-model input. It authorizes no external operation and does not authorize A2, A3, funding, payment, external action, command execution, row closure, activation, or final GO. The authoritative A0 registry is now `satisfied` / `fresh` / `exact` / `approved` / `fingerprint_bound=yes`; all fingerprints are deterministically derived only from the sanitized approved fields. EVID-PROVIDER-COST remains incomplete because its A2 child is partial-stop; EVID-STRIPE-COST and EVID-PRODUCT-PRICE remain incomplete because their closing children remain unapproved. The canonical nine unresolved hard requirements, NO-GO, closed activation, permanent Free posture, and NC-L1 not-started state remain unchanged.
+This approved, completed, documentation-only parallel A0 release-owner judgment records the exact provisional non-closing cost-model input. It authorizes no external operation and does not authorize A2, A3, funding, payment, external action, command execution, row closure, activation, or final GO. The authoritative A0 registry is now `satisfied` / `fresh` / `exact` / `approved` / `fingerprint_bound=yes`; all fingerprints are deterministically derived only from the sanitized approved fields. EVID-PROVIDER-COST remains incomplete because its A2 child is partial-stop; EVID-STRIPE-COST now has an approved A3 partial-stop child but remains incomplete because the account-specific source, separate base fee, exact applied cost, tax context, and effective scope are incomplete; EVID-PRODUCT-PRICE remains unapproved and unbound. The canonical nine unresolved hard requirements, NO-GO, closed activation, permanent Free posture, and NC-L1 not-started state remain unchanged.
 
 ```text
 packet_execution_status=approved-completed-release-owner-judgment
@@ -1703,24 +1817,26 @@ row_dependent_stop_result=derived-canonical-reverse-dependency-graph
 ```text
 row_group_id=EVID-STRIPE-COST
 canonical_primary_approval_unit=authenticated-private-read
-row_group_status=unapproved
+row_group_status=partial-stop
 prerequisite_children=A0-provisional-cost-model-input
 row_child_ids=A0-provisional-cost-model-input,A3-stripe-source-applicability-read-or-judgment
 row_closing_child=A3-stripe-source-applicability-read-or-judgment
-child_approval_id=<required-unique-approval-id-A3-stripe-source-applicability-read-or-judgment>
-child_exact_target_or_scope=<required-exact-stripe-cost-target-and-scope>
-child_explicit_approval_decision=<required-explicit-approved-or-rejected-decision>
-child_executable_operation_window_operator=<required-exact-operation-window-operator-or-N-A>
-child_judgment_bound_input_effective_date_named_approver=<required-bound-input-effective-date-named-approver-or-N-A>
+child_approval_id=NC-R1-A3-STRIPE-ACCOUNT-PRICING-DOCUMENT-MANUAL-20260811-01
+child_exact_target_or_scope=creator-paid-primary-stripe-account-pricing-document-scope-v1
+child_explicit_approval_decision=approved
+child_executable_operation_window_operator=2026-08-11T00:00:00+09:00/2026-08-11T23:59:59+09:00/kurodev-manual-current-task
+child_judgment_bound_input_effective_date_named_approver=N/A
 child_stop_owner=kurodev
 child_rollback_owner=kurodev
-child_evidence_retention_location=<required-sanitized-retention-location>
+child_evidence_retention_location=current-Codex-task-sanitized-report
 row_closure=none
-row_freshness=missing
-row_target=missing
-row_approval=unapproved
-row_fingerprint_bound=no
-row_dependent_stop_result=not-applicable
+row_freshness=fresh
+row_target=exact
+row_approval=approved
+row_fingerprint_bound=yes
+row_prior_approved_or_started=yes
+row_stop_or_drift_cause=standard-public-pricing-partial-stop-account-specific-scope-incomplete
+row_dependent_stop_result=derived-canonical-reverse-dependency-graph
 ```
 
 ### Row Group: EVID-PRODUCT-PRICE
@@ -2064,39 +2180,42 @@ child_id=A3-stripe-source-applicability-read-or-judgment
 row_group_references=EVID-STRIPE-COST
 canonical_child_approval_unit=authenticated-private-read
 child_type=executable-or-judgment
-selected_mode=unselected
-selected_approval_unit=N/A
-approval_id=<required-unique-approval-id-A3-stripe-source-applicability-read-or-judgment>
-explicit_decision=<required-explicit-approved-or-rejected-decision>
-exact_target_or_scope=<required-exact-stripe-cost-target-and-scope>
-requested_operation=<required-exact-requested-operation-or-N-A>
-time_window=<required-exact-time-window-or-N-A>
-operator=<required-exact-operator-or-N-A>
-bound_input=<required-bound-input-or-N-A>
-effective_date=<required-effective-date-or-N-A>
-required_approver=<required-named-approver-or-N-A>
-evidence_retention_location=<required-sanitized-retention-location>
-approval_fingerprint=<required-sha256-fingerprint>
+selected_mode=read
+selected_approval_unit=authenticated-private-read
+approval_id=NC-R1-A3-STRIPE-ACCOUNT-PRICING-DOCUMENT-MANUAL-20260811-01
+explicit_decision=approved
+exact_target_or_scope=creator-paid-primary-stripe-account-pricing-document-scope-v1
+requested_operation=kurodev-manual-read-existing-stripe-account-pricing-scope-and-standard-applicability-only
+time_window=2026-08-11T00:00:00+09:00/2026-08-11T23:59:59+09:00
+operator=kurodev-manual-current-task
+bound_input=N/A
+effective_date=N/A
+required_approver=N/A
+evidence_retention_location=current-Codex-task-sanitized-report
+approval_fingerprint=sha256:47509ce9d578e4e5bbc1cf05a1e4436b0f4ab1f1c7d709af7a91de25a34fde71
 stop_owner=kurodev
 rollback_owner=kurodev
 cost_guard=no-cost-bearing-action-authorized
-source_timestamp=<required-date-parse-valid-source-timestamp-or-N-A>
-sanitized_exact_cost=<required-sanitized-exact-cost-classification-or-N-A>
-applicability=<required-applicable-classification-or-N-A>
-cost_model_fingerprint=<required-sha256-fingerprint-or-N-A>
-judgment_output=<required-approved-or-accepted-judgment-output-or-N-A>
-bound_artifact_fingerprint=<required-sha256-fingerprint-or-N-A>
-judgment_effective_date=<required-effective-date-or-N-A>
-dependency_fingerprint=<required-sha256-fingerprint>
-observed_record_fingerprint=<required-sha256-fingerprint>
-result_fingerprint=<required-sha256-fingerprint>
-child_status=unapproved
-freshness=missing
-target=missing
-approval=unapproved
-fingerprint_bound=no
+source_timestamp=2026-08-11T21:46:00+09:00
+sanitized_exact_cost=sanitized-standard-public-pricing-reference
+applicability=applicable
+cost_model_fingerprint=sha256:3786fdd1745b45f1cfbe65f9284f6d0e7363f077f7f51c3a965af46e1fd1c656
+judgment_output=N/A
+bound_artifact_fingerprint=N/A
+judgment_effective_date=N/A
+dependency_fingerprint=sha256:d8f403f21571bc48098f9989394c3bef547455090dc922efaa071d0aa7938531
+owner_approval_record_fingerprint=sha256:8549fc010de24c0f4818523ae5b8d55c1aa37df306b4a28da70c04199353ff22
+observed_record_fingerprint=sha256:2e484611bbc25e2c3ca0126d686235f68ae13aaf6086cac5bc57d41d5a5ec5e9
+result_fingerprint=sha256:3786fdd1745b45f1cfbe65f9284f6d0e7363f077f7f51c3a965af46e1fd1c656
+child_status=partial-stop
+freshness=fresh
+target=exact
+approval=approved
+fingerprint_bound=yes
+prior_approved_or_started=yes
+stop_or_drift_cause=standard-public-pricing-partial-stop-account-specific-scope-incomplete
 row_closure_effect=EVID-STRIPE-COST-only-after-satisfied
-dependent_stop_result=not-applicable
+dependent_stop_result=derived-canonical-reverse-dependency-graph
 ```
 
 ### Child Unit: A4-product-price-judgment

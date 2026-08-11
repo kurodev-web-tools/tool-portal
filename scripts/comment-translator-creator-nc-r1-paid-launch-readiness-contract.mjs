@@ -83,7 +83,16 @@ function isCurrentNcR1StagedResolutionTask(markdown) {
     && /^implementation_status=pr751-draft-nc-r1-staged-resolution-control-plane$/m.test(markdown);
 }
 
+function isCurrentApprovedA3PartialStopTask(markdown) {
+  return /NC-R1-A3-STRIPE-ACCOUNT-PRICING-DOCUMENT-MANUAL-20260811-01/.test(markdown)
+    && /A3[^\r\n]*approved partial-stop[^\r\n]*row_closure=none/i.test(markdown);
+}
+
 function assertCurrentWorktreePathSafety({ currentTask, changedPaths, phase }) {
+  if (isCurrentApprovedA3PartialStopTask(currentTask)) {
+    assertChangedPathsForPhase(changedPaths, "child-result-run");
+    return;
+  }
   if (!isCurrentNcR1StagedResolutionTask(currentTask)) return;
   assertChangedPathsForPhase(changedPaths, phase);
 }
@@ -544,6 +553,44 @@ const canonicalUnapprovedA3StripePricingDocumentManualPacketFields = {
   activation_status: "closed",
   approval_decision: "unapproved"
 };
+const canonicalCurrentA3StripePricingDocumentManualReadPacketFields = {
+  packet_execution_status: "approved-partial-stop-authenticated-private-read",
+  packet_item_count: "1",
+  approval_unit: "authenticated-private-read",
+  child_id: "A3-stripe-source-applicability-read-or-judgment",
+  selected_mode: "read",
+  selected_approval_unit: "authenticated-private-read",
+  evidence_id: "EVID-STRIPE-COST",
+  requested_operation: "kurodev-manual-read-existing-stripe-account-pricing-scope-and-standard-applicability-only",
+  permitted_execution_surface: "kurodev-operated-existing-stripe-account-plans-and-fees-surface-only",
+  command: "<no-Codex-command-authorized>",
+  external_action: "none",
+  operator: "kurodev-manual-current-task",
+  required_approver: "kurodev",
+  approval_id: "NC-R1-A3-STRIPE-ACCOUNT-PRICING-DOCUMENT-MANUAL-20260811-01",
+  exact_target_or_scope: "creator-paid-primary-stripe-account-pricing-document-scope-v1",
+  time_window: "2026-08-11T00:00:00+09:00/2026-08-11T23:59:59+09:00",
+  bound_a0_approval_id: "NC-R1-A0-PROVISIONAL-COST-MODEL-20260809-01",
+  bound_a0_cost_model_input_fingerprint: "sha256:d8f403f21571bc48098f9989394c3bef547455090dc922efaa071d0aa7938531",
+  prior_stripe_cost_approval_ids: "NC-R1-STRIPE-COST-20260807-01,NC-R1-STRIPE-BASE-FEE-20260807-01",
+  verification_scope: "source-availability-and-separate-base-fee-availability-and-standard-custom-applicability-and-full-cost-model-completeness-only",
+  evidence_retention_location: "current-Codex-task-sanitized-report",
+  stop_owner: "kurodev",
+  rollback_owner: "kurodev",
+  cost_guard: "zero-incremental-spend-and-stop-before-any-charge",
+  default_incremental_spend_jpy: "0",
+  stop_before_any_incremental_charge: "yes",
+  payment_refund_client_or_event_settings_api_export_action: "none",
+  credential_creation_retrieval_disclosure: "none",
+  raw_document_contract_text_url_account_identifier_private_identifier_retention: "none",
+  codex_browser_or_stripe_control: "none",
+  public_pricing_substitution: "forbidden",
+  partial_stop_condition: "source-unavailable-or-separate-fee-unavailable-or-standard-public-model-incomplete-or-tax-or-effective-scope-unknown-or-charge-required",
+  row_closure: "none-this-packet",
+  production_proof: "no",
+  activation_status: "closed",
+  approval_decision: "approved"
+};
 // This independent record is the only future approval authority for A3.  The
 // documented template below remains a non-evidence shape and cannot create it.
 const canonicalA3ManualReadOwnerApprovalTemplateFields = {
@@ -661,6 +708,27 @@ const a2FundingDispositionOwnerApprovalRecordFields = Object.keys(canonicalA2Fun
 const a2FundingRequirementDispositionResultRecordFields = Object.keys(canonicalA2FundingRequirementDispositionResultTemplateFields);
 const a3ManualReadOwnerApprovalRecordFields = Object.keys(canonicalA3ManualReadOwnerApprovalTemplateFields);
 const a3StripeObservedResultRecordFields = Object.keys(canonicalA3StripePricingDocumentResultTemplateFields);
+const a3SupplementalPublicStandardPricingReferenceFields = [
+  "record_type", "source_id", "source_scope", "standard_custom_classification", "custom_usage",
+  "currency_conversion_coverage", "foreign_card_coverage", "refunds_disputes_chargebacks_coverage", "tax_coverage",
+  "account_specific_evidence", "public_pricing_substitution", "row_closure", "a4_rebinding", "observed_at"
+];
+const canonicalA3SupplementalPublicStandardPricingReferenceFields = {
+  record_type: "a3-public-standard-pricing-supplement",
+  source_id: "SRC-STRIPE-JP",
+  source_scope: "standard-public-pricing-only",
+  standard_custom_classification: "standard",
+  custom_usage: "none",
+  currency_conversion_coverage: "complete",
+  foreign_card_coverage: "complete",
+  refunds_disputes_chargebacks_coverage: "complete",
+  tax_coverage: "unknown-context-dependent",
+  account_specific_evidence: "no",
+  public_pricing_substitution: "no",
+  row_closure: "none",
+  a4_rebinding: "forbidden",
+  observed_at: "2026-08-11T21:46:00+09:00"
+};
 const a4ProductPriceJudgmentResultRecordFields = [
   "record_status", "record_type", "evidence_id", "child_id", "judgment_record_id", "approval_id", "approval_decision", "approval_fingerprint",
   "exact_target_or_scope", "required_approver", "decision_owner", "effective_date", "bound_a2_result_fingerprint", "bound_a3_result_fingerprint",
@@ -1869,7 +1937,7 @@ function parseA2ProviderCostObservedResultRecord(markdown) {
 
 function parseA3StripeObservedResultRecord(markdown) {
   const section = markdown.includes("## Completed A3 Stripe Account-Pricing Document Sanitized Result")
-    ? sectionBody(markdown, "## Completed A3 Stripe Account-Pricing Document Sanitized Result")
+    ? exactOneSectionBody(markdown, "## Completed A3 Stripe Account-Pricing Document Sanitized Result")
     : markdown;
   const fields = parseStrictExactTextFence(section.trim(), a3StripeObservedResultRecordFields, "A3 observed result");
   assertA3SanitizedRecordValues(fields, "A3 observed result");
@@ -1882,6 +1950,20 @@ function parseA3ManualReadOwnerApprovalRecord(text) {
   assertA3SanitizedRecordValues(fields, "A3 manual-read owner approval");
   assertA3NonAuthorizingRecordValues(fields, "A3 manual-read owner approval");
   return { fields };
+}
+
+function parseA3ManualReadOwnerApprovalRecordSection(markdown) {
+  const section = exactOneSectionBody(markdown, "## Approved A3 Stripe Account-Pricing Manual-Read Owner Approval");
+  return { section, fields: parseA3ManualReadOwnerApprovalRecord(section).fields };
+}
+
+function parseA3SupplementalPublicStandardPricingReference(markdown) {
+  const section = sectionBody(markdown, "## Supplemental Public Standard Stripe Pricing Reference For A3");
+  const fields = parseStrictExactTextFence(section.trim(), a3SupplementalPublicStandardPricingReferenceFields, "A3 supplemental public standard pricing reference");
+  assertA3SanitizedRecordValues(fields, "A3 supplemental public standard pricing reference");
+  assertStrictAsiaTokyoCalendarTimestamp(fields.observed_at, "A3 supplemental public standard pricing reference observed_at");
+  assert.deepEqual(fields, canonicalA3SupplementalPublicStandardPricingReferenceFields, "A3 supplemental public standard pricing reference must retain its exact sanitized classification");
+  return { section, fields };
 }
 
 function parseA4ProductPriceJudgmentResultRecord(text) {
@@ -2929,7 +3011,9 @@ function validateA3ManualReadOwnerApprovalTemplate(template) {
   assert.deepEqual(Object.keys(template.fields).sort(), [...a3ManualReadOwnerApprovalRecordFields].sort(), "A3 manual-read owner approval template must match the exact owner schema");
   assert.match(template.section, /template-only, non-evidence/i, "A3 owner approval template must remain non-evidence");
   assert.match(template.section, /cannot create approval/i, "A3 owner approval template must not create approval");
-  assert.match(template.section, /current A3 child remains unapproved.*collection is empty/i, "A3 owner approval template must retain the empty current collection");
+  assert.match(template.section, /current 2026-08-11 A3 has exactly one independent owner record and one sanitized partial-stop result/i, "A3 owner approval template must acknowledge the current independent owner and sanitized result records");
+  assert.match(template.section, /remains `partial-stop` with `row_closure=none`/i, "A3 owner approval template must retain the current nonclosing partial-stop state");
+  assert.match(template.section, /template describes only a future\/new read/i, "A3 owner approval template must remain limited to a future or new read");
 }
 
 function validateA2ProviderCostObservedResultTemplate(template) {
@@ -5040,6 +5124,10 @@ validateUnapprovedA3StripePricingDocumentManualPacket(unapprovedA3StripePricingD
 const unapprovedA3StripePricingDocumentPacketReadiness = parseUnapprovedA3StripePricingDocumentManualPacket(readiness);
 validateUnapprovedA3StripePricingDocumentManualPacket(unapprovedA3StripePricingDocumentPacketReadiness);
 assert.deepEqual(unapprovedA3StripePricingDocumentPacketReadiness.fields, unapprovedA3StripePricingDocumentPacket.fields, "readiness and checklist must retain the same exact unapproved A3 Stripe pricing-document manual packet");
+assert.match(checklist, /^## Approved A3 Stripe Account-Pricing Manual-Read Owner Approval$/m, "A3 must retain the approved owner-approval record after the exact manual read");
+assert.match(readiness, /^## Approved A3 Stripe Account-Pricing Manual-Read Owner Approval$/m, "readiness must retain the approved A3 owner-approval record");
+assert.match(checklist, /^## Completed A3 Stripe Account-Pricing Document Sanitized Result$/m, "A3 must retain the completed sanitized observed result");
+assert.match(readiness, /^## Completed A3 Stripe Account-Pricing Document Sanitized Result$/m, "readiness must retain the completed sanitized observed result");
 const a2ProviderCostObservedResultTemplate = parseA2ProviderCostObservedResultTemplate(checklist);
 validateA2ProviderCostObservedResultTemplate(a2ProviderCostObservedResultTemplate);
 const a2ProviderCostObservedResultTemplateReadiness = parseA2ProviderCostObservedResultTemplate(readiness);
@@ -5066,8 +5154,65 @@ validateA3ManualReadOwnerApprovalTemplate(a3ManualReadOwnerApprovalTemplate);
 const a3ManualReadOwnerApprovalTemplateReadiness = parseA3ManualReadOwnerApprovalTemplate(readiness);
 validateA3ManualReadOwnerApprovalTemplate(a3ManualReadOwnerApprovalTemplateReadiness);
 assert.deepEqual(a3ManualReadOwnerApprovalTemplateReadiness.fields, a3ManualReadOwnerApprovalTemplate.fields, "readiness and checklist must retain the same exact non-evidence A3 owner approval template");
-assert.match(task, /NC-R1-A3-STRIPE-ACCOUNT-PRICING-DOCUMENT-MANUAL-20260810-01/, "task board must retain the corrected unapproved A3 Stripe pricing-document manual packet identifier");
-assert.match(task, /A3.*unapproved.*non-executable|unapproved.*non-executable.*A3/i, "task board must retain the A3 Stripe pricing-document manual packet as unapproved and non-executable");
+const completedA3ManualReadOwnerApproval = parseA3ManualReadOwnerApprovalRecordSection(checklist);
+const completedA3ManualReadOwnerApprovalReadiness = parseA3ManualReadOwnerApprovalRecordSection(readiness);
+assert.deepEqual(
+  completedA3ManualReadOwnerApprovalReadiness.fields,
+  completedA3ManualReadOwnerApproval.fields,
+  "readiness and checklist must retain the same exact completed A3 owner approval record"
+);
+const completedA3StripeObservedResult = parseA3StripeObservedResultRecord(checklist);
+const completedA3StripeObservedResultReadiness = parseA3StripeObservedResultRecord(readiness);
+assert.deepEqual(
+  completedA3StripeObservedResultReadiness.fields,
+  completedA3StripeObservedResult.fields,
+  "readiness and checklist must retain the same exact completed A3 observed result"
+);
+const currentA3ResultClassification = {
+  record_status: "approved-partial-stop-authenticated-private-read",
+  approval_id: "NC-R1-A3-STRIPE-ACCOUNT-PRICING-DOCUMENT-MANUAL-20260811-01",
+  target_match: "exact",
+  source_document_available: "unavailable",
+  direct_account_specific_base_processing_fee_available: "unavailable",
+  standard_custom_applicability: "standard",
+  full_cost_model_completeness: "incomplete",
+  sanitized_exact_cost_classification: "unconfirmed",
+  account_specific_pricing_terms_coverage: "incomplete",
+  private_exposure_detected: "no",
+  incremental_charge_required: "no",
+  base_processing_fee_coverage: "complete",
+  fixed_and_variable_components_coverage: "complete",
+  refunds_disputes_chargebacks_coverage: "complete",
+  international_currency_conversion_coverage: "complete",
+  tax_and_other_account_specific_fee_coverage: "unknown",
+  effective_scope_coverage: "incomplete",
+  public_pricing_substitution: "no",
+  incremental_charge: "no",
+  result_status: "partial-stop",
+  row_closure: "none"
+};
+for (const [field, expectedValue] of Object.entries(currentA3ResultClassification)) {
+  assert.equal(completedA3StripeObservedResult.fields[field], expectedValue, `current A3 result must retain the exact ${field} classification`);
+}
+const completedA3SupplementalPublicStandardPricingReference = parseA3SupplementalPublicStandardPricingReference(checklist);
+const completedA3SupplementalPublicStandardPricingReferenceReadiness = parseA3SupplementalPublicStandardPricingReference(readiness);
+assert.deepEqual(
+  completedA3SupplementalPublicStandardPricingReferenceReadiness.fields,
+  completedA3SupplementalPublicStandardPricingReference.fields,
+  "readiness and checklist must retain the same exact A3 public-standard supplemental classification"
+);
+for (const invalidSupplementalReference of [
+  checklist.replace("foreign_card_coverage=complete\n", ""),
+  checklist.replace("foreign_card_coverage=complete", "foreign_card_coverage=incomplete")
+]) {
+  assert.throws(
+    () => parseA3SupplementalPublicStandardPricingReference(invalidSupplementalReference),
+    /exact closed schema|exact sanitized classification/,
+    "A3 supplemental public-standard reference must reject missing or altered foreign-card coverage"
+  );
+}
+assert.match(currentTask, /NC-R1-A3-STRIPE-ACCOUNT-PRICING-DOCUMENT-MANUAL-20260811-01/, "current task board must retain the current approved partial-stop A3 pricing-document manual-read identifier");
+assert.match(currentTask, /A3.*partial-stop.*row_closure=none|partial-stop.*row_closure=none.*A3/i, "current task board must retain the A3 Stripe pricing-document manual read as partial-stop with no row closure");
 for (const [overrides, expectedError] of [
   [{ raw_payload: "synthetic" }, /exact non-executable/],
   [{ approval_decision: "approved" }, /must remain unapproved|exact non-executable/],
@@ -5570,6 +5715,12 @@ function sectionBody(markdown, heading) {
   const section = markdown.match(new RegExp(`^${escapeRegExp(heading)}\\r?\\n([\\s\\S]*?)(?=^## |(?![\\s\\S]))`, "m"));
   assert.ok(section, `missing staged section: ${heading}`);
   return section[1];
+}
+
+function exactOneSectionBody(markdown, heading) {
+  const headings = [...markdown.matchAll(new RegExp(`^${escapeRegExp(heading)}$`, "gm"))];
+  assert.equal(headings.length, 1, `${heading} must appear exactly once`);
+  return sectionBody(markdown, heading);
 }
 
 function parseExactTextBlock(section) {
@@ -6781,7 +6932,7 @@ function assertA3NonAuthorizingRecordValues(fields, context) {
 function validateActualA3ReadChild(a3Child, context) {
   assert.ok(a3Child && typeof a3Child === "object", `${context} requires the actual A3 child`);
   for (const field of ["child_id", "selected_mode", "selected_approval_unit", "requested_operation", "operator", "approval_id", "exact_target_or_scope", "time_window"]) {
-    assert.equal(a3Child[field], canonicalUnapprovedA3StripePricingDocumentManualPacketFields[field], `${context} ${field} must retain the canonical corrected A3 packet field`);
+    assert.equal(a3Child[field], canonicalCurrentA3StripePricingDocumentManualReadPacketFields[field], `${context} ${field} must retain the canonical corrected A3 packet field`);
   }
   const approvalFingerprint = assertDerivedApprovalFingerprint(a3Child, `${context} actual A3 child`);
   assert.match(approvalFingerprint, sanitizedFingerprintPattern, `${context} actual A3 child requires a deterministic sanitized approval fingerprint`);
@@ -6836,7 +6987,7 @@ function validateA3ManualReadOwnerApprovalRecord(record, a3Child, a0Child) {
     "stop_owner", "rollback_owner", "cost_guard", "default_incremental_spend_jpy", "stop_before_any_incremental_charge",
     "payment_refund_client_or_event_settings_api_export_action", "credential_creation_retrieval_disclosure", "raw_document_contract_text_url_account_identifier_private_identifier_retention",
     "codex_browser_or_stripe_control", "public_pricing_substitution", "partial_stop_condition", "production_proof", "activation_status"
-  ]) assert.equal(fields[field], canonicalUnapprovedA3StripePricingDocumentManualPacketFields[field], `${context} ${field} must bind the exact corrected packet field`);
+  ]) assert.equal(fields[field], canonicalCurrentA3StripePricingDocumentManualReadPacketFields[field], `${context} ${field} must bind the exact corrected packet field`);
   assert.equal(fields.approval_decision, "approved", `${context} requires explicit owner approval`);
   assert.equal(fields.external_action, "none", `${context} cannot execute an external action`);
   for (const field of ["requested_operation", "approval_id", "exact_target_or_scope", "time_window", "operator"]) assert.equal(fields[field], a3Child[field], `${context} ${field} must exactly match the actual A3 child`);
@@ -8342,6 +8493,18 @@ const parsedStagedChildren = validateStagedChildren(parseStagedChildren(checklis
 assert.equal(parsedStagedChildren.length, 12, "every prerequisite and closing child must have its own record");
 const completedA0RegistryChild = parsedStagedChildren.find((child) => child.headingId === "A0-provisional-cost-model-input").fields;
 validateCompletedA0RegistryState(completedA0RegistryChild);
+const currentA3RegistryChild = parsedStagedChildren.find((child) => child.headingId === "A3-stripe-source-applicability-read-or-judgment").fields;
+const parsedA3ManualReadOwnerApprovalRecords = [{ fields: completedA3ManualReadOwnerApproval.fields }];
+Object.defineProperty(parsedStagedChildren, "a3ManualReadOwnerApprovalRecords", {
+  value: parsedA3ManualReadOwnerApprovalRecords,
+  enumerable: false
+});
+validateA3ManualReadOwnerApprovalCollection(
+  currentA3RegistryChild,
+  parsedA3ManualReadOwnerApprovalRecords,
+  completedA0RegistryChild,
+  [completedA3StripeObservedResult]
+);
 assert.throws(
   () => validateCompletedA0RegistryState({ ...completedA0RegistryChild, child_status: "approved-not-started" }),
   /must be satisfied/
@@ -8644,14 +8807,36 @@ assertParsedRegistrySchema("A2-provider-cost-evidence-read", {
   dependent_stop_result: "derived-canonical-reverse-dependency-graph"
 });
 assertParsedRegistrySchema("A3-stripe-source-applicability-read-or-judgment", {
-  source_timestamp: "<required-date-parse-valid-source-timestamp-or-N-A>",
-  cost_model_fingerprint: "<required-sha256-fingerprint-or-N-A>",
-  judgment_output: "<required-approved-or-accepted-judgment-output-or-N-A>",
-  bound_artifact_fingerprint: "<required-sha256-fingerprint-or-N-A>",
-  judgment_effective_date: "<required-effective-date-or-N-A>",
-  dependency_fingerprint: "<required-sha256-fingerprint>",
-  observed_record_fingerprint: "<required-sha256-fingerprint>",
-  result_fingerprint: "<required-sha256-fingerprint>"
+  selected_mode: "read",
+  selected_approval_unit: "authenticated-private-read",
+  approval_id: "NC-R1-A3-STRIPE-ACCOUNT-PRICING-DOCUMENT-MANUAL-20260811-01",
+  explicit_decision: "approved",
+  exact_target_or_scope: "creator-paid-primary-stripe-account-pricing-document-scope-v1",
+  requested_operation: "kurodev-manual-read-existing-stripe-account-pricing-scope-and-standard-applicability-only",
+  time_window: "2026-08-11T00:00:00+09:00/2026-08-11T23:59:59+09:00",
+  operator: "kurodev-manual-current-task",
+  bound_input: "N/A",
+  effective_date: "N/A",
+  required_approver: "N/A",
+  source_timestamp: "2026-08-11T21:46:00+09:00",
+  sanitized_exact_cost: "sanitized-standard-public-pricing-reference",
+  applicability: "applicable",
+  cost_model_fingerprint: "sha256:3786fdd1745b45f1cfbe65f9284f6d0e7363f077f7f51c3a965af46e1fd1c656",
+  judgment_output: "N/A",
+  bound_artifact_fingerprint: "N/A",
+  judgment_effective_date: "N/A",
+  dependency_fingerprint: "sha256:d8f403f21571bc48098f9989394c3bef547455090dc922efaa071d0aa7938531",
+  owner_approval_record_fingerprint: "sha256:8549fc010de24c0f4818523ae5b8d55c1aa37df306b4a28da70c04199353ff22",
+  observed_record_fingerprint: "sha256:2e484611bbc25e2c3ca0126d686235f68ae13aaf6086cac5bc57d41d5a5ec5e9",
+  result_fingerprint: "sha256:3786fdd1745b45f1cfbe65f9284f6d0e7363f077f7f51c3a965af46e1fd1c656",
+  child_status: "partial-stop",
+  freshness: "fresh",
+  target: "exact",
+  approval: "approved",
+  fingerprint_bound: "yes",
+  prior_approved_or_started: "yes",
+  stop_or_drift_cause: "standard-public-pricing-partial-stop-account-specific-scope-incomplete",
+  dependent_stop_result: "derived-canonical-reverse-dependency-graph"
 });
 assertParsedRegistrySchema("A4-product-price-judgment", {
   a2_result_fingerprint: "<required-sha256-fingerprint>",
@@ -8681,11 +8866,11 @@ assertParsedRegistrySchema("B2-live-paid-flow-evidence", {
 });
 assert.doesNotThrow(() => validateParsedStagedFixture(
   parseStagedRows(checklist),
-  parseStagedChildren(checklist),
+  parsedStagedChildren,
   evidenceRows,
   [],
   [],
-  [],
+  [completedA3StripeObservedResult],
   [completedA2ProviderCostObservedResult]
 ));
 const fundingReferenceExpected = stagedChildDefinitions.find((child) => child.id === "A2-provider-funding-external-prerequisite-reference");
@@ -8715,12 +8900,19 @@ const futureApprovedChildRecord = {
 };
 validateStagedChildRecord(futureApprovedChildRecord, stagedChildDefinitions.find((child) => child.id === "A1-worker-cpu-evidence-read"));
 assert.throws(() => validateStagedChildRecord({ ...futureApprovedChildRecord, operator: "<required-exact-operator>" }, stagedChildDefinitions.find((child) => child.id === "A1-worker-cpu-evidence-read")), /required/);
-const futureRegistryEquivalent = parsedStagedChildren.map((child) => child.headingId === "A1-worker-cpu-evidence-read" ? { ...child, fields: { ...futureApprovedChildRecord } } : child);
+function attachCurrentA3ManualReadOwnerApprovalRecords(childRecords) {
+  Object.defineProperty(childRecords, "a3ManualReadOwnerApprovalRecords", {
+    value: parsedA3ManualReadOwnerApprovalRecords,
+    enumerable: false
+  });
+  return childRecords;
+}
+const futureRegistryEquivalent = attachCurrentA3ManualReadOwnerApprovalRecords(parsedStagedChildren.map((child) => child.headingId === "A1-worker-cpu-evidence-read" ? { ...child, fields: { ...futureApprovedChildRecord } } : child));
 const futureRowRegistryEquivalent = parseStagedRows(checklist).map((row) => row.headingId === "EVID-WORKER-CPU" ? { ...row, fields: { ...row.fields, row_group_status: "approved-not-started", child_approval_id: "NC-R1-FUTURE-A1-01", child_explicit_approval_decision: "approved", child_exact_target_or_scope: "exact-worker-cpu-scope", child_evidence_retention_location: "sanitized-retention", row_freshness: "fresh", row_target: "exact", row_approval: "approved", row_fingerprint_bound: "yes", row_dependent_stop_result: "not-applicable" } } : row);
-assert.doesNotThrow(() => validateParsedStagedFixture(futureRowRegistryEquivalent, futureRegistryEquivalent));
-assert.throws(() => validateParsedStagedFixture(futureRowRegistryEquivalent.map((row) => row.headingId === "EVID-WORKER-CPU" ? { ...row, fields: { ...row.fields, child_approval_id: "<required-unique-approval-id-A1-worker-cpu-evidence-read>" } } : row), futureRegistryEquivalent), /non-placeholder approval ID/);
-assert.throws(() => validateParsedStagedFixture(futureRowRegistryEquivalent.map((row) => row.headingId === "EVID-WORKER-CPU" ? { ...row, fields: { ...row.fields, row_group_status: "running" } } : row), futureRegistryEquivalent), /lifecycle states must match/);
-assert.throws(() => validateParsedStagedFixture(futureRowRegistryEquivalent.map((row) => row.headingId === "EVID-WORKER-CPU" ? { ...row, fields: { ...row.fields, row_dependent_stop_result: "derived-canonical-reverse-dependency-graph" } } : row), futureRegistryEquivalent), /row dependent-stop result/);
+assert.doesNotThrow(() => validateParsedStagedFixture(futureRowRegistryEquivalent, futureRegistryEquivalent, evidenceRows, [], [], [completedA3StripeObservedResult]));
+assert.throws(() => validateParsedStagedFixture(futureRowRegistryEquivalent.map((row) => row.headingId === "EVID-WORKER-CPU" ? { ...row, fields: { ...row.fields, child_approval_id: "<required-unique-approval-id-A1-worker-cpu-evidence-read>" } } : row), futureRegistryEquivalent, evidenceRows, [], [], [completedA3StripeObservedResult]), /non-placeholder approval ID/);
+assert.throws(() => validateParsedStagedFixture(futureRowRegistryEquivalent.map((row) => row.headingId === "EVID-WORKER-CPU" ? { ...row, fields: { ...row.fields, row_group_status: "running" } } : row), futureRegistryEquivalent, evidenceRows, [], [], [completedA3StripeObservedResult]), /lifecycle states must match/);
+assert.throws(() => validateParsedStagedFixture(futureRowRegistryEquivalent.map((row) => row.headingId === "EVID-WORKER-CPU" ? { ...row, fields: { ...row.fields, row_dependent_stop_result: "derived-canonical-reverse-dependency-graph" } } : row), futureRegistryEquivalent, evidenceRows, [], [], [completedA3StripeObservedResult]), /row dependent-stop result/);
 for (const lifecycleState of ["approved-not-started", "running", "partial-stop", "complete-not-closure-eligible"]) {
   const stopsDependents = ["partial-stop", "stale", "invalidated"].includes(lifecycleState);
   const futureRows = futureRowRegistryEquivalent.map((row) => row.headingId === "EVID-WORKER-CPU" ? {
@@ -8734,7 +8926,7 @@ for (const lifecycleState of ["approved-not-started", "running", "partial-stop",
       row_stop_or_drift_cause: stopsDependents ? "target-mismatch-observed" : undefined
     }
   } : row);
-  const futureChildren = futureRegistryEquivalent.map((child) => child.headingId === "A1-worker-cpu-evidence-read" ? {
+  const futureChildren = attachCurrentA3ManualReadOwnerApprovalRecords(futureRegistryEquivalent.map((child) => child.headingId === "A1-worker-cpu-evidence-read" ? {
     ...child,
     fields: {
       ...child.fields,
@@ -8751,9 +8943,9 @@ for (const lifecycleState of ["approved-not-started", "running", "partial-stop",
   } : child.headingId === "A1-worker-cpu-source-disposition" && ["running", "complete-not-closure-eligible", "satisfied"].includes(lifecycleState) ? {
     ...child,
     fields: { ...futureSourceDisposition, source_disposition_outcome: "approved-safe-source-selected" }
-  } : child);
+  } : child));
   const fixtureLedger = cloneRows(evidenceRows);
-  assert.doesNotThrow(() => validateParsedStagedFixture(futureRows, futureChildren, fixtureLedger), `parsed row and registry fixture must accept future ${lifecycleState}`);
+  assert.doesNotThrow(() => validateParsedStagedFixture(futureRows, futureChildren, fixtureLedger, [], [], [completedA3StripeObservedResult]), `parsed row and registry fixture must accept future ${lifecycleState}`);
 }
 const futureRowApprovalIds = new Map(parseStagedRows(checklist).map((row) => [row.fields.row_group_id, row.fields.child_approval_id]));
 futureRowApprovalIds.set("EVID-WORKER-CPU", "NC-R1-FUTURE-A1-01");
@@ -8764,8 +8956,8 @@ for (const lifecycleState of ["running", "partial-stop", "complete-not-closure-e
 for (const [lifecycleState, drift] of [["stale", { target: "target-mismatched", approval: "approved", fingerprint_bound: "yes" }], ["invalidated", { target: "exact", approval: "unapproved", fingerprint_bound: "yes" }], ["incomplete", { target: "exact", approval: "approved", fingerprint_bound: "no" }]]) {
   const stopsDependents = ["stale", "invalidated"].includes(lifecycleState);
   const degradedRows = futureRowRegistryEquivalent.map((row) => row.headingId === "EVID-WORKER-CPU" ? { ...row, fields: { ...row.fields, row_group_status: lifecycleState, row_freshness: lifecycleState === "stale" ? "stale" : "fresh", row_target: drift.target, row_approval: drift.approval, row_fingerprint_bound: drift.fingerprint_bound, row_closure: "none", row_prior_approved_or_started: "yes", row_stop_or_drift_cause: lifecycleState === "stale" ? "evidence-stale" : lifecycleState === "invalidated" ? "approval-drift" : "fingerprint-broken", row_dependent_stop_result: stopsDependents ? "derived-canonical-reverse-dependency-graph" : "not-applicable" } } : row);
-  const degradedChildren = futureRegistryEquivalent.map((child) => child.headingId === "A1-worker-cpu-evidence-read" ? { ...child, fields: { ...child.fields, child_status: lifecycleState, freshness: lifecycleState === "stale" ? "stale" : "fresh", ...drift, prior_approved_or_started: "yes", stop_or_drift_cause: lifecycleState === "stale" ? "evidence-stale" : lifecycleState === "invalidated" ? "approval-drift" : "fingerprint-broken", dependent_stop_result: stopsDependents ? "derived-canonical-reverse-dependency-graph" : "not-applicable" } } : child);
-  assert.doesNotThrow(() => validateParsedStagedFixture(degradedRows, degradedChildren), `${lifecycleState} parser round-trip must retain its truthful drift state`);
+  const degradedChildren = attachCurrentA3ManualReadOwnerApprovalRecords(futureRegistryEquivalent.map((child) => child.headingId === "A1-worker-cpu-evidence-read" ? { ...child, fields: { ...child.fields, child_status: lifecycleState, freshness: lifecycleState === "stale" ? "stale" : "fresh", ...drift, prior_approved_or_started: "yes", stop_or_drift_cause: lifecycleState === "stale" ? "evidence-stale" : lifecycleState === "invalidated" ? "approval-drift" : "fingerprint-broken", dependent_stop_result: stopsDependents ? "derived-canonical-reverse-dependency-graph" : "not-applicable" } } : child));
+  assert.doesNotThrow(() => validateParsedStagedFixture(degradedRows, degradedChildren, evidenceRows, [], [], [completedA3StripeObservedResult]), `${lifecycleState} parser round-trip must retain its truthful drift state`);
 }
 assert.throws(() => validateStagedChildren(futureRegistryEquivalent.map((child) => child.headingId === "A1-worker-cpu-evidence-read" ? { ...child, fields: { ...child.fields, approval_id: "<required-unique-approval-id-A1-worker-cpu-evidence-read>" } } : child), parsedStagedRows, futureRowApprovalIds), /non-placeholder approval ID/);
 const mismatchedRowApprovalIds = new Map(parseStagedRows(checklist).map((row) => [row.fields.row_group_id, row.fields.child_approval_id]));
@@ -8774,7 +8966,7 @@ assert.throws(() => validateStagedChildren(parsedStagedChildren, parsedStagedRow
 const stripeExpected = stagedChildDefinitions.find((child) => child.id === "A3-stripe-source-applicability-read-or-judgment");
 const futureStripeRead = {
   ...parsedStagedChildren.find((child) => child.headingId === stripeExpected.id).fields,
-  child_status: "approved-not-started", approval_id: "NC-R1-FUTURE-A3-READ-01", explicit_decision: "approved", exact_target_or_scope: "exact-stripe-scope", evidence_retention_location: "sanitized-retention", freshness: "fresh", target: "exact", approval: "approved", fingerprint_bound: "yes",
+  child_status: "approved-not-started", approval_id: "NC-R1-FUTURE-A3-READ-01", explicit_decision: "approved", exact_target_or_scope: "exact-stripe-scope", evidence_retention_location: "sanitized-retention", freshness: "fresh", target: "exact", approval: "approved", fingerprint_bound: "yes", dependent_stop_result: "not-applicable",
   selected_mode: "read", selected_approval_unit: "authenticated-private-read", requested_operation: "approved-stripe-read", time_window: "approved-window", operator: "approved-operator", bound_input: "N/A", effective_date: "N/A", required_approver: "N/A"
 };
 assert.doesNotThrow(() => validateStagedChildRecord(futureStripeRead, stripeExpected));
@@ -9357,13 +9549,13 @@ function parsedFingerprintGraphFixture(closingChildId, childStatus) {
   });
   Object.assign(fieldsByChildId.get("A3-stripe-source-applicability-read-or-judgment"), {
     ...validA3ReadStructuredResult,
-    approval_id: canonicalUnapprovedA3StripePricingDocumentManualPacketFields.approval_id,
-    exact_target_or_scope: canonicalUnapprovedA3StripePricingDocumentManualPacketFields.exact_target_or_scope,
-    requested_operation: canonicalUnapprovedA3StripePricingDocumentManualPacketFields.requested_operation,
-    operator: canonicalUnapprovedA3StripePricingDocumentManualPacketFields.operator,
-    time_window: canonicalUnapprovedA3StripePricingDocumentManualPacketFields.time_window,
-    source_timestamp: "2026-08-10T00:15:00+09:00",
-    evidence_retention_location: canonicalUnapprovedA3StripePricingDocumentManualPacketFields.evidence_retention_location,
+    approval_id: canonicalCurrentA3StripePricingDocumentManualReadPacketFields.approval_id,
+    exact_target_or_scope: canonicalCurrentA3StripePricingDocumentManualReadPacketFields.exact_target_or_scope,
+    requested_operation: canonicalCurrentA3StripePricingDocumentManualReadPacketFields.requested_operation,
+    operator: canonicalCurrentA3StripePricingDocumentManualReadPacketFields.operator,
+    time_window: canonicalCurrentA3StripePricingDocumentManualReadPacketFields.time_window,
+    source_timestamp: "2026-08-11T00:15:00+09:00",
+    evidence_retention_location: canonicalCurrentA3StripePricingDocumentManualReadPacketFields.evidence_retention_location,
     satisfied_result: satisfiedResultSchemas["A3-stripe-source-applicability-read-or-judgment"],
     judgment_output: "N/A",
     bound_artifact_fingerprint: "N/A",
@@ -9557,29 +9749,29 @@ function parsedFingerprintGraphFixture(closingChildId, childStatus) {
     child_id: a3Fields.child_id,
     selected_mode: "read",
     selected_approval_unit: "authenticated-private-read",
-    requested_operation: canonicalUnapprovedA3StripePricingDocumentManualPacketFields.requested_operation,
-    permitted_execution_surface: canonicalUnapprovedA3StripePricingDocumentManualPacketFields.permitted_execution_surface,
+    requested_operation: canonicalCurrentA3StripePricingDocumentManualReadPacketFields.requested_operation,
+    permitted_execution_surface: canonicalCurrentA3StripePricingDocumentManualReadPacketFields.permitted_execution_surface,
     command: "<no-Codex-command-authorized>", external_action: "none",
-    operator: canonicalUnapprovedA3StripePricingDocumentManualPacketFields.operator,
+    operator: canonicalCurrentA3StripePricingDocumentManualReadPacketFields.operator,
     required_approver: "kurodev",
-    approval_id: canonicalUnapprovedA3StripePricingDocumentManualPacketFields.approval_id,
+    approval_id: canonicalCurrentA3StripePricingDocumentManualReadPacketFields.approval_id,
     approval_decision: "approved",
     approval_fingerprint: a3Fields.approval_fingerprint,
-    exact_target_or_scope: canonicalUnapprovedA3StripePricingDocumentManualPacketFields.exact_target_or_scope,
-    time_window: canonicalUnapprovedA3StripePricingDocumentManualPacketFields.time_window,
+    exact_target_or_scope: canonicalCurrentA3StripePricingDocumentManualReadPacketFields.exact_target_or_scope,
+    time_window: canonicalCurrentA3StripePricingDocumentManualReadPacketFields.time_window,
     bound_a0_approval_id: a0Fields.approval_id,
     bound_a0_cost_model_input_fingerprint: a0Fields.cost_model_input_fingerprint,
-    prior_stripe_cost_approval_ids: canonicalUnapprovedA3StripePricingDocumentManualPacketFields.prior_stripe_cost_approval_ids,
-    verification_scope: canonicalUnapprovedA3StripePricingDocumentManualPacketFields.verification_scope,
-    evidence_retention_location: canonicalUnapprovedA3StripePricingDocumentManualPacketFields.evidence_retention_location,
+    prior_stripe_cost_approval_ids: canonicalCurrentA3StripePricingDocumentManualReadPacketFields.prior_stripe_cost_approval_ids,
+    verification_scope: canonicalCurrentA3StripePricingDocumentManualReadPacketFields.verification_scope,
+    evidence_retention_location: canonicalCurrentA3StripePricingDocumentManualReadPacketFields.evidence_retention_location,
     stop_owner: "kurodev", rollback_owner: "kurodev",
-    cost_guard: canonicalUnapprovedA3StripePricingDocumentManualPacketFields.cost_guard,
+    cost_guard: canonicalCurrentA3StripePricingDocumentManualReadPacketFields.cost_guard,
     default_incremental_spend_jpy: "0", stop_before_any_incremental_charge: "yes",
     payment_refund_client_or_event_settings_api_export_action: "none",
     credential_creation_retrieval_disclosure: "none",
     raw_document_contract_text_url_account_identifier_private_identifier_retention: "none",
     codex_browser_or_stripe_control: "none", public_pricing_substitution: "forbidden",
-    partial_stop_condition: canonicalUnapprovedA3StripePricingDocumentManualPacketFields.partial_stop_condition,
+    partial_stop_condition: canonicalCurrentA3StripePricingDocumentManualReadPacketFields.partial_stop_condition,
     row_closure: "none", production_proof: "no", activation_status: "closed",
     owner_approval_record_fingerprint: "pending"
   };
@@ -10992,6 +11184,12 @@ assert.throws(
 const a3OwnerApprovalValidationFence = `\`\`\`text\n${a3ManualReadOwnerApprovalRecordFields.map((field) => `${field}=${a3ObservedValidationOwnerApproval.fields[field]}`).join("\n")}\n\`\`\``;
 const parsedA3OwnerApprovalValidationRecord = parseA3ManualReadOwnerApprovalRecord(a3OwnerApprovalValidationFence);
 assert.deepEqual(parsedA3OwnerApprovalValidationRecord.fields, a3ObservedValidationOwnerApproval.fields, "A3 owner approval parser must retain the exact closed sanitized record");
+const a3OwnerApprovalValidationMarkdown = `## Approved A3 Stripe Account-Pricing Manual-Read Owner Approval\n\n${a3OwnerApprovalValidationFence}\n`;
+assert.throws(
+  () => parseA3ManualReadOwnerApprovalRecordSection(`${a3OwnerApprovalValidationMarkdown}\n${a3OwnerApprovalValidationMarkdown}`),
+  /exactly once/,
+  "A3 owner approval section parser must reject duplicate same-heading sections"
+);
 const syntheticA3OwnerRawUrl = ["https:", "", "private.invalid", "synthetic"].join("/");
 const syntheticA3OwnerPrivateStripePattern = ["acct", "SYNTHETIC", "PRIVATE", "VALUE"].join("_");
 const syntheticA3OwnerFtpUrl = ["ftp:", "", "private.invalid", "synthetic"].join("/");
@@ -11031,6 +11229,11 @@ assert.throws(
 const a3ObservedValidationMarkdown = `## Completed A3 Stripe Account-Pricing Document Sanitized Result\n\n\`\`\`text\n${a3StripeObservedResultRecordFields.map((field) => `${field}=${a3ObservedValidationFields[field]}`).join("\n")}\n\`\`\`\n`;
 const parsedA3ObservedValidationRecord = parseA3StripeObservedResultRecord(a3ObservedValidationMarkdown);
 assert.deepEqual(parsedA3ObservedValidationRecord.fields, a3ObservedValidationFields, "A3 observed result parser must retain the exact closed sanitized record");
+assert.throws(
+  () => parseA3StripeObservedResultRecord(`${a3ObservedValidationMarkdown}\n${a3ObservedValidationMarkdown}`),
+  /exactly once/,
+  "A3 observed-result section parser must reject duplicate same-heading sections"
+);
 const syntheticA3ObservedFtpUrl = ["ftp:", "", "private.invalid", "synthetic"].join("/");
 const syntheticA3ObservedPaymentMethodPattern = ["pm", "SYNTHETIC", "PRIVATE", "VALUE"].join("_");
 assert.throws(() => parseA3StripeObservedResultRecord(a3ObservedValidationMarkdown.replace("requested_operation=", `requested_operation=${syntheticA3ObservedFtpUrl}`)), /URL scheme/, "A3 observed result parser must reject every URL scheme");
@@ -11672,6 +11875,15 @@ assert.throws(
   }),
   /outside its approved allowlist/,
   "the exact-path guard must remain active for the NC-R1 staged-resolution lane"
+);
+assert.throws(
+  () => assertCurrentWorktreePathSafety({
+    currentTask: "current_goal=comment-translator-creator-nc-x2b-r1-thirty-day-retention-switch\ncurrent_lane=NC-X2B-R1\nimplementation_status=repository-implemented-not-applied\n- current A3 is `NC-R1-A3-STRIPE-ACCOUNT-PRICING-DOCUMENT-MANUAL-20260811-01` approved partial-stop with row_closure=none",
+    changedPaths: ["docs/superpowers/plans/2026-08-11-nc-r1-a3-standard-partial-stop.md"],
+    phase: "manifest-creation"
+  }),
+  /child-result-run must not change a path outside its approved allowlist/,
+  "the current A3 approved partial-stop marker must activate the child-result-run exact-path guard without changing the overall X2B lane"
 );
 
 process.stdout.write(

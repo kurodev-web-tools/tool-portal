@@ -19,6 +19,7 @@
 - Current publication follow-up: PR #663 is open and mergeable from `codex/viewer-engagement-prompt-board-delete-dialog-main` to `main`, based on exact fetched `origin/main` tip `aa703240d29f6df66823c2ad059e795e4db699b3`. Merge, deploy, and branch/worktree cleanup remain separate human actions.
 - Launch-video repository boundary: the prompt-board Remotion sources and verified JA/EN artifacts are now owned by `kurodev-web-tools/streamer-tools-launch-videos` at merged commit `edd3a4fc1e6aacc9d9957b647ca4bfd25865714f`, with public release `viewer-engagement-prompt-board-launch-v1`. Branch `codex/remove-prompt-board-video-package` reverts product-repository PR #661 so the root Cloudflare build no longer discovers package-local Remotion sources; no deploy or Cloudflare mutation is part of this fix PR.
 - New detailed status belongs in the linked active authority. Do not append new long-form task history to the compatibility ledger below.
+- Comment Translator Paid Core v1 Task 2: local-only schema/RPC and trusted server adapter implementation is on `codex/comment-translator-paid-v1-task2` from Preview commit `bc2d1bef0e2c9662fa3bfb04be236071fe16d155`; remote apply, deploy, activation, and Preview merge are not performed.
 
 ## Current Premises
 

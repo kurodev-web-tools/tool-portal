@@ -6,16 +6,13 @@ import ts from "typescript";
 
 const root = process.cwd();
 const billingRuntimePath = "lib/comment-translator-billing-runtime.ts";
-const accountBillingPagePath = "app/account/billing/page.tsx";
-const accountBillingActionsPath = "app/account/billing/actions.ts";
 const accountBillingShellPath = "components/account/AccountBillingShell.tsx";
-const webhookRoutePath = "app/api/comment-translator/billing/webhook/route.ts";
-const accountPagePath = "components/account/AccountPreferencesShell.tsx";
-const toolDockPath = "components/comment-translator/CommentTranslatorDock.tsx";
-const sessionActionPath = "app/tools/comment-translator/actions.ts";
-const sessionRoutePath = "app/api/comment-translator/session/route.ts";
-const requirementsPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_RELEASE_REQUIREMENTS.md";
-const taskPath = "task.md";
+const accountPreferencesShellPath = "components/account/AccountPreferencesShell.tsx";
+const publicEntitlementPath = "lib/comment-translator-public-entitlement-baseline.ts";
+const sessionPolicyPath = "lib/comment-translator-session-policy.ts";
+const providerPolicyPath = "lib/comment-translator-provider-policy-runtime.ts";
+const azureExecutionPath = "lib/comment-translator-azure-normal-translation-execution.ts";
+const task1PlanPath = "docs/superpowers/plans/2026-08-12-comment-translator-paid-task1.md";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -30,13 +27,15 @@ function loadTsModule(relativePath) {
   const originalLoad = Module._load;
 
   function resolveAlias(request) {
-    if (request.startsWith("@/")) {
-      const withoutAlias = request.slice(2);
-      for (const extension of [".ts", ".tsx"]) {
-        const candidate = path.join(root, `${withoutAlias}${extension}`);
-        if (fs.existsSync(candidate)) {
-          return candidate;
-        }
+    if (!request.startsWith("@/")) {
+      return null;
+    }
+
+    const withoutAlias = request.slice(2);
+    for (const extension of [".ts", ".tsx"]) {
+      const candidate = path.join(root, `${withoutAlias}${extension}`);
+      if (fs.existsSync(candidate)) {
+        return candidate;
       }
     }
 
@@ -67,7 +66,7 @@ function loadTsModule(relativePath) {
   }
 
   Module._load = function patchedLoad(request, parent, isMain) {
-    if (request === "server-only" || request === "next/navigation" || request === "next/headers") {
+    if (request === "server-only" || request === "next/headers" || request === "next/navigation" || request === "stripe") {
       return {};
     }
 
@@ -95,221 +94,241 @@ function loadTsModule(relativePath) {
   }
 }
 
-assert.ok(exists(billingRuntimePath), "Task 15 server-only billing runtime exists");
-assert.ok(exists(accountBillingPagePath), "account billing page exists");
-assert.ok(exists(accountBillingActionsPath), "account billing server actions exist");
-assert.ok(exists(accountBillingShellPath), "account billing shell exists");
-assert.ok(exists(webhookRoutePath), "Stripe webhook route exists");
-assert.ok(exists(requirementsPath), "canonical public requirements remain available");
+assert.ok(exists(billingRuntimePath), "Task 1 billing boundary exists");
+assert.ok(exists(accountBillingShellPath), "Task 1 billing UI exists");
+assert.ok(exists(accountPreferencesShellPath), "Task 1 account preferences UI exists");
+assert.ok(exists(publicEntitlementPath), "Free entitlement baseline exists");
+assert.ok(exists(sessionPolicyPath), "Free session policy exists");
+assert.ok(exists(providerPolicyPath), "provider policy exists");
+assert.ok(exists(azureExecutionPath), "Free Azure execution exists");
+assert.ok(exists(task1PlanPath), "Task 1 implementation plan exists");
 
 const billingSource = read(billingRuntimePath);
-const accountBillingPageSource = read(accountBillingPagePath);
-const accountBillingActionsSource = read(accountBillingActionsPath);
 const accountBillingShellSource = read(accountBillingShellPath);
-const webhookRouteSource = read(webhookRoutePath);
-const accountPageSource = read(accountPagePath);
-const toolDockSource = read(toolDockPath);
-const sessionActionSource = read(sessionActionPath);
-const sessionRouteSource = read(sessionRoutePath);
-const requirementsSource = read(requirementsPath);
-const taskSource = read(taskPath);
+const accountPreferencesShellSource = read(accountPreferencesShellPath);
+const publicEntitlementSource = read(publicEntitlementPath);
+const sessionPolicySource = read(sessionPolicyPath);
+const providerPolicySource = read(providerPolicyPath);
+const azureExecutionSource = read(azureExecutionPath);
 
-assert.match(billingSource, /^import "server-only";/m, "billing runtime is server-only");
-assert.match(billingSource, /Checkout Sessions/i, "billing runtime records Checkout Sessions integration intent");
-assert.match(billingSource, /Customer Portal/i, "billing runtime records Customer Portal integration intent");
-assert.match(webhookRouteSource, /STRIPE_WEBHOOK_SECRET/, "webhook route uses webhook secret reference");
-assert.match(webhookRouteSource, /readCommentTranslatorStripeWebhookResult/, "webhook route delegates to the billing runtime");
-assert.match(accountBillingActionsSource, /createCommentTranslatorBillingCheckoutAction/, "checkout server action exists");
-assert.match(accountBillingActionsSource, /createCommentTranslatorBillingPortalAction/, "portal server action exists");
-assert.match(accountBillingPageSource, /AccountBillingShell/, "billing page renders account billing shell");
-assert.match(accountPageSource, /\/account\/billing/, "account page links to billing");
-assert.match(toolDockSource, /data-comment-translator-billing-entry="stripe-paid-plan"/, "translator UI includes paid-plan entry point");
-assert.match(sessionActionSource, /readCommentTranslatorBillingEntitlementSnapshot/, "server actions read billing entitlement state");
-assert.match(sessionRouteSource, /readCommentTranslatorBillingEntitlementSnapshot/, "session route reads billing entitlement state");
-assert.match(requirementsSource, /Free\/Paid plan state when entitlement enforcement exists/, "requirements retain Free/Paid usage display");
-
-for (const source of [
-  billingSource,
-  accountBillingPageSource,
-  accountBillingActionsSource,
-  accountBillingShellSource,
-  webhookRouteSource,
-  accountPageSource,
-  toolDockSource,
-  sessionActionSource,
-  sessionRouteSource
+assert.match(billingSource, /^import "server-only";/m, "billing boundary remains server-only");
+assert.match(billingSource, /paidCoreV1Availability:\s*"unavailable-until-durable-entitlement"/, "Paid Core v1 is explicitly disconnected until durable entitlement exists");
+assert.match(billingSource, /memoryEntitlementStore:\s*"removed"/, "memory-backed Paid entitlement is marked removed");
+assert.doesNotMatch(billingSource, /paidEntitlementsByBillingUser|new Map<.*Billing|pro-monthly|pro-yearly|Kuro Stream Kit Pro|currency:\s*"JPY"|monthlyAmount:\s*1_200|yearlyAmount:\s*12_000/, "old Paid plan presentation and memory entitlement are not retained in the boundary");
+for (const [uiPath, uiSource] of [
+  [accountBillingShellPath, accountBillingShellSource],
+  [accountPreferencesShellPath, accountPreferencesShellSource]
 ]) {
+  assert.match(uiSource, /Paid Core v1/, `${uiPath} names the explicit Paid Core v1 boundary`);
   assert.doesNotMatch(
-    source,
-    /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|whsec_[A-Za-z0-9]+|access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|Authorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN\s+PRIVATE\s+KEY|liveChatId\s*[:=]\s*["'][^"']+|providerChannelId\s*[:=]\s*["'][^"']+/i,
-    "Task 15 source does not contain Stripe secret values, provider credentials, provider targets, authorization values, or private keys"
+    uiSource,
+    /Kuro Stream Kit Pro|Free \/ Pro|Pro inactive|月額|年額|OpenAI mini|¥0/,
+    `${uiPath} does not retain the old Paid name, price intervals, provider promise, or JPY zero price`
   );
 }
+assert.match(accountBillingShellSource, /paid-core-v1-unavailable/, "billing UI handles the Paid Core v1 unavailable query result");
+assert.match(accountBillingShellSource, /"paid-core-v1-unavailable":\s*"Paid Core v1 は[^\n]+Free は引き続き利用できます。"/, "billing UI includes the Japanese unavailable result message");
+assert.match(accountBillingShellSource, /"paid-core-v1-unavailable":\s*"Paid Core v1 is unavailable[^\n]+Free remains available\."/, "billing UI includes the English unavailable result message");
+assert.match(accountBillingShellSource, /paidCoreV1Availability/, "billing UI renders browser-safe Paid Core v1 availability");
+assert.match(accountBillingShellSource, /data-comment-translator-plan-comparison="free-only-paid-unavailable"/, "billing UI labels the Free-only and Paid-unavailable comparison");
+
+assert.match(publicEntitlementSource, /billingSnapshot\??:\s*Pick<|billingSnapshot\??:/, "Free baseline accepts unavailable billing input");
+assert.match(publicEntitlementSource, /billingSnapshot\?\.[\s\S]*plan/, "Free baseline does not require a readable Paid snapshot");
+assert.match(sessionPolicySource, /dailyLimitMs:\s*freeLimitMs/, "Free daily limit remains server-owned");
+assert.match(sessionPolicySource, /sessionLimitMs:\s*freeLimitMs/, "Free session limit remains server-owned");
+assert.match(sessionPolicySource, /translatedMessagesPerMinute:\s*30/, "Free per-minute limit remains server-owned");
+assert.match(sessionPolicySource, /monthlyProviderInputCharacterLimit:\s*20_000/, "Free monthly input-character cap remains server-owned");
+assert.match(providerPolicySource, /freePlanPrimary:\s*"azure-translator"/, "Free provider remains Azure Translator");
+assert.match(azureExecutionSource, /freePlanPrimary:\s*"azure-translator"/, "Free Azure execution contract remains present");
 
 const billing = loadTsModule(billingRuntimePath);
+const session = loadTsModule(sessionPolicyPath);
 
 assert.equal(
-  billing.commentTranslatorStripeBillingContract.runtime,
-  "server-only",
-  "billing contract is server-only"
+  billing.commentTranslatorStripeBillingContract.paidCoreV1Availability,
+  "unavailable-until-durable-entitlement",
+  "Paid Core v1 stays unavailable until the durable authority is connected"
 );
-assert.equal(
-  billing.commentTranslatorStripeBillingContract.freePlanAvailability,
-  "permanent",
-  "free plan remains permanent"
-);
-assert.deepEqual(
-  billing.commentTranslatorStripeBillingContract.stripeSurfaces,
-  ["Checkout Sessions", "Billing Customer Portal", "signed webhook"],
-  "Task 15 uses Stripe Checkout, Portal, and signed webhooks"
-);
-assert.equal(
-  billing.commentTranslatorStripeBillingContract.browserStorage,
-  "forbidden",
-  "billing integration does not use browser storage"
-);
+assert.equal(billing.commentTranslatorStripeBillingContract.memoryEntitlementStore, "removed");
+assert.equal(billing.commentTranslatorStripeBillingContract.freePlanAvailability, "permanent");
+assert.equal(billing.commentTranslatorStripeBillingContract.browserStorage, "forbidden");
 
-const unsignedWebhook = await billing.readCommentTranslatorStripeWebhookResult({
-  payload: "{}",
-  signature: null,
+const freeEntitlement = session.createCommentTranslatorSessionPlanEntitlement({ plan: "free" });
+assert.equal(freeEntitlement.dailyLimitMs, 1_800_000);
+assert.equal(freeEntitlement.sessionLimitMs, 1_800_000);
+assert.equal(freeEntitlement.translatedMessagesPerMinute, 30);
+assert.equal(freeEntitlement.activeSessionsPerUser, 1);
+assert.equal(freeEntitlement.monthlyProviderInputCharacterLimit, 20_000);
+
+const authorizedSnapshot = billing.readCommentTranslatorBillingEntitlementSnapshot({
+  callerAuthorization: {
+    status: "authorized",
+    ownerUserId: "opaque-owner-fixture"
+  }
+});
+assert.equal(authorizedSnapshot.plan, "free", "authorized callers remain on Free while Paid is disconnected");
+assert.equal(authorizedSnapshot.billingState, "free");
+assert.equal(authorizedSnapshot.planEntitlement.plan, "free");
+assert.equal(authorizedSnapshot.planEntitlement.dailyLimitMs, 1_800_000);
+assert.equal(authorizedSnapshot.planEntitlement.sessionLimitMs, 1_800_000);
+assert.equal(authorizedSnapshot.planEntitlement.translatedMessagesPerMinute, 30);
+assert.equal(authorizedSnapshot.planEntitlement.monthlyProviderInputCharacterLimit, 20_000);
+
+const paidShapedBrowserSnapshot = {
+  ...authorizedSnapshot,
+  plan: "paid",
+  billingState: "paid-active",
+  planEntitlement: {
+    ...authorizedSnapshot.planEntitlement,
+    plan: "paid",
+    planEntitlementReferenceId: "opaque-paid-fixture",
+    dailyLimitMs: 14_400_000,
+    sessionLimitMs: 14_400_000,
+    translatedMessagesPerMinute: 120,
+    activeSessionsPerUser: 4,
+    monthlyProviderInputCharacterLimit: 1_000_000
+  },
+  paidPlan: {
+    status: "available",
+    currentPeriodEndIso: null,
+    provider: "stripe"
+  }
+};
+
+const configuredBrowserView = billing.createCommentTranslatorBillingBrowserSafeViewModel({
+  snapshot: paidShapedBrowserSnapshot,
   env: {
-    STRIPE_WEBHOOK_SECRET: "present-for-test-only"
+    STRIPE_SECRET_KEY: "fixture-secret",
+    STRIPE_WEBHOOK_SECRET: "fixture-webhook-secret",
+    COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "fixture-price",
+    NEXT_PUBLIC_SITE_URL: "https://example.test"
+  }
+});
+assert.equal(configuredBrowserView.plan, "free");
+assert.equal(configuredBrowserView.billingState, "free");
+assert.equal(configuredBrowserView.planEntitlement.plan, "free");
+assert.equal(configuredBrowserView.planEntitlement.dailyLimitMs, 1_800_000);
+assert.equal(configuredBrowserView.planEntitlement.sessionLimitMs, 1_800_000);
+assert.equal(configuredBrowserView.planEntitlement.translatedMessagesPerMinute, 30);
+assert.equal(configuredBrowserView.planEntitlement.activeSessionsPerUser, 1);
+assert.equal(configuredBrowserView.planEntitlement.monthlyProviderInputCharacterLimit, 20_000);
+assert.equal(
+  configuredBrowserView.paidCoreV1Availability,
+  "unavailable-until-durable-entitlement",
+  "browser-safe view intentionally distinguishes Paid Core v1 unavailability"
+);
+assert.equal(configuredBrowserView.checkoutAvailable, false, "configured Stripe does not open old Paid checkout");
+assert.equal(configuredBrowserView.portalAvailable, false, "configured Stripe does not open old Paid portal");
+assert.deepEqual(configuredBrowserView.planComparison.planOptions.map((option) => option.id), ["free"], "browser view exposes Free only");
+assert.equal(configuredBrowserView.planComparison.planOptions[0].productName, "Free");
+assert.equal(configuredBrowserView.planComparison.planOptions[0].entitlement.plan, "free");
+assert.doesNotMatch(JSON.stringify(configuredBrowserView), /fixture-secret|fixture-webhook-secret|opaque-owner-fixture/, "browser view excludes private fixture values");
+
+let checkoutAdapterCalls = 0;
+const configuredCheckout = await billing.createCommentTranslatorStripeCheckoutSessionResult({
+  callerAuthorization: {
+    status: "authorized",
+    ownerUserId: "opaque-owner-fixture"
+  },
+  env: {
+    STRIPE_SECRET_KEY: "fixture-secret",
+    COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "fixture-price",
+    NEXT_PUBLIC_SITE_URL: "https://example.test"
+  },
+  stripeAdapter: {
+    createCheckoutSession: async () => {
+      checkoutAdapterCalls += 1;
+      return { url: "https://checkout.example.test/should-not-run" };
+    }
+  }
+});
+assert.equal(configuredCheckout.status, "unavailable");
+assert.equal(configuredCheckout.reason, "paid-core-v1-unavailable");
+assert.equal(checkoutAdapterCalls, 0, "old Checkout adapter is not called");
+
+const missingCheckout = await billing.createCommentTranslatorStripeCheckoutSessionResult({
+  callerAuthorization: {
+    status: "authorized",
+    ownerUserId: "opaque-owner-fixture"
+  },
+  env: {},
+  stripeAdapter: {
+    createCheckoutSession: async () => {
+      throw new Error("old Checkout adapter must stay disconnected");
+    }
+  }
+});
+assert.equal(missingCheckout.status, "unavailable");
+assert.equal(missingCheckout.reason, "paid-core-v1-unavailable", "missing Stripe config does not affect Free availability");
+
+let portalAdapterCalls = 0;
+const configuredPortal = await billing.createCommentTranslatorStripePortalSessionResult({
+  callerAuthorization: {
+    status: "authorized",
+    ownerUserId: "opaque-owner-fixture"
+  },
+  env: {
+    STRIPE_SECRET_KEY: "fixture-secret",
+    NEXT_PUBLIC_SITE_URL: "https://example.test"
+  },
+  stripeAdapter: {
+    createPortalSession: async () => {
+      portalAdapterCalls += 1;
+      return { url: "https://billing.example.test/should-not-run" };
+    }
+  }
+});
+assert.equal(configuredPortal.status, "unavailable");
+assert.equal(configuredPortal.reason, "paid-core-v1-unavailable");
+assert.equal(portalAdapterCalls, 0, "old Portal adapter is not called");
+
+let webhookVerifierCalls = 0;
+const activeWebhook = await billing.readCommentTranslatorStripeWebhookResult({
+  payload: "fixture-payload",
+  signature: "fixture-signature",
+  env: {
+    STRIPE_WEBHOOK_SECRET: "fixture-webhook-secret"
   },
   verifier: {
     constructEvent: async () => {
-      throw new Error("should not be called without a signature");
+      webhookVerifierCalls += 1;
+      return {
+        type: "customer.subscription.updated",
+        customerReferenceId: "fixture-customer",
+        subscriptionReferenceId: "fixture-subscription",
+        status: "active",
+        priceReferenceId: "fixture-price",
+        billingUserReferenceId: null,
+        currentPeriodEndMs: null
+      };
+    }
+  }
+});
+assert.equal(activeWebhook.status, "rejected");
+assert.equal(activeWebhook.reason, "paid-core-v1-unavailable", "old signed webhook projection cannot activate Paid");
+assert.equal(webhookVerifierCalls, 0, "old webhook verifier is not invoked for the disconnected Paid path");
+
+const unsignedWebhook = await billing.readCommentTranslatorStripeWebhookResult({
+  payload: "fixture-payload",
+  signature: null,
+  env: {
+    STRIPE_WEBHOOK_SECRET: "fixture-webhook-secret"
+  },
+  verifier: {
+    constructEvent: async () => {
+      throw new Error("unsigned webhook must not reach verifier");
     }
   }
 });
 assert.equal(unsignedWebhook.status, "rejected");
 assert.equal(unsignedWebhook.reason, "missing-signature");
-assert.doesNotMatch(JSON.stringify(unsignedWebhook), /present-for-test-only/, "webhook output excludes secret values");
-
-const customerUserReference = billing.createCommentTranslatorBillingUserReference({
-  status: "authorized",
-  ownerUserId: "server-only-owner-value"
-});
-assert.match(customerUserReference, /^ctbill_[a-f0-9]{24}$/, "billing user reference is sanitized metadata");
-assert.doesNotMatch(customerUserReference, /server-only-owner-value/, "billing user reference does not expose owner id value");
-
-const configuredCheckout = await billing.createCommentTranslatorStripeCheckoutSessionResult({
-  callerAuthorization: {
-    status: "authorized",
-    ownerUserId: "server-only-owner-value"
-  },
-  env: {
-    STRIPE_SECRET_KEY: "present-for-test-only",
-    COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_test_public_paid",
-    NEXT_PUBLIC_SITE_URL: "https://example.test"
-  },
-  stripeAdapter: {
-    createCheckoutSession: async (params) => ({
-      url: "https://checkout.stripe.test/session",
-      observed: params
-    })
-  }
-});
-assert.equal(configuredCheckout.status, "redirect-ready");
-assert.equal(configuredCheckout.url, "https://checkout.stripe.test/session");
-assert.equal(configuredCheckout.observed.mode, "subscription");
-assert.equal(configuredCheckout.observed.priceReferenceId, "price_test_public_paid");
-assert.equal(configuredCheckout.observed.clientReferenceId, customerUserReference);
-assert.doesNotMatch(JSON.stringify(configuredCheckout), /present-for-test-only|server-only-owner-value/, "checkout output excludes secret and owner id values");
-
-const missingCheckout = await billing.createCommentTranslatorStripeCheckoutSessionResult({
-  callerAuthorization: {
-    status: "authorized",
-    ownerUserId: "server-only-owner-value"
-  },
-  env: {},
-  stripeAdapter: {
-    createCheckoutSession: async () => {
-      throw new Error("should not run when config is missing");
-    }
-  }
-});
-assert.equal(missingCheckout.status, "unavailable");
-assert.deepEqual(
-  missingCheckout.missingEnvReferences.sort(),
-  ["COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID", "NEXT_PUBLIC_SITE_URL", "STRIPE_SECRET_KEY"].sort(),
-  "checkout reports missing env references by name only"
-);
-
-const activeWebhook = await billing.readCommentTranslatorStripeWebhookResult({
-  payload: "{}",
-  signature: "signed-test-payload",
-  env: {
-    STRIPE_WEBHOOK_SECRET: "present-for-test-only"
-  },
-  verifier: {
-    constructEvent: async () => ({
-      type: "customer.subscription.updated",
-      customerReferenceId: "cus_public_reference",
-      subscriptionReferenceId: "sub_public_reference",
-      status: "active",
-      priceReferenceId: "price_test_public_paid",
-      billingUserReferenceId: customerUserReference,
-      currentPeriodEndMs: 1_900_000_000_000
-    })
-  }
-});
-assert.equal(activeWebhook.status, "applied");
-assert.equal(activeWebhook.entitlement.plan, "paid");
-assert.equal(activeWebhook.entitlement.billingState, "paid-active");
-assert.equal(activeWebhook.entitlement.planEntitlement.dailyLimitMs, 7_200_000);
-assert.doesNotMatch(JSON.stringify(activeWebhook), /present-for-test-only|server-only-owner-value/, "webhook output excludes secret and owner id values");
-
-const activeSnapshot = billing.readCommentTranslatorBillingEntitlementSnapshot({
-  callerAuthorization: {
-    status: "authorized",
-    ownerUserId: "server-only-owner-value"
-  }
-});
-assert.equal(activeSnapshot.plan, "paid", "applied active webhook activates paid plan");
-assert.equal(activeSnapshot.billingState, "paid-active");
-assert.equal(activeSnapshot.planEntitlement.dailyLimitMs, 7_200_000, "paid plan increases server-owned daily limit");
-
-const canceledWebhook = await billing.readCommentTranslatorStripeWebhookResult({
-  payload: "{}",
-  signature: "signed-test-payload",
-  env: {
-    STRIPE_WEBHOOK_SECRET: "present-for-test-only"
-  },
-  verifier: {
-    constructEvent: async () => ({
-      type: "customer.subscription.deleted",
-      customerReferenceId: "cus_public_reference",
-      subscriptionReferenceId: "sub_public_reference",
-      status: "canceled",
-      priceReferenceId: "price_test_public_paid",
-      billingUserReferenceId: customerUserReference,
-      currentPeriodEndMs: 1_900_000_000_000
-    })
-  }
-});
-assert.equal(canceledWebhook.status, "applied");
-assert.equal(canceledWebhook.entitlement.plan, "free", "canceled paid state degrades to Free plan");
-assert.equal(canceledWebhook.entitlement.billingState, "paid-inactive");
-assert.equal(canceledWebhook.entitlement.planEntitlement.dailyLimitMs, 1_800_000);
-
-const inactiveSnapshot = billing.readCommentTranslatorBillingEntitlementSnapshot({
-  callerAuthorization: {
-    status: "authorized",
-    ownerUserId: "server-only-owner-value"
-  }
-});
-assert.equal(inactiveSnapshot.plan, "free", "inactive paid snapshot uses Free plan for session limits");
-assert.equal(inactiveSnapshot.billingState, "paid-inactive");
-assert.equal(inactiveSnapshot.freePlanAvailable, true);
 
 const signedOutSnapshot = billing.readCommentTranslatorBillingEntitlementSnapshot({
   callerAuthorization: {
     status: "unauthenticated"
   }
 });
-assert.equal(signedOutSnapshot.plan, "free", "signed-out or unavailable callers safely receive Free plan");
+assert.equal(signedOutSnapshot.plan, "free", "signed-out callers also resolve to the Free-safe shape");
 assert.equal(signedOutSnapshot.freePlanAvailable, true);
 
-assert.match(taskSource, /Stripe paid-plan integration/i, "task board still tracks Task 15");
-
-console.log("comment translator Stripe paid-plan integration contract checks passed");
+console.log("comment translator Paid Core v1 Task 1 Free baseline isolation contract checks passed");

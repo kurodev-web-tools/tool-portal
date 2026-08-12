@@ -10,49 +10,51 @@ type AccountFormAction = (formData: FormData) => void | Promise<void>;
 const billingCopy = {
   ja: {
     eyebrow: "Comment Translator billing",
-    title: "Free / Kuro Stream Kit Pro",
-    lead: "Free は常に利用できます。Kuro Stream Kit Pro は、まず Comment Translator の利用上限拡張から価値提供を開始します。月額/年額は表示整理で、実際の Stripe 月額/年額設定は後続の readiness で扱います。",
+    title: "Free / Paid Core v1 unavailable",
+    lead: "Free は常に利用できます。Paid Core v1 は永続的な権限情報が接続されるまで利用できません。",
     signedInAs: "ログイン中のメールアドレス",
     currentPlan: "現在のプラン",
-    planContrastTitle: "Free / Paid / Stripe readiness",
+    planContrastTitle: "Free / Paid Core v1 availability",
     freePlan: "Free",
-    paidPlan: "Kuro Stream Kit Pro",
-    paidInactive: "Pro inactive",
+    paidPlan: "Paid Core v1 unavailable",
+    paidInactive: "Paid Core v1 unavailable",
     dailyLimit: "1日の上限",
     sessionLimit: "1セッション上限",
     messageLimit: "翻訳メッセージ/分",
     freeAvailable: "Free は常に利用可能",
     activeNow: "現在の表示",
-    stripeReadinessPending: "月額/年額 Checkout は後続 Stripe readiness で有効化",
+    paidUnavailable: "永続的な権限情報が接続されるまで利用不可",
+    availabilityLabel: "Paid Core v1 の利用可否",
     planContrast: {
       free: {
         label: "Free 基本枠",
-        body: "Paid checkout 準備中でも Free は利用できます。"
+        body: "Paid Core v1 が利用不可でも Free は利用できます。"
       },
       paid: {
         label: "Paid との差分",
-        body: "Paid は server-side entitlement sync 後に Comment Translator の上限を拡張します。"
+        body: "Paid Core v1 は永続的な権限情報が接続されるまで利用できません。"
       },
-      stripe: {
-        label: "Stripe readiness",
-        body: "Checkout、Portal、webhook、billing setting mutation は承認ゲート付きです。"
+      availability: {
+        label: "明示的な利用不可境界",
+        body: "旧Paid権限や旧価格設定からPaid状態を推測しません。"
       }
     },
-    checkout: "現行 Paid Checkout を開く",
-    manage: "支払いを管理",
-    checkoutUnavailable: "決済設定の準備中",
-    portalUnavailable: "Paid 管理は契約反映後に利用できます",
-    billingControlsTitle: "支払い操作",
-    billingControlsBody: "この画面ではプラン比較と現在状態を確認できます。実際の月額/年額 Price、Checkout、Portal、webhook、billing setting mutation は承認ゲート付きで扱います。",
+    checkout: "Paid Core v1 unavailable",
+    manage: "Paid Core v1 unavailable",
+    checkoutUnavailable: "Paid Core v1 unavailable",
+    portalUnavailable: "Paid Core v1 unavailable",
+    billingControlsTitle: "Paid Core v1 操作",
+    billingControlsBody: "Paid Core v1 の外部操作は、永続的な権限情報が接続されるまで無効です。Free の利用には影響しません。",
     providerPolicyTitle: "翻訳provider方針",
     providerPolicyBody:
-      "FreeはAzure Translator、ProはOpenAI miniを優先し、復帰可能なprovider errorだけAzure fallbackを使います。DeepL、Gemini、Workers AIは比較用で、現行production routingには含めません。",
+      "Free の通常翻訳は Azure Translator を使用します。Paid Core v1 のprovider方針は永続的な権限情報の接続後に定義します。",
     safeBoundary:
       "この画面は Stripe secret、webhook secret、token、owner id、provider channel id、liveChatId、Authorization header、provider target metadata を表示・保存しません。",
     messages: {
-      "checkout-returned": "Checkout から戻りました。契約状態は webhook 反映後に更新されます。",
-      "checkout-canceled": "Checkout はキャンセルされました。Free は引き続き利用できます。",
-      "portal-returned": "Billing Portal から戻りました。",
+      "checkout-returned": "Paid Core v1 は現在利用できません。Free は引き続き利用できます。",
+      "checkout-canceled": "Paid Core v1 は現在利用できません。Free は引き続き利用できます。",
+      "portal-returned": "Paid Core v1 は現在利用できません。",
+      "paid-core-v1-unavailable": "Paid Core v1 は永続的な権限情報が接続されるまで利用できません。Free は引き続き利用できます。",
       "caller-not-authenticated": "Billing 操作にはログインが必要です。",
       "missing-config": "Stripe のサーバー設定がまだ揃っていません。",
       "missing-customer": "管理対象の Stripe customer がまだありません。",
@@ -60,53 +62,55 @@ const billingCopy = {
     },
     backToAccount: "アカウント設定へ戻る",
     openTranslator: "翻訳ツールを開く",
-    priceContentAdvanceNoticeLabel: "価格・対象内容の変更について"
+    paidCoreV1AvailabilityNoticeLabel: "Paid Core v1 の利用可否"
   },
   en: {
     eyebrow: "Comment Translator billing",
-    title: "Free / Kuro Stream Kit Pro",
-    lead: "Free remains permanently available. Kuro Stream Kit Pro starts with expanded Comment Translator limits. Monthly/yearly is presentation for now; actual Stripe monthly/yearly setup belongs to later readiness work.",
+    title: "Free / Paid Core v1 unavailable",
+    lead: "Free remains available. Paid Core v1 is unavailable until durable entitlement authority is connected.",
     signedInAs: "Signed-in email",
     currentPlan: "Current plan",
-    planContrastTitle: "Free / Paid / Stripe readiness",
+    planContrastTitle: "Free / Paid Core v1 availability",
     freePlan: "Free",
-    paidPlan: "Kuro Stream Kit Pro",
-    paidInactive: "Pro inactive",
+    paidPlan: "Paid Core v1 unavailable",
+    paidInactive: "Paid Core v1 unavailable",
     dailyLimit: "Daily limit",
     sessionLimit: "Session limit",
     messageLimit: "Translated messages/min",
     freeAvailable: "Free is always available",
     activeNow: "Current display",
-    stripeReadinessPending: "Monthly/yearly Checkout is enabled by later Stripe readiness",
+    paidUnavailable: "Unavailable until durable entitlement is connected",
+    availabilityLabel: "Paid Core v1 availability",
     planContrast: {
       free: {
         label: "Free baseline",
-        body: "Free remains usable even when Paid checkout is pending."
+        body: "Free remains usable while Paid Core v1 is unavailable."
       },
       paid: {
         label: "Paid contrast",
-        body: "Paid expands Comment Translator limits after server-side entitlement sync."
+        body: "Paid Core v1 is unavailable until durable entitlement authority is connected."
       },
-      stripe: {
-        label: "Stripe readiness",
-        body: "Checkout, Portal, webhook, and billing setting mutation remain approval-gated."
+      availability: {
+        label: "Explicit unavailable boundary",
+        body: "Old Paid entitlements and old prices do not imply Paid access."
       }
     },
-    checkout: "Open current Paid Checkout",
-    manage: "Manage billing",
-    checkoutUnavailable: "Billing setup pending",
-    portalUnavailable: "Paid management is available after a subscription is synced",
-    billingControlsTitle: "Billing actions",
-    billingControlsBody: "Use this screen to compare plans and review current status. Actual monthly/yearly Prices, Checkout, Portal, webhooks, and billing setting mutations stay approval-gated.",
+    checkout: "Paid Core v1 unavailable",
+    manage: "Paid Core v1 unavailable",
+    checkoutUnavailable: "Paid Core v1 unavailable",
+    portalUnavailable: "Paid Core v1 unavailable",
+    billingControlsTitle: "Paid Core v1 actions",
+    billingControlsBody: "Paid Core v1 external actions stay disabled until durable entitlement authority is connected. Free remains unaffected.",
     providerPolicyTitle: "Translation provider policy",
     providerPolicyBody:
-      "Free routes to Azure Translator. Pro routes to OpenAI mini with Azure fallback only for recoverable provider errors. DeepL, Gemini, and Workers AI remain comparison-only and are not included in current production routing.",
+      "Free normal translation uses Azure Translator. Paid Core v1 provider policy will be defined after durable entitlement authority is connected.",
     safeBoundary:
       "This screen does not display or store Stripe secrets, webhook secrets, tokens, owner ids, provider channel ids, liveChatId, Authorization headers, or provider target metadata.",
     messages: {
-      "checkout-returned": "Returned from Checkout. Subscription state updates after webhook sync.",
-      "checkout-canceled": "Checkout was canceled. Free remains available.",
-      "portal-returned": "Returned from the Billing Portal.",
+      "checkout-returned": "Paid Core v1 is unavailable. Free remains available.",
+      "checkout-canceled": "Paid Core v1 is unavailable. Free remains available.",
+      "portal-returned": "Paid Core v1 is unavailable.",
+      "paid-core-v1-unavailable": "Paid Core v1 is unavailable until durable entitlement authority is connected. Free remains available.",
       "caller-not-authenticated": "Sign in before using billing actions.",
       "missing-config": "Stripe server configuration is not ready.",
       "missing-customer": "No Stripe customer is available to manage yet.",
@@ -114,7 +118,7 @@ const billingCopy = {
     },
     backToAccount: "Back to account",
     openTranslator: "Open translator",
-    priceContentAdvanceNoticeLabel: "Price and covered content changes"
+    paidCoreV1AvailabilityNoticeLabel: "Paid Core v1 availability"
   }
 } as const;
 
@@ -126,20 +130,10 @@ function formatMinutes(ms: number) {
 
 function formatPrice(option: PlanOption, locale: "ja" | "en") {
   if (option.displayPrice.monthlyAmount === 0) {
-    return locale === "ja" ? "¥0 / month" : "¥0 / month";
+    return locale === "ja" ? "無料" : "Free";
   }
 
-  const amount =
-    option.interval === "yearly" && option.displayPrice.yearlyAmount
-      ? option.displayPrice.yearlyAmount
-      : option.displayPrice.monthlyAmount;
-  const suffix = option.interval === "yearly" ? "/ year" : "/ month";
-
-  return `${new Intl.NumberFormat(locale === "ja" ? "ja-JP" : "en-US", {
-    style: "currency",
-    currency: option.displayPrice.currency,
-    maximumFractionDigits: 0
-  }).format(amount)} ${suffix}`;
+  return "Unavailable";
 }
 
 function StatusPill({ children }: { children: string }) {
@@ -193,7 +187,7 @@ function PlanComparisonCard({
           <h3 className="break-words text-base font-black text-foreground">{option.productName}</h3>
           <p className="mt-1 text-xs font-bold text-muted">{option.badge[localized]}</p>
         </div>
-        <StatusPill>{current ? copy.activeNow : option.implementationEntitlement === "paid" ? "Pro" : "Free"}</StatusPill>
+        <StatusPill>{current ? copy.activeNow : option.implementationEntitlement === "paid" ? copy.paidUnavailable : "Free"}</StatusPill>
       </div>
       <p className="mt-4 break-words text-2xl font-black text-foreground">{formatPrice(option, locale)}</p>
       <p className="mt-2 min-h-10 break-words text-sm font-semibold leading-6 text-muted">{option.description[localized]}</p>
@@ -203,7 +197,7 @@ function PlanComparisonCard({
         <PlanMetric label={copy.messageLimit} value={String(option.entitlement.translatedMessagesPerMinute)} />
       </div>
       <p className="mt-4 rounded-base border border-border bg-surface px-3 py-2 text-xs font-bold leading-5 text-muted">
-        {option.implementationEntitlement === "paid" ? copy.stripeReadinessPending : option.cta[localized]}
+        {option.implementationEntitlement === "paid" ? copy.paidUnavailable : option.cta[localized]}
       </p>
     </article>
   );
@@ -265,7 +259,7 @@ export function AccountBillingShell({
         ) : null}
       </section>
 
-      <section data-comment-translator-plan-comparison="free-pro-monthly-yearly" className="grid gap-4">
+      <section data-comment-translator-plan-comparison="free-only-paid-unavailable" className="grid gap-4">
         <div className="panel p-4 shadow-none sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0">
@@ -278,6 +272,14 @@ export function AccountBillingShell({
             <Metric label={copy.dailyLimit} value={formatMinutes(billing.planEntitlement.dailyLimitMs)} />
             <Metric label={copy.sessionLimit} value={formatMinutes(billing.planEntitlement.sessionLimitMs)} />
             <Metric label={copy.messageLimit} value={String(billing.planEntitlement.translatedMessagesPerMinute)} />
+          </div>
+          <div className="mt-4 rounded-base border border-border bg-surface-muted/45 px-3 py-3">
+            <p className="text-xs font-black text-primary-strong">{copy.availabilityLabel}</p>
+            <p className="mt-2 break-words text-sm font-semibold text-muted">
+              {billing.paidCoreV1Availability === "unavailable-until-durable-entitlement"
+                ? copy.paidUnavailable
+                : copy.paidPlan}
+            </p>
           </div>
         </div>
 
@@ -306,10 +308,10 @@ export function AccountBillingShell({
         </div>
 
         <div
-          data-comment-translator-billing-copy="price-content-advance-notice"
+          data-comment-translator-billing-copy="paid-core-v1-availability"
           className="rounded-base border border-primary/30 bg-primary-soft/45 px-4 py-3"
         >
-          <h2 className="text-sm font-black text-primary-strong">{copy.priceContentAdvanceNoticeLabel}</h2>
+          <h2 className="text-sm font-black text-primary-strong">{copy.paidCoreV1AvailabilityNoticeLabel}</h2>
           <p className="mt-2 text-sm font-bold leading-7 text-foreground">
             {billing.planComparison.advanceNoticeCopy[locale]}
           </p>

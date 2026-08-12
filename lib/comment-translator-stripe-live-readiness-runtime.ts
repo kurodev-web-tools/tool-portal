@@ -66,7 +66,7 @@ export type CommentTranslatorStripeLiveReadinessReport = {
 };
 
 export const commentTranslatorStripeLiveReadinessContract = {
-  implementationStage: "pre-main-task-21-stripe-live-readiness-and-billing-operations",
+  implementationStage: "comment-translator-paid-v1-task3-local-signed-webhook-projection",
   runtime: "server-only",
   liveModeActions: "not-run-without-explicit-same-thread-approval",
   dashboardActions: "approval-gated-operator-local-only",
@@ -82,7 +82,7 @@ export const commentTranslatorStripeLiveReadinessContract = {
     "COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID",
     "NEXT_PUBLIC_SITE_URL"
   ],
-  signedWebhookEntitlementEvidence: "local-deterministic-verifier-contract-only",
+  signedWebhookEntitlementEvidence: "local-deterministic-signed-webhook-projection-fixture-only",
   failedCanceledExpiredStateReview: "safe-free-or-paid-inactive-degradation",
   rollback: "stop-new-checkout-disable-paid-entry-revert-price-or-webhook-dashboard-settings-after-approval",
   forbiddenReadableOutput: commentTranslatorStripeBillingContract.forbiddenReadableOutput

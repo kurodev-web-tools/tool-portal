@@ -1,8 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
 import {
   createCommentTranslatorStripeWebhookVerifier,
+  createCommentTranslatorStripeCurrentObjectReader,
+  getCommentTranslatorStripeWebhookHttpStatus,
   readCommentTranslatorStripeWebhookResult
 } from "@/lib/comment-translator-billing-runtime";
+import { createTrustedCommentTranslatorPaidEntitlementStore } from "@/lib/comment-translator-paid-entitlement-store";
 import {
   assertCommentTranslatorAbuseRequestAllowed,
   readCommentTranslatorRequestIp
@@ -35,19 +38,22 @@ export async function POST(request: NextRequest) {
 
   const payload = await request.text();
   const signature = request.headers.get("stripe-signature");
+  const env = {
+    ...process.env,
+    STRIPE_WEBHOOK_SECRET: process.env[stripeWebhookSecretEnvReference]
+  };
+  const storeResult = createTrustedCommentTranslatorPaidEntitlementStore({ env });
   const result = await readCommentTranslatorStripeWebhookResult({
     payload,
     signature,
-    env: {
-      ...process.env,
-      STRIPE_WEBHOOK_SECRET: process.env[stripeWebhookSecretEnvReference]
-    },
-    verifier: {
-      constructEvent: (payloadToVerify, signatureToVerify, webhookSecret) =>
-        createCommentTranslatorStripeWebhookVerifier().constructEvent(payloadToVerify, signatureToVerify, webhookSecret)
-    }
+    env,
+    verifier: createCommentTranslatorStripeWebhookVerifier(env),
+    currentObjectReader: createCommentTranslatorStripeCurrentObjectReader(env),
+    store: storeResult.status === "ready" ? storeResult.store : undefined,
+    projectionEnabled: true,
+    nowIso: new Date().toISOString()
   });
 
-  const status = result.status === "rejected" ? 400 : 200;
+  const status = getCommentTranslatorStripeWebhookHttpStatus(result);
   return NextResponse.json(result, { status });
 }

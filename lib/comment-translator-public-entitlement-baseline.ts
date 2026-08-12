@@ -40,6 +40,8 @@ export const commentTranslatorPublicEntitlementBaselineContract = {
   runtime: "server-only",
   planAuthority: "server-owned-free-public-beta-baseline",
   billingReadPath: "safe-free-degradation-until-durable-paid-entitlement-c1",
+  paidProjectionAuthority: "signed-webhook-durable-supabase-only",
+  checkoutRedirectAuthority: "never-grants-entitlement",
   durableUsageAuthority: "durable-usage-counter-required",
   publicLaunchAllowed: false,
   freePlanLimits: {

@@ -10,7 +10,7 @@ const billingShellPath = "components/account/AccountBillingShell.tsx";
 const integrationsShellPath = "components/account/AccountIntegrationsShell.tsx";
 const accountShellPath = "components/account/AccountPreferencesShell.tsx";
 const dockPath = "components/comment-translator/CommentTranslatorDock.tsx";
-const taskPath = "task.md";
+const sessionPanelPath = "components/comment-translator/CommentTranslatorSessionPanel.tsx";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -91,23 +91,23 @@ const billingShellSource = read(billingShellPath);
 const integrationsShellSource = read(integrationsShellPath);
 const accountShellSource = read(accountShellPath);
 const dockSource = read(dockPath);
-const taskSource = read(taskPath);
+const sessionPanelSource = read(sessionPanelPath);
 
 assert.match(billingSource, /^import "server-only";/m, "billing runtime remains server-only");
 assert.equal(
   billingRuntime.commentTranslatorOperatorUxReadinessContract?.implementationStage,
-  "pre-main-task-18-operator-ux-readiness-polish",
-  "Task 18 operator UX readiness contract is exported"
+  "comment-translator-paid-v1-task1-free-baseline-isolation",
+  "Task 1 Free baseline isolation contract is exported"
 );
 assert.equal(
   billingRuntime.commentTranslatorOperatorUxReadinessContract?.implementationEntitlementShape,
-  "free-or-paid-only",
-  "monthly/yearly presentation does not change server entitlement shape"
+  "free-only-until-durable-paid-entitlement",
+  "operator UX stays Free-only until durable Paid entitlement exists"
 );
 assert.equal(
   billingRuntime.commentTranslatorOperatorUxReadinessContract?.stripeLiveModeActions,
-  "not-run-in-task-18",
-  "Task 18 does not run Stripe live-mode actions"
+  "not-run",
+  "Task 1 does not run Stripe live-mode actions"
 );
 
 const planComparison = billingRuntime.createCommentTranslatorPlanComparisonViewModel({
@@ -120,25 +120,18 @@ const planComparison = billingRuntime.createCommentTranslatorPlanComparisonViewM
   }).planEntitlement
 });
 assert.equal(planComparison.currentPlanId, "free", "free users see Free as current plan");
-assert.equal(planComparison.planOptions.length, 3, "billing comparison exposes Free, Pro monthly, and Pro yearly");
+assert.equal(planComparison.planOptions.length, 1, "billing comparison exposes Free only");
 assert.deepEqual(
   planComparison.planOptions.map((option) => option.id),
-  ["free", "pro-monthly", "pro-yearly"],
-  "plan option order is stable"
+  ["free"],
+  "Free-only plan option is stable"
 );
-assert.equal(planComparison.planOptions[1].productName, "Kuro Stream Kit Pro");
-assert.equal(planComparison.planOptions[1].badge.en, "Paid monthly");
-assert.equal(planComparison.planOptions[2].badge.en, "Best value");
-assert.equal(planComparison.planOptions[1].implementationEntitlement, "paid");
-assert.equal(planComparison.planOptions[2].implementationEntitlement, "paid");
-assert.ok(
-  planComparison.planOptions[2].displayPrice.yearlyAmount < planComparison.planOptions[1].displayPrice.monthlyAmount * 12,
-  "yearly display price is cheaper than 12 monthly payments"
-);
+assert.equal(planComparison.planOptions[0].productName, "Free");
+assert.equal(planComparison.planOptions[0].implementationEntitlement, "free");
 assert.match(
   planComparison.advanceNoticeCopy.ja,
-  /事前にお知らせします/,
-  "plan copy records advance notice for price or content changes"
+  /Paid Core v1[\s\S]*利用不可/,
+  "plan copy explicitly records Paid Core v1 as unavailable"
 );
 assert.doesNotMatch(
   `${planComparison.advanceNoticeCopy.ja}\n${planComparison.advanceNoticeCopy.en}`,
@@ -146,21 +139,21 @@ assert.doesNotMatch(
   "plan copy does not promise all future tools forever"
 );
 
-assert.match(billingShellSource, /data-comment-translator-plan-comparison="free-pro-monthly-yearly"/, "billing page renders plan comparison cards");
-assert.match(billingShellSource, /Kuro Stream Kit Pro/, "billing page uses integrated Kuro Stream Kit Pro naming");
-assert.match(billingShellSource, /price-content-advance-notice/, "billing page includes price/content change notice");
+assert.match(billingShellSource, /data-comment-translator-plan-comparison="free-only-paid-unavailable"/, "billing page renders Free-only and Paid-unavailable comparison");
+assert.match(billingShellSource, /paidCoreV1Availability/, "billing page renders the browser-safe Paid Core v1 availability boundary");
+assert.doesNotMatch(billingShellSource, /Kuro Stream Kit Pro|Free \/ Pro|Pro inactive|月額|年額|OpenAI mini|¥0/, "billing page removes old Paid presentation");
+assert.match(billingShellSource, /paid-core-v1-availability/, "billing page includes the Paid Core v1 availability notice");
 
-assert.match(dockSource, /data-comment-translator-start-blocked="youtube-connection-required"/, "translator renders explicit Start blocked surface");
-assert.match(dockSource, /href="\/account\/integrations"/, "translator links blocked YouTube state to account integrations");
-assert.match(dockSource, /startBlockedByCredentialStatus/, "translator derives disabled Start state from credential readiness");
-assert.match(dockSource, /disabled=\{isSessionPending \|\| sessionState\.status === "active" \|\| startBlockedByCredentialStatus\}/, "Start button is disabled when YouTube is not ready");
-assert.match(dockSource, /data-comment-translator-billing-entry="free-pro-plan-state"/, "translator plan entry shows Free/Pro plan state");
+assert.match(sessionPanelSource, /data-comment-translator-start-blocked="youtube-connection-required"/, "translator renders explicit Start blocked surface");
+assert.match(sessionPanelSource, /href="\/account\/integrations"/, "translator links blocked YouTube state to account integrations");
+assert.match(sessionPanelSource, /startBlockedByCredentialStatus/, "translator derives disabled Start state from credential readiness");
+assert.match(sessionPanelSource, /disabled=\{isSessionPending \|\| sessionState\.status === "active" \|\| startBlockedByCredentialStatus \|\| startBlockedByUsagePolicy \|\| startBlockedByRateLimit\}/, "Start button is disabled when credential, usage policy, or rate limit readiness blocks it");
 
 assert.match(integrationsShellSource, /Start が使えない場合|Start is unavailable/, "integrations copy explains it fixes Start availability");
-assert.match(accountShellSource, /Kuro Stream Kit Pro|Free \/ Pro/, "account entry copy points to integrated plan naming");
-assert.match(taskSource, /18\. Operator UX readiness polish/, "task board keeps Task 18 as the active implementation target");
+assert.match(accountShellSource, /Free \/ Paid Core v1 unavailable/, "account entry copy points to Free and explicit Paid unavailability");
+assert.doesNotMatch(accountShellSource, /Kuro Stream Kit Pro|Free \/ Pro|Pro inactive|月額|年額/, "account entry removes old Paid presentation");
 
-const changedSurface = `${billingSource}\n${billingShellSource}\n${integrationsShellSource}\n${accountShellSource}\n${dockSource}`;
+const changedSurface = `${billingSource}\n${billingShellSource}\n${integrationsShellSource}\n${accountShellSource}\n${dockSource}\n${sessionPanelSource}`;
 
 assert.doesNotMatch(
   changedSurface,

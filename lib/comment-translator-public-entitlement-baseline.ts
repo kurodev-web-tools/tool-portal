@@ -74,7 +74,7 @@ export function resolveCommentTranslatorPublicEntitlementBaseline({
   durableUsageRead,
   previewRateLimitSmokeOverride
 }: {
-  billingSnapshot: Pick<CommentTranslatorBillingEntitlementSnapshot, "plan" | "billingState" | "planEntitlement">;
+  billingSnapshot?: Pick<CommentTranslatorBillingEntitlementSnapshot, "plan" | "billingState" | "planEntitlement"> | null;
   durableUsageRead: CommentTranslatorDurableUsageRead;
   previewRateLimitSmokeOverride?: CommentTranslatorFreeBetaPreviewRateLimitSmokeOverride;
 }): CommentTranslatorPublicEntitlementBaselineResult {
@@ -118,7 +118,7 @@ export function resolveCommentTranslatorPublicEntitlementBaseline({
     monthlyProviderInputCharacterEstimate,
     monthlyProviderInputCharacterRemaining,
     entitlementSource: "free-public-beta-baseline",
-    degradedFrom: billingSnapshot.plan === "paid" || billingSnapshot.billingState === "paid-active" ? "non-durable-paid-entitlement" : null,
+    degradedFrom: billingSnapshot?.plan === "paid" || billingSnapshot?.billingState === "paid-active" ? "non-durable-paid-entitlement" : null,
     publicLaunchAllowed: false
   };
 }

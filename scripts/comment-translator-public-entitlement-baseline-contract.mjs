@@ -7,6 +7,7 @@ import ts from "typescript";
 
 const root = process.cwd();
 const entitlementPath = "lib/comment-translator-public-entitlement-baseline.ts";
+const billingRuntimePath = "lib/comment-translator-billing-runtime.ts";
 const sessionRuntimePath = "lib/comment-translator-session-runtime.ts";
 const usageLedgerPath = "lib/comment-translator-usage-ledger-runtime.ts";
 const durableUsagePath = "lib/comment-translator-durable-usage-counter-store.ts";
@@ -15,6 +16,7 @@ const actionPath = "app/tools/comment-translator/actions.ts";
 const readinessDocPath = "docs/active/COMMENT_TRANSLATOR_DURABLE_PERSISTENCE_SCHEMA_READINESS.md";
 const gapAuditPath = "docs/active/COMMENT_TRANSLATOR_PUBLIC_BETA_GAP_AUDIT.md";
 const taskPath = "task.md";
+const task1PlanPath = "docs/superpowers/plans/2026-08-12-comment-translator-paid-task1.md";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -25,7 +27,7 @@ function exists(relativePath) {
 }
 
 function changedFiles() {
-  const base = "origin/codex/comment-translator-free-public-beta-integration";
+  const base = "codex/comment-translator-paid-v1-preview";
   const committedDiff = execSync(`git diff --name-only ${base}...HEAD`, {
     cwd: root,
     encoding: "utf8",
@@ -126,18 +128,21 @@ function loadTsModule(relativePath) {
 
 for (const requiredPath of [
   entitlementPath,
+  billingRuntimePath,
   sessionRuntimePath,
   usageLedgerPath,
   durableUsagePath,
   routePath,
   actionPath,
   readinessDocPath,
-  gapAuditPath
+  gapAuditPath,
+  task1PlanPath
 ]) {
   assert.ok(exists(requiredPath), `F5 required file exists: ${requiredPath}`);
 }
 
 const entitlementSource = read(entitlementPath);
+const billingSource = read(billingRuntimePath);
 const sessionRuntimeSource = read(sessionRuntimePath);
 const usageLedgerSource = read(usageLedgerPath);
 const durableUsageSource = read(durableUsagePath);
@@ -154,6 +159,17 @@ assert.match(entitlementSource, /monthlyProviderInputCharacterLimit/, "resolver 
 assert.match(entitlementSource, /20_000/, "resolver encodes the 20,000 provider-input characters/month Free cap");
 assert.match(entitlementSource, /degradedFrom/, "resolver records safe Free degradation source");
 assert.match(entitlementSource, /publicLaunchAllowed:\s*false/, "resolver does not open public launch gate");
+assert.match(billingSource, /paidCoreV1Availability:\s*"unavailable-until-durable-entitlement"/, "billing boundary keeps Paid unavailable");
+assert.match(
+  billingSource,
+  /paidCoreV1Availability:\s*"unavailable-until-durable-entitlement";[\s\S]*paidCoreV1Availability:\s*"unavailable-until-durable-entitlement"/,
+  "browser-safe billing model and return both expose the intentional Paid unavailable state"
+);
+assert.doesNotMatch(
+  billingSource,
+  /paidEntitlementsByBillingUser|pro-monthly|pro-yearly|Kuro Stream Kit Pro|currency:\s*"JPY"|monthlyAmount:\s*1_200|yearlyAmount:\s*12_000/,
+  "billing boundary does not retain old Paid presentation or memory entitlement"
+);
 
 assert.match(sessionRuntimeSource, /monthlyProviderInputCharacterLimit/, "session entitlement type carries monthly provider-input character cap");
 assert.match(sessionRuntimeSource, /monthlyProviderInputCharacters:\s*20_000/, "session contract records the Free monthly provider-input character cap");
@@ -172,6 +188,7 @@ assert.match(readinessDoc, /20,000 provider-input characters\/month/i, "durable 
 assert.match(gapAudit, /F5[\s\S]*monthly provider-input character cap/i, "gap audit F5 requirement remains visible");
 
 const entitlement = loadTsModule(entitlementPath);
+const billing = loadTsModule(billingRuntimePath);
 const session = loadTsModule(sessionRuntimePath);
 
 assert.equal(
@@ -237,17 +254,14 @@ assert.equal(freeBaseline.usage.aiBudgetAvailable, true);
 assert.equal(freeBaseline.usage.planEntitlement.monthlyProviderInputCharacterLimit, 20_000);
 assert.equal(freeBaseline.degradedFrom, null);
 
-const paidDegraded = entitlement.resolveCommentTranslatorPublicEntitlementBaseline({
+const paidShapedInput = entitlement.resolveCommentTranslatorPublicEntitlementBaseline({
   billingSnapshot: {
     plan: "paid",
     billingState: "paid-active",
     planEntitlement: {
       ...freeEntitlement,
       plan: "paid",
-      planEntitlementReferenceId: "comment-translator-paid-public-v1",
-      dailyLimitMs: 7_200_000,
-      sessionLimitMs: 3_600_000,
-      translatedMessagesPerMinute: 90
+      planEntitlementReferenceId: "opaque-paid-fixture"
     }
   },
   durableUsageRead: {
@@ -257,20 +271,41 @@ const paidDegraded = entitlement.resolveCommentTranslatorPublicEntitlementBaseli
       planEntitlement: {
         ...freeEntitlement,
         plan: "paid",
-        planEntitlementReferenceId: "comment-translator-paid-public-v1",
-        dailyLimitMs: 7_200_000,
-        sessionLimitMs: 3_600_000,
-        translatedMessagesPerMinute: 90
+        planEntitlementReferenceId: "opaque-paid-fixture"
       }
     },
     authority: "durable-store"
   }
 });
-assert.equal(paidDegraded.status, "ready");
-assert.equal(paidDegraded.plan, "free", "paid snapshot safely degrades to Free until durable paid entitlement exists");
-assert.equal(paidDegraded.usage.planEntitlement.plan, "free");
-assert.equal(paidDegraded.usage.planEntitlement.dailyLimitMs, 1_800_000);
-assert.equal(paidDegraded.degradedFrom, "non-durable-paid-entitlement");
+assert.equal(paidShapedInput.status, "ready");
+assert.equal(paidShapedInput.plan, "free", "paid-shaped input safely degrades to Free until durable paid entitlement exists");
+assert.equal(paidShapedInput.usage.planEntitlement.plan, "free");
+assert.equal(paidShapedInput.usage.planEntitlement.dailyLimitMs, 1_800_000);
+assert.equal(paidShapedInput.usage.planEntitlement.sessionLimitMs, 1_800_000);
+assert.equal(paidShapedInput.usage.planEntitlement.translatedMessagesPerMinute, 30);
+assert.equal(paidShapedInput.degradedFrom, "non-durable-paid-entitlement");
+
+const billingUnavailableInput = entitlement.resolveCommentTranslatorPublicEntitlementBaseline({
+  billingSnapshot: null,
+  durableUsageRead: {
+    status: "ready",
+    snapshot: baseUsage,
+    authority: "durable-store"
+  }
+});
+assert.equal(billingUnavailableInput.status, "ready", "unreadable Paid billing state does not block Free");
+assert.equal(billingUnavailableInput.plan, "free");
+assert.equal(billingUnavailableInput.usage.planEntitlement.plan, "free");
+assert.equal(billingUnavailableInput.degradedFrom, null);
+
+const billingSnapshotFromRuntime = billing.readCommentTranslatorBillingEntitlementSnapshot({
+  callerAuthorization: {
+    status: "authorized",
+    ownerUserId: "opaque-owner-fixture"
+  }
+});
+assert.equal(billingSnapshotFromRuntime.plan, "free", "billing runtime itself returns the Free baseline");
+assert.equal(billingSnapshotFromRuntime.planEntitlement.monthlyProviderInputCharacterLimit, 20_000);
 
 const cappedBaseline = entitlement.resolveCommentTranslatorPublicEntitlementBaseline({
   billingSnapshot: {
@@ -335,7 +370,7 @@ assert.match(taskSource, /monthly_input_character_accounting_status=complete/i, 
 assert.match(taskSource, /20,000 provider-input\/source characters per month/i, "task.md records the monthly provider-input cap as additive");
 assert.match(taskSource, /monthly_input_character_accounting_status=complete/i, "task.md records current monthly input accounting completion");
 
-for (const source of [entitlementSource, sessionRuntimeSource, usageLedgerSource, durableUsageSource, routeSource, actionSource, readinessDoc, gapAudit, taskSource]) {
+for (const source of [billingSource, entitlementSource, sessionRuntimeSource, usageLedgerSource, durableUsageSource, routeSource, actionSource, readinessDoc, gapAudit, taskSource, read(task1PlanPath)]) {
   assert.doesNotMatch(
     source,
     /sk_live_[A-Za-z0-9]+|sk_test_[A-Za-z0-9]+|whsec_[A-Za-z0-9]+|access_token\s*[:=]\s*["'][^"']+|refresh_token\s*[:=]\s*["'][^"']+|authorization_code\s*[:=]\s*["'][^"']+|Authorization\s*[:=]\s*["'][^"']+|SUPABASE_SERVICE_ROLE_KEY\s*[:=]|SERVICE_ROLE_KEY\s*[:=]|BEGIN\s+PRIVATE\s+KEY|liveChatId\s*[:=]\s*["'][^"']+|providerChannelId\s*[:=]\s*["'][^"']+/i,
@@ -345,10 +380,17 @@ for (const source of [entitlementSource, sessionRuntimeSource, usageLedgerSource
 
 const allowedChangedFiles = new Set([
   entitlementPath,
+  billingRuntimePath,
+  "components/account/AccountBillingShell.tsx",
+  "components/account/AccountPreferencesShell.tsx",
   sessionRuntimePath,
   routePath,
   actionPath,
   readinessDocPath,
+  "scripts/comment-translator-stripe-paid-plan-integration-contract.mjs",
+  "scripts/comment-translator-operator-ux-readiness-polish-contract.mjs",
+  "scripts/comment-translator-stripe-live-readiness-contract.mjs",
+  task1PlanPath,
   "scripts/comment-translator-public-entitlement-baseline-contract.mjs",
   taskPath
 ]);

@@ -42,8 +42,8 @@ const accountCopy = {
       "reconnect-required": "再接続が必要",
       error: "確認エラー",
       free: "Free",
-      "paid-active": "Pro",
-      "paid-inactive": "Pro inactive"
+      "paid-active": "Paid Core v1 unavailable",
+      "paid-inactive": "Paid Core v1 unavailable"
     },
     accountUnavailable: "確認できません",
     settingsEyebrow: "Settings",
@@ -79,8 +79,8 @@ const accountCopy = {
     },
     openPlan: "現在のアカウント",
     planName: "アカウント状況",
-    planBody: "表示言語、テーマ、タイムゾーンを別ブラウザやスマホでも引き継げます。Comment Translator のYouTube連携管理と Free / Pro プラン状況、Kuro Stream Kit Pro の月額/年額表示は専用ページで確認できます。",
-    planItems: ["表示設定を保存", "Free / Pro プラン", "YouTube連携管理"],
+    planBody: "表示言語、テーマ、タイムゾーンを別ブラウザやスマホでも引き継げます。Comment Translator のYouTube連携管理と Free / Paid Core v1 unavailable の状態は専用ページで確認できます。",
+    planItems: ["表示設定を保存", "Free / Paid Core v1 unavailable", "YouTube連携管理"],
     preferencesTitle: "表示設定",
     preferencesBody: "表示言語、テーマ、タイムゾーンはこのブラウザに保存されます。ログイン中は、同じ内容をアカウントにも明示的に保存でき、別ブラウザやスマホでも引き継げます。",
     language: "表示言語",
@@ -92,7 +92,7 @@ const accountCopy = {
     providerTitle: "YouTube連携",
     providerBody: "Comment Translator のYouTube連携状態は専用ページで確認できます。接続だけではバックグラウンド監視、ポーリング、AI翻訳、クォータ消費は開始しません。",
     boundaryItems: ["Free は常に利用可能", "YouTube連携管理", "tokenやprovider target値は画面に表示しない", "既存ローカルデータは自動移行しない"],
-    manageBilling: "プランと支払いを開く",
+    manageBilling: "FreeとPaid Core v1状態を開く",
     manageIntegrations: "連携設定を開く",
     backToTools: "ツール一覧へ戻る",
     openSecurity: "パスワード変更"
@@ -116,8 +116,8 @@ const accountCopy = {
       "reconnect-required": "Reconnect required",
       error: "Check failed",
       free: "Free",
-      "paid-active": "Pro",
-      "paid-inactive": "Pro inactive"
+      "paid-active": "Paid Core v1 unavailable",
+      "paid-inactive": "Paid Core v1 unavailable"
     },
     accountUnavailable: "Unavailable",
     settingsEyebrow: "Settings",
@@ -153,8 +153,8 @@ const accountCopy = {
     },
     openPlan: "Current account",
     planName: "Account status",
-    planBody: "Language, theme, and time zone can be carried across browsers and phones. Comment Translator YouTube integration management, Free / Pro plan status, and Kuro Stream Kit Pro monthly/yearly display are available on dedicated pages.",
-    planItems: ["Save display settings", "Free / Pro plan", "YouTube integration"],
+    planBody: "Language, theme, and time zone can be carried across browsers and phones. Comment Translator YouTube integration management and Free / Paid Core v1 unavailable status are available on dedicated pages.",
+    planItems: ["Save display settings", "Free / Paid Core v1 unavailable", "YouTube integration"],
     preferencesTitle: "Display settings",
     preferencesBody: "Language, theme, and time zone are saved in this browser. Signed-in users can explicitly save the same values to the account and carry them across browsers and phones.",
     language: "Language",
@@ -166,7 +166,7 @@ const accountCopy = {
     providerTitle: "YouTube integration",
     providerBody: "YouTube integration state for Comment Translator is available on its own page. Connecting alone will not start background monitoring, polling, AI translation, or quota use.",
     boundaryItems: ["Free remains available", "YouTube integration management", "No token or provider target values in UI", "No automatic migration of local data"],
-    manageBilling: "Open plans and billing",
+    manageBilling: "Open Free and Paid Core v1 status",
     manageIntegrations: "Open integrations",
     backToTools: "Back to tools",
     openSecurity: "Change password"
@@ -311,8 +311,8 @@ export function AccountPreferencesShell({
       href: "/account/integrations"
     },
     {
-      title: "Free / Pro",
-      body: locale === "ja" ? "利用上限、Paid 表示、支払い状態を確認します。" : "Review limits, Paid display, and billing state.",
+      title: "Free / Paid Core v1 unavailable",
+      body: locale === "ja" ? "Free の利用上限と、Paid Core v1 の明示的な利用不可状態を確認します。" : "Review Free limits and the explicit Paid Core v1 unavailable state.",
       action: copy.manageBilling,
       href: "/account/billing"
     },

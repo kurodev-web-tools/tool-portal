@@ -65,6 +65,7 @@ export function createCommentTranslatorSessionPlanEntitlement({
   if (plan === "paid") {
     return {
       plan: "paid",
+      paidAuthorityReadable: false,
       planEntitlementReferenceId: "comment-translator-paid-authority-unavailable",
       entitlementSource: "server-owned",
       dailyLimitMs: 0,
@@ -75,7 +76,6 @@ export function createCommentTranslatorSessionPlanEntitlement({
       paidIndividualCostLimitMicros: commentTranslatorPaidCostLedgerContract.paidIndividualCostLimitMicros,
       paidGlobalCostLimitMicros: commentTranslatorPaidCostLedgerContract.paidGlobalCostLimitMicros,
       paidAzureFallbackMonthlyCharacterLimit: commentTranslatorPaidCostLedgerContract.paidAzureFallbackCharacterLimit,
-      paidAuthorityReadable: false,
       paidPrioritization: "not-implemented",
       providerUsageCharging: "not-implemented"
     };

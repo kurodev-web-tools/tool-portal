@@ -5,6 +5,19 @@ import path from "node:path";
 const root = process.cwd();
 const migrationPath = "supabase/migrations/20260812120000_comment_translator_paid_core_v1.sql";
 const sql = fs.readFileSync(path.join(root, migrationPath), "utf8");
+const terminalOpenAiPartialMigrationPath = "supabase/migrations/20260813144500_comment_translator_paid_task6_terminal_openai_partial.sql";
+const terminalOpenAiPartialSql = fs.readFileSync(path.join(root, terminalOpenAiPartialMigrationPath), "utf8");
+const openAiPartialReceiptMigrationPath = "supabase/migrations/20260813150000_comment_translator_paid_task6_openai_partial_receipt.sql";
+const openAiPartialReceiptSql = fs.readFileSync(path.join(root, openAiPartialReceiptMigrationPath), "utf8");
+const terminalOpenAiPartialAuthorityMigrationPath = "supabase/migrations/20260813151500_comment_translator_paid_task6_terminal_openai_partial_authority.sql";
+const terminalOpenAiPartialAuthoritySql = fs.readFileSync(path.join(root, terminalOpenAiPartialAuthorityMigrationPath), "utf8");
+const replayCircuitAuthorityMigrationPath = "supabase/migrations/20260813153000_comment_translator_paid_task6_replay_circuit_authority.sql";
+const replayCircuitAuthoritySql = fs.readFileSync(path.join(root, replayCircuitAuthorityMigrationPath), "utf8");
+const dispatchAndAzurePartialMigrationPath = "supabase/migrations/20260813154500_comment_translator_paid_task6_dispatch_and_azure_partial_settlement.sql";
+assert.equal(fs.existsSync(path.join(root, dispatchAndAzurePartialMigrationPath)), true, "dispatch/partial migration exists");
+const dispatchAndAzurePartialSql = fs.existsSync(path.join(root, dispatchAndAzurePartialMigrationPath))
+  ? fs.readFileSync(path.join(root, dispatchAndAzurePartialMigrationPath), "utf8")
+  : "";
 
 const requiredTables = [
   "comment_translator_paid_customers",
@@ -84,6 +97,47 @@ const scan = scanSql(sql);
 assert.equal(scan.parenthesesDepth, 0, "migration parentheses are balanced outside SQL strings/comments");
 assert.equal(scan.unterminatedDollarQuote, null, "migration dollar-quoted functions are terminated");
 assert.equal(scan.unterminatedString, false, "migration single-quoted literals are terminated");
+const terminalOpenAiPartialScan = scanSql(terminalOpenAiPartialSql);
+assert.equal(terminalOpenAiPartialScan.parenthesesDepth, 0, "terminal OpenAI partial migration parentheses are balanced");
+assert.equal(terminalOpenAiPartialScan.unterminatedDollarQuote, null, "terminal OpenAI partial migration dollar quote is terminated");
+assert.equal(terminalOpenAiPartialScan.unterminatedString, false, "terminal OpenAI partial migration strings are terminated");
+assert.equal((terminalOpenAiPartialSql.match(/create or replace function public\.ct_paid_commit_terminal_openai_partial\s*\(/gi) ?? []).length, 1, "terminal OpenAI partial migration defines its RPC once");
+assert.match(terminalOpenAiPartialSql, /language plpgsql\s+security definer\s+set search_path = pg_catalog, public\s+as \$\$/i, "terminal OpenAI partial RPC has a fixed-search-path SECURITY DEFINER boundary");
+assert.doesNotMatch(terminalOpenAiPartialSql, /\b(?:drop\s+table|truncate\s+table|delete\s+from)\b/i, "terminal OpenAI partial migration is additive and non-destructive");
+for (const [name, migrationSql] of [
+  ["OpenAI partial receipt", openAiPartialReceiptSql],
+  ["terminal OpenAI partial authority", terminalOpenAiPartialAuthoritySql]
+]) {
+  const migrationScan = scanSql(migrationSql);
+  assert.equal(migrationScan.parenthesesDepth, 0, `${name} migration parentheses are balanced`);
+  assert.equal(migrationScan.unterminatedDollarQuote, null, `${name} migration dollar quote is terminated`);
+  assert.equal(migrationScan.unterminatedString, false, `${name} migration strings are terminated`);
+  assert.doesNotMatch(migrationSql, /\b(?:drop\s+table|truncate\s+table|delete\s+from)\b/i, `${name} migration is additive and non-destructive`);
+}
+assert.equal((openAiPartialReceiptSql.match(/create or replace function public\.ct_paid_finalize_openai_attempt_with_successes\s*\(/gi) ?? []).length, 1, "partial receipt migration defines its wrapper RPC once");
+assert.equal((openAiPartialReceiptSql.match(/create or replace function public\.ct_paid_read_openai_attempt_with_successes\s*\(/gi) ?? []).length, 1, "partial receipt migration defines its additive success-aware read RPC once");
+assert.equal((openAiPartialReceiptSql.match(/create or replace function public\.ct_paid_read_openai_attempt\s*\(/gi) ?? []).length, 0, "partial receipt migration does not replace the legacy two-column read RPC");
+assert.equal((terminalOpenAiPartialAuthoritySql.match(/create or replace function public\.ct_paid_commit_terminal_openai_partial\s*\(/gi) ?? []).length, 1, "terminal authority migration replaces its RPC once");
+assert.match(openAiPartialReceiptSql, /language plpgsql\s+security definer\s+set search_path = pg_catalog, public\s+as \$\$/i, "partial receipt wrapper has a fixed-search-path SECURITY DEFINER boundary");
+assert.match(terminalOpenAiPartialAuthoritySql, /language plpgsql\s+security definer\s+set search_path = pg_catalog, public\s+as \$\$/i, "terminal partial authority has a fixed-search-path SECURITY DEFINER boundary");
+const replayCircuitAuthorityScan = scanSql(replayCircuitAuthoritySql);
+assert.equal(replayCircuitAuthorityScan.parenthesesDepth, 0, "replay circuit authority migration parentheses are balanced");
+assert.equal(replayCircuitAuthorityScan.unterminatedDollarQuote, null, "replay circuit authority migration dollar quote is terminated");
+assert.equal(replayCircuitAuthorityScan.unterminatedString, false, "replay circuit authority migration strings are terminated");
+assert.doesNotMatch(replayCircuitAuthoritySql, /create or replace function public\.ct_paid_read_openai_attempt\s*\(/i, "legacy two-column replay RPC is unchanged");
+assert.doesNotMatch(replayCircuitAuthoritySql, /create or replace function public\.ct_paid_read_openai_attempt_with_successes\s*\(/i, "legacy four-column replay RPC is unchanged");
+assert.match(replayCircuitAuthoritySql, /returns table \([\s\S]+?attempt_state text[\s\S]+?provider_failure_class text[\s\S]+?successful_item_attempt_ids text\[\][\s\S]+?successful_input_characters bigint[\s\S]+?fallback_eligible boolean[\s\S]+?circuit_failure_state text[\s\S]+?circuit_success_state text/i, "new replay RPC returns the complete sanitized metadata shape");
+assert.match(replayCircuitAuthoritySql, /revoke all on function[\s\S]+?public, anon, authenticated, service_role[\s\S]+?grant execute on function[\s\S]+?service_role/i, "new authority RPCs are service-role-only");
+assert.doesNotMatch(replayCircuitAuthoritySql, /\b(?:drop\s+table|truncate\s+table|delete\s+from)\b/i, "replay circuit authority migration is additive and non-destructive");
+const dispatchAndAzurePartialScan = scanSql(dispatchAndAzurePartialSql);
+assert.equal(dispatchAndAzurePartialScan.parenthesesDepth, 0, "dispatch/partial migration parentheses are balanced");
+assert.equal(dispatchAndAzurePartialScan.unterminatedDollarQuote, null, "dispatch/partial migration dollar quote is terminated");
+assert.equal(dispatchAndAzurePartialScan.unterminatedString, false, "dispatch/partial migration strings are terminated");
+assert.match(dispatchAndAzurePartialSql, /language plpgsql\s+security definer\s+set search_path = pg_catalog, public\s+as \$\$/i, "dispatch/partial RPCs have a fixed-search-path SECURITY DEFINER boundary");
+assert.match(dispatchAndAzurePartialSql, /primary key \(attempt_id, provider_attempt, dispatch_sequence\)/i, "dispatch identity is unique per provider POST");
+assert.match(dispatchAndAzurePartialSql, /for update/i, "dispatch and settlement lock durable authority rows");
+assert.match(dispatchAndAzurePartialSql, /grant execute on function[\s\S]+?service_role/i, "dispatch/partial RPCs are service-role-only");
+assert.doesNotMatch(dispatchAndAzurePartialSql, /\b(?:drop\s+table|truncate\s+table|delete\s+from)\b/i, "dispatch/partial migration is additive and non-destructive");
 assert.doesNotMatch(sql, /\b(?:drop\s+table|truncate\s+table)\b/i, "migration is additive and does not remove tables or truncate data");
 const deleteTargets = [...sql.matchAll(/delete\s+from\s+public\.([a-z0-9_]+)/gi)].map((match) => match[1]);
 assert.deepEqual(deleteTargets, ["comment_translator_paid_attempt_receipts", "comment_translator_paid_logical_attempts", "comment_translator_paid_provider_detail_source_receipts"], "only bounded terminal attempt ledgers and expired source receipts are deleted");

@@ -102,7 +102,10 @@ export const commentTranslatorPaidReconcilerStoreContract = {
     "ct_paid_finalize_reconciler",
     "ct_paid_retry_reconciler",
     "ct_paid_record_provider_circuit_failure",
+    "ct_paid_record_provider_circuit_failure_owned",
     "ct_paid_probe_provider_circuit",
+    "ct_paid_read_provider_circuit",
+    "ct_paid_claim_provider_circuit_probe",
     "ct_paid_record_provider_circuit_success",
     "ct_paid_disable_provider_circuit"
   ] as const

@@ -8,7 +8,13 @@ import type {
   CommentTranslationProviderSecretBoundary,
   CommentTranslationUsageHandoff
 } from "./comment-translator-provider-boundary";
+import {
+  createCommentTranslatorOpenAiProvider,
+  parseCommentTranslatorOpenAiBatchResponse,
+  type CommentTranslatorOpenAiFetch
+} from "./comment-translator-openai-execution";
 import type { CommentTranslatorSessionPlan, CommentTranslatorSessionPlanEntitlement } from "./comment-translator-session-runtime";
+import type { CommentTranslatorOpenAiFetchResponse } from "./comment-translator-openai-execution";
 
 export type CommentTranslatorTranslationProviderKind = "azure-translator" | "openai-mini";
 
@@ -59,16 +65,15 @@ export type OpenAIMiniCommentTranslationProviderConfig = {
   apiKey: string | null | undefined;
   model: string | null | undefined;
   endpoint?: string | null | undefined;
-  fetchImpl?: ProviderFetch;
+  fetchImpl?: ProviderFetch | CommentTranslatorOpenAiFetch;
 };
 
-type ProviderFetchResponse = {
+type ProviderFetchResponse = CommentTranslatorOpenAiFetchResponse & {
   ok: boolean;
   status: number;
   headers?: {
     get(name: string): string | null;
   };
-  json(): Promise<unknown>;
   text(): Promise<string>;
 };
 
@@ -85,6 +90,7 @@ export type ParsedOpenAITranslationProviderResponse =
   | {
       status: "invalid";
       reason: "missing-content" | "invalid-json" | "invalid-shape";
+      failureClass: "policy" | "invalid-response";
     };
 
 type AzureTranslateResponse = Array<{
@@ -118,7 +124,6 @@ const openAiEnv = {
 
 const defaultAzureEndpoint = "https://api.cognitive.microsofttranslator.com";
 const defaultOpenAIEndpoint = "https://api.openai.com/v1/chat/completions";
-const maxProviderDiagnosticLength = 160;
 
 export const commentTranslatorProviderImplementationAlignmentContract = {
   implementationStage: "pre-main-task-20-provider-implementation-alignment",
@@ -160,7 +165,11 @@ export function createAzureCommentTranslationProvider(config: AzureCommentTransl
 }
 
 export function createOpenAIMiniCommentTranslationProvider(config: OpenAIMiniCommentTranslationProviderConfig) {
-  return new OpenAIMiniCommentTranslationProvider(config);
+  return createCommentTranslatorOpenAiProvider({
+    apiKey: config.apiKey,
+    endpoint: config.endpoint,
+    fetchImpl: config.fetchImpl
+  });
 }
 
 export function createCommentTranslatorDefaultTranslationProviderSet(
@@ -264,8 +273,9 @@ class AzureCommentTranslationProvider implements CommentTranslationProvider {
       url.searchParams.set("from", sourceLanguage);
     }
 
+    let response: ProviderFetchResponse;
     try {
-      const response = await this.fetchImpl(url.toString(), {
+      response = await this.fetchImpl(url.toString(), {
         method: "POST",
         headers: {
           "Ocp-Apim-Subscription-Key": this.key,
@@ -274,171 +284,117 @@ class AzureCommentTranslationProvider implements CommentTranslationProvider {
         },
         body: JSON.stringify([{ text }])
       });
-
-      if (!response.ok) {
-        return await mapProviderErrorResponse(response, usageHandoff);
-      }
-
-      const body = (await response.json()) as AzureTranslateResponse;
-      const first = body[0];
-      const translatedText = first?.translations?.[0]?.text?.trim();
-      if (!translatedText) {
-        return recoverableError({
-          code: "temporary-unavailable",
-          message: "Azure Translator response did not contain translated text.",
-          retryAfterMs: null,
-          usageHandoff
-        });
-      }
-
-      return {
-        type: "translated",
-        translatedText,
-        detectedSourceLanguage: first.detectedLanguage?.language ?? (sourceLanguage ? request.input.sourceLanguage : null),
-        confidence: first.detectedLanguage?.score ?? null,
-        cacheOutcome: "miss",
-        usageHandoff
-      };
     } catch {
       return recoverableError({
-        code: "temporary-unavailable",
-        message: "Azure Translator request failed temporarily.",
+        code: "transport-uncertain",
+        message: "Azure Translator request outcome is uncertain.",
         retryAfterMs: null,
         usageHandoff
       });
     }
-  }
-}
 
-class OpenAIMiniCommentTranslationProvider implements CommentTranslationProvider {
-  readonly id = "openai-mini";
-  readonly name = "OpenAI mini translation model";
-  readonly runtimeScope = "server-runtime-only" as const;
-  readonly secretBoundary = providerSecretBoundary;
-
-  private readonly apiKey: string | null;
-  private readonly model: string | null;
-  private readonly endpoint: string;
-  private readonly fetchImpl: ProviderFetch;
-
-  constructor(config: OpenAIMiniCommentTranslationProviderConfig) {
-    this.apiKey = config.apiKey?.trim() || null;
-    this.model = config.model?.trim() || null;
-    this.endpoint = normalizeEndpoint(config.endpoint, defaultOpenAIEndpoint);
-    this.fetchImpl = config.fetchImpl ?? ((url, init) => fetch(url, init));
-  }
-
-  async translate(request: CommentTranslationProviderRequest): Promise<CommentTranslationProviderResult> {
-    if (!this.apiKey || !this.model) {
-      return terminalError("credential-missing", "OpenAI mini provider is not configured in server runtime env.");
+    if (!response.ok) {
+      return await mapProviderErrorResponse(response, usageHandoff);
     }
 
-    const text = request.input.text.trim();
-    if (!text) {
-      return terminalError("invalid-request", "Translation text is required.");
-    }
-
-    const estimatedInputUnits = estimateOpenAITokens(text);
-    const usageHandoff = createUsageHandoff(request, "openai-mini", estimatedInputUnits, estimateOpenAICostMicros(estimatedInputUnits), "miss");
-
+    let body: AzureTranslateResponse;
     try {
-      const response = await this.fetchImpl(this.endpoint, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${this.apiKey}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model: this.model,
-          temperature: 0,
-          response_format: {
-            type: "json_object"
-          },
-          messages: [
-            {
-              role: "system",
-              content:
-                "Translate short live chat comments. Return strict JSON with exactly translatedText, detectedSourceLanguage, and confidence. Do not include provider names or diagnostics."
-            },
-            {
-              role: "user",
-              content: JSON.stringify({
-                text,
-                sourceLanguage: request.input.sourceLanguage,
-                targetLanguage: request.input.targetLanguage,
-                glossaryTerms: request.glossary.terms
-              })
-            }
-          ]
-        })
-      });
-
-      if (!response.ok) {
-        return await mapProviderErrorResponse(response, usageHandoff);
-      }
-
-      const parsed = parseOpenAITranslationProviderResponse(await response.json());
-      if (parsed.status !== "parsed") {
-        return terminalError("policy-blocked", "OpenAI mini response failed strict translation output parsing.");
-      }
-
-      return {
-        type: "translated",
-        translatedText: parsed.translatedText,
-        detectedSourceLanguage: parsed.detectedSourceLanguage,
-        confidence: parsed.confidence,
-        cacheOutcome: "miss",
-        usageHandoff: createUsageHandoff(
-          request,
-          "openai-mini",
-          Math.max(parsed.totalTokens, estimatedInputUnits),
-          estimateOpenAICostMicros(Math.max(parsed.totalTokens, estimatedInputUnits)),
-          "miss"
-        )
-      };
+      body = (await response.json()) as AzureTranslateResponse;
     } catch {
       return recoverableError({
-        code: "temporary-unavailable",
-        message: "OpenAI mini request failed temporarily.",
+        code: "response-invalid",
+        message: "Azure Translator response could not be parsed.",
         retryAfterMs: null,
         usageHandoff
       });
     }
+    const first = Array.isArray(body) ? body[0] : undefined;
+    const translatedText = first?.translations?.[0]?.text?.trim();
+    if (!translatedText) {
+      return recoverableError({
+        code: "response-invalid",
+        message: "Azure Translator response did not contain translated text.",
+        retryAfterMs: null,
+        usageHandoff
+      });
+    }
+
+    return {
+      type: "translated",
+      translatedText,
+      detectedSourceLanguage: first.detectedLanguage?.language ?? (sourceLanguage ? request.input.sourceLanguage : null),
+      confidence: first.detectedLanguage?.score ?? null,
+      cacheOutcome: "miss",
+      usageHandoff
+    };
   }
 }
 
 export function parseOpenAITranslationProviderResponse(body: unknown): ParsedOpenAITranslationProviderResponse {
-  const content = readOpenAIContent(body);
-  if (!content) {
+  const parsed = parseCommentTranslatorOpenAiBatchResponse(body, [{
+    attemptId: "compatibility-attempt",
+    text: "compatibility",
+    sourceLanguage: "auto",
+    targetLanguage: "ja"
+  }]);
+  if (parsed.status === "policy-rejected") {
     return {
       status: "invalid",
-      reason: "missing-content"
+      reason: "invalid-shape",
+      failureClass: "policy"
+    };
+  }
+  if (parsed.status === "invalid-response") {
+    return {
+      status: "invalid",
+      reason: "invalid-shape",
+      failureClass: "invalid-response"
+    };
+  }
+  if ((parsed.status === "complete" || parsed.status === "subset-retry") && parsed.items.length === 1) {
+    return {
+      status: "parsed",
+      translatedText: parsed.items[0].translatedText,
+      detectedSourceLanguage: null,
+      confidence: null,
+      totalTokens: 0
     };
   }
 
-  let parsed: unknown;
+  const legacyContent = readOpenAIContent(body);
+  if (!legacyContent) {
+    return {
+      status: "invalid",
+      reason: "missing-content",
+      failureClass: "invalid-response"
+    };
+  }
+
+  let legacyParsed: unknown;
   try {
-    parsed = JSON.parse(content);
+    legacyParsed = JSON.parse(legacyContent);
   } catch {
     return {
       status: "invalid",
-      reason: "invalid-json"
+      reason: "invalid-json",
+      failureClass: "invalid-response"
     };
   }
 
-  if (!isStrictTranslationObject(parsed)) {
+  if (!isStrictTranslationObject(legacyParsed)) {
     return {
       status: "invalid",
-      reason: "invalid-shape"
+      reason: "invalid-shape",
+      failureClass: "invalid-response"
     };
   }
 
   return {
     status: "parsed",
-    translatedText: parsed.translatedText.trim(),
-    detectedSourceLanguage: parsed.detectedSourceLanguage ?? null,
-    confidence: parsed.confidence ?? null,
-    totalTokens: readOpenAITotalTokens(body)
+    translatedText: legacyParsed.translatedText.trim(),
+    detectedSourceLanguage: legacyParsed.detectedSourceLanguage ?? null,
+    confidence: legacyParsed.confidence ?? null,
+    totalTokens: 0
   };
 }
 
@@ -458,19 +414,6 @@ function readOpenAIContent(body: unknown) {
   }
 
   return typeof message.content === "string" ? message.content.trim() : null;
-}
-
-function readOpenAITotalTokens(body: unknown) {
-  if (typeof body !== "object" || body === null || !("usage" in body)) {
-    return 0;
-  }
-
-  const usage = body.usage;
-  if (typeof usage !== "object" || usage === null || !("total_tokens" in usage)) {
-    return 0;
-  }
-
-  return typeof usage.total_tokens === "number" && Number.isFinite(usage.total_tokens) ? Math.max(0, usage.total_tokens) : 0;
 }
 
 function isStrictTranslationObject(
@@ -509,12 +452,17 @@ async function mapProviderErrorResponse(
   response: ProviderFetchResponse,
   usageHandoff: CommentTranslationUsageHandoff
 ): Promise<CommentTranslationProviderResult> {
-  const message = sanitizeProviderMessage(await safeReadResponseText(response));
-
-  if (response.status === 429) {
+  if (response.status === 429 || response.status === 403) {
+    const azureErrorKind = await readAllowlistedAzureErrorKind(response);
+    if (azureErrorKind === "quota") {
+      return terminalError("provider-quota-exhausted", "Azure Translator quota is exhausted.");
+    }
+    if (response.status === 403) {
+      return terminalError("provider-not-configured", "Translation provider configuration was rejected.");
+    }
     return recoverableError({
       code: "rate-limited",
-      message: message || "Translation provider rate limit reached.",
+      message: "Translation provider rate limit reached.",
       retryAfterMs: parseRetryAfterMs(response.headers?.get("retry-after") ?? null),
       usageHandoff
     });
@@ -523,7 +471,7 @@ async function mapProviderErrorResponse(
   if (response.status === 408 || response.status === 504) {
     return recoverableError({
       code: "timeout",
-      message: message || "Translation provider request timed out.",
+      message: "Translation provider request timed out.",
       retryAfterMs: null,
       usageHandoff
     });
@@ -532,21 +480,21 @@ async function mapProviderErrorResponse(
   if (response.status >= 500 && response.status <= 599) {
     return recoverableError({
       code: "temporary-unavailable",
-      message: message || "Translation provider is temporarily unavailable.",
+      message: "Translation provider is temporarily unavailable.",
       retryAfterMs: parseRetryAfterMs(response.headers?.get("retry-after") ?? null),
       usageHandoff
     });
   }
 
   if (response.status === 400 || response.status === 413) {
-    return terminalError("invalid-request", message || "Translation provider rejected the request.");
+    return terminalError("invalid-request", "Translation provider rejected the request.");
   }
 
   if (response.status === 401 || response.status === 403 || response.status === 404) {
-    return terminalError("provider-not-configured", message || "Translation provider configuration was rejected.");
+    return terminalError("provider-not-configured", "Translation provider configuration was rejected.");
   }
 
-  return terminalError("policy-blocked", message || "Translation provider rejected this request.");
+  return terminalError("policy-blocked", "Translation provider rejected this request.");
 }
 
 function createUsageHandoff(
@@ -633,28 +581,40 @@ function estimateCharacters(text: string) {
   return Math.max(Array.from(text).length, 1);
 }
 
-function estimateOpenAITokens(text: string) {
-  return Math.max(Math.ceil(Array.from(text).length / 3), 1);
-}
-
 function estimateAzureCostMicros(text: string) {
   return estimateCharacters(text);
 }
 
-function estimateOpenAICostMicros(totalTokens: number) {
-  return Math.max(Math.ceil(totalTokens), 1);
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-async function safeReadResponseText(response: ProviderFetchResponse) {
+const azureQuotaErrorCodes = new Set([
+  "403001",
+  "quotaexceeded",
+  "outofquota",
+  "subscriptionquotaexceeded",
+  "quota_exceeded"
+]);
+
+async function readAllowlistedAzureErrorKind(
+  response: ProviderFetchResponse
+): Promise<"quota" | "other"> {
+  let value: unknown;
   try {
-    return await response.text();
+    value = await response.json();
   } catch {
-    return "";
+    return "other";
   }
-}
-
-function sanitizeProviderMessage(message: string) {
-  return message.replace(/\s+/g, " ").trim().slice(0, maxProviderDiagnosticLength);
+  if (!isRecord(value)) return "other";
+  const error = isRecord(value.error) ? value.error : value;
+  const candidates = [error.code, error.type]
+    .flatMap((candidate) => {
+      if (typeof candidate === "string") return [candidate.trim().toLocaleLowerCase()];
+      if (typeof candidate === "number" && Number.isSafeInteger(candidate)) return [String(candidate)];
+      return [];
+    });
+  return candidates.some((candidate) => azureQuotaErrorCodes.has(candidate)) ? "quota" : "other";
 }
 
 function parseRetryAfterMs(value: string | null) {

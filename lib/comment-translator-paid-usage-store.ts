@@ -23,12 +23,51 @@ export type CommentTranslatorPaidProviderReservation = {
   openAiSlotToken: string | null;
 };
 
+export type CommentTranslatorPaidProviderDispatchClaimStatus = "claimed" | "already-dispatched";
+
+export type CommentTranslatorPaidOpenAiAttemptReceipt = {
+  attemptState: "reserved" | "uncertain" | "committed" | "released" | "expired";
+  providerFailureClass: CommentTranslatorPaidProviderFailureClass | null;
+  successfulItemAttemptIds: readonly string[];
+  successfulInputCharacters: number;
+  fallbackEligible: boolean;
+  circuitFailureState: CommentTranslatorPaidCircuitFailureState;
+  circuitSuccessState: CommentTranslatorPaidCircuitSuccessState;
+  providerKind: CommentTranslatorPaidProviderKind;
+};
+
+export type CommentTranslatorPaidCircuitFailureState = "not-required" | "deferred" | "pending" | "recorded";
+export type CommentTranslatorPaidCircuitSuccessState = "not-required" | "pending" | "recorded";
+
+export type CommentTranslatorPaidReservationRefusal =
+  | "capacity"
+  | "quota"
+  | "cost"
+  | "individual-cost"
+  | "global-cost";
+
+export class CommentTranslatorPaidReservationRefusedError extends Error {
+  readonly refusal: CommentTranslatorPaidReservationRefusal;
+
+  constructor(refusal: CommentTranslatorPaidReservationRefusal) {
+    super("Paid provider reservation was refused by a bounded authority.");
+    this.name = "CommentTranslatorPaidReservationRefusedError";
+    this.refusal = refusal;
+  }
+}
+
 export type CommentTranslatorPaidAzureFinalizeRequest = {
   attemptId: string;
   providerAttempt: string;
   sessionLeaseToken: string;
   actualInputCharacters?: number;
+  // When OpenAI translated a subset before Azure handled the remainder,
+  // Azure's monthly fallback bucket must commit only Azure characters while
+  // the logical Paid billing period commits the combined successful total.
+  actualBillingInputCharacters?: number;
   nowIso: string;
+  circuitFailureState: Exclude<CommentTranslatorPaidCircuitFailureState, "deferred">;
+  circuitSuccessState: CommentTranslatorPaidCircuitSuccessState;
 } & (
   | {
       outcome: "completed";
@@ -134,6 +173,23 @@ export type CommentTranslatorPaidUsageStore = {
     tokenCount: number;
     nowIso: string;
   }) => Promise<CommentTranslatorPaidProviderReservation>;
+  claimProviderDispatch: (request: {
+    attemptId: string;
+    providerAttempt: string;
+    providerKind: CommentTranslatorPaidProviderKind;
+    dispatchSequence: number;
+    sessionLeaseToken: string;
+    openAiSlotToken?: string;
+    nowIso: string;
+  }) => Promise<CommentTranslatorPaidProviderDispatchClaimStatus>;
+  readOpenAiAttempt: (request: {
+    attemptId: string;
+    providerAttempt: string;
+  }) => Promise<CommentTranslatorPaidOpenAiAttemptReceipt>;
+  readProviderAttemptReplayMetadata: (request: {
+    attemptId: string;
+    providerAttempt: string;
+  }) => Promise<CommentTranslatorPaidOpenAiAttemptReceipt>;
   extendOpenAiAttempt: (request: {
     attemptId: string;
     providerAttempt: string;
@@ -150,8 +206,19 @@ export type CommentTranslatorPaidUsageStore = {
     actualInputCharacters?: number;
     actualCostMicros?: number;
     providerFailureClass: CommentTranslatorPaidProviderFailureClass | null;
+    successfulItemAttemptIds: readonly string[];
+    successfulInputCharacters: number;
+    fallbackEligible: boolean;
+    circuitFailureState: CommentTranslatorPaidCircuitFailureState;
+    circuitSuccessState: CommentTranslatorPaidCircuitSuccessState;
     nowIso: string;
   }) => Promise<boolean>;
+  commitTerminalOpenAiPartial: (request: {
+    attemptId: string;
+    providerAttempt: string;
+    actualCharacters: number;
+    nowIso: string;
+  }) => Promise<number>;
   reclaimOpenAiAttempt: (request: { attemptId: string; providerAttempt: string; nowIso: string }) => Promise<boolean>;
   azureDirectFallback: (request: {
     attemptId: string;
@@ -165,6 +232,15 @@ export type CommentTranslatorPaidUsageStore = {
     nowIso: string;
   }) => Promise<CommentTranslatorPaidProviderReservation>;
   finalizeAzureDirectFallback: (request: CommentTranslatorPaidAzureFinalizeRequest) => Promise<boolean>;
+  settleAzurePartialFailure: (request: {
+    attemptId: string;
+    providerAttempt: string;
+    sessionLeaseToken: string;
+    actualInputCharacters: number;
+    actualBillingInputCharacters: number;
+    providerFailureClass: CommentTranslatorPaidProviderFailureClass;
+    nowIso: string;
+  }) => Promise<boolean>;
   reclaimAzureDirectFallback: (request: { attemptId: string; providerAttempt: string; nowIso: string }) => Promise<boolean>;
   reservePollBudget: (request: {
     sessionReferenceId: string;
@@ -240,11 +316,21 @@ export const commentTranslatorPaidUsageStoreContract = {
     "ct_paid_close_billing_period",
     "ct_paid_close_utc_month",
     "ct_paid_openai_attempt",
+    "ct_paid_claim_provider_dispatch",
+    "ct_paid_read_openai_attempt",
+    "ct_paid_read_openai_attempt_with_successes",
+    "ct_paid_read_provider_attempt_replay_metadata",
     "ct_paid_extend_openai_attempt",
     "ct_paid_finalize_openai_attempt",
+    "ct_paid_finalize_openai_attempt_with_successes",
+    "ct_paid_finalize_openai_attempt_with_metadata",
+    "ct_paid_commit_terminal_openai_partial",
     "ct_paid_reclaim_openai_attempt",
     "ct_paid_azure_direct_fallback",
     "ct_paid_finalize_azure_fallback",
+    "ct_paid_finalize_azure_fallback_with_billing_characters",
+    "ct_paid_finalize_azure_fallback_with_metadata",
+    "ct_paid_settle_azure_partial_failure",
     "ct_paid_reclaim_azure_fallback",
     "ct_paid_reserve_poll_budget"
   ] as const
@@ -432,6 +518,47 @@ export function createCommentTranslatorPaidUsageStore({
       });
       return readProviderReservation(result, "OpenAI attempt reservation failed.");
     },
+    async claimProviderDispatch(request) {
+      assertCommentTranslatorPaidAttemptId(request.attemptId);
+      assertBoundedOpaqueReference(request.providerAttempt, "Paid provider attempt");
+      assertBoundedNonNegativeInteger(request.dispatchSequence, 14, "Paid provider dispatch sequence");
+      if (request.providerKind === "openai_attempt" && !request.openAiSlotToken) {
+        throw new Error("Paid OpenAI dispatch claim requires its slot token.");
+      }
+      if (request.providerKind === "azure_direct_fallback" && request.openAiSlotToken) {
+        throw new Error("Paid Azure dispatch claim cannot bind an OpenAI slot token.");
+      }
+      const result = await supabase.rpc("ct_paid_claim_provider_dispatch", {
+        p_attempt_id: request.attemptId,
+        p_provider_attempt: request.providerAttempt,
+        p_provider_kind: request.providerKind,
+        p_dispatch_sequence: request.dispatchSequence,
+        p_session_lease_token: request.sessionLeaseToken,
+        p_openai_slot_lease_token: request.openAiSlotToken ?? null,
+        p_now: request.nowIso
+      });
+      return readProviderDispatchClaimStatus(result);
+    },
+    async readOpenAiAttempt(request) {
+      assertCommentTranslatorPaidAttemptId(request.attemptId);
+      assertBoundedOpaqueReference(request.providerAttempt, "Paid provider attempt");
+      const result = await supabase.rpc("ct_paid_read_provider_attempt_replay_metadata", {
+        p_attempt_id: request.attemptId,
+        p_provider_attempt: request.providerAttempt
+      });
+      const receipt = readProviderAttemptReplayMetadata(result);
+      if (receipt.providerKind !== "openai_attempt") throw new Error("OpenAI attempt receipt provider is unreadable.");
+      return receipt;
+    },
+    async readProviderAttemptReplayMetadata(request) {
+      assertCommentTranslatorPaidAttemptId(request.attemptId);
+      assertBoundedOpaqueReference(request.providerAttempt, "Paid provider attempt");
+      const result = await supabase.rpc("ct_paid_read_provider_attempt_replay_metadata", {
+        p_attempt_id: request.attemptId,
+        p_provider_attempt: request.providerAttempt
+      });
+      return readProviderAttemptReplayMetadata(result);
+    },
     async extendOpenAiAttempt(request) {
       assertCommentTranslatorPaidAttemptId(request.attemptId);
       assertBoundedOpaqueReference(request.providerAttempt, "Paid provider attempt");
@@ -447,7 +574,12 @@ export function createCommentTranslatorPaidUsageStore({
     async finalizeOpenAiAttempt(request) {
       assertCommentTranslatorPaidAttemptId(request.attemptId);
       assertBoundedOpaqueReference(request.providerAttempt, "Paid provider attempt");
-      const result = await supabase.rpc("ct_paid_finalize_openai_attempt", {
+      assertBoundedSuccessfulItemAttemptIds(request.successfulItemAttemptIds);
+      assertBoundedNonNegativeInteger(request.successfulInputCharacters, 7_500, "Paid successful OpenAI input characters");
+      if ((request.successfulItemAttemptIds.length === 0) !== (request.successfulInputCharacters === 0)) {
+        throw new Error("Paid OpenAI success metadata is inconsistent.");
+      }
+      const result = await supabase.rpc("ct_paid_finalize_openai_attempt_with_metadata", {
         p_attempt_id: request.attemptId,
         p_provider_attempt: request.providerAttempt,
         p_session_lease_token: request.sessionLeaseToken,
@@ -456,9 +588,26 @@ export function createCommentTranslatorPaidUsageStore({
         p_actual_input_characters: request.actualInputCharacters ?? null,
         p_actual_cost_micros: request.actualCostMicros ?? null,
         p_provider_failure_class: request.providerFailureClass,
+        p_successful_item_attempt_ids: request.successfulItemAttemptIds,
+        p_successful_input_characters: request.successfulInputCharacters,
+        p_fallback_eligible: request.fallbackEligible,
+        p_circuit_failure_state: request.circuitFailureState,
+        p_circuit_success_state: request.circuitSuccessState,
         p_now: request.nowIso
       });
       return readBoolean(result, "OpenAI attempt finalization failed.");
+    },
+    async commitTerminalOpenAiPartial(request) {
+      assertCommentTranslatorPaidAttemptId(request.attemptId);
+      assertBoundedOpaqueReference(request.providerAttempt, "Paid provider attempt");
+      assertPositiveBoundedInteger(request.actualCharacters, 7_500, "Paid terminal OpenAI partial characters");
+      const result = await supabase.rpc("ct_paid_commit_terminal_openai_partial", {
+        p_attempt_id: request.attemptId,
+        p_provider_attempt: request.providerAttempt,
+        p_actual_characters: request.actualCharacters,
+        p_now: request.nowIso
+      });
+      return readInteger(result, "Paid terminal OpenAI partial commit failed.");
     },
     async reclaimOpenAiAttempt(request) {
       assertCommentTranslatorPaidAttemptId(request.attemptId);
@@ -493,16 +642,48 @@ export function createCommentTranslatorPaidUsageStore({
       if (request.outcome === "uncertain_inflight" && request.providerFailureClass === null) {
         throw new Error("Azure uncertain finalization requires a sanitized provider failure class.");
       }
-      const result = await supabase.rpc("ct_paid_finalize_azure_fallback", {
+      if (request.actualBillingInputCharacters !== undefined && request.outcome !== "completed") {
+        throw new Error("Combined Paid billing characters require completed Azure finalization.");
+      }
+      if (request.actualBillingInputCharacters !== undefined) {
+        assertPositiveBoundedInteger(
+          request.actualBillingInputCharacters,
+          7_500,
+          "Paid combined billing characters"
+        );
+      }
+      const result = await supabase.rpc("ct_paid_finalize_azure_fallback_with_metadata", {
         p_attempt_id: request.attemptId,
         p_provider_attempt: request.providerAttempt,
         p_session_lease_token: request.sessionLeaseToken,
         p_outcome: request.outcome,
         p_actual_input_characters: request.actualInputCharacters ?? null,
+        p_actual_billing_input_characters: request.actualBillingInputCharacters ?? null,
         p_provider_failure_class: request.providerFailureClass,
+        p_circuit_failure_state: request.circuitFailureState,
+        p_circuit_success_state: request.circuitSuccessState,
         p_now: request.nowIso
       });
       return readBoolean(result, "Azure fallback finalization failed.");
+    },
+    async settleAzurePartialFailure(request) {
+      assertCommentTranslatorPaidAttemptId(request.attemptId);
+      assertBoundedOpaqueReference(request.providerAttempt, "Paid provider attempt");
+      assertBoundedNonNegativeInteger(request.actualInputCharacters, 7_500, "Paid successful Azure input characters");
+      assertBoundedNonNegativeInteger(request.actualBillingInputCharacters, 7_500, "Paid combined successful input characters");
+      if (request.actualBillingInputCharacters < request.actualInputCharacters) {
+        throw new Error("Paid combined successful input characters are inconsistent.");
+      }
+      const result = await supabase.rpc("ct_paid_settle_azure_partial_failure", {
+        p_attempt_id: request.attemptId,
+        p_provider_attempt: request.providerAttempt,
+        p_session_lease_token: request.sessionLeaseToken,
+        p_actual_input_characters: request.actualInputCharacters,
+        p_actual_billing_input_characters: request.actualBillingInputCharacters,
+        p_provider_failure_class: request.providerFailureClass,
+        p_now: request.nowIso
+      });
+      return readBoolean(result, "Azure partial failure settlement failed.");
     },
     async reclaimAzureDirectFallback(request) {
       assertCommentTranslatorPaidAttemptId(request.attemptId);
@@ -530,7 +711,11 @@ function readProviderReservation(
   result: SupabaseRpcResult,
   message: string
 ): CommentTranslatorPaidProviderReservation {
-  if (result.error) throw new Error(message);
+  if (result.error) {
+    const refusal = classifyReservationRefusal(result.error.message);
+    if (refusal) throw new CommentTranslatorPaidReservationRefusedError(refusal);
+    throw new Error(message);
+  }
   const row = firstRpcRow(result.data);
   const reservationStatus = readString(row, "reservation_status");
   if (!["reserved", "uncertain", "committed", "released", "expired"].includes(reservationStatus)) {
@@ -547,9 +732,123 @@ function readProviderReservation(
   return { reservationStatus, sessionLeaseToken, openAiSlotToken };
 }
 
+function readProviderDispatchClaimStatus(
+  result: SupabaseRpcResult
+): CommentTranslatorPaidProviderDispatchClaimStatus {
+  if (result.error) throw new Error("Paid provider dispatch claim failed.");
+  const value = Array.isArray(result.data) ? result.data[0] : result.data;
+  if (value === "claimed" || value === "already-dispatched") return value;
+  throw new Error("Paid provider dispatch claim status is unreadable.");
+}
+
+function readProviderAttemptReplayMetadata(
+  result: SupabaseRpcResult
+): CommentTranslatorPaidOpenAiAttemptReceipt {
+  if (result.error) throw new Error("OpenAI attempt receipt read failed.");
+  const row = firstRpcRow(result.data);
+  const attemptState = readString(row, "attempt_state");
+  if (!["reserved", "uncertain", "committed", "released", "expired"].includes(attemptState)) {
+    throw new Error("Trusted Paid OpenAI attempt state is unreadable.");
+  }
+  const providerFailureClass = readNullableString(row, "provider_failure_class");
+  if (
+    providerFailureClass !== null
+    && !["network", "timeout", "rate-limit", "server-error", "invalid-response", "quota", "configuration", "policy"].includes(providerFailureClass)
+  ) {
+    throw new Error("Trusted Paid OpenAI failure class is unreadable.");
+  }
+  const successfulItemAttemptIds = row.successful_item_attempt_ids;
+  const successfulInputCharacters = row.successful_input_characters;
+  const fallbackEligible = row.fallback_eligible;
+  const circuitFailureState = readString(row, "circuit_failure_state");
+  const circuitSuccessState = readString(row, "circuit_success_state");
+  const providerKind = readString(row, "provider_kind");
+  if (typeof fallbackEligible !== "boolean") throw new Error("Trusted Paid fallback authority is unreadable.");
+  if (!["not-required", "deferred", "pending", "recorded"].includes(circuitFailureState)) {
+    throw new Error("Trusted Paid circuit failure state is unreadable.");
+  }
+  if (!["not-required", "pending", "recorded"].includes(circuitSuccessState)) {
+    throw new Error("Trusted Paid circuit success state is unreadable.");
+  }
+  if (!["openai_attempt", "azure_direct_fallback"].includes(providerKind)) {
+    throw new Error("Trusted Paid provider kind is unreadable.");
+  }
+  if (!Array.isArray(successfulItemAttemptIds)) {
+    throw new Error("Trusted Paid OpenAI successful item ids are unreadable.");
+  }
+  assertBoundedSuccessfulItemAttemptIds(successfulItemAttemptIds);
+  const normalizedSuccessfulInputCharacters = typeof successfulInputCharacters === "string" && /^\d+$/.test(successfulInputCharacters)
+    ? Number(successfulInputCharacters)
+    : successfulInputCharacters;
+  assertBoundedNonNegativeInteger(normalizedSuccessfulInputCharacters, 7_500, "Trusted Paid OpenAI successful input characters");
+  if (
+    providerKind === "openai_attempt"
+    && (successfulItemAttemptIds.length === 0) !== (normalizedSuccessfulInputCharacters === 0)
+  ) {
+    throw new Error("Trusted Paid OpenAI success metadata is inconsistent.");
+  }
+  if (providerKind === "azure_direct_fallback" && successfulItemAttemptIds.length !== 0) {
+    throw new Error("Trusted Paid Azure replay metadata cannot expose item identities.");
+  }
+  return {
+    attemptState: attemptState as CommentTranslatorPaidOpenAiAttemptReceipt["attemptState"],
+    providerFailureClass: providerFailureClass as CommentTranslatorPaidProviderFailureClass | null,
+    successfulItemAttemptIds,
+    successfulInputCharacters: normalizedSuccessfulInputCharacters,
+    fallbackEligible,
+    circuitFailureState: circuitFailureState as CommentTranslatorPaidCircuitFailureState,
+    circuitSuccessState: circuitSuccessState as CommentTranslatorPaidCircuitSuccessState,
+    providerKind: providerKind as CommentTranslatorPaidProviderKind
+  };
+}
+
+function classifyReservationRefusal(message: string | undefined): CommentTranslatorPaidReservationRefusal | null {
+  const normalized = typeof message === "string" ? message.toLocaleLowerCase() : "";
+  if (
+    normalized.includes("slot capacity is exhausted")
+    || normalized.includes("rpm reservation is exhausted")
+    || normalized.includes("tpm reservation is exhausted")
+    || normalized.includes("capacity is full")
+    || normalized.includes("shared capacity is exhausted")
+    || normalized.includes("circuit is unavailable")
+    || normalized.includes("session has an active provider lease")
+    || normalized.includes("probe is already leased")
+  ) return "capacity";
+  if (
+    normalized.includes("individual paid cost")
+    || normalized.includes("individual openai cost")
+    || normalized.includes("owner cost")
+  ) return "individual-cost";
+  if (
+    normalized.includes("global paid cost")
+    || normalized.includes("global openai cost")
+    || normalized.includes("cost month is closed")
+  ) return "global-cost";
+  if (
+    normalized.includes("quota is exhausted")
+    || normalized.includes("billing period is closed for new reservations")
+  ) return "quota";
+  if (
+    normalized.includes("cost limit is exhausted")
+    || normalized.includes("cost period is closed")
+  ) return "cost";
+  return null;
+}
+
 function assertBoundedOpaqueReference(value: string, label: string): void {
   if (typeof value !== "string" || value.trim().length === 0 || value.length > 200) {
     throw new Error(label + " is invalid.");
+  }
+}
+
+function assertBoundedSuccessfulItemAttemptIds(value: readonly unknown[]): asserts value is readonly string[] {
+  if (!Array.isArray(value) || value.length > 15 || new Set(value).size !== value.length) {
+    throw new Error("Paid successful OpenAI item attempt ids are invalid.");
+  }
+  for (const attemptId of value) {
+    if (typeof attemptId !== "string" || !isCommentTranslatorPaidAttemptId(attemptId)) {
+      throw new Error("Paid successful OpenAI item attempt id is invalid.");
+    }
   }
 }
 
@@ -561,6 +860,12 @@ function assertCommentTranslatorPaidAttemptId(value: string): void {
 
 function assertPositiveBoundedInteger(value: number, maximum: number, label: string): void {
   if (!Number.isSafeInteger(value) || value <= 0 || value > maximum) {
+    throw new Error(label + " is invalid.");
+  }
+}
+
+function assertBoundedNonNegativeInteger(value: unknown, maximum: number, label: string): asserts value is number {
+  if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0 || value > maximum) {
     throw new Error(label + " is invalid.");
   }
 }

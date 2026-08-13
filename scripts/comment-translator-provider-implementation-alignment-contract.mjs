@@ -335,6 +335,8 @@ assert.equal(freeRun.skipsByReason.languagePolicy, 1, "skipped comments are not 
 assert.equal(openAiRecoverableProvider.calls.length, 0, "Free route never calls paid OpenAI fallback");
 
 ledger.resetInMemoryCommentTranslatorUsageLedgerForTests();
+const paidFallbackOpenAiCallsBefore = openAiRecoverableProvider.calls.length;
+const paidFallbackAzureCallsBefore = azureProvider.calls.length;
 const paidFallbackRun = await executionRuntime.executeCommentTranslatorProviderPolicyBatch({
   providers: {
     azure: azureProvider,
@@ -362,11 +364,16 @@ const paidFallbackRun = await executionRuntime.executeCommentTranslatorProviderP
 });
 assert.equal(paidFallbackRun.status, "completed");
 assert.equal(paidFallbackRun.providerRouting.plan, "paid");
-assert.equal(paidFallbackRun.providerRouting.fallbackProvider, "server-owned-policy-fallback");
-assert.equal(paidFallbackRun.fallbackReasonCounts.recoverablePrimaryError, 1, "paid recoverable primary error triggers auditable fallback");
-assert.equal(paidFallbackRun.translatedCount, 1, "Azure fallback can complete paid translation");
-assert.equal(paidFallbackRun.errorCounts.recoverable, 0, "successful fallback is not exposed as a failed translation");
+assert.equal(paidFallbackRun.providerRouting.primaryProvider, "none");
+assert.equal(paidFallbackRun.providerRouting.fallbackProvider, "none");
+assert.equal(paidFallbackRun.paidProviderStopReason, "authority-unreadable", "generic Paid execution fails closed without durable Task 6 authority");
+assert.equal(paidFallbackRun.providerCallCount, 0, "generic Paid execution reports zero provider calls");
+assert.equal(paidFallbackRun.translatedCount, 0, "generic Paid execution returns zero translations");
+assert.equal(openAiRecoverableProvider.calls.length, paidFallbackOpenAiCallsBefore, "generic Paid execution never calls OpenAI");
+assert.equal(azureProvider.calls.length, paidFallbackAzureCallsBefore, "generic Paid execution never calls Azure fallback");
 
+const paidTerminalOpenAiCallsBefore = openAiTerminalProvider.calls.length;
+const paidTerminalAzureCallsBefore = azureProvider.calls.length;
 const paidTerminalRun = await executionRuntime.executeCommentTranslatorProviderPolicyBatch({
   providers: {
     azure: azureProvider,
@@ -391,9 +398,14 @@ const paidTerminalRun = await executionRuntime.executeCommentTranslatorProviderP
   ]
 });
 assert.equal(paidTerminalRun.status, "completed");
-assert.equal(paidTerminalRun.fallbackReasonCounts.recoverablePrimaryError, 0, "terminal parse/policy failures do not fallback automatically");
-assert.equal(paidTerminalRun.providerCallCount, 1, "terminal OpenAI parser failure does not call Azure fallback");
-assert.equal(paidTerminalRun.errorCounts.terminal, 1);
+assert.equal(paidTerminalRun.providerRouting.plan, "paid");
+assert.equal(paidTerminalRun.providerRouting.primaryProvider, "none");
+assert.equal(paidTerminalRun.providerRouting.fallbackProvider, "none");
+assert.equal(paidTerminalRun.paidProviderStopReason, "authority-unreadable", "generic Paid terminal provider setup also fails closed before execution");
+assert.equal(paidTerminalRun.providerCallCount, 0, "generic Paid terminal setup reports zero provider calls");
+assert.equal(paidTerminalRun.translatedCount, 0, "generic Paid terminal setup returns zero translations");
+assert.equal(openAiTerminalProvider.calls.length, paidTerminalOpenAiCallsBefore, "generic Paid terminal setup never calls OpenAI");
+assert.equal(azureProvider.calls.length, paidTerminalAzureCallsBefore, "generic Paid terminal setup never calls Azure");
 
 assert.deepEqual(
   policyRuntime.parseOpenAITranslationProviderResponse({

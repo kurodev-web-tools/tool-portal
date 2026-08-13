@@ -469,6 +469,7 @@ create table if not exists public.comment_translator_paid_logical_attempts (
   expires_at timestamptz not null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
+  constraint comment_translator_paid_logical_attempt_id_shape check (attempt_id ~ '^ctpa_[A-Za-z0-9_-]{1,32}_[A-Za-z0-9_-]{43}$'),
   constraint comment_translator_paid_logical_attempt_period_shape check (period_end > period_start),
   constraint comment_translator_paid_logical_attempt_commit_shape check (
     (logical_state = 'committed' and committed_input_characters > 0)
@@ -507,6 +508,7 @@ create table if not exists public.comment_translator_paid_attempt_receipts (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   constraint comment_translator_paid_attempt_receipts_key unique (attempt_id, provider_attempt),
+  constraint comment_translator_paid_attempt_receipts_attempt_id_shape check (attempt_id ~ '^ctpa_[A-Za-z0-9_-]{1,32}_[A-Za-z0-9_-]{43}$'),
   constraint comment_translator_paid_attempt_receipts_nonempty check (length(trim(attempt_id)) > 0),
   constraint comment_translator_paid_attempt_receipts_provider_attempt_nonempty check (length(trim(provider_attempt)) > 0),
   constraint comment_translator_paid_attempt_receipts_session_nonempty check (length(trim(session_reference_id)) > 0)
@@ -519,6 +521,7 @@ create table if not exists public.comment_translator_paid_provider_detail_source
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   primary key (attempt_id, provider_attempt),
+  constraint comment_translator_paid_provider_detail_source_attempt_id_shape check (attempt_id ~ '^ctpa_[A-Za-z0-9_-]{1,32}_[A-Za-z0-9_-]{43}$'),
   constraint comment_translator_paid_provider_detail_source_attempt_nonempty check (length(trim(attempt_id)) > 0),
   constraint comment_translator_paid_provider_detail_source_provider_attempt_nonempty check (length(trim(provider_attempt)) > 0)
 );
@@ -5079,6 +5082,8 @@ declare
   v_lease public.comment_translator_paid_session_leases%rowtype;
   v_openai_slot public.comment_translator_paid_openai_slots%rowtype;
   v_openai_rate public.comment_translator_paid_openai_rate_reservations%rowtype;
+  v_owner_cost public.comment_translator_paid_owner_cost_buckets%rowtype;
+  v_global_cost public.comment_translator_paid_global_cost_buckets%rowtype;
   v_receipt_count integer;
   v_openai_receipt_count integer;
   v_azure_receipt_count integer;
@@ -5381,6 +5386,71 @@ begin
   end if;
   perform public.ct_paid_assert_current_utc_month(p_now);
 
+  -- Azure fallback never bypasses the Paid OpenAI safety caps. It does not
+  -- reserve OpenAI cost, but it must atomically prove that both cost
+  -- authorities are readable and not already exhausted before a Provider
+  -- reservation can be created.
+  if v_shared_attempt.id is not null then
+    if v_shared_attempt.owner_cost_bucket_id is null
+      or v_shared_attempt.global_cost_bucket_id is null
+    then
+      raise exception 'Paid cost authority is unavailable for Azure fallback';
+    end if;
+    select *
+      into v_owner_cost
+      from public.comment_translator_paid_owner_cost_buckets
+     where id = v_shared_attempt.owner_cost_bucket_id
+     for update;
+    select *
+      into v_global_cost
+      from public.comment_translator_paid_global_cost_buckets
+     where id = v_shared_attempt.global_cost_bucket_id
+     for update;
+  else
+    insert into public.comment_translator_paid_owner_cost_buckets (
+      owner_user_id, period_start, period_end, updated_at
+    )
+    values (p_owner_user_id, p_period_start, p_period_end, p_now)
+    on conflict (owner_user_id, period_start, period_end) do nothing;
+    select *
+      into v_owner_cost
+      from public.comment_translator_paid_owner_cost_buckets
+     where owner_user_id = p_owner_user_id
+       and period_start = p_period_start
+       and period_end = p_period_end
+     for update;
+
+    insert into public.comment_translator_paid_global_cost_buckets (
+      utc_month, updated_at
+    )
+    values (p_utc_month, p_now)
+    on conflict (utc_month) do nothing;
+    select *
+      into v_global_cost
+      from public.comment_translator_paid_global_cost_buckets
+     where utc_month = p_utc_month
+     for update;
+  end if;
+  if v_owner_cost.id is null
+    or v_global_cost.id is null
+  then
+    raise exception 'Paid cost authority is unavailable for Azure fallback';
+  end if;
+  if v_owner_cost.period_state <> 'open'
+    or v_owner_cost.reserved_cost_micros + v_owner_cost.committed_cost_micros
+      >= v_owner_cost.cost_limit_micros
+  then
+    raise exception 'individual Paid cost limit is exhausted';
+  end if;
+  if v_global_cost.utc_month <> p_utc_month
+    or v_global_cost.bucket_state <> 'open'
+    or v_global_cost.reserved_cost_micros + v_global_cost.committed_cost_micros
+      >= v_global_cost.cost_limit_micros
+  then
+    raise exception 'global Paid cost limit is exhausted';
+  end if;
+
+  lock table public.comment_translator_usage_ledger_events in share mode;
   select coalesce(sum(translated_character_estimate), 0)::bigint
     into v_free_usage_characters
     from public.comment_translator_usage_ledger_events

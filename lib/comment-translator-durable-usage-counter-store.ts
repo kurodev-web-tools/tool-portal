@@ -140,6 +140,8 @@ export const commentTranslatorDurableUsageCounterStoreContract = {
   monthlyUsageAuthority: "durable-store-required",
   dailyUsageAuthority: "durable-store-required",
   sessionUsageAuthority: "durable-store-required",
+  paidFallbackLedgerAuthority: "separate-comment_translator_paid_azure_fallback_buckets",
+  paidAzurePhysicalInputBoundary: "Free-ai-usage-estimate-is-read-only-input; Paid reservation remains separate",
   browserReadableOutput: "sanitized-usage-metadata-only",
   failClosedFallback: "stop-session-when-durable-usage-store-unavailable",
   remoteSupabaseMigrationApply: "not-run-in-this-thread",
@@ -264,7 +266,16 @@ export async function readCommentTranslatorDurableUsageSnapshotOrFailClosed({
   activeSession: CommentTranslatorActiveSessionRecord | null;
   paidEntitlement?: Pick<
     CommentTranslatorSessionPlanEntitlement,
-    "planEntitlementReferenceId" | "dailyLimitMs" | "sessionLimitMs" | "translatedMessagesPerMinute" | "activeSessionsPerUser"
+    | "planEntitlementReferenceId"
+    | "dailyLimitMs"
+    | "sessionLimitMs"
+    | "translatedMessagesPerMinute"
+    | "activeSessionsPerUser"
+    | "monthlyProviderInputCharacterLimit"
+    | "paidIndividualCostLimitMicros"
+    | "paidGlobalCostLimitMicros"
+    | "paidAzureFallbackMonthlyCharacterLimit"
+    | "paidAuthorityReadable"
   >;
   planEntitlementOverride?: Pick<CommentTranslatorSessionPlanEntitlement, "translatedMessagesPerMinute">;
 }): Promise<CommentTranslatorDurableUsageRead> {

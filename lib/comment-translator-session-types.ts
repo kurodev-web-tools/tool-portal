@@ -18,8 +18,12 @@ export type CommentTranslatorSessionPlanEntitlement = {
   readonly translatedMessagesPerMinute: number;
   readonly activeSessionsPerUser: number;
   readonly monthlyProviderInputCharacterLimit?: number;
-  readonly paidPrioritization: "not-implemented";
-  readonly providerUsageCharging: "not-implemented";
+  readonly paidPrioritization: "server-authorized" | "not-implemented";
+  readonly providerUsageCharging: "server-authorized" | "not-implemented";
+  readonly paidIndividualCostLimitMicros?: number;
+  readonly paidGlobalCostLimitMicros?: number;
+  readonly paidAzureFallbackMonthlyCharacterLimit?: number;
+  readonly paidAuthorityReadable?: boolean;
 };
 
 export type CommentTranslatorSessionStopReason =
@@ -27,6 +31,8 @@ export type CommentTranslatorSessionStopReason =
   | "missing-heartbeat" | "auth-failed" | "token-refresh-failed" | "reconnect-required"
   | "daily-time-limit" | "session-time-limit" | "translated-message-cap" | "provider-quota-stop"
   | "global-budget-stop" | "ai-budget-stop" | "translation-provider-limit" | "session-limit"
+  | "paid-authority-unreadable" | "paid-character-quota-stop" | "paid-individual-cost-stop"
+  | "paid-global-cost-stop"
   | "terminal-provider-error";
 
 export type CommentTranslatorSessionUsageSnapshot = {
@@ -38,6 +44,11 @@ export type CommentTranslatorSessionUsageSnapshot = {
   readonly globalBudgetAvailable: boolean;
   readonly aiBudgetAvailable: boolean;
   readonly translationProviderAvailable?: boolean;
+  readonly paidAuthorityReadable?: boolean;
+  readonly paidBillingPeriodInputCharacters?: number;
+  readonly paidBillingPeriodCharacterLimit?: number;
+  readonly paidIndividualCostAvailable?: boolean;
+  readonly paidGlobalCostAvailable?: boolean;
   readonly planEntitlement?: CommentTranslatorSessionPlanEntitlement;
 };
 

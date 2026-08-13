@@ -2116,6 +2116,13 @@ async function projectCurrentStripeGraph({
       return { status: "rejected", reason: "binding-conflict", errorClass: "binding-conflict" };
     }
   }
+  if (
+    eventType.startsWith("customer.subscription.") &&
+    eventType !== "customer.subscription.deleted" &&
+    (graph.invoice.status !== "paid" || !graph.invoice.paid)
+  ) {
+    return { status: "retryable", reason: "object-retrieval-failed", errorClass: "object-retrieval-failed" };
+  }
 
   const priceId = subscription.priceId ?? graph.invoice?.priceId ?? null;
   const productId = subscription.productId ?? graph.invoice?.productId ?? null;

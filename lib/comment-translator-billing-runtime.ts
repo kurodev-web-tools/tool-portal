@@ -17,11 +17,19 @@ import {
 import {
   createTrustedCommentTranslatorPaidEntitlementStore,
   type CommentTranslatorPaidDisputeState,
+  type CommentTranslatorPaidCheckoutLifecycle,
+  type CommentTranslatorPaidCheckoutInitialization,
   type CommentTranslatorPaidEntitlementStatus,
   type CommentTranslatorPaidEntitlementProjectionClaim,
   type CommentTranslatorPaidEntitlementStore,
   type CommentTranslatorPaidStripeBinding
 } from "./comment-translator-paid-entitlement-store";
+import {
+  type CommentTranslatorPaidConsentStore,
+  type CommentTranslatorPaidConsentDocumentType,
+  createTrustedCommentTranslatorPaidConsentStore
+} from "./comment-translator-paid-consent-store";
+import type { CommentTranslatorPaidRegionDecision } from "./comment-translator-paid-region-gate";
 
 export type CommentTranslatorBillingUserReference = `ctbill_${string}`;
 export type CommentTranslatorBillingState = "free" | "paid-active" | "paid-inactive";
@@ -46,7 +54,12 @@ export type CommentTranslatorStripeEnvName =
   | "STRIPE_WEBHOOK_SECRET"
   | "COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID"
   | "COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID"
-  | "NEXT_PUBLIC_SITE_URL";
+  | "NEXT_PUBLIC_SITE_URL"
+  | "COMMENT_TRANSLATOR_TERMS_VERSION"
+  | "COMMENT_TRANSLATOR_PRIVACY_VERSION"
+  | "COMMENT_TRANSLATOR_PAID_CONDITIONS_VERSION"
+  | "COMMENT_TRANSLATOR_STRIPE_PROMOTION_CODE_ID"
+  | "COMMENT_TRANSLATOR_STRIPE_COUPON_ID";
 
 export type CommentTranslatorStripeEnv = Record<string, string | undefined>;
 
@@ -117,24 +130,96 @@ export type CommentTranslatorPlanComparisonViewModel = {
 
 export type CommentTranslatorStripeCheckoutSessionParams = {
   mode: "subscription";
+  customerReferenceId: string;
+  productReferenceId: string;
   priceReferenceId: string;
+  currency: "usd";
+  recurringInterval: "month";
   clientReferenceId: CommentTranslatorBillingUserReference;
   successUrl: string;
   cancelUrl: string;
+  expiresAtIso: string;
+  idempotencyKey: string;
+  automaticTax: true;
+  billingAddressCollection: "required";
+  paymentMethodTypes: readonly ["card"];
+  promotionCodeReferenceId?: string | null;
+  couponReferenceId?: string | null;
   customerEmail?: string | null;
 };
 
 export type CommentTranslatorStripePortalSessionParams = {
   customerReferenceId: string;
   returnUrl: string;
+  flow: "payment-method-update" | "contract-management";
+  subscriptionReferenceId?: string | null;
 };
 
+export type CommentTranslatorStripeCheckoutSessionResult = {
+  id: string | null;
+  customerId: string | null;
+  url: string | null;
+  expiresAtIso: string | null;
+  status: "open" | "complete" | "expired" | "unknown";
+};
+
+export type CommentTranslatorStripeCheckoutSessionReadResult = CommentTranslatorStripeCheckoutSessionResult;
+
 export type CommentTranslatorStripeAdapter = {
+  createCustomer?: (params: {
+    email?: string | null;
+    idempotencyKey: string;
+  }) => Promise<{ id: string }>;
   createCheckoutSession: (
     params: CommentTranslatorStripeCheckoutSessionParams
-  ) => Promise<{ url: string | null; observed?: CommentTranslatorStripeCheckoutSessionParams }>;
+  ) => Promise<CommentTranslatorStripeCheckoutSessionResult & { observed?: CommentTranslatorStripeCheckoutSessionParams }>;
+  retrieveCheckoutSession?: (sessionId: string) => Promise<CommentTranslatorStripeCheckoutSessionReadResult>;
+  expireCheckoutSession?: (params: {
+    sessionId: string;
+    idempotencyKey: string;
+  }) => Promise<CommentTranslatorStripeCheckoutSessionReadResult>;
   createPortalSession: (params: CommentTranslatorStripePortalSessionParams) => Promise<{ url: string | null }>;
 };
+
+export const commentTranslatorPaidCheckoutConsentFieldNames = {
+  termsChecked: "paid-consent-terms",
+  privacyChecked: "paid-consent-privacy",
+  paidConditionsChecked: "paid-consent-paid-conditions",
+  termsVersion: "paid-terms-version",
+  privacyVersion: "paid-privacy-version",
+  paidConditionsVersion: "paid-conditions-version"
+} as const;
+
+export type CommentTranslatorPaidCheckoutConsentInput = {
+  termsChecked: boolean;
+  privacyChecked: boolean;
+  paidConditionsChecked: boolean;
+  termsVersion: string | null;
+  privacyVersion: string | null;
+  paidConditionsVersion: string | null;
+};
+
+export function readCommentTranslatorPaidCheckoutConsentInput(
+  formData?: FormData | null
+): CommentTranslatorPaidCheckoutConsentInput {
+  const readChecked = (fieldName: string) => {
+    const value = formData?.get(fieldName);
+    return value === "on" || value === "true" || value === "1";
+  };
+  const readVersion = (fieldName: string) => {
+    const value = formData?.get(fieldName);
+    return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+  };
+
+  return {
+    termsChecked: readChecked(commentTranslatorPaidCheckoutConsentFieldNames.termsChecked),
+    privacyChecked: readChecked(commentTranslatorPaidCheckoutConsentFieldNames.privacyChecked),
+    paidConditionsChecked: readChecked(commentTranslatorPaidCheckoutConsentFieldNames.paidConditionsChecked),
+    termsVersion: readVersion(commentTranslatorPaidCheckoutConsentFieldNames.termsVersion),
+    privacyVersion: readVersion(commentTranslatorPaidCheckoutConsentFieldNames.privacyVersion),
+    paidConditionsVersion: readVersion(commentTranslatorPaidCheckoutConsentFieldNames.paidConditionsVersion)
+  };
+}
 
 export type CommentTranslatorStripeWebhookEventType =
   | "checkout.session.completed"
@@ -244,14 +329,24 @@ export type CommentTranslatorStripeWebhookVerifier = {
 };
 
 export const commentTranslatorStripeBillingContract = {
-  implementationStage: "comment-translator-paid-v1-task3-signed-webhook-idempotent-projection",
+  implementationStage: "comment-translator-paid-v1-task4-checkout-capacity-region-consent-gate",
   runtime: "server-only",
   freePlanAvailability: "permanent",
   paidCoreV1Availability: "unavailable-until-durable-entitlement",
   memoryEntitlementStore: "removed",
   stripeSurfaces: ["Checkout Sessions", "Billing Customer Portal", "signed webhook"],
   browserReadableOutput: "sanitized-billing-metadata-only",
-  checkoutMode: "disabled-until-durable-entitlement",
+  checkoutMode: "server-policy-gated",
+  checkoutPrerequisites: ["authenticated", "cloudflare-region-jp-or-us", "durable-consent", "atomic-capacity-hold"],
+  checkoutAuthority: "customer-binding-lifecycle-hold-session-binding-then-commit-url",
+  checkoutIdempotency: "ct-paid-checkout-{hold_id}",
+  checkoutExpiry: "server-now-plus-31-minutes-and-stripe-value-authoritative-after-binding",
+  checkoutUrlPersistence: "forbidden",
+  checkoutBindingFailure: "expire-required-without-url",
+  checkoutResponseLoss: "same-idempotency-key-recovery",
+  capacityLimit: 20,
+  paymentFailureCapacity: "hold-seven-days-and-release-after-stripe-canceled-confirmed",
+  discountPolicy: "configured-only-same-price",
   signedWebhookProjection: "durable-supabase-only-with-120-second-receipt-and-projection-leases",
   receiptProjectionStaleGuard: "local-receipt-deadline-before-projection-plus-durable-projection-cas",
   entitlementSync: "free-baseline-only-until-durable-paid-entitlement",
@@ -386,13 +481,28 @@ export function createCommentTranslatorPlanComparisonViewModel({
 
 export async function createCommentTranslatorStripeCheckoutSessionResult({
   callerAuthorization,
+  env,
   stripeAdapter,
-  abuseRateLimit
+  customerEmail,
+  abuseRateLimit,
+  regionGate,
+  consent = readCommentTranslatorPaidCheckoutConsentInput(),
+  paidEntitlementStore,
+  paidConsentStore,
+  nowMs = Date.now()
 }: {
   callerAuthorization: CommentTranslatorBillingCallerAuthorization;
   env: CommentTranslatorStripeEnv;
-  stripeAdapter: Pick<CommentTranslatorStripeAdapter, "createCheckoutSession">;
+  stripeAdapter: Pick<
+    CommentTranslatorStripeAdapter,
+    "createCheckoutSession" | "createCustomer" | "retrieveCheckoutSession" | "expireCheckoutSession" | "createPortalSession"
+  >;
   customerEmail?: string | null;
+  regionGate?: CommentTranslatorPaidRegionDecision | null;
+  consent?: CommentTranslatorPaidCheckoutConsentInput;
+  paidEntitlementStore?: CommentTranslatorPaidEntitlementStore | null;
+  paidConsentStore?: CommentTranslatorPaidConsentStore | null;
+  nowMs?: number;
   abuseRateLimit?: {
     nowMs?: number;
     requestIp?: string | null;
@@ -410,7 +520,22 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
       status: "unavailable";
       reason:
         | "caller-not-authenticated"
+        | "region-unavailable"
+        | "unsupported-region"
+        | "consent-required"
+        | "consent-store-unavailable"
         | "missing-config"
+        | "billing-store-unavailable"
+        | "capacity-full"
+        | "billing-state-conflict"
+        | "stripe-customer-unavailable"
+        | "checkout-response-unknown"
+        | "checkout-expire-required"
+        | "checkout-binding-failed"
+        | "existing-checkout-session"
+        | "portal-payment-method-update"
+        | "contract-management"
+        | "processing"
         | "stripe-session-url-missing"
         | "rate-limit-exceeded"
         | "paid-core-v1-unavailable";
@@ -434,7 +559,6 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
     return createCommentTranslatorBillingRateLimitUnavailableResult({ check: abuseCheck });
   }
 
-  void stripeAdapter;
   if (callerAuthorization.status !== "authorized") {
     return {
       status: "unavailable",
@@ -443,21 +567,279 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
     };
   }
 
-  return {
-    status: "unavailable",
-    reason: "paid-core-v1-unavailable",
-    missingEnvReferences: []
+  if (regionGate === undefined) {
+    return {
+      status: "unavailable",
+      reason: "paid-core-v1-unavailable",
+      missingEnvReferences: []
+    };
+  }
+  if (regionGate === null || regionGate.status !== "allowed") {
+    return {
+      status: "unavailable",
+      reason: regionGate?.reason ?? "region-unavailable",
+      missingEnvReferences: []
+    };
+  }
+
+  const checkoutConfig = readCommentTranslatorPaidCheckoutConfig(env);
+  if (checkoutConfig.status === "missing") {
+    return {
+      status: "unavailable",
+      reason: "missing-config",
+      missingEnvReferences: checkoutConfig.missingEnvReferences
+    };
+  }
+
+  const entitlementStore = paidEntitlementStore ?? createDefaultPaidEntitlementStore(env);
+  const consentStore = paidConsentStore ?? createDefaultPaidConsentStore(env);
+  if (!entitlementStore) {
+    return { status: "unavailable", reason: "billing-store-unavailable", missingEnvReferences: [] };
+  }
+
+  const nowIso = new Date(nowMs).toISOString();
+  const ownerUserId = callerAuthorization.ownerUserId;
+  let existingLifecycle: CommentTranslatorPaidCheckoutLifecycle | null;
+  try {
+    existingLifecycle = await entitlementStore.readCheckoutLifecycle({ ownerUserId });
+  } catch {
+    return { status: "unavailable", reason: "billing-store-unavailable", missingEnvReferences: [] };
+  }
+  const existingLifecycleNeedsCheckoutConsent =
+    existingLifecycle?.lifecycleState === "checkout_hold" || existingLifecycle?.lifecycleState === "incomplete";
+  if (existingLifecycle && !existingLifecycleNeedsCheckoutConsent) {
+    return convergeExistingPaidBillingLifecycle({
+      lifecycle: existingLifecycle,
+      stripeAdapter,
+      siteOrigin: checkoutConfig.siteOrigin,
+      checkoutConfig: checkoutConfig.config,
+      paidEntitlementStore: entitlementStore,
+      ownerUserId,
+      customerEmail: customerEmail ?? null,
+      env,
+      nowIso
+    });
+  }
+
+  if (!consentStore) {
+    return { status: "unavailable", reason: "consent-store-unavailable", missingEnvReferences: [] };
+  }
+  const consentResult = await ensureCommentTranslatorPaidCheckoutConsent({
+    ownerUserId,
+    consent,
+    env,
+    store: consentStore,
+    nowIso
+  });
+  if (consentResult.status !== "ready") {
+    return {
+      status: "unavailable",
+      reason: consentResult.reason,
+      missingEnvReferences: consentResult.missingEnvReferences
+    };
+  }
+
+  if (existingLifecycle?.lifecycleState === "checkout_hold" && existingLifecycle.checkoutSessionId === null) {
+    let lockedInitialization: CommentTranslatorPaidCheckoutInitialization;
+    try {
+      lockedInitialization = await entitlementStore.beginCheckout({
+        ownerUserId,
+        stripeCustomerId: existingLifecycle.stripeCustomerId,
+        nowIso
+      });
+    } catch {
+      return { status: "unavailable", reason: "billing-state-conflict", missingEnvReferences: [] };
+    }
+    if (
+      lockedInitialization.lifecycleId !== existingLifecycle.lifecycleId ||
+      lockedInitialization.customerBindingId !== existingLifecycle.customerBindingId ||
+      lockedInitialization.holdId !== existingLifecycle.holdId ||
+      lockedInitialization.idempotencyKey !== existingLifecycle.idempotencyKey
+    ) {
+      return { status: "unavailable", reason: "billing-state-conflict", missingEnvReferences: [] };
+    }
+    return convergeExistingPaidBillingLifecycle({
+      lifecycle: {
+        ...existingLifecycle,
+        checkoutExpiresAtTargetIso: lockedInitialization.checkoutExpiresAtTargetIso
+      },
+      stripeAdapter,
+      siteOrigin: checkoutConfig.siteOrigin,
+      checkoutConfig: checkoutConfig.config,
+      paidEntitlementStore: entitlementStore,
+      ownerUserId,
+      customerEmail: customerEmail ?? null,
+      env,
+      nowIso
+    });
+  }
+  if (existingLifecycle) {
+    return convergeExistingPaidBillingLifecycle({
+      lifecycle: existingLifecycle,
+      stripeAdapter,
+      siteOrigin: checkoutConfig.siteOrigin,
+      checkoutConfig: checkoutConfig.config,
+      paidEntitlementStore: entitlementStore,
+      ownerUserId,
+      customerEmail: customerEmail ?? null,
+      env,
+      nowIso
+    });
+  }
+
+  let stripeCustomerId: string;
+  try {
+    const customerBinding = await entitlementStore.readCustomerBinding({ ownerUserId });
+    if (customerBinding) {
+      stripeCustomerId = customerBinding.stripeCustomerId;
+    } else {
+      if (!stripeAdapter.createCustomer) {
+        return { status: "unavailable", reason: "stripe-customer-unavailable", missingEnvReferences: [] };
+      }
+      const customer = await stripeAdapter.createCustomer({
+        email: customerEmail ?? null,
+        idempotencyKey: createStripeCustomerIdempotencyKey({ ownerUserId, env })
+      });
+      stripeCustomerId = readRequiredStripeReference(customer.id, "Stripe Customer");
+    }
+  } catch {
+    return { status: "unavailable", reason: "stripe-customer-unavailable", missingEnvReferences: [] };
+  }
+
+  let initialization: CommentTranslatorPaidCheckoutInitialization;
+  try {
+    initialization = await entitlementStore.beginCheckout({ ownerUserId, stripeCustomerId, nowIso });
+  } catch (error) {
+    return {
+      status: "unavailable",
+      reason: isPaidCapacityFullError(error) ? "capacity-full" : "billing-state-conflict",
+      missingEnvReferences: []
+    };
+  }
+
+  const checkoutExpiresAtTargetIso = readOptionalIso(initialization.checkoutExpiresAtTargetIso);
+  if (!checkoutExpiresAtTargetIso) {
+    return { status: "unavailable", reason: "checkout-response-unknown", missingEnvReferences: [] };
+  }
+
+  const checkoutParams: CommentTranslatorStripeCheckoutSessionParams = {
+    mode: "subscription",
+    customerReferenceId: stripeCustomerId,
+    productReferenceId: checkoutConfig.config.productReferenceId,
+    priceReferenceId: checkoutConfig.priceReferenceId,
+    currency: "usd",
+    recurringInterval: "month",
+    clientReferenceId: createCommentTranslatorBillingUserReferenceFromHold(initialization.holdId, env),
+    successUrl: new URL("/account/billing?billing=checkout-returned", checkoutConfig.siteOrigin).toString(),
+    cancelUrl: new URL("/account/billing?billing=checkout-canceled", checkoutConfig.siteOrigin).toString(),
+    expiresAtIso: checkoutExpiresAtTargetIso,
+    idempotencyKey: initialization.idempotencyKey,
+    automaticTax: true,
+    billingAddressCollection: "required",
+    paymentMethodTypes: ["card"],
+    promotionCodeReferenceId: checkoutConfig.config.promotionCodeReferenceId,
+    couponReferenceId: checkoutConfig.config.couponReferenceId,
+    customerEmail: customerEmail ?? null
   };
+
+  let checkoutSession: CommentTranslatorStripeCheckoutSessionResult & { observed?: CommentTranslatorStripeCheckoutSessionParams };
+  try {
+    checkoutSession = await stripeAdapter.createCheckoutSession(checkoutParams);
+  } catch {
+    try {
+      checkoutSession = await stripeAdapter.createCheckoutSession(checkoutParams);
+    } catch {
+      return { status: "unavailable", reason: "checkout-response-unknown", missingEnvReferences: [] };
+    }
+  }
+
+  const sessionId = readOptionalStripeReference(checkoutSession.id);
+  const sessionCustomerId = readOptionalStripeReference(checkoutSession.customerId) ?? stripeCustomerId;
+  const sessionExpiresAtIso = readOptionalIso(checkoutSession.expiresAtIso);
+  if (!sessionId || !sessionExpiresAtIso) {
+    return { status: "unavailable", reason: "checkout-response-unknown", missingEnvReferences: [] };
+  }
+  if (
+    sessionCustomerId !== stripeCustomerId ||
+    sessionExpiresAtIso !== checkoutExpiresAtTargetIso ||
+    checkoutSession.status === "expired"
+  ) {
+    await expirePaidCheckoutSessionAfterDurableMark({
+      store: entitlementStore,
+      stripeAdapter,
+      ownerUserId,
+      initialization,
+      stripeCheckoutSessionId: sessionId,
+      stripeCustomerId,
+      stripeExpiresAtIso: sessionExpiresAtIso,
+      nowIso
+    });
+    return { status: "unavailable", reason: "checkout-expire-required", missingEnvReferences: [] };
+  }
+
+  try {
+    await entitlementStore.bindCheckoutSession({
+      ownerUserId,
+      lifecycleId: initialization.lifecycleId,
+      holdId: initialization.holdId,
+      customerBindingId: initialization.customerBindingId,
+      stripeCheckoutSessionId: sessionId,
+      stripeCustomerId: sessionCustomerId,
+      stripeExpiresAtIso: sessionExpiresAtIso,
+      isRecoveryBinding: false,
+      idempotencyKey: initialization.idempotencyKey,
+      nowIso
+    });
+  } catch {
+    const expireMarked = await expirePaidCheckoutSessionAfterDurableMark({
+      store: entitlementStore,
+      stripeAdapter,
+      ownerUserId,
+      initialization,
+      stripeCheckoutSessionId: sessionId,
+      stripeCustomerId: sessionCustomerId,
+      stripeExpiresAtIso: sessionExpiresAtIso,
+      nowIso
+    });
+    return {
+      status: "unavailable",
+      reason: expireMarked ? "checkout-expire-required" : "checkout-binding-failed",
+      missingEnvReferences: []
+    };
+  }
+
+  if (checkoutSession.status !== "open") {
+    return { status: "unavailable", reason: "processing", missingEnvReferences: [] };
+  }
+  if (!checkoutSession.url) {
+    return { status: "unavailable", reason: "stripe-session-url-missing", missingEnvReferences: [] };
+  }
+  const redirectCommitted = await commitPaidCheckoutRedirect({
+    store: entitlementStore,
+    ownerUserId,
+    initialization,
+    stripeCheckoutSessionId: sessionId,
+    stripeCustomerId: sessionCustomerId,
+    stripeExpiresAtIso: sessionExpiresAtIso,
+    nowIso
+  });
+  if (!redirectCommitted) {
+    return { status: "unavailable", reason: "checkout-expire-required", missingEnvReferences: [] };
+  }
+  return { status: "redirect-ready", url: checkoutSession.url, observed: checkoutSession.observed };
 }
 
 export async function createCommentTranslatorStripePortalSessionResult({
   callerAuthorization,
+  env,
   stripeAdapter,
-  abuseRateLimit
+  abuseRateLimit,
+  paidEntitlementStore
 }: {
   callerAuthorization: CommentTranslatorBillingCallerAuthorization;
   env: CommentTranslatorStripeEnv;
   stripeAdapter: Pick<CommentTranslatorStripeAdapter, "createPortalSession">;
+  paidEntitlementStore?: CommentTranslatorPaidEntitlementStore | null;
   abuseRateLimit?: {
     nowMs?: number;
     requestIp?: string | null;
@@ -476,6 +858,10 @@ export async function createCommentTranslatorStripePortalSessionResult({
         | "caller-not-authenticated"
         | "missing-config"
         | "missing-customer"
+        | "billing-store-unavailable"
+        | "portal-payment-method-update"
+        | "contract-management"
+        | "processing"
         | "stripe-session-url-missing"
         | "rate-limit-exceeded"
         | "paid-core-v1-unavailable";
@@ -499,7 +885,6 @@ export async function createCommentTranslatorStripePortalSessionResult({
     return createCommentTranslatorBillingRateLimitUnavailableResult({ check: abuseCheck });
   }
 
-  void stripeAdapter;
   if (callerAuthorization.status !== "authorized") {
     return {
       status: "unavailable",
@@ -508,11 +893,604 @@ export async function createCommentTranslatorStripePortalSessionResult({
     };
   }
 
+  const siteOrigin = readSiteOrigin(env.NEXT_PUBLIC_SITE_URL);
+  if (!siteOrigin) {
+    return { status: "unavailable", reason: "missing-config", missingEnvReferences: ["NEXT_PUBLIC_SITE_URL"] };
+  }
+  const entitlementStore = paidEntitlementStore ?? createDefaultPaidEntitlementStore(env);
+  if (!entitlementStore) {
+    return { status: "unavailable", reason: "paid-core-v1-unavailable", missingEnvReferences: [] };
+  }
+
+  let lifecycle: CommentTranslatorPaidCheckoutLifecycle | null;
+  try {
+    lifecycle = await entitlementStore.readCheckoutLifecycle({ ownerUserId: callerAuthorization.ownerUserId });
+  } catch {
+    return { status: "unavailable", reason: "billing-store-unavailable", missingEnvReferences: [] };
+  }
+  if (!lifecycle || !lifecycle.stripeCustomerId) {
+    return { status: "unavailable", reason: "missing-customer", missingEnvReferences: [] };
+  }
+
+  const paymentMethodOnly = lifecycle.lifecycleState === "past_due" || lifecycle.lifecycleState === "unpaid";
+  const contractManagement = lifecycle.lifecycleState === "active" || lifecycle.lifecycleState === "cancel_at_period_end";
+  if (!paymentMethodOnly && !contractManagement) {
+    return { status: "unavailable", reason: "processing", missingEnvReferences: [] };
+  }
+
+  const portal = await stripeAdapter.createPortalSession({
+    customerReferenceId: lifecycle.stripeCustomerId,
+    returnUrl: new URL("/account/billing?billing=portal-returned", siteOrigin).toString(),
+    flow: paymentMethodOnly ? "payment-method-update" : "contract-management",
+    subscriptionReferenceId: lifecycle.subscriptionId
+  });
+  if (!portal.url) {
+    return { status: "unavailable", reason: "stripe-session-url-missing", missingEnvReferences: [] };
+  }
+  return { status: "redirect-ready", url: portal.url };
+}
+
+type CommentTranslatorPaidCheckoutConfig = {
+  siteOrigin: string;
+  priceReferenceId: string;
+  productReferenceId: string;
+  termsVersion: string;
+  privacyVersion: string;
+  paidConditionsVersion: string;
+  promotionCodeReferenceId: string | null;
+  couponReferenceId: string | null;
+};
+
+function readCommentTranslatorPaidCheckoutConfig(
+  env: CommentTranslatorStripeEnv
+):
+  | { status: "ready"; config: CommentTranslatorPaidCheckoutConfig; siteOrigin: string; priceReferenceId: string }
+  | { status: "missing"; missingEnvReferences: CommentTranslatorStripeEnvName[] } {
+  const required: Array<[CommentTranslatorStripeEnvName, string | undefined]> = [
+    ["STRIPE_SECRET_KEY", env.STRIPE_SECRET_KEY],
+    ["COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID", env.COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID],
+    ["COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID", env.COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID],
+    ["NEXT_PUBLIC_SITE_URL", env.NEXT_PUBLIC_SITE_URL]
+  ];
+  const missingEnvReferences = required.filter(([, value]) => !value?.trim()).map(([name]) => name);
+  const siteOrigin = readSiteOrigin(env.NEXT_PUBLIC_SITE_URL);
+  if (siteOrigin === null && !missingEnvReferences.includes("NEXT_PUBLIC_SITE_URL")) {
+    missingEnvReferences.push("NEXT_PUBLIC_SITE_URL");
+  }
+  if (missingEnvReferences.length > 0 || !siteOrigin) {
+    return { status: "missing", missingEnvReferences };
+  }
+
+  const priceReferenceId = env.COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID?.trim();
+  const productReferenceId = env.COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID?.trim();
+  if (!priceReferenceId || !productReferenceId) {
+    return { status: "missing", missingEnvReferences };
+  }
   return {
-    status: "unavailable",
-    reason: "paid-core-v1-unavailable",
-    missingEnvReferences: []
+    status: "ready",
+    siteOrigin,
+    priceReferenceId,
+    config: {
+      siteOrigin,
+      priceReferenceId,
+      productReferenceId,
+      termsVersion: env.COMMENT_TRANSLATOR_TERMS_VERSION?.trim() ?? "",
+      privacyVersion: env.COMMENT_TRANSLATOR_PRIVACY_VERSION?.trim() ?? "",
+      paidConditionsVersion: env.COMMENT_TRANSLATOR_PAID_CONDITIONS_VERSION?.trim() ?? "",
+      promotionCodeReferenceId: readOptionalEnv(env.COMMENT_TRANSLATOR_STRIPE_PROMOTION_CODE_ID),
+      couponReferenceId: readOptionalEnv(env.COMMENT_TRANSLATOR_STRIPE_COUPON_ID)
+    }
   };
+}
+
+function readSiteOrigin(value: string | undefined): string | null {
+  if (!value?.trim()) return null;
+  try {
+    const parsed = new URL(value.trim());
+    if (parsed.protocol !== "https:" && parsed.hostname !== "localhost") return null;
+    return parsed.origin;
+  } catch {
+    return null;
+  }
+}
+
+function readOptionalEnv(value: string | undefined): string | null {
+  const normalized = value?.trim();
+  return normalized || null;
+}
+
+function createCommentTranslatorBillingUserReferenceFromHold(
+  holdId: string,
+  env: CommentTranslatorStripeEnv
+): CommentTranslatorBillingUserReference {
+  const secret = env.STRIPE_SECRET_KEY?.trim() ?? "comment-translator-paid-client-reference";
+  const digest = createHmac("sha256", secret).update(holdId, "utf8").digest("hex").slice(0, 48);
+  return `ctbill_${digest}` as CommentTranslatorBillingUserReference;
+}
+
+function createStripeCustomerIdempotencyKey({
+  ownerUserId,
+  env
+}: {
+  ownerUserId: string;
+  env: CommentTranslatorStripeEnv;
+}): string {
+  const secret = env.STRIPE_SECRET_KEY?.trim() ?? "comment-translator-paid-customer";
+  const digest = createHmac("sha256", secret).update(ownerUserId, "utf8").digest("hex").slice(0, 48);
+  return `ct-paid-customer-${digest}`;
+}
+
+function readRequiredStripeReference(value: unknown, label: string): string {
+  const normalized = readOptionalStripeReference(value);
+  if (!normalized) throw new Error(`${label} reference is unavailable.`);
+  return normalized;
+}
+
+function readOptionalStripeReference(value: unknown): string | null {
+  return typeof value === "string" && value.trim().length > 0 ? value.trim() : null;
+}
+
+function readOptionalIso(value: unknown): string | null {
+  if (typeof value !== "string" || value.trim().length === 0) return null;
+  const parsed = new Date(value);
+  return Number.isFinite(parsed.getTime()) ? parsed.toISOString() : null;
+}
+
+function isPaidCapacityFullError(error: unknown): boolean {
+  return error instanceof Error && /capacity\s+is\s+full|capacity-full|twenty-first/i.test(error.message);
+}
+
+function createDefaultPaidConsentStore(env: CommentTranslatorStripeEnv): CommentTranslatorPaidConsentStore | null {
+  const result = createTrustedCommentTranslatorPaidConsentStore({
+    env: {
+      NEXT_PUBLIC_SUPABASE_URL: env.NEXT_PUBLIC_SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY
+    }
+  });
+  return result.status === "ready" ? result.store : null;
+}
+
+async function ensureCommentTranslatorPaidCheckoutConsent({
+  ownerUserId,
+  consent,
+  env,
+  store,
+  nowIso
+}: {
+  ownerUserId: string;
+  consent: CommentTranslatorPaidCheckoutConsentInput;
+  env: CommentTranslatorStripeEnv;
+  store: CommentTranslatorPaidConsentStore;
+  nowIso: string;
+}): Promise<
+  | { status: "ready" }
+  | { status: "unavailable"; reason: "consent-required" | "consent-store-unavailable"; missingEnvReferences: CommentTranslatorStripeEnvName[] }
+> {
+  const versions = {
+    terms: env.COMMENT_TRANSLATOR_TERMS_VERSION?.trim() ?? "",
+    privacy: env.COMMENT_TRANSLATOR_PRIVACY_VERSION?.trim() ?? "",
+    paid_conditions: env.COMMENT_TRANSLATOR_PAID_CONDITIONS_VERSION?.trim() ?? ""
+  } satisfies Record<CommentTranslatorPaidConsentDocumentType, string>;
+  const checked = {
+    terms: consent.termsChecked,
+    privacy: consent.privacyChecked,
+    paid_conditions: consent.paidConditionsChecked
+  } satisfies Record<CommentTranslatorPaidConsentDocumentType, boolean>;
+  const submittedVersions = {
+    terms: consent.termsVersion,
+    privacy: consent.privacyVersion,
+    paid_conditions: consent.paidConditionsVersion
+  } satisfies Record<CommentTranslatorPaidConsentDocumentType, string | null>;
+
+  for (const documentType of ["terms", "privacy", "paid_conditions"] as const) {
+    if (!checked[documentType] || !versions[documentType] || submittedVersions[documentType] !== versions[documentType]) {
+      return { status: "unavailable", reason: "consent-required", missingEnvReferences: [] };
+    }
+  }
+
+  try {
+    for (const documentType of ["terms", "privacy", "paid_conditions"] as const) {
+      await store.recordConsent({
+        ownerUserId,
+        documentType,
+        documentVersion: versions[documentType],
+        consentedAtIso: nowIso,
+        nowIso
+      });
+      const durable = await store.readConsent({
+        ownerUserId,
+        documentType,
+        documentVersion: versions[documentType]
+      });
+      if (!durable || durable.ownerUserId !== ownerUserId || durable.documentVersion !== versions[documentType]) {
+        return { status: "unavailable", reason: "consent-required", missingEnvReferences: [] };
+      }
+    }
+  } catch {
+    return { status: "unavailable", reason: "consent-store-unavailable", missingEnvReferences: [] };
+  }
+  return { status: "ready" };
+}
+
+async function markPaidCheckoutExpireRequired({
+  store,
+  ownerUserId,
+  initialization,
+  stripeCheckoutSessionId,
+  stripeCustomerId,
+  stripeExpiresAtIso,
+  nowIso
+}: {
+  store: CommentTranslatorPaidEntitlementStore;
+  ownerUserId: string;
+  initialization: CommentTranslatorPaidCheckoutInitialization;
+  stripeCheckoutSessionId: string;
+  stripeCustomerId: string;
+  stripeExpiresAtIso: string;
+  nowIso: string;
+}): Promise<boolean> {
+  try {
+    await store.markCheckoutExpireRequired({
+      ownerUserId,
+      lifecycleId: initialization.lifecycleId,
+      holdId: initialization.holdId,
+      customerBindingId: initialization.customerBindingId,
+      stripeCheckoutSessionId,
+      stripeCustomerId,
+      stripeExpiresAtIso,
+      idempotencyKey: initialization.idempotencyKey,
+      checkoutExpiresAtTargetIso: initialization.checkoutExpiresAtTargetIso,
+      nowIso
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function commitPaidCheckoutRedirect({
+  store,
+  ownerUserId,
+  initialization,
+  stripeCheckoutSessionId,
+  stripeCustomerId,
+  stripeExpiresAtIso,
+  nowIso
+}: {
+  store: CommentTranslatorPaidEntitlementStore;
+  ownerUserId: string;
+  initialization: CommentTranslatorPaidCheckoutInitialization;
+  stripeCheckoutSessionId: string;
+  stripeCustomerId: string;
+  stripeExpiresAtIso: string;
+  nowIso: string;
+}): Promise<boolean> {
+  try {
+    return await store.commitCheckoutRedirect({
+      ownerUserId,
+      lifecycleId: initialization.lifecycleId,
+      holdId: initialization.holdId,
+      customerBindingId: initialization.customerBindingId,
+      stripeCheckoutSessionId,
+      stripeCustomerId,
+      stripeExpiresAtIso,
+      idempotencyKey: initialization.idempotencyKey,
+      nowIso
+    });
+  } catch {
+    return false;
+  }
+}
+
+async function expirePaidCheckoutSessionAfterDurableMark({
+  store,
+  stripeAdapter,
+  ownerUserId,
+  initialization,
+  stripeCheckoutSessionId,
+  stripeCustomerId,
+  stripeExpiresAtIso,
+  nowIso
+}: {
+  store: CommentTranslatorPaidEntitlementStore;
+  stripeAdapter: Pick<CommentTranslatorStripeAdapter, "expireCheckoutSession" | "retrieveCheckoutSession">;
+  ownerUserId: string;
+  initialization: CommentTranslatorPaidCheckoutInitialization;
+  stripeCheckoutSessionId: string;
+  stripeCustomerId: string;
+  stripeExpiresAtIso: string;
+  nowIso: string;
+}): Promise<boolean> {
+  const durablyMarked = await markPaidCheckoutExpireRequired({
+    store,
+    ownerUserId,
+    initialization,
+    stripeCheckoutSessionId,
+    stripeCustomerId,
+    stripeExpiresAtIso,
+    nowIso
+  });
+  if (!durablyMarked || !stripeAdapter.expireCheckoutSession || !stripeAdapter.retrieveCheckoutSession) return durablyMarked;
+
+  try {
+    let confirmed = await stripeAdapter.retrieveCheckoutSession(stripeCheckoutSessionId);
+    if (confirmed.id !== stripeCheckoutSessionId || confirmed.customerId !== stripeCustomerId) return true;
+    if (confirmed.status !== "expired") {
+      try {
+        await stripeAdapter.expireCheckoutSession({
+          sessionId: stripeCheckoutSessionId,
+          idempotencyKey: `ct-paid-expire-${initialization.holdId}`
+        });
+      } catch {
+        // A response loss may still mean Stripe durably expired the Session; confirm by retrieval below.
+      }
+      confirmed = await stripeAdapter.retrieveCheckoutSession(stripeCheckoutSessionId);
+    }
+    if (
+      confirmed.id !== stripeCheckoutSessionId ||
+      confirmed.customerId !== stripeCustomerId ||
+      confirmed.status !== "expired"
+    ) {
+      return true;
+    }
+    const checkedAtMs = Date.parse(nowIso);
+    const releaseAfterMs = Math.max(Date.parse(initialization.checkoutExpiresAtTargetIso), Date.parse(stripeExpiresAtIso));
+    if (!Number.isFinite(checkedAtMs) || !Number.isFinite(releaseAfterMs) || checkedAtMs < releaseAfterMs) return true;
+    await store.expireCheckoutHold({
+      lifecycleId: initialization.lifecycleId,
+      ownerUserId,
+      holdId: initialization.holdId,
+      stripeSessionStatus: "expired",
+      stripeSessionCheckedAtIso: nowIso,
+      reconcileLeaseToken: null,
+      nowIso
+    });
+  } catch {
+    // Keep expire_required and its next_reconcile_at retry boundary fail-closed.
+  }
+  return true;
+}
+
+async function convergeExistingPaidBillingLifecycle({
+  lifecycle,
+  stripeAdapter,
+  siteOrigin,
+  checkoutConfig,
+  paidEntitlementStore,
+  ownerUserId,
+  customerEmail,
+  env,
+  nowIso
+}: {
+  lifecycle: CommentTranslatorPaidCheckoutLifecycle;
+  stripeAdapter: Pick<
+    CommentTranslatorStripeAdapter,
+    "retrieveCheckoutSession" | "expireCheckoutSession" | "createCheckoutSession" | "createPortalSession"
+  >;
+  siteOrigin: string;
+  checkoutConfig: CommentTranslatorPaidCheckoutConfig;
+  paidEntitlementStore: CommentTranslatorPaidEntitlementStore;
+  ownerUserId: string;
+  customerEmail: string | null;
+  env: CommentTranslatorStripeEnv;
+  nowIso: string;
+}) {
+  if (
+    lifecycle.lifecycleState === "expire_required" &&
+    lifecycle.holdId &&
+    lifecycle.idempotencyKey &&
+    lifecycle.checkoutExpiresAtTargetIso &&
+    lifecycle.checkoutSessionId &&
+    lifecycle.stripeExpiresAtIso
+  ) {
+    await expirePaidCheckoutSessionAfterDurableMark({
+      store: paidEntitlementStore,
+      stripeAdapter,
+      ownerUserId,
+      initialization: {
+        lifecycleId: lifecycle.lifecycleId,
+        holdId: lifecycle.holdId,
+        customerBindingId: lifecycle.customerBindingId,
+        idempotencyKey: lifecycle.idempotencyKey,
+        checkoutExpiresAtTargetIso: lifecycle.checkoutExpiresAtTargetIso
+      },
+      stripeCheckoutSessionId: lifecycle.checkoutSessionId,
+      stripeCustomerId: lifecycle.stripeCustomerId,
+      stripeExpiresAtIso: lifecycle.stripeExpiresAtIso,
+      nowIso
+    });
+    return { status: "unavailable" as const, reason: "processing" as const, missingEnvReferences: [] };
+  }
+  if (lifecycle.lifecycleState === "checkout_hold" || lifecycle.lifecycleState === "incomplete") {
+    if (lifecycle.checkoutSessionId && stripeAdapter.retrieveCheckoutSession) {
+      try {
+        const session = await stripeAdapter.retrieveCheckoutSession(lifecycle.checkoutSessionId);
+        if (
+          session.url &&
+          session.status === "open" &&
+          lifecycle.holdId &&
+          lifecycle.idempotencyKey &&
+          lifecycle.checkoutExpiresAtTargetIso &&
+          session.id === lifecycle.checkoutSessionId &&
+          session.customerId === lifecycle.stripeCustomerId &&
+          session.expiresAtIso === lifecycle.stripeExpiresAtIso
+        ) {
+          const redirectCommitted = await commitPaidCheckoutRedirect({
+            store: paidEntitlementStore,
+            ownerUserId,
+            initialization: {
+              lifecycleId: lifecycle.lifecycleId,
+              holdId: lifecycle.holdId,
+              customerBindingId: lifecycle.customerBindingId,
+              idempotencyKey: lifecycle.idempotencyKey,
+              checkoutExpiresAtTargetIso: lifecycle.checkoutExpiresAtTargetIso
+            },
+            stripeCheckoutSessionId: lifecycle.checkoutSessionId,
+            stripeCustomerId: lifecycle.stripeCustomerId,
+            stripeExpiresAtIso: lifecycle.stripeExpiresAtIso,
+            nowIso
+          });
+          if (redirectCommitted) return { status: "redirect-ready" as const, url: session.url };
+        }
+        if (
+          lifecycle.holdId &&
+          lifecycle.idempotencyKey &&
+          lifecycle.checkoutExpiresAtTargetIso &&
+          lifecycle.stripeExpiresAtIso &&
+          (
+            session.id !== lifecycle.checkoutSessionId ||
+            session.customerId !== lifecycle.stripeCustomerId ||
+            session.expiresAtIso !== lifecycle.stripeExpiresAtIso ||
+            session.status === "expired"
+          )
+        ) {
+          await expirePaidCheckoutSessionAfterDurableMark({
+            store: paidEntitlementStore,
+            stripeAdapter,
+            ownerUserId,
+            initialization: {
+              lifecycleId: lifecycle.lifecycleId,
+              holdId: lifecycle.holdId,
+              customerBindingId: lifecycle.customerBindingId,
+              idempotencyKey: lifecycle.idempotencyKey,
+              checkoutExpiresAtTargetIso: lifecycle.checkoutExpiresAtTargetIso
+            },
+            stripeCheckoutSessionId: lifecycle.checkoutSessionId,
+            stripeCustomerId: lifecycle.stripeCustomerId,
+            stripeExpiresAtIso: lifecycle.stripeExpiresAtIso,
+            nowIso
+          });
+        }
+      } catch {
+        // The existing Session remains the only recovery authority; do not create a new Session.
+      }
+      return { status: "unavailable" as const, reason: "existing-checkout-session" as const, missingEnvReferences: [] };
+    }
+
+    if (
+      lifecycle.lifecycleState === "checkout_hold" &&
+      lifecycle.holdId &&
+      lifecycle.idempotencyKey &&
+      lifecycle.checkoutExpiresAtTargetIso &&
+      !lifecycle.subscriptionId
+    ) {
+      const initialization: CommentTranslatorPaidCheckoutInitialization = {
+        lifecycleId: lifecycle.lifecycleId,
+        holdId: lifecycle.holdId,
+        customerBindingId: lifecycle.customerBindingId,
+        idempotencyKey: lifecycle.idempotencyKey,
+        checkoutExpiresAtTargetIso: lifecycle.checkoutExpiresAtTargetIso
+      };
+      const checkoutParams: CommentTranslatorStripeCheckoutSessionParams = {
+        mode: "subscription",
+        customerReferenceId: lifecycle.stripeCustomerId,
+        productReferenceId: checkoutConfig.productReferenceId,
+        priceReferenceId: checkoutConfig.priceReferenceId,
+        currency: "usd",
+        recurringInterval: "month",
+        clientReferenceId: createCommentTranslatorBillingUserReferenceFromHold(lifecycle.holdId, env),
+        successUrl: new URL("/account/billing?billing=checkout-returned", siteOrigin).toString(),
+        cancelUrl: new URL("/account/billing?billing=checkout-canceled", siteOrigin).toString(),
+        expiresAtIso: lifecycle.checkoutExpiresAtTargetIso,
+        idempotencyKey: lifecycle.idempotencyKey,
+        automaticTax: true,
+        billingAddressCollection: "required",
+        paymentMethodTypes: ["card"],
+        promotionCodeReferenceId: checkoutConfig.promotionCodeReferenceId,
+        couponReferenceId: checkoutConfig.couponReferenceId,
+        customerEmail
+      };
+      let session: CommentTranslatorStripeCheckoutSessionResult & { observed?: CommentTranslatorStripeCheckoutSessionParams };
+      try {
+        session = await stripeAdapter.createCheckoutSession(checkoutParams);
+      } catch {
+        try {
+          session = await stripeAdapter.createCheckoutSession(checkoutParams);
+        } catch {
+          return { status: "unavailable" as const, reason: "existing-checkout-session" as const, missingEnvReferences: [] };
+        }
+      }
+      const sessionId = readOptionalStripeReference(session.id);
+      const sessionCustomerId = readOptionalStripeReference(session.customerId) ?? lifecycle.stripeCustomerId;
+      const sessionExpiresAtIso = readOptionalIso(session.expiresAtIso);
+      if (!sessionId || !sessionExpiresAtIso) {
+        return { status: "unavailable" as const, reason: "processing" as const, missingEnvReferences: [] };
+      }
+      if (
+        sessionCustomerId !== lifecycle.stripeCustomerId ||
+        sessionExpiresAtIso !== lifecycle.checkoutExpiresAtTargetIso ||
+        session.status === "expired"
+      ) {
+        await expirePaidCheckoutSessionAfterDurableMark({
+          store: paidEntitlementStore,
+          stripeAdapter,
+          ownerUserId,
+          initialization,
+          stripeCheckoutSessionId: sessionId,
+          stripeCustomerId: lifecycle.stripeCustomerId,
+          stripeExpiresAtIso: sessionExpiresAtIso,
+          nowIso
+        });
+        return { status: "unavailable" as const, reason: "processing" as const, missingEnvReferences: [] };
+      }
+      try {
+        await paidEntitlementStore.bindCheckoutSession({
+          ownerUserId,
+          lifecycleId: initialization.lifecycleId,
+          holdId: initialization.holdId,
+          customerBindingId: initialization.customerBindingId,
+          stripeCheckoutSessionId: sessionId,
+          stripeCustomerId: sessionCustomerId,
+          stripeExpiresAtIso: sessionExpiresAtIso,
+          isRecoveryBinding: true,
+          idempotencyKey: initialization.idempotencyKey,
+          nowIso
+        });
+      } catch {
+        await expirePaidCheckoutSessionAfterDurableMark({
+          store: paidEntitlementStore,
+          stripeAdapter,
+          ownerUserId,
+          initialization,
+          stripeCheckoutSessionId: sessionId,
+          stripeCustomerId: sessionCustomerId,
+          stripeExpiresAtIso: sessionExpiresAtIso,
+          nowIso
+        });
+        return { status: "unavailable" as const, reason: "processing" as const, missingEnvReferences: [] };
+      }
+      if (session.status === "open" && session.url) {
+        const redirectCommitted = await commitPaidCheckoutRedirect({
+          store: paidEntitlementStore,
+          ownerUserId,
+          initialization,
+          stripeCheckoutSessionId: sessionId,
+          stripeCustomerId: sessionCustomerId,
+          stripeExpiresAtIso: sessionExpiresAtIso,
+          nowIso
+        });
+        if (redirectCommitted) return { status: "redirect-ready" as const, url: session.url, observed: session.observed };
+      }
+      return { status: "unavailable" as const, reason: "processing" as const, missingEnvReferences: [] };
+    }
+    return { status: "unavailable" as const, reason: "processing" as const, missingEnvReferences: [] };
+  }
+  if (lifecycle.lifecycleState === "past_due" || lifecycle.lifecycleState === "unpaid") {
+    if (lifecycle.stripeCustomerId && stripeAdapter.createPortalSession) {
+      const portal = await stripeAdapter.createPortalSession({
+        customerReferenceId: lifecycle.stripeCustomerId,
+        returnUrl: new URL("/account/billing?billing=portal-returned", siteOrigin).toString(),
+        flow: "payment-method-update",
+        subscriptionReferenceId: lifecycle.subscriptionId
+      });
+      if (portal.url) return { status: "redirect-ready" as const, url: portal.url };
+    }
+    return { status: "unavailable" as const, reason: "portal-payment-method-update" as const, missingEnvReferences: [] };
+  }
+  if (lifecycle.lifecycleState === "active" || lifecycle.lifecycleState === "cancel_at_period_end") {
+    return { status: "unavailable" as const, reason: "contract-management" as const, missingEnvReferences: [] };
+  }
+  return { status: "unavailable" as const, reason: "processing" as const, missingEnvReferences: [] };
 }
 
 export type CommentTranslatorStripeWebhookProjectionResult =
@@ -1423,13 +2401,167 @@ function mapLifecycleState(status: CommentTranslatorStripeSubscriptionStatus): s
 export function createCommentTranslatorStripeAdapter(
   env: CommentTranslatorStripeEnv = process.env
 ): CommentTranslatorStripeAdapter {
-  void env;
+  const secretKey = env.STRIPE_SECRET_KEY?.trim();
+  const requestStripe = async <T>(
+    path: string,
+    params: URLSearchParams,
+    options: { idempotencyKey?: string } = {}
+  ): Promise<T> => {
+    if (!secretKey) throw new Error("Stripe secret key is unavailable.");
+    const response = await fetch(`https://api.stripe.com${path}`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${secretKey}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+        ...(options.idempotencyKey ? { "Idempotency-Key": options.idempotencyKey } : {})
+      },
+      body: params.toString(),
+      cache: "no-store"
+    });
+    if (!response.ok) throw new Error("Stripe billing request failed.");
+    const body: unknown = await response.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("Stripe billing response is invalid.");
+    return body as T;
+  };
+
+  const readStripeObject = async <T>(path: string): Promise<T> => {
+    if (!secretKey) throw new Error("Stripe secret key is unavailable.");
+    const response = await fetch(`https://api.stripe.com${path}`, {
+      headers: { Authorization: `Bearer ${secretKey}` },
+      cache: "no-store"
+    });
+    if (!response.ok) throw new Error("Stripe billing read failed.");
+    const body: unknown = await response.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("Stripe billing response is invalid.");
+    return body as T;
+  };
+
+  const validateCheckoutPrice = async (params: CommentTranslatorStripeCheckoutSessionParams) => {
+    if (params.currency !== "usd" || params.recurringInterval !== "month") {
+      throw new Error("Paid Checkout Price policy is invalid.");
+    }
+    const price = await readStripeObject<Record<string, unknown>>(`/v1/prices/${encodeURIComponent(params.priceReferenceId)}`);
+    const product = readStripeReference(price.product);
+    const recurring = price.recurring && typeof price.recurring === "object" && !Array.isArray(price.recurring)
+      ? (price.recurring as Record<string, unknown>)
+      : null;
+    if (
+      readOptionalStripeReference(price.id) !== params.priceReferenceId ||
+      price.currency !== "usd" ||
+      price.unit_amount !== 600 ||
+      price.tax_behavior !== "inclusive" ||
+      recurring?.interval !== "month" ||
+      product !== params.productReferenceId
+    ) {
+      throw new Error("Paid Checkout Price binding conflict.");
+    }
+
+    const discountReference = params.promotionCodeReferenceId ?? params.couponReferenceId;
+    if (!discountReference) return;
+    const discountPath = params.promotionCodeReferenceId
+      ? `/v1/promotion_codes/${encodeURIComponent(discountReference)}`
+      : `/v1/coupons/${encodeURIComponent(discountReference)}`;
+    const discount = await readStripeObject<Record<string, unknown>>(discountPath);
+    if (params.promotionCodeReferenceId && discount.active !== true) {
+      throw new Error("Paid Checkout Promotion Code is inactive.");
+    }
+    const coupon = params.promotionCodeReferenceId && discount.coupon && typeof discount.coupon === "object" && !Array.isArray(discount.coupon)
+      ? (discount.coupon as Record<string, unknown>)
+      : discount;
+    const appliesTo = coupon.applies_to && typeof coupon.applies_to === "object" && !Array.isArray(coupon.applies_to)
+      ? (coupon.applies_to as Record<string, unknown>)
+      : null;
+    const products = Array.isArray(appliesTo?.products)
+      ? appliesTo.products.filter((value): value is string => typeof value === "string")
+      : [];
+    if (products.length === 0 || !products.includes(params.productReferenceId)) {
+      throw new Error("Paid Checkout discount is not restricted to the configured Price product.");
+    }
+  };
+
+  const readCheckoutResponse = (body: Record<string, unknown>): CommentTranslatorStripeCheckoutSessionResult => {
+    const id = readOptionalStripeReference(body.id);
+    const customerId = readStripeReference(body.customer);
+    const url = readOptionalStripeReference(body.url);
+    const expiresAt = typeof body.expires_at === "number" && Number.isFinite(body.expires_at) ? body.expires_at : null;
+    const expiresAtIso = expiresAt === null ? null : new Date(expiresAt * 1000).toISOString();
+    const status = body.status === "open" || body.status === "complete" || body.status === "expired" ? body.status : "unknown";
+    return { id, customerId, url, expiresAtIso, status };
+  };
+
   return {
-    async createCheckoutSession() {
-      return { url: null };
+    async createCustomer(params) {
+      const form = new URLSearchParams();
+      if (params.email?.trim()) form.set("email", params.email.trim());
+      const body = await requestStripe<Record<string, unknown>>("/v1/customers", form, {
+        idempotencyKey: params.idempotencyKey
+      });
+      return { id: readRequiredStripeReference(body.id, "Stripe Customer") };
     },
-    async createPortalSession() {
-      return { url: null };
+    async createCheckoutSession(params) {
+      if (params.paymentMethodTypes.length !== 1 || params.paymentMethodTypes[0] !== "card") {
+        throw new Error("Paid Checkout payment method policy is invalid.");
+      }
+      if (params.mode !== "subscription" || params.automaticTax !== true || params.billingAddressCollection !== "required") {
+        throw new Error("Paid Checkout policy is invalid.");
+      }
+      await validateCheckoutPrice(params);
+      const expiresAtSeconds = Math.floor(new Date(params.expiresAtIso).getTime() / 1000);
+      if (!Number.isFinite(expiresAtSeconds)) throw new Error("Paid Checkout expiry is invalid.");
+      const form = new URLSearchParams();
+      form.set("mode", "subscription");
+      form.set("customer", params.customerReferenceId);
+      form.set("client_reference_id", params.clientReferenceId);
+      form.set("line_items[0][price]", params.priceReferenceId);
+      form.set("line_items[0][quantity]", "1");
+      form.set("success_url", params.successUrl);
+      form.set("cancel_url", params.cancelUrl);
+      form.set("expires_at", String(expiresAtSeconds));
+      form.set("automatic_tax[enabled]", "true");
+      form.set("billing_address_collection", "required");
+      form.set("payment_method_types[0]", "card");
+      if (params.customerEmail?.trim()) form.set("customer_email", params.customerEmail.trim());
+      if (params.promotionCodeReferenceId && params.couponReferenceId) {
+        throw new Error("Paid Checkout discount policy is ambiguous.");
+      }
+      if (params.promotionCodeReferenceId) form.set("discounts[0][promotion_code]", params.promotionCodeReferenceId);
+      if (params.couponReferenceId) form.set("discounts[0][coupon]", params.couponReferenceId);
+      const body = await requestStripe<Record<string, unknown>>("/v1/checkout/sessions", form, {
+        idempotencyKey: params.idempotencyKey
+      });
+      return {
+        ...readCheckoutResponse(body),
+        observed: params
+      };
+    },
+    async retrieveCheckoutSession(sessionId) {
+      if (!secretKey) throw new Error("Stripe secret key is unavailable.");
+      const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`, {
+        headers: { Authorization: `Bearer ${secretKey}` },
+        cache: "no-store"
+      });
+      if (!response.ok) throw new Error("Stripe Checkout Session retrieval failed.");
+      const body: unknown = await response.json();
+      if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("Stripe Checkout Session response is invalid.");
+      return readCheckoutResponse(body as Record<string, unknown>);
+    },
+    async expireCheckoutSession({ sessionId, idempotencyKey }) {
+      const body = await requestStripe<Record<string, unknown>>(
+        `/v1/checkout/sessions/${encodeURIComponent(sessionId)}/expire`,
+        new URLSearchParams(),
+        { idempotencyKey }
+      );
+      return readCheckoutResponse(body);
+    },
+    async createPortalSession(params) {
+      const form = new URLSearchParams();
+      form.set("customer", params.customerReferenceId);
+      form.set("return_url", params.returnUrl);
+      if (params.flow === "payment-method-update") {
+        form.set("flow_data[type]", "payment_method_update");
+      }
+      const body = await requestStripe<Record<string, unknown>>("/v1/billing_portal/sessions", form);
+      return { url: readOptionalStripeReference(body.url) };
     }
   };
 }

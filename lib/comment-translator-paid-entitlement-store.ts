@@ -69,6 +69,29 @@ export type CommentTranslatorPaidCheckoutInitialization = {
   checkoutExpiresAtTargetIso: string;
 };
 
+export type CommentTranslatorPaidCustomerBinding = {
+  customerBindingId: string;
+  ownerUserId: string;
+  stripeCustomerId: string;
+};
+
+export type CommentTranslatorPaidCheckoutLifecycle = {
+  lifecycleId: string;
+  ownerUserId: string;
+  customerBindingId: string;
+  stripeCustomerId: string;
+  lifecycleState: string;
+  isTerminal: boolean;
+  holdId: string | null;
+  checkoutExpiresAtTargetIso: string | null;
+  checkoutSessionId: string | null;
+  stripeExpiresAtIso: string | null;
+  idempotencyKey: string | null;
+  subscriptionId: string | null;
+  paymentFailureStartedAtIso: string | null;
+  nextReconcileAtIso: string | null;
+};
+
 export type CommentTranslatorPaidEntitlementProjectionClaim = {
   projectionLeaseToken: string;
   projectionLeaseUntilIso: string;
@@ -96,6 +119,8 @@ export type CommentTranslatorPaidStripeBindingResolution =
   | { status: "conflict" };
 
 export type CommentTranslatorPaidEntitlementStore = {
+  readCustomerBinding: (request: { ownerUserId: string }) => Promise<CommentTranslatorPaidCustomerBinding | null>;
+  readCheckoutLifecycle: (request: { ownerUserId: string }) => Promise<CommentTranslatorPaidCheckoutLifecycle | null>;
   beginCheckout: (request: {
     ownerUserId: string;
     stripeCustomerId: string;
@@ -113,6 +138,17 @@ export type CommentTranslatorPaidEntitlementStore = {
     idempotencyKey: string;
     nowIso: string;
   }) => Promise<string>;
+  commitCheckoutRedirect: (request: {
+    ownerUserId: string;
+    lifecycleId: string;
+    holdId: string;
+    customerBindingId: string;
+    stripeCheckoutSessionId: string;
+    stripeCustomerId: string;
+    stripeExpiresAtIso: string;
+    idempotencyKey: string;
+    nowIso: string;
+  }) => Promise<boolean>;
   markCheckoutExpireRequired: (request: {
     ownerUserId: string;
     lifecycleId: string;
@@ -235,8 +271,10 @@ export const commentTranslatorPaidEntitlementStoreContract = {
   rowAccess: "trusted-server-service-role-only",
   mutationAuthority: "atomic-trusted-rpc-only",
   checkoutInitializationAuthority: "customer-lifecycle-capacity-hold-in-one-trusted-rpc",
-  checkoutCanonicalAuthority: "hold-derived-idempotency-key-and-statement-clock-31-minute-target",
+  checkoutPreflightAuthority: "owner-scoped-customer-and-nonterminal-lifecycle-trusted-read",
+  checkoutCanonicalAuthority: "hold-derived-idempotency-key-and-statement-clock-second-precision-31-minute-target",
   checkoutSessionBindingAuthority: "insert-once-immutable",
+  checkoutRedirectAuthority: "url-free-owner-lifecycle-hold-customer-session-subscription-final-cas",
   checkoutBindingFailureAuthority: "session-binding-and-pending-hold-to-expire-required-in-one-trusted-rpc",
   checkoutExpiryAuthority: "hold-lifecycle-capacity-release-in-one-trusted-rpc",
   customerBindingAuthority: "insert-only-immutable",
@@ -255,6 +293,7 @@ export const commentTranslatorPaidEntitlementStoreContract = {
   trustedRpcNames: [
     "ct_paid_begin_checkout",
     "ct_paid_bind_checkout_session",
+    "ct_paid_commit_checkout_redirect",
     "ct_paid_mark_checkout_expire_required",
     "ct_paid_expire_checkout_hold",
     "ct_paid_claim_entitlement_projection",
@@ -306,6 +345,108 @@ export function createCommentTranslatorPaidEntitlementStore({
   supabase: SupabaseClient;
 }): CommentTranslatorPaidEntitlementStore {
   return {
+    async readCustomerBinding({ ownerUserId }) {
+      const row = await readMaybeTrustedRow(
+        supabase,
+        "comment_translator_paid_customers",
+        "owner_user_id",
+        ownerUserId
+      );
+      if (!row) return null;
+      const rowOwnerUserId = readOptionalString(row, "owner_user_id");
+      const customerBindingId = readOptionalString(row, "id");
+      const stripeCustomerId = readOptionalString(row, "stripe_customer_id");
+      if (!rowOwnerUserId || !customerBindingId || !stripeCustomerId || rowOwnerUserId !== ownerUserId) {
+        throw new Error("Paid Customer binding preflight was invalid.");
+      }
+      return {
+        customerBindingId,
+        ownerUserId: rowOwnerUserId,
+        stripeCustomerId
+      };
+    },
+    async readCheckoutLifecycle({ ownerUserId }) {
+      const lifecycleRow = await readMaybeTrustedRow(
+        supabase,
+        "comment_translator_paid_billing_lifecycles",
+        "owner_user_id",
+        ownerUserId,
+        { extraColumn: "is_terminal", extraValue: false }
+      );
+      if (!lifecycleRow) return null;
+
+      const lifecycleId = readOptionalString(lifecycleRow, "id");
+      const lifecycleOwnerUserId = readOptionalString(lifecycleRow, "owner_user_id");
+      const customerBindingId = readOptionalString(lifecycleRow, "customer_binding_id");
+      const lifecycleState = readOptionalString(lifecycleRow, "lifecycle_state");
+      if (!lifecycleId || !lifecycleOwnerUserId || !customerBindingId || !lifecycleState || lifecycleOwnerUserId !== ownerUserId) {
+        throw new Error("Paid billing lifecycle preflight was invalid.");
+      }
+
+      const isTerminal = lifecycleRow.is_terminal;
+      if (typeof isTerminal !== "boolean") throw new Error("Paid billing lifecycle preflight was invalid.");
+
+      const customerRow = await readMaybeTrustedRowById(supabase, "comment_translator_paid_customers", customerBindingId);
+      const customerOwnerUserId = readOptionalString(customerRow, "owner_user_id");
+      const stripeCustomerId = readOptionalString(customerRow, "stripe_customer_id");
+      if (
+        !customerRow ||
+        customerOwnerUserId !== ownerUserId ||
+        readOptionalString(customerRow, "id") !== customerBindingId ||
+        !stripeCustomerId
+      ) {
+        throw new Error("Paid billing lifecycle Customer binding conflict.");
+      }
+
+      const holdRow = await readMaybeTrustedRow(supabase, "comment_translator_paid_checkout_holds", "lifecycle_id", lifecycleId);
+      const sessionRow = await readMaybeTrustedRow(
+        supabase,
+        "comment_translator_paid_checkout_session_bindings",
+        "lifecycle_id",
+        lifecycleId
+      );
+      const subscriptionRow = await readMaybeTrustedRow(
+        supabase,
+        "comment_translator_paid_subscription_bindings",
+        "lifecycle_id",
+        lifecycleId
+      );
+
+      for (const row of [holdRow, sessionRow, subscriptionRow]) {
+        if (row && readOptionalString(row, "owner_user_id") !== ownerUserId) {
+          throw new Error("Paid billing lifecycle owner binding conflict.");
+        }
+      }
+      if (sessionRow && readOptionalString(sessionRow, "customer_binding_id") !== customerBindingId) {
+        throw new Error("Paid Checkout Session Customer binding conflict.");
+      }
+      if (subscriptionRow && readOptionalString(subscriptionRow, "customer_binding_id") !== customerBindingId) {
+        throw new Error("Paid Subscription Customer binding conflict.");
+      }
+      if (sessionRow && readOptionalString(sessionRow, "stripe_customer_id") !== stripeCustomerId) {
+        throw new Error("Paid Checkout Session Stripe Customer conflict.");
+      }
+      if (subscriptionRow && readOptionalString(subscriptionRow, "stripe_customer_id") !== stripeCustomerId) {
+        throw new Error("Paid Subscription Stripe Customer conflict.");
+      }
+
+      return {
+        lifecycleId,
+        ownerUserId,
+        customerBindingId,
+        stripeCustomerId,
+        lifecycleState,
+        isTerminal,
+        holdId: readOptionalString(holdRow, "id"),
+        checkoutExpiresAtTargetIso: readOptionalString(holdRow, "checkout_expires_at_target"),
+        checkoutSessionId: readOptionalString(sessionRow, "stripe_checkout_session_id"),
+        stripeExpiresAtIso: readOptionalString(sessionRow, "stripe_expires_at"),
+        idempotencyKey: readOptionalString(holdRow, "idempotency_key"),
+        subscriptionId: readOptionalString(subscriptionRow, "stripe_subscription_id"),
+        paymentFailureStartedAtIso: readOptionalString(lifecycleRow, "payment_failure_started_at"),
+        nextReconcileAtIso: readOptionalString(lifecycleRow, "next_reconcile_at")
+      };
+    },
     async beginCheckout(request) {
       const result = await supabase.rpc("ct_paid_begin_checkout", {
         p_owner_user_id: request.ownerUserId,
@@ -336,6 +477,21 @@ export function createCommentTranslatorPaidEntitlementStore({
         p_now: request.nowIso
       });
       return readRpcUuid(result, "Paid Checkout Session binding failed.");
+    },
+    async commitCheckoutRedirect(request) {
+      const result = await supabase.rpc("ct_paid_commit_checkout_redirect", {
+        p_owner_user_id: request.ownerUserId,
+        p_lifecycle_id: request.lifecycleId,
+        p_hold_id: request.holdId,
+        p_customer_binding_id: request.customerBindingId,
+        p_stripe_checkout_session_id: request.stripeCheckoutSessionId,
+        p_stripe_customer_id: request.stripeCustomerId,
+        p_stripe_expires_at: request.stripeExpiresAtIso,
+        p_idempotency_key: request.idempotencyKey,
+        p_now: request.nowIso
+      });
+      if (result.error) throw new Error("Paid Checkout redirect commit failed.");
+      return result.data === true;
     },
     async markCheckoutExpireRequired(request) {
       const result = await supabase.rpc("ct_paid_mark_checkout_expire_required", {

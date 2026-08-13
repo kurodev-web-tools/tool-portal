@@ -1039,7 +1039,7 @@ begin
 
   v_hold_id := gen_random_uuid();
   v_idempotency_key := 'ct-paid-checkout-' || v_hold_id::text;
-  v_checkout_expires_at_target := p_now + interval '31 minutes';
+  v_checkout_expires_at_target := date_trunc('second', p_now) + interval '31 minutes';
 
   insert into public.comment_translator_paid_billing_lifecycles (
     owner_user_id, customer_binding_id, lifecycle_state, is_terminal,
@@ -1184,6 +1184,94 @@ begin
    where id = p_lifecycle_id
      and lifecycle_state in ('checkout_hold', 'incomplete');
   return v_binding_id;
+end;
+$$;
+
+create or replace function public.ct_paid_commit_checkout_redirect(
+  p_owner_user_id uuid,
+  p_lifecycle_id uuid,
+  p_hold_id uuid,
+  p_customer_binding_id uuid,
+  p_stripe_checkout_session_id text,
+  p_stripe_customer_id text,
+  p_stripe_expires_at timestamptz,
+  p_idempotency_key text,
+  p_now timestamptz default now()
+)
+returns boolean
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+  v_lifecycle public.comment_translator_paid_billing_lifecycles%rowtype;
+  v_hold public.comment_translator_paid_checkout_holds%rowtype;
+  v_customer public.comment_translator_paid_customers%rowtype;
+  v_session public.comment_translator_paid_checkout_session_bindings%rowtype;
+  v_subscription public.comment_translator_paid_subscription_bindings%rowtype;
+begin
+  p_now := statement_timestamp();
+  if p_stripe_checkout_session_id is null
+    or length(trim(p_stripe_checkout_session_id)) = 0
+    or p_stripe_customer_id is null
+    or length(trim(p_stripe_customer_id)) = 0
+    or p_stripe_expires_at is null
+    or not isfinite(p_stripe_expires_at)
+    or p_idempotency_key is null
+    or length(trim(p_idempotency_key)) = 0
+  then
+    return false;
+  end if;
+
+  perform pg_advisory_xact_lock(47290101);
+  select * into v_lifecycle
+    from public.comment_translator_paid_billing_lifecycles
+   where id = p_lifecycle_id
+   for update;
+  select * into v_hold
+    from public.comment_translator_paid_checkout_holds
+   where id = p_hold_id
+   for update;
+  select * into v_customer
+    from public.comment_translator_paid_customers
+   where id = p_customer_binding_id
+   for update;
+  select * into v_session
+    from public.comment_translator_paid_checkout_session_bindings
+   where lifecycle_id = p_lifecycle_id
+      or hold_id = p_hold_id
+      or stripe_checkout_session_id = p_stripe_checkout_session_id
+   order by created_at
+   limit 1
+   for update;
+  select * into v_subscription
+    from public.comment_translator_paid_subscription_bindings
+   where lifecycle_id = p_lifecycle_id
+   for update;
+
+  return v_lifecycle.id is not null
+    and v_lifecycle.owner_user_id = p_owner_user_id
+    and v_lifecycle.customer_binding_id = p_customer_binding_id
+    and not v_lifecycle.is_terminal
+    and v_lifecycle.lifecycle_state in ('checkout_hold', 'incomplete')
+    and v_hold.id is not null
+    and v_hold.lifecycle_id = p_lifecycle_id
+    and v_hold.owner_user_id = p_owner_user_id
+    and v_hold.hold_state in ('held', 'converted')
+    and v_hold.idempotency_key is not distinct from p_idempotency_key
+    and v_hold.checkout_expires_at_target is not distinct from p_stripe_expires_at
+    and v_customer.id is not null
+    and v_customer.owner_user_id = p_owner_user_id
+    and v_customer.stripe_customer_id = p_stripe_customer_id
+    and v_session.id is not null
+    and v_session.lifecycle_id = p_lifecycle_id
+    and v_session.hold_id = p_hold_id
+    and v_session.owner_user_id = p_owner_user_id
+    and v_session.customer_binding_id = p_customer_binding_id
+    and v_session.stripe_checkout_session_id = p_stripe_checkout_session_id
+    and v_session.stripe_customer_id = p_stripe_customer_id
+    and v_session.stripe_expires_at is not distinct from p_stripe_expires_at
+    and v_subscription.id is null;
 end;
 $$;
 
@@ -6249,6 +6337,7 @@ declare
   v_functions constant text[] := array[
     'ct_paid_begin_checkout(uuid,text,timestamptz)',
     'ct_paid_bind_checkout_session(uuid,uuid,uuid,uuid,text,text,timestamptz,boolean,text,timestamptz)',
+    'ct_paid_commit_checkout_redirect(uuid,uuid,uuid,uuid,text,text,timestamptz,text,timestamptz)',
     'ct_paid_mark_checkout_expire_required(uuid,uuid,uuid,uuid,text,text,timestamptz,text,timestamptz,timestamptz)',
     'ct_paid_expire_checkout_hold(uuid,uuid,uuid,text,timestamptz,uuid,timestamptz)',
     'ct_paid_claim_stripe_event(text,text,timestamptz,text,timestamptz)',

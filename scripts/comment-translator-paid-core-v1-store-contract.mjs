@@ -28,6 +28,7 @@ for (const [relativePath, contractName, factoryName] of stores) {
 }
 
 const entitlement = read(stores[0][0]);
+const circuit = read("lib/comment-translator-provider-circuit-breaker.ts");
 for (const required of [
   "beginCheckout",
   "bindCheckoutSession",
@@ -104,12 +105,15 @@ for (const required of [
   "closeBillingPeriod",
   "closeUtcMonth",
   "openaiAttempt",
+  "claimProviderDispatch",
   "extendOpenAiAttempt",
   "finalizeOpenAiAttempt",
+  "commitTerminalOpenAiPartial",
   "reclaimOpenAiAttempt",
   "openAiSlotToken",
   "azureDirectFallback",
   "finalizeAzureDirectFallback",
+  "settleAzurePartialFailure",
   "reclaimAzureDirectFallback",
   "cleanupAttemptLedgers",
   "reservePollBudget",
@@ -117,7 +121,10 @@ for (const required of [
   "openAiSlotLimit: 8",
   "reconcilerLeaseSeconds: 120",
   "ct_paid_openai_attempt",
+  "ct_paid_claim_provider_dispatch",
+  "ct_paid_commit_terminal_openai_partial",
   "ct_paid_azure_direct_fallback",
+  "ct_paid_settle_azure_partial_failure",
   "ct_paid_abandon_logical_attempt",
   "ct_paid_reclaim_azure_fallback",
   "ct_paid_record_provider_hourly_detail",
@@ -130,6 +137,10 @@ assert.match(usage, /forbidden|never-recorded-by-design/, "usage adapter marks f
 assert.match(usage, /finalizeOpenAiAttempt:[\s\S]+?sessionLeaseToken:\s*string;[\s\S]+?openAiSlotToken:\s*string;/, "OpenAI finalize always requires both original lease tokens");
 assert.match(usage, /type CommentTranslatorPaidAzureFinalizeRequest\s*=\s*[\s\S]+?sessionLeaseToken:\s*string;[\s\S]+?outcome:\s*"uncertain_inflight";/, "Azure finalize requires the original session token and supports uncertain outcome");
 assert.match(usage, /finalizeAzureDirectFallback:\s*\(request:\s*CommentTranslatorPaidAzureFinalizeRequest\)/, "Azure finalize uses its outcome-bound request type");
+assert.match(usage, /claimProviderDispatch:[\s\S]+?dispatchSequence:\s*number;[\s\S]+?Promise<CommentTranslatorPaidProviderDispatchClaimStatus>/, "dispatch claim binds each bounded provider POST identity");
+assert.match(usage, /ct_paid_claim_provider_dispatch[\s\S]+?p_dispatch_sequence:\s*request\.dispatchSequence/, "dispatch claim forwards only bounded durable identity");
+assert.match(usage, /settleAzurePartialFailure:[\s\S]+?actualInputCharacters:\s*number;[\s\S]+?actualBillingInputCharacters:\s*number;[\s\S]+?providerFailureClass:/, "Azure partial settlement requires exact successful character counts and a sanitized failure");
+assert.match(usage, /ct_paid_settle_azure_partial_failure[\s\S]+?p_actual_input_characters:\s*request\.actualInputCharacters[\s\S]+?p_actual_billing_input_characters:\s*request\.actualBillingInputCharacters/, "Azure partial settlement forwards separate Azure and logical character authority");
 assert.doesNotMatch(usage, /finalize(?:OpenAiAttempt|AzureDirectFallback):[\s\S]{0,240}?LeaseToken:\s*string\s*\|\s*null/, "provider finalization tokens are never nullable");
 assert.doesNotMatch(usage, /type CommentTranslatorPaidAzureFinalizeRequest[\s\S]{0,240}?sessionLeaseToken:\s*string\s*\|\s*null/, "Azure finalization session token is never nullable");
 assert.match(usage, /CommentTranslatorPaidAttemptOutcome\s*=\s*"completed"\s*\|\s*"uncertain_inflight"\s*\|\s*"provider_not_reached";/, "shared provider outcome remains aligned with Azure RPC outcomes");
@@ -140,6 +151,20 @@ assert.match(usage, /logicalAttemptTableName:\s*"comment_translator_paid_logical
 assert.match(usage, /type CommentTranslatorPaidProviderFailureClass\s*=\s*[\s\S]*?"network"[\s\S]*?"timeout"[\s\S]*?"rate-limit"[\s\S]*?"server-error"[\s\S]*?"invalid-response"[\s\S]*?"quota"[\s\S]*?"configuration"[\s\S]*?"policy"/, "usage adapter exposes only sanitized provider failure classes");
 assert.match(usage, /finalizeOpenAiAttempt:[\s\S]+?providerFailureClass:\s*CommentTranslatorPaidProviderFailureClass\s*\|\s*null/, "OpenAI finalize requires an explicit sanitized failure-class decision");
 assert.match(usage, /ct_paid_finalize_openai_attempt[\s\S]+?p_provider_failure_class:\s*request\.providerFailureClass/, "OpenAI finalize forwards the sanitized failure class to the trusted RPC");
+assert.match(usage, /finalizeOpenAiAttempt:[\s\S]+?successfulItemAttemptIds:\s*readonly string\[\];[\s\S]+?successfulInputCharacters:\s*number;/, "OpenAI finalize requires durable bounded success metadata");
+assert.match(usage, /ct_paid_finalize_openai_attempt_with_metadata[\s\S]+?p_successful_item_attempt_ids:\s*request\.successfulItemAttemptIds[\s\S]+?p_successful_input_characters:\s*request\.successfulInputCharacters/, "OpenAI finalize forwards success metadata through the additive metadata RPC");
+assert.match(usage, /CommentTranslatorPaidOpenAiAttemptReceipt[\s\S]+?successfulItemAttemptIds:\s*readonly string\[\];[\s\S]+?successfulInputCharacters:\s*number;/, "OpenAI replay receipt exposes only bounded successful ids and character count");
+assert.match(usage, /providerKind === "openai_attempt"[\s\S]+?successfulItemAttemptIds\.length === 0[\s\S]+?normalizedSuccessfulInputCharacters === 0/, "OpenAI replay retains exact item-id and character consistency");
+assert.match(usage, /providerKind === "azure_direct_fallback"[\s\S]+?successfulItemAttemptIds\.length !== 0[\s\S]+?cannot expose item identities/, "Azure partial replay carries successful characters without persisting item identities");
+assert.match(usage, /CommentTranslatorPaidOpenAiAttemptReceipt[\s\S]+?fallbackEligible:\s*boolean;[\s\S]+?circuitFailureState:[\s\S]+?circuitSuccessState:/, "OpenAI replay receipt exposes sanitized fallback and circuit authority");
+assert.match(usage, /ct_paid_finalize_openai_attempt_with_metadata[\s\S]+?p_fallback_eligible:\s*request\.fallbackEligible[\s\S]+?p_circuit_failure_state:\s*request\.circuitFailureState[\s\S]+?p_circuit_success_state:\s*request\.circuitSuccessState/, "OpenAI finalization binds replay and circuit metadata atomically");
+assert.match(circuit, /ct_paid_record_attempt_circuit_failure[\s\S]+?p_attempt_id:\s*attemptId[\s\S]+?p_provider_attempt:\s*providerAttempt/, "failure marker is bound to the exact provider attempt");
+assert.match(circuit, /ct_paid_record_attempt_circuit_success[\s\S]+?p_attempt_id:\s*attemptId[\s\S]+?p_provider_attempt:\s*providerAttempt/, "success marker is bound to the exact provider attempt");
+assert.match(usage, /trustedRpcNames:[\s\S]+?"ct_paid_read_provider_attempt_replay_metadata"/, "usage adapter trusts the additive replay metadata RPC");
+assert.match(usage, /readOpenAiAttempt\(request\)[\s\S]+?supabase\.rpc\("ct_paid_read_provider_attempt_replay_metadata"/, "OpenAI replay reads use the additive replay metadata RPC");
+assert.doesNotMatch(usage, /supabase\.rpc\("ct_paid_read_openai_attempt"/, "OpenAI replay runtime does not call the legacy two-column RPC");
+assert.match(usage, /commitTerminalOpenAiPartial:[\s\S]+?actualCharacters:\s*number;[\s\S]+?Promise<number>/, "terminal OpenAI partial settlement requires an exact successful character count");
+assert.match(usage, /ct_paid_commit_terminal_openai_partial[\s\S]+?p_attempt_id:\s*request\.attemptId[\s\S]+?p_provider_attempt:\s*request\.providerAttempt[\s\S]+?p_actual_characters:\s*request\.actualCharacters/, "terminal OpenAI partial settlement forwards only bounded durable identity and character authority");
 const azureUncertainFinalizeFixture = {
   outcome: "uncertain_inflight",
   providerFailureClass: "timeout"

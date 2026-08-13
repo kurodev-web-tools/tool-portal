@@ -6,9 +6,11 @@ import {
 } from "./comment-translator-provider-policy-runtime";
 import {
   createInMemoryCommentTranslatorProviderExecutionCache,
+  executeCommentTranslatorPaidProviderBatch,
   executeCommentTranslatorProviderPolicyBatch,
   type CommentTranslatorProviderExecutionCache,
-  type CommentTranslatorProviderExecutionResult
+  type CommentTranslatorProviderExecutionResult,
+  type ExecuteCommentTranslatorPaidProviderBatchRequest
 } from "./comment-translator-provider-execution-runtime";
 import {
   createCommentTranslatorRealCommentsFeedStateFromNormalizedMessages,
@@ -69,6 +71,7 @@ export type CommentTranslatorAzureNormalTranslationExecutionContract = {
   browserStorage: "unchanged";
   handoffPayload: "unchanged";
   providerTargetMetadata: "forbidden";
+  paidTask6ProviderExecution: "narrow-server-only-delegation-no-session-or-ui-integration";
   publicLaunchAllowed: false;
 };
 
@@ -148,8 +151,19 @@ export const commentTranslatorAzureNormalTranslationExecutionContract = {
   browserStorage: "unchanged",
   handoffPayload: "unchanged",
   providerTargetMetadata: "forbidden",
+  paidTask6ProviderExecution: "narrow-server-only-delegation-no-session-or-ui-integration",
   publicLaunchAllowed: false
 } as const satisfies CommentTranslatorAzureNormalTranslationExecutionContract;
+
+export type ExecuteCommentTranslatorPaidNormalTranslationForProviderSafeCommentsRequest =
+  ExecuteCommentTranslatorPaidProviderBatchRequest;
+
+/** Task 6 seam only: Task 7 owns session integration and browser wiring. */
+export async function executeCommentTranslatorPaidNormalTranslationForProviderSafeComments(
+  request: ExecuteCommentTranslatorPaidNormalTranslationForProviderSafeCommentsRequest
+): Promise<CommentTranslatorProviderExecutionResult> {
+  return executeCommentTranslatorPaidProviderBatch(request);
+}
 
 type CommentTranslatorAzureNormalTranslationSessionDedupeState = {
   processedCommentIds: Set<string>;

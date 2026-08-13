@@ -96,7 +96,13 @@ export type CommentTranslationProviderResponse = {
 
 export type CommentTranslationProviderRecoverableError = {
   type: "recoverable-error";
-  code: "temporary-unavailable" | "rate-limited" | "timeout" | "content-filtered";
+  code:
+    | "temporary-unavailable"
+    | "rate-limited"
+    | "timeout"
+    | "content-filtered"
+    | "transport-uncertain"
+    | "response-invalid";
   message: string;
   retry: {
     retryable: true;
@@ -108,7 +114,7 @@ export type CommentTranslationProviderRecoverableError = {
 
 export type CommentTranslationProviderTerminalError = {
   type: "terminal-error";
-  code: "invalid-request" | "unsupported-language" | "provider-not-configured" | "credential-missing" | "policy-blocked";
+  code: "invalid-request" | "unsupported-language" | "provider-not-configured" | "credential-missing" | "policy-blocked" | "provider-quota-exhausted";
   message: string;
   retry: {
     retryable: false;

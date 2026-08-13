@@ -1,5 +1,6 @@
 import "server-only";
 
+import { commentTranslatorPaidCostLedgerContract } from "./comment-translator-paid-cost-ledger";
 import type { YouTubeOAuthCredentialTranslatorStartReadiness } from "./comment-translator-youtube-disconnect-runtime";
 import type {
   CommentTranslatorActiveSessionRecord,
@@ -21,14 +22,60 @@ export function createCommentTranslatorSessionPlanEntitlement({
   readonly plan: CommentTranslatorSessionPlan;
   readonly paidEntitlement?: Pick<
     CommentTranslatorSessionPlanEntitlement,
-    "planEntitlementReferenceId" | "dailyLimitMs" | "sessionLimitMs" | "translatedMessagesPerMinute" | "activeSessionsPerUser"
+    | "planEntitlementReferenceId"
+    | "dailyLimitMs"
+    | "sessionLimitMs"
+    | "translatedMessagesPerMinute"
+    | "activeSessionsPerUser"
+    | "monthlyProviderInputCharacterLimit"
+    | "paidIndividualCostLimitMicros"
+    | "paidGlobalCostLimitMicros"
+    | "paidAzureFallbackMonthlyCharacterLimit"
+    | "paidAuthorityReadable"
   >;
 }): CommentTranslatorSessionPlanEntitlement {
   if (plan === "paid" && paidEntitlement) {
-    return {
+    const baseEntitlement: CommentTranslatorSessionPlanEntitlement = {
       plan,
       ...paidEntitlement,
       entitlementSource: "server-owned",
+      paidPrioritization: "not-implemented",
+      providerUsageCharging: "not-implemented"
+    };
+    if (paidEntitlement.paidAuthorityReadable !== true) return baseEntitlement;
+    return {
+      ...baseEntitlement,
+      monthlyProviderInputCharacterLimit:
+        paidEntitlement.monthlyProviderInputCharacterLimit
+        ?? commentTranslatorPaidCostLedgerContract.paidBillingPeriodCharacterLimit,
+      paidIndividualCostLimitMicros:
+        paidEntitlement.paidIndividualCostLimitMicros
+        ?? commentTranslatorPaidCostLedgerContract.paidIndividualCostLimitMicros,
+      paidGlobalCostLimitMicros:
+        paidEntitlement.paidGlobalCostLimitMicros
+        ?? commentTranslatorPaidCostLedgerContract.paidGlobalCostLimitMicros,
+      paidAzureFallbackMonthlyCharacterLimit:
+        paidEntitlement.paidAzureFallbackMonthlyCharacterLimit
+        ?? commentTranslatorPaidCostLedgerContract.paidAzureFallbackCharacterLimit,
+      paidAuthorityReadable: true,
+      paidPrioritization: "server-authorized",
+      providerUsageCharging: "server-authorized"
+    };
+  }
+  if (plan === "paid") {
+    return {
+      plan: "paid",
+      planEntitlementReferenceId: "comment-translator-paid-authority-unavailable",
+      entitlementSource: "server-owned",
+      dailyLimitMs: 0,
+      sessionLimitMs: 0,
+      translatedMessagesPerMinute: 0,
+      activeSessionsPerUser: 1,
+      monthlyProviderInputCharacterLimit: commentTranslatorPaidCostLedgerContract.paidBillingPeriodCharacterLimit,
+      paidIndividualCostLimitMicros: commentTranslatorPaidCostLedgerContract.paidIndividualCostLimitMicros,
+      paidGlobalCostLimitMicros: commentTranslatorPaidCostLedgerContract.paidGlobalCostLimitMicros,
+      paidAzureFallbackMonthlyCharacterLimit: commentTranslatorPaidCostLedgerContract.paidAzureFallbackCharacterLimit,
+      paidAuthorityReadable: false,
       paidPrioritization: "not-implemented",
       providerUsageCharging: "not-implemented"
     };
@@ -60,6 +107,24 @@ export function assessCommentTranslatorUsageStopReason(
   activeElapsedMs = usage.currentSessionElapsedMs ?? 0
 ): CommentTranslatorSessionStopReason | null {
   const entitlement = resolveCommentTranslatorUsageEntitlement(usage, plan);
+  if (plan === "paid") {
+    if (
+      entitlement.plan !== "paid"
+      || entitlement.paidAuthorityReadable !== true
+      || usage.paidAuthorityReadable !== true
+      || usage.paidBillingPeriodInputCharacters === undefined
+      || usage.paidBillingPeriodCharacterLimit === undefined
+      || usage.paidIndividualCostAvailable === undefined
+      || usage.paidGlobalCostAvailable === undefined
+    ) {
+      return "paid-authority-unreadable";
+    }
+    if (usage.paidBillingPeriodInputCharacters >= usage.paidBillingPeriodCharacterLimit) {
+      return "paid-character-quota-stop";
+    }
+    if (!usage.paidIndividualCostAvailable) return "paid-individual-cost-stop";
+    if (!usage.paidGlobalCostAvailable) return "paid-global-cost-stop";
+  }
   if (usage.dailyUsedMs > 0 && usage.dailyUsedMs + Math.max(0, activeElapsedMs) >= entitlement.dailyLimitMs) {
     return "daily-time-limit";
   }

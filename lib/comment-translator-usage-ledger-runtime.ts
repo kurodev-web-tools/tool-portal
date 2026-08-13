@@ -167,6 +167,7 @@ export const commentTranslatorUsageQuotaBudgetLedgerContract = {
   paidPrioritization: "not-implemented-in-task-8",
   providerUsageCharging: "not-implemented-in-task-8",
   billingEnforcement: "not-implemented-in-task-8",
+  paidFallbackLedgerIsolation: "paid-fallback-and-cost-ledger-not-recorded-in-this-free-ledger",
   liveProviderExecution: "not-run-in-task-8",
   providerTargetLookup: "not-run-in-task-8",
   remoteSupabaseMutation: "not-run-in-task-8",
@@ -197,7 +198,16 @@ export function resolveCommentTranslatorUsagePlanEntitlement({
   plan: CommentTranslatorSessionPlan;
   paidEntitlement?: Pick<
     CommentTranslatorSessionPlanEntitlement,
-    "planEntitlementReferenceId" | "dailyLimitMs" | "sessionLimitMs" | "translatedMessagesPerMinute" | "activeSessionsPerUser"
+    | "planEntitlementReferenceId"
+    | "dailyLimitMs"
+    | "sessionLimitMs"
+    | "translatedMessagesPerMinute"
+    | "activeSessionsPerUser"
+    | "monthlyProviderInputCharacterLimit"
+    | "paidIndividualCostLimitMicros"
+    | "paidGlobalCostLimitMicros"
+    | "paidAzureFallbackMonthlyCharacterLimit"
+    | "paidAuthorityReadable"
   >;
 }): CommentTranslatorSessionPlanEntitlement {
   return createCommentTranslatorSessionPlanEntitlement({

@@ -502,6 +502,31 @@ assert.equal(fixture.projections.at(-1).subscriptionStatus, "active");
 assert.equal(fixture.finalized.at(-1), "complete");
 assert.equal(billing.getCommentTranslatorStripeWebhookHttpStatus(activeResult), 200);
 
+const unpaidRenewalFixture = createFixture();
+const unpaidRenewal = await run(
+  unpaidRenewalFixture,
+  event("customer.subscription.updated", "subscription-reference", {}, { id: "event-unpaid-renewal" }),
+  {
+    subscription: subscription("active", {
+      currentPeriodStartIso: "2026-09-01T00:00:00.000Z",
+      currentPeriodEndIso: "2026-10-01T00:00:00.000Z"
+    }),
+    invoice: invoice({ status: "open", paid: false })
+  }
+);
+assert.equal(unpaidRenewal.status, "retryable", "unpaid Subscription renewal remains retryable");
+assert.equal(unpaidRenewal.reason, "object-retrieval-failed");
+assert.equal(unpaidRenewalFixture.projections.length, 0, "unpaid Subscription renewal cannot project a new Paid period");
+
+const unpaidDeletedFixture = createFixture();
+const unpaidDeleted = await run(
+  unpaidDeletedFixture,
+  event("customer.subscription.deleted", "subscription-reference", {}, { id: "event-unpaid-deleted" }),
+  { subscription: subscription("canceled"), invoice: invoice({ status: "open", paid: false }) }
+);
+assert.equal(unpaidDeleted.status, "complete", "Subscription deletion is not blocked by invoice payment state");
+assert.equal(unpaidDeletedFixture.projections.at(-1).status, "canceled");
+
 const duplicate = await run(fixture, activeEvent, {
   subscription: subscription("active"),
   invoice: invoice(),

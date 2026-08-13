@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
+import { isCommentTranslatorPaidAttemptId } from "@/lib/comment-translator-paid-cost-ledger";
 
 export type CommentTranslatorPaidProviderKind = "openai_attempt" | "azure_direct_fallback";
 export type CommentTranslatorPaidHourlyProvider = "openai" | "azure_fallback";
@@ -201,7 +202,7 @@ export type CommentTranslatorPaidForbiddenAttemptFields = {
 };
 
 export const commentTranslatorPaidUsageStoreContract = {
-  implementationStage: "comment-translator-paid-v1-task2-durable-usage-adapter",
+  implementationStage: "comment-translator-paid-v1-task5-durable-usage-and-cost-reservation-adapter",
   runtime: "server-only",
   tableName: "comment_translator_paid_attempt_receipts",
   logicalAttemptTableName: "comment_translator_paid_logical_attempts",
@@ -215,7 +216,13 @@ export const commentTranslatorPaidUsageStoreContract = {
   commentHash: "forbidden",
   rawCommentText: "forbidden",
   billingPeriodAuthority: "ct_paid_reserve_billing_period_characters / ct_paid_commit_billing_period_characters / ct_paid_release_billing_period_characters / ct_paid_abandon_logical_attempt",
-  azurePhysicalCapacityAuthority: "comment_translator_usage_ledger_events durable Free ai-usage-estimated aggregate inside the Azure reservation RPC",
+  billingPeriodCharacterLimit: 500_000,
+  individualCostLimitMicros: 3_000_000,
+  globalCostLimitMicros: 25_000_000,
+  azureFallbackCharacterLimit: 200_000,
+  azurePhysicalCapacityAuthority: "Free actual usage snapshot + separate Paid fallback reservation bucket + strict '<' reservation RPC",
+  reservationBoundary: "atomic pre-provider quota/cost/physical-capacity reservation",
+  logicalAttemptSettlement: "one logical attempt; retry/fallback provider attempts settle characters at most once",
   openAiSlotLimit: 8,
   reconcilerLeaseSeconds: 120,
   remoteSupabaseMigrationApply: "not-run-in-this-thread",
@@ -280,6 +287,8 @@ export function createCommentTranslatorPaidUsageStore({
 }): CommentTranslatorPaidUsageStore {
   return {
     async recordProviderHourlyDetail(request) {
+      assertCommentTranslatorPaidAttemptId(request.attemptId);
+      assertBoundedOpaqueReference(request.providerAttempt, "Paid provider attempt");
       const result = await supabase.rpc("ct_paid_record_provider_hourly_detail", {
         p_attempt_id: request.attemptId,
         p_provider_attempt: request.providerAttempt,
@@ -325,6 +334,9 @@ export function createCommentTranslatorPaidUsageStore({
       return readUuid(result, "Paid session summary write failed.");
     },
     async reserveBillingPeriodCharacters(request) {
+      assertCommentTranslatorPaidAttemptId(request.attemptId);
+      assertBoundedOpaqueReference(request.providerAttempt, "Paid provider attempt");
+      assertPositiveBoundedInteger(request.characters, 500_000, "Paid billing-period characters");
       const result = await supabase.rpc("ct_paid_reserve_billing_period_characters", {
         p_attempt_id: request.attemptId,
         p_provider_attempt: request.providerAttempt,
@@ -337,6 +349,11 @@ export function createCommentTranslatorPaidUsageStore({
       return readInteger(result, "Paid billing-period character reservation failed.");
     },
     async commitBillingPeriodCharacters(request) {
+      assertCommentTranslatorPaidAttemptId(request.attemptId);
+      assertBoundedOpaqueReference(request.providerAttempt, "Paid provider attempt");
+      if (request.actualCharacters !== undefined) {
+        assertPositiveBoundedInteger(request.actualCharacters, 500_000, "Paid committed characters");
+      }
       const result = await supabase.rpc("ct_paid_commit_billing_period_characters", {
         p_attempt_id: request.attemptId,
         p_provider_attempt: request.providerAttempt,
@@ -346,6 +363,8 @@ export function createCommentTranslatorPaidUsageStore({
       return readInteger(result, "Paid billing-period character commit failed.");
     },
     async releaseBillingPeriodCharacters(request) {
+      assertCommentTranslatorPaidAttemptId(request.attemptId);
+      assertBoundedOpaqueReference(request.providerAttempt, "Paid provider attempt");
       const result = await supabase.rpc("ct_paid_release_billing_period_characters", {
         p_attempt_id: request.attemptId,
         p_provider_attempt: request.providerAttempt,
@@ -354,6 +373,8 @@ export function createCommentTranslatorPaidUsageStore({
       return readInteger(result, "Paid billing-period character release failed.");
     },
     async abandonLogicalAttempt(request) {
+      assertCommentTranslatorPaidAttemptId(request.attemptId);
+      assertBoundedOpaqueReference(request.releasedProviderAttempt, "Paid provider attempt");
       const result = await supabase.rpc("ct_paid_abandon_logical_attempt", {
         p_attempt_id: request.attemptId,
         p_provider_attempt: request.releasedProviderAttempt,
@@ -389,6 +410,12 @@ export function createCommentTranslatorPaidUsageStore({
       return readBoolean(result, "Paid UTC-month close failed.");
     },
     async openaiAttempt(request) {
+      assertCommentTranslatorPaidAttemptId(request.attemptId);
+      assertBoundedOpaqueReference(request.providerAttempt, "Paid provider attempt");
+      assertPositiveBoundedInteger(request.inputCharacters, 7_500, "Paid OpenAI input characters");
+      assertPositiveBoundedInteger(request.requestCount, 15, "Paid OpenAI request count");
+      assertPositiveBoundedInteger(request.tokenCount, Number.MAX_SAFE_INTEGER, "Paid OpenAI token reservation");
+      assertPositiveBoundedInteger(request.estimatedCostMicros, Number.MAX_SAFE_INTEGER, "Paid OpenAI cost reservation");
       const result = await supabase.rpc("ct_paid_openai_attempt", {
         p_attempt_id: request.attemptId,
         p_provider_attempt: request.providerAttempt,
@@ -406,6 +433,8 @@ export function createCommentTranslatorPaidUsageStore({
       return readProviderReservation(result, "OpenAI attempt reservation failed.");
     },
     async extendOpenAiAttempt(request) {
+      assertCommentTranslatorPaidAttemptId(request.attemptId);
+      assertBoundedOpaqueReference(request.providerAttempt, "Paid provider attempt");
       const result = await supabase.rpc("ct_paid_extend_openai_attempt", {
         p_attempt_id: request.attemptId,
         p_provider_attempt: request.providerAttempt,
@@ -416,6 +445,8 @@ export function createCommentTranslatorPaidUsageStore({
       return readBoolean(result, "OpenAI attempt extension failed.");
     },
     async finalizeOpenAiAttempt(request) {
+      assertCommentTranslatorPaidAttemptId(request.attemptId);
+      assertBoundedOpaqueReference(request.providerAttempt, "Paid provider attempt");
       const result = await supabase.rpc("ct_paid_finalize_openai_attempt", {
         p_attempt_id: request.attemptId,
         p_provider_attempt: request.providerAttempt,
@@ -430,6 +461,8 @@ export function createCommentTranslatorPaidUsageStore({
       return readBoolean(result, "OpenAI attempt finalization failed.");
     },
     async reclaimOpenAiAttempt(request) {
+      assertCommentTranslatorPaidAttemptId(request.attemptId);
+      assertBoundedOpaqueReference(request.providerAttempt, "Paid provider attempt");
       const result = await supabase.rpc("ct_paid_reclaim_openai_attempt", {
         p_attempt_id: request.attemptId,
         p_provider_attempt: request.providerAttempt,
@@ -438,6 +471,9 @@ export function createCommentTranslatorPaidUsageStore({
       return readBoolean(result, "OpenAI attempt reclaim failed.");
     },
     async azureDirectFallback(request) {
+      assertCommentTranslatorPaidAttemptId(request.attemptId);
+      assertBoundedOpaqueReference(request.providerAttempt, "Paid provider attempt");
+      assertPositiveBoundedInteger(request.inputCharacters, 7_500, "Paid Azure fallback input characters");
       const result = await supabase.rpc("ct_paid_azure_direct_fallback", {
         p_attempt_id: request.attemptId,
         p_provider_attempt: request.providerAttempt,
@@ -452,6 +488,8 @@ export function createCommentTranslatorPaidUsageStore({
       return readProviderReservation(result, "Azure fallback reservation failed.");
     },
     async finalizeAzureDirectFallback(request) {
+      assertCommentTranslatorPaidAttemptId(request.attemptId);
+      assertBoundedOpaqueReference(request.providerAttempt, "Paid provider attempt");
       if (request.outcome === "uncertain_inflight" && request.providerFailureClass === null) {
         throw new Error("Azure uncertain finalization requires a sanitized provider failure class.");
       }
@@ -467,6 +505,8 @@ export function createCommentTranslatorPaidUsageStore({
       return readBoolean(result, "Azure fallback finalization failed.");
     },
     async reclaimAzureDirectFallback(request) {
+      assertCommentTranslatorPaidAttemptId(request.attemptId);
+      assertBoundedOpaqueReference(request.providerAttempt, "Paid provider attempt");
       const result = await supabase.rpc("ct_paid_reclaim_azure_fallback", {
         p_attempt_id: request.attemptId,
         p_provider_attempt: request.providerAttempt,
@@ -493,6 +533,9 @@ function readProviderReservation(
   if (result.error) throw new Error(message);
   const row = firstRpcRow(result.data);
   const reservationStatus = readString(row, "reservation_status");
+  if (!["reserved", "uncertain", "committed", "released", "expired"].includes(reservationStatus)) {
+    throw new Error("Trusted Paid provider reservation status is unreadable.");
+  }
   const sessionLeaseToken = readNullableString(row, "session_lease_token");
   const openAiSlotToken = readNullableString(row, "openai_slot_token");
   if (["reserved", "uncertain"].includes(reservationStatus) && sessionLeaseToken === null) {
@@ -502,6 +545,24 @@ function readProviderReservation(
     throw new Error("Trusted Paid active OpenAI reservation is missing its slot token.");
   }
   return { reservationStatus, sessionLeaseToken, openAiSlotToken };
+}
+
+function assertBoundedOpaqueReference(value: string, label: string): void {
+  if (typeof value !== "string" || value.trim().length === 0 || value.length > 200) {
+    throw new Error(label + " is invalid.");
+  }
+}
+
+function assertCommentTranslatorPaidAttemptId(value: string): void {
+  if (!isCommentTranslatorPaidAttemptId(value)) {
+    throw new Error("Paid attempt id is invalid.");
+  }
+}
+
+function assertPositiveBoundedInteger(value: number, maximum: number, label: string): void {
+  if (!Number.isSafeInteger(value) || value <= 0 || value > maximum) {
+    throw new Error(label + " is invalid.");
+  }
 }
 
 function readInteger(result: SupabaseRpcResult, message: string): number {

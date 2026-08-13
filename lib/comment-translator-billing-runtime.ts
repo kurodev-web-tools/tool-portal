@@ -1,5 +1,7 @@
 import "server-only";
 
+import { createHmac, timingSafeEqual } from "node:crypto";
+
 import {
   createCommentTranslatorSessionPlanEntitlement,
   type CommentTranslatorSessionPlan,
@@ -12,6 +14,14 @@ import {
   type CommentTranslatorAbuseRateLimitBlockedResult,
   type CommentTranslatorAbuseRateLimitStore
 } from "./comment-translator-abuse-rate-limit-runtime";
+import {
+  createTrustedCommentTranslatorPaidEntitlementStore,
+  type CommentTranslatorPaidDisputeState,
+  type CommentTranslatorPaidEntitlementStatus,
+  type CommentTranslatorPaidEntitlementProjectionClaim,
+  type CommentTranslatorPaidEntitlementStore,
+  type CommentTranslatorPaidStripeBinding
+} from "./comment-translator-paid-entitlement-store";
 
 export type CommentTranslatorBillingUserReference = `ctbill_${string}`;
 export type CommentTranslatorBillingState = "free" | "paid-active" | "paid-inactive";
@@ -35,6 +45,7 @@ export type CommentTranslatorStripeEnvName =
   | "STRIPE_SECRET_KEY"
   | "STRIPE_WEBHOOK_SECRET"
   | "COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID"
+  | "COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID"
   | "NEXT_PUBLIC_SITE_URL";
 
 export type CommentTranslatorStripeEnv = Record<string, string | undefined>;
@@ -125,20 +136,103 @@ export type CommentTranslatorStripeAdapter = {
   createPortalSession: (params: CommentTranslatorStripePortalSessionParams) => Promise<{ url: string | null }>;
 };
 
+export type CommentTranslatorStripeWebhookEventType =
+  | "checkout.session.completed"
+  | "checkout.session.expired"
+  | "customer.subscription.created"
+  | "customer.subscription.updated"
+  | "customer.subscription.deleted"
+  | "invoice.paid"
+  | "invoice.payment_failed"
+  | "invoice.payment_succeeded"
+  | "charge.dispute.created"
+  | "charge.dispute.closed"
+  | "charge.dispute.funds_reinstated"
+  | "charge.dispute.funds_withdrawn"
+  | "refund.created"
+  | "refund.updated"
+  | "refund.failed"
+  | "credit_note.created"
+  | "credit_note.updated";
+
 export type CommentTranslatorStripeWebhookEvent = {
-  type:
-    | "checkout.session.completed"
-    | "customer.subscription.created"
-    | "customer.subscription.updated"
-    | "customer.subscription.deleted"
-    | "invoice.payment_failed"
-    | "invoice.payment_succeeded";
-  customerReferenceId: string | null;
-  subscriptionReferenceId: string | null;
-  status: CommentTranslatorStripeSubscriptionStatus | null;
-  priceReferenceId: string | null;
-  billingUserReferenceId: CommentTranslatorBillingUserReference | null;
-  currentPeriodEndMs: number | null;
+  id: string;
+  created: number;
+  type: string;
+  data: {
+    object: Record<string, unknown>;
+  };
+};
+
+export type CommentTranslatorStripeCheckoutSessionSnapshot = {
+  id: string;
+  customerId: string | null;
+  subscriptionId: string | null;
+  status: "complete" | "expired" | "open" | "unknown";
+  expiresAtIso: string | null;
+  paymentStatus: "paid" | "unpaid" | "no_payment_required" | "unknown";
+};
+
+export type CommentTranslatorStripeSubscriptionSnapshot = {
+  id: string;
+  customerId: string | null;
+  status: CommentTranslatorStripeSubscriptionStatus;
+  productId: string | null;
+  priceId: string | null;
+  currentPeriodStartIso: string | null;
+  currentPeriodEndIso: string | null;
+  cancelAtPeriodEnd: boolean;
+  latestInvoiceId: string | null;
+};
+
+export type CommentTranslatorStripeInvoiceSnapshot = {
+  id: string;
+  customerId: string | null;
+  subscriptionId: string | null;
+  status: "paid" | "open" | "uncollectible" | "void" | "draft" | "unknown";
+  paid: boolean;
+  paymentIntentId: string | null;
+  chargeId: string | null;
+  productId: string | null;
+  priceId: string | null;
+};
+
+export type CommentTranslatorStripeDisputeSnapshot = {
+  id: string;
+  status: "needs_response" | "under_review" | "won" | "lost" | "warning_closed" | "unknown";
+  customerId: string | null;
+  subscriptionId: string | null;
+  invoiceId: string | null;
+  paymentIntentId: string | null;
+  chargeId: string | null;
+};
+
+export type CommentTranslatorStripePaymentAdjustmentSnapshot = {
+  status: "succeeded" | "pending" | "failed" | "canceled" | "requires_action" | "issued" | "void" | "unknown";
+  successful: boolean;
+  fullAmount: boolean;
+  targetsCurrentPeriod: boolean;
+};
+
+export type CommentTranslatorStripeCurrentObjectGraph = {
+  checkoutSession?: CommentTranslatorStripeCheckoutSessionSnapshot;
+  subscription?: CommentTranslatorStripeSubscriptionSnapshot;
+  invoice?: CommentTranslatorStripeInvoiceSnapshot;
+  dispute?: CommentTranslatorStripeDisputeSnapshot;
+  paymentAdjustment?: CommentTranslatorStripePaymentAdjustmentSnapshot;
+};
+
+export type CommentTranslatorStripeCurrentObjectReader = {
+  retrieveCurrentObjectState: (request: {
+    eventType: CommentTranslatorStripeWebhookEventType;
+    objectId: string;
+  }) => Promise<CommentTranslatorStripeCurrentObjectGraph>;
+};
+
+export type CommentTranslatorStripeSubscriptionCancelAdapter = {
+  cancelSubscription: (request: {
+    subscriptionId: string;
+  }) => Promise<CommentTranslatorStripeSubscriptionSnapshot>;
 };
 
 export type CommentTranslatorStripeWebhookVerifier = {
@@ -150,7 +244,7 @@ export type CommentTranslatorStripeWebhookVerifier = {
 };
 
 export const commentTranslatorStripeBillingContract = {
-  implementationStage: "comment-translator-paid-v1-task1-free-baseline-isolation",
+  implementationStage: "comment-translator-paid-v1-task3-signed-webhook-idempotent-projection",
   runtime: "server-only",
   freePlanAvailability: "permanent",
   paidCoreV1Availability: "unavailable-until-durable-entitlement",
@@ -158,6 +252,8 @@ export const commentTranslatorStripeBillingContract = {
   stripeSurfaces: ["Checkout Sessions", "Billing Customer Portal", "signed webhook"],
   browserReadableOutput: "sanitized-billing-metadata-only",
   checkoutMode: "disabled-until-durable-entitlement",
+  signedWebhookProjection: "durable-supabase-only-with-120-second-receipt-and-projection-leases",
+  receiptProjectionStaleGuard: "local-receipt-deadline-before-projection-plus-durable-projection-cas",
   entitlementSync: "free-baseline-only-until-durable-paid-entitlement",
   safeDegradation: "paid-shaped-or-unreadable-billing-degrades-to-free-baseline",
   paidPrioritization: "not-implemented",
@@ -419,52 +515,909 @@ export async function createCommentTranslatorStripePortalSessionResult({
   };
 }
 
+export type CommentTranslatorStripeWebhookProjectionResult =
+  | {
+      status: "complete";
+      eventId: string;
+      receiptStatus: "complete";
+      projection: "applied" | "ignored";
+    }
+  | {
+      status: "rejected";
+      eventId?: string;
+      receiptStatus: "rejected";
+      reason:
+        | "missing-signature"
+        | "missing-config"
+        | "invalid-signature"
+        | "unknown-event-type"
+        | "event-identity-conflict"
+        | "binding-conflict";
+      missingEnvReferences?: CommentTranslatorStripeEnvName[];
+    }
+  | {
+      status: "retryable";
+      eventId?: string;
+      receiptStatus: "retryable";
+      reason:
+        | "active-processing"
+        | "object-retrieval-failed"
+        | "database-transaction-failed"
+        | "lease-conflict"
+        | "binding-not-ready"
+        | "missing-config";
+    };
+
+export const commentTranslatorPaidWebhookReceiptLeaseMs = 120_000;
+
 export async function readCommentTranslatorStripeWebhookResult({
   payload,
   signature,
   env,
-  verifier
+  verifier,
+  store,
+  currentObjectReader,
+  subscriptionCancelAdapter,
+  projectionEnabled = false,
+  nowIso = new Date().toISOString(),
+  clock = () => Date.now()
 }: {
   payload: string;
   signature: string | null;
   env: CommentTranslatorStripeEnv;
   verifier: CommentTranslatorStripeWebhookVerifier;
-}): Promise<
-  | {
-      status: "applied";
-      entitlement: CommentTranslatorBillingEntitlementSnapshot;
+  store?: CommentTranslatorPaidEntitlementStore;
+  currentObjectReader?: CommentTranslatorStripeCurrentObjectReader;
+  subscriptionCancelAdapter?: CommentTranslatorStripeSubscriptionCancelAdapter;
+  projectionEnabled?: boolean;
+  nowIso?: string;
+  clock?: () => number;
+}): Promise<CommentTranslatorStripeWebhookProjectionResult | { status: "rejected"; reason: "paid-core-v1-unavailable" }> {
+  if (!projectionEnabled) {
+    if (!signature) return { status: "rejected", receiptStatus: "rejected", reason: "missing-signature" };
+    if (!env.STRIPE_WEBHOOK_SECRET?.trim()) {
+      return {
+        status: "rejected",
+        receiptStatus: "rejected",
+        reason: "missing-config"
+      };
     }
-  | {
-      status: "ignored";
-      reason: "unsupported-event" | "missing-billing-user-reference";
-    }
-  | {
-      status: "rejected";
-      reason: "missing-signature" | "missing-config" | "invalid-signature" | "paid-core-v1-unavailable";
-      missingEnvReferences?: CommentTranslatorStripeEnvName[];
-    }
-> {
-  if (!signature) {
-    return {
-      status: "rejected",
-      reason: "missing-signature"
-    };
+    return { status: "rejected", reason: "paid-core-v1-unavailable" };
   }
 
-  if (!env.STRIPE_WEBHOOK_SECRET?.trim()) {
+  if (!signature) return { status: "rejected", receiptStatus: "rejected", reason: "missing-signature" };
+  const webhookSecret = env.STRIPE_WEBHOOK_SECRET?.trim();
+  if (!webhookSecret) {
     return {
       status: "rejected",
+      receiptStatus: "rejected",
       reason: "missing-config",
       missingEnvReferences: ["STRIPE_WEBHOOK_SECRET"]
     };
   }
 
-  void payload;
-  void verifier;
-  return {
-    status: "rejected",
-    reason: "paid-core-v1-unavailable"
+  let event: CommentTranslatorStripeWebhookEvent;
+  try {
+    event = await verifier.constructEvent(payload, signature, webhookSecret);
+  } catch {
+    return { status: "rejected", receiptStatus: "rejected", reason: "invalid-signature" };
+  }
+
+  const normalized = normalizeStripeWebhookEvent(event);
+  if (normalized.status === "unidentifiable") {
+    return { status: "rejected", receiptStatus: "rejected", reason: "event-identity-conflict" };
+  }
+
+  const eventId = normalized.eventId;
+  const eventType = normalized.eventType;
+  const objectType = normalized.objectType;
+  const eventCreatedAtIso = new Date(normalized.created * 1000).toISOString();
+  const resolvedStore = store ?? createDefaultPaidEntitlementStore(env);
+  if (!resolvedStore) {
+    return { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" };
+  }
+  const receiptLeaseDeadlineMs = clock() + commentTranslatorPaidWebhookReceiptLeaseMs;
+  const receiptLeaseIsActive = () => clock() < receiptLeaseDeadlineMs;
+
+  let claim;
+  try {
+    claim = await resolvedStore.claimStripeEvent({
+      eventId,
+      eventType,
+      stripeEventCreatedAtIso: eventCreatedAtIso,
+      objectType,
+      nowIso
+    });
+  } catch {
+    return { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" };
+  }
+
+  if (claim.claimStatus === "complete") {
+    return { status: "complete", eventId, receiptStatus: "complete", projection: "applied" };
+  }
+  if (claim.claimStatus === "rejected") {
+    return { status: "rejected", eventId, receiptStatus: "rejected", reason: "event-identity-conflict" };
+  }
+  if (!claim.leaseToken) {
+    return { status: "retryable", eventId, receiptStatus: "retryable", reason: "active-processing" };
+  }
+
+  const finalize = async (
+    status: "retryable" | "complete" | "rejected",
+    errorClass?: string
+  ): Promise<boolean> => {
+    try {
+      return await resolvedStore.finalizeStripeEvent({
+        eventId,
+        leaseToken: claim.leaseToken as string,
+        status,
+        errorClass,
+        nowIso
+      });
+    } catch {
+      return false;
+    }
   };
+
+  if (normalized.status === "claimable-invalid") {
+    const finalized = await finalize("rejected", "event-identity-conflict");
+    return finalized
+      ? { status: "rejected", eventId, receiptStatus: "rejected", reason: "event-identity-conflict" }
+      : { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" };
+  }
+
+  if (!isSupportedStripeWebhookEventType(eventType)) {
+    const finalized = await finalize("rejected", "unknown-event-type");
+    return finalized
+      ? { status: "rejected", eventId, receiptStatus: "rejected", reason: "unknown-event-type" }
+      : { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" };
+  }
+
+  if (!isExpectedStripeObjectType(eventType, objectType)) {
+    const finalized = await finalize("rejected", "event-identity-conflict");
+    return finalized
+      ? { status: "rejected", eventId, receiptStatus: "rejected", reason: "event-identity-conflict" }
+      : { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" };
+  }
+
+  const rawObject = normalized.event.data.object;
+  const currentReader = currentObjectReader ?? createCommentTranslatorStripeCurrentObjectReader(env);
+  let bindingResolution: Awaited<ReturnType<typeof resolveStripeBindingForEvent>>;
+  try {
+    bindingResolution = await resolveStripeBindingForEvent(resolvedStore, eventType, rawObject);
+  } catch {
+    const finalized = await finalize("retryable", "database-transaction-failed");
+    return finalized
+      ? { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" }
+      : { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" };
+  }
+  if (bindingResolution.status === "conflict") {
+    const finalized = await finalize("rejected", "binding-conflict");
+    return finalized
+      ? { status: "rejected", eventId, receiptStatus: "rejected", reason: "binding-conflict" }
+      : { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" };
+  }
+  if (
+    bindingResolution.status === "missing" &&
+    (eventType.startsWith("charge.dispute.") ||
+      eventType.startsWith("refund.") ||
+      eventType.startsWith("credit_note."))
+  ) {
+    let targetGraph: CommentTranslatorStripeCurrentObjectGraph;
+    try {
+      targetGraph = await currentReader.retrieveCurrentObjectState({ eventType, objectId: normalized.objectId });
+    } catch {
+      const finalized = await finalize("retryable", "object-retrieval-failed");
+      return finalized
+        ? { status: "retryable", eventId, receiptStatus: "retryable", reason: "object-retrieval-failed" }
+        : { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" };
+    }
+    if (!receiptLeaseIsActive()) {
+      const finalized = await finalize("retryable", "lease-conflict");
+      return finalized
+        ? { status: "retryable", eventId, receiptStatus: "retryable", reason: "lease-conflict" }
+        : { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" };
+    }
+    try {
+      bindingResolution = await resolveStripeBindingForGraph(resolvedStore, targetGraph);
+    } catch {
+      const finalized = await finalize("retryable", "database-transaction-failed");
+      return finalized
+        ? { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" }
+        : { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" };
+    }
+    if (bindingResolution.status === "conflict") {
+      const finalized = await finalize("rejected", "binding-conflict");
+      return finalized
+        ? { status: "rejected", eventId, receiptStatus: "rejected", reason: "binding-conflict" }
+        : { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" };
+    }
+    if (bindingResolution.status === "missing") {
+      const finalized = await finalize("retryable", "object-retrieval-failed");
+      return finalized
+        ? { status: "retryable", eventId, receiptStatus: "retryable", reason: "binding-not-ready" }
+        : { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" };
+    }
+  }
+  if (bindingResolution.status === "missing") {
+    const finalized = await finalize("retryable", "object-retrieval-failed");
+    return finalized
+      ? { status: "retryable", eventId, receiptStatus: "retryable", reason: "binding-not-ready" }
+      : { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" };
+  }
+
+  if (!receiptLeaseIsActive()) {
+    const finalized = await finalize("retryable", "lease-conflict");
+    return finalized
+      ? { status: "retryable", eventId, receiptStatus: "retryable", reason: "lease-conflict" }
+      : { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" };
+  }
+
+  let projectionLease: CommentTranslatorPaidEntitlementProjectionClaim | null = null;
+  if (eventType !== "checkout.session.expired") {
+    try {
+      projectionLease = await resolvedStore.claimEntitlementProjection({
+        ownerUserId: bindingResolution.binding.ownerUserId,
+        lifecycleId: bindingResolution.binding.lifecycleId,
+        nowIso
+      });
+    } catch {
+      const finalized = await finalize("retryable", "database-transaction-failed");
+      return finalized
+        ? { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" }
+        : { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" };
+    }
+    if (!projectionLease) {
+      const finalized = await finalize("retryable", "lease-conflict");
+      return finalized
+        ? { status: "retryable", eventId, receiptStatus: "retryable", reason: "lease-conflict" }
+        : { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" };
+    }
+  }
+
+  let graph: CommentTranslatorStripeCurrentObjectGraph;
+  try {
+    graph = await currentReader.retrieveCurrentObjectState({ eventType, objectId: normalized.objectId });
+  } catch {
+    const finalized = await finalize("retryable", "object-retrieval-failed");
+    return finalized
+      ? { status: "retryable", eventId, receiptStatus: "retryable", reason: "object-retrieval-failed" }
+      : { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" };
+  }
+  if (!receiptLeaseIsActive()) {
+    const finalized = await finalize("retryable", "lease-conflict");
+    return finalized
+      ? { status: "retryable", eventId, receiptStatus: "retryable", reason: "lease-conflict" }
+      : { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" };
+  }
+
+  const projection = await projectCurrentStripeGraph({
+    eventType,
+    graph,
+    binding: bindingResolution.binding,
+    store: resolvedStore,
+    env,
+    nowIso,
+    eventCreatedAtIso,
+    projectionLease,
+    subscriptionCancelAdapter: subscriptionCancelAdapter ?? createCommentTranslatorStripeSubscriptionCancelAdapter(env),
+    receiptLeaseIsActive
+  });
+  if (projection.status === "rejected") {
+    const finalized = await finalize("rejected", projection.errorClass);
+    return finalized
+      ? { status: "rejected", eventId, receiptStatus: "rejected", reason: projection.reason }
+      : { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" };
+  }
+  if (projection.status === "retryable") {
+    const finalized = await finalize("retryable", projection.errorClass);
+    return finalized
+      ? { status: "retryable", eventId, receiptStatus: "retryable", reason: projection.reason }
+      : { status: "retryable", eventId, receiptStatus: "retryable", reason: "database-transaction-failed" };
+  }
+
+  const finalized = await finalize("complete");
+  if (!finalized) return { status: "retryable", eventId, receiptStatus: "retryable", reason: "lease-conflict" };
+  return { status: "complete", eventId, receiptStatus: "complete", projection: projection.projection };
+}
+
+export function getCommentTranslatorStripeWebhookHttpStatus(
+  result: CommentTranslatorStripeWebhookProjectionResult | { status: "rejected"; reason: "paid-core-v1-unavailable" }
+): number {
+  if (result.status === "complete") return 200;
+  if (result.status === "rejected") {
+    return "eventId" in result && typeof result.eventId === "string" && result.eventId.trim().length > 0 ? 200 : 400;
+  }
+  return 503;
+}
+
+type NormalizedStripeWebhookEvent =
+  | {
+      status: "valid";
+      event: CommentTranslatorStripeWebhookEvent;
+      eventId: string;
+      eventType: string;
+      created: number;
+      objectType: string;
+      objectId: string;
+    }
+  | {
+      status: "claimable-invalid";
+      eventId: string;
+      eventType: string;
+      created: number;
+      objectType: string;
+    }
+  | { status: "unidentifiable" };
+
+function normalizeStripeWebhookEvent(event: CommentTranslatorStripeWebhookEvent): NormalizedStripeWebhookEvent {
+  if (!event || typeof event !== "object") return { status: "unidentifiable" };
+  if (typeof event.id !== "string" || event.id.trim().length === 0) return { status: "unidentifiable" };
+  if (typeof event.type !== "string" || event.type.trim().length === 0) return { status: "unidentifiable" };
+  if (!Number.isSafeInteger(event.created) || event.created <= 0) return { status: "unidentifiable" };
+  const eventId = event.id.trim();
+  const eventType = event.type.trim();
+  const created = event.created;
+  if (!event.data || typeof event.data !== "object" || !event.data.object || typeof event.data.object !== "object") {
+    return { status: "claimable-invalid", eventId, eventType, created, objectType: "unknown" };
+  }
+  const objectType = readObjectType(event.data.object);
+  const objectId = readObjectId(event.data.object);
+  if (!objectId) return { status: "claimable-invalid", eventId, eventType, created, objectType };
+  return { status: "valid", event, eventId, eventType, created, objectType, objectId };
+}
+
+function readObjectId(object: Record<string, unknown>): string | null {
+  const id = object.id;
+  return typeof id === "string" && id.trim().length > 0 ? id.trim() : null;
+}
+
+function readObjectType(object: Record<string, unknown>): string {
+  const objectType = object.object;
+  return typeof objectType === "string" && objectType.trim().length > 0 ? objectType.trim() : "unknown";
+}
+
+function isSupportedStripeWebhookEventType(value: string): value is CommentTranslatorStripeWebhookEventType {
+  return [
+    "checkout.session.completed",
+    "checkout.session.expired",
+    "customer.subscription.created",
+    "customer.subscription.updated",
+    "customer.subscription.deleted",
+    "invoice.paid",
+    "invoice.payment_failed",
+    "invoice.payment_succeeded",
+    "charge.dispute.created",
+    "charge.dispute.closed",
+    "charge.dispute.funds_reinstated",
+    "charge.dispute.funds_withdrawn",
+    "refund.created",
+    "refund.updated",
+    "refund.failed",
+    "credit_note.created",
+    "credit_note.updated"
+  ].includes(value);
+}
+
+function isExpectedStripeObjectType(eventType: CommentTranslatorStripeWebhookEventType, objectType: string): boolean {
+  if (eventType.startsWith("checkout.")) return objectType === "checkout.session";
+  if (eventType.startsWith("customer.subscription.")) return objectType === "subscription";
+  if (eventType.startsWith("invoice.")) return objectType === "invoice";
+  if (eventType.startsWith("charge.dispute.")) return objectType === "dispute";
+  if (eventType.startsWith("refund.")) return objectType === "refund";
+  return objectType === "credit_note";
+}
+
+function createDefaultPaidEntitlementStore(env: CommentTranslatorStripeEnv): CommentTranslatorPaidEntitlementStore | null {
+  const result = createTrustedCommentTranslatorPaidEntitlementStore({
+    env: {
+      NEXT_PUBLIC_SUPABASE_URL: env.NEXT_PUBLIC_SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY: env.SUPABASE_SERVICE_ROLE_KEY
+    }
+  });
+  return result.status === "ready" ? result.store : null;
+}
+
+async function resolveStripeBindingForEvent(
+  store: CommentTranslatorPaidEntitlementStore,
+  eventType: CommentTranslatorStripeWebhookEventType,
+  object: Record<string, unknown>
+) {
+  const customerId = readStripeReference(object.customer);
+  const subscriptionId = eventType.startsWith("customer.subscription.")
+    ? readObjectId(object)
+    : eventType.startsWith("invoice.")
+      ? readInvoiceSubscriptionReference(object)
+      : readStripeReference(object.subscription);
+  const checkoutSessionId = eventType.startsWith("checkout.") ? readObjectId(object) : null;
+  return store.resolveStripeBinding({
+    stripeCustomerId: customerId,
+    stripeCheckoutSessionId: checkoutSessionId,
+    stripeSubscriptionId: subscriptionId
+  });
+}
+
+async function resolveStripeBindingForGraph(
+  store: CommentTranslatorPaidEntitlementStore,
+  graph: CommentTranslatorStripeCurrentObjectGraph
+) {
+  const customerIds = new Set(
+    [graph.subscription?.customerId, graph.invoice?.customerId, graph.dispute?.customerId].filter(
+      (value): value is string => Boolean(value)
+    )
+  );
+  const subscriptionIds = new Set(
+    [graph.subscription?.id, graph.invoice?.subscriptionId, graph.dispute?.subscriptionId].filter(
+      (value): value is string => Boolean(value)
+    )
+  );
+  if (customerIds.size > 1 || subscriptionIds.size > 1) return { status: "conflict" as const };
+  return store.resolveStripeBinding({
+    stripeCustomerId: customerIds.values().next().value ?? null,
+    stripeSubscriptionId: subscriptionIds.values().next().value ?? null
+  });
+}
+
+function readStripeReference(value: unknown): string | null {
+  if (typeof value === "string" && value.trim().length > 0) return value.trim();
+  if (value && typeof value === "object" && !Array.isArray(value)) {
+    const id = (value as Record<string, unknown>).id;
+    return typeof id === "string" && id.trim().length > 0 ? id.trim() : null;
+  }
+  return null;
+}
+
+type ProjectCurrentStripeGraphResult =
+  | { status: "complete"; projection: "applied" | "ignored" }
+  | {
+      status: "retryable";
+      reason: "object-retrieval-failed" | "database-transaction-failed" | "lease-conflict" | "binding-not-ready" | "missing-config";
+      errorClass: "object-retrieval-failed" | "database-transaction-failed" | "lease-conflict";
+    }
+  | {
+      status: "rejected";
+      reason: "binding-conflict" | "unknown-event-type";
+      errorClass: "binding-conflict" | "unknown-event-type";
+    };
+
+async function projectCurrentStripeGraph({
+  eventType,
+  graph,
+  binding,
+  store,
+  env,
+  nowIso,
+  eventCreatedAtIso,
+  projectionLease,
+  subscriptionCancelAdapter,
+  receiptLeaseIsActive
+}: {
+  eventType: CommentTranslatorStripeWebhookEventType;
+  graph: CommentTranslatorStripeCurrentObjectGraph;
+  binding: CommentTranslatorPaidStripeBinding;
+  store: CommentTranslatorPaidEntitlementStore;
+  env: CommentTranslatorStripeEnv;
+  nowIso: string;
+  eventCreatedAtIso: string;
+  projectionLease: CommentTranslatorPaidEntitlementProjectionClaim | null;
+  subscriptionCancelAdapter: CommentTranslatorStripeSubscriptionCancelAdapter;
+  receiptLeaseIsActive: () => boolean;
+}): Promise<ProjectCurrentStripeGraphResult> {
+  if (eventType === "checkout.session.expired") {
+    const session = graph.checkoutSession;
+    if (
+      !session ||
+      session.status !== "expired" ||
+      !binding.holdId ||
+      !binding.stripeCheckoutSessionId ||
+      session.id !== binding.stripeCheckoutSessionId ||
+      !session.customerId ||
+      session.customerId !== binding.stripeCustomerId
+    ) {
+      return { status: "retryable", reason: "binding-not-ready", errorClass: "object-retrieval-failed" };
+    }
+    if (
+      session.subscriptionId ||
+      graph.subscription ||
+      binding.stripeSubscriptionId ||
+      binding.subscriptionBindingId
+    ) {
+      return { status: "complete", projection: "ignored" };
+    }
+    let existingEntitlement;
+    try {
+      existingEntitlement = await store.readEntitlement({
+        ownerUserId: binding.ownerUserId,
+        lifecycleId: binding.lifecycleId
+      });
+    } catch {
+      return { status: "retryable", reason: "database-transaction-failed", errorClass: "database-transaction-failed" };
+    }
+    if (existingEntitlement && existingEntitlement.status !== "incomplete_expired") {
+      return { status: "complete", projection: "ignored" };
+    }
+    if (!receiptLeaseIsActive()) {
+      return { status: "retryable", reason: "lease-conflict", errorClass: "lease-conflict" };
+    }
+    try {
+      if (!receiptLeaseIsActive()) {
+        return { status: "retryable", reason: "lease-conflict", errorClass: "lease-conflict" };
+      }
+      await store.expireCheckoutHold({
+        lifecycleId: binding.lifecycleId,
+        ownerUserId: binding.ownerUserId,
+        holdId: binding.holdId,
+        stripeSessionStatus: "expired",
+        stripeSessionCheckedAtIso: nowIso,
+        reconcileLeaseToken: null,
+        nowIso
+      });
+      return { status: "complete", projection: "applied" };
+    } catch {
+      return { status: "retryable", reason: "database-transaction-failed", errorClass: "database-transaction-failed" };
+    }
+  }
+
+  if (eventType === "checkout.session.completed") {
+    const session = graph.checkoutSession;
+    const invoice = graph.invoice;
+    const expiresAtMs = session?.expiresAtIso ? Date.parse(session.expiresAtIso) : Number.NaN;
+    if (
+      !session ||
+      !session.id ||
+      session.status !== "complete" ||
+      !session.expiresAtIso ||
+      !Number.isFinite(expiresAtMs) ||
+      new Date(eventCreatedAtIso).getTime() > expiresAtMs ||
+      (session.paymentStatus !== "paid" && session.paymentStatus !== "no_payment_required") ||
+      !invoice ||
+      !invoice.id ||
+      invoice.status !== "paid" ||
+      !invoice.paid ||
+      !session.customerId ||
+      !session.subscriptionId ||
+      !graph.subscription?.id ||
+      !invoice.customerId ||
+      !invoice.subscriptionId
+    ) {
+      return { status: "retryable", reason: "object-retrieval-failed", errorClass: "object-retrieval-failed" };
+    }
+    if (
+      !binding.stripeCheckoutSessionId ||
+      session.id !== binding.stripeCheckoutSessionId ||
+      session.customerId !== binding.stripeCustomerId ||
+      session.subscriptionId !== graph.subscription.id ||
+      (binding.stripeSubscriptionId !== null && session.subscriptionId !== binding.stripeSubscriptionId) ||
+      invoice.customerId !== binding.stripeCustomerId ||
+      invoice.customerId !== session.customerId ||
+      invoice.subscriptionId !== session.subscriptionId
+    ) {
+      return { status: "rejected", reason: "binding-conflict", errorClass: "binding-conflict" };
+    }
+  }
+  if (
+    (eventType.startsWith("checkout.") || eventType.startsWith("customer.subscription.")) && !graph.invoice
+  ) {
+    return { status: "retryable", reason: "object-retrieval-failed", errorClass: "object-retrieval-failed" };
+  }
+  if (eventType.startsWith("invoice.") && !graph.invoice) {
+    return { status: "retryable", reason: "object-retrieval-failed", errorClass: "object-retrieval-failed" };
+  }
+  if (
+    (eventType.startsWith("refund.") || eventType.startsWith("credit_note.")) &&
+    (!graph.invoice || !graph.paymentAdjustment)
+  ) {
+    return { status: "retryable", reason: "object-retrieval-failed", errorClass: "object-retrieval-failed" };
+  }
+  if (eventType.startsWith("charge.dispute.") && (!graph.dispute || !graph.invoice)) {
+    return { status: "retryable", reason: "object-retrieval-failed", errorClass: "object-retrieval-failed" };
+  }
+
+  const subscription = graph.subscription;
+  if (!subscription || !subscription.id || !subscription.currentPeriodStartIso || !subscription.currentPeriodEndIso) {
+    return { status: "retryable", reason: "object-retrieval-failed", errorClass: "object-retrieval-failed" };
+  }
+  if (!subscription.customerId) {
+    return { status: "retryable", reason: "object-retrieval-failed", errorClass: "object-retrieval-failed" };
+  }
+  if (subscription.customerId !== binding.stripeCustomerId) {
+    return { status: "rejected", reason: "binding-conflict", errorClass: "binding-conflict" };
+  }
+  if (binding.stripeSubscriptionId && subscription.id !== binding.stripeSubscriptionId) {
+    return { status: "rejected", reason: "binding-conflict", errorClass: "binding-conflict" };
+  }
+  if (graph.invoice) {
+    if (!graph.invoice.id || !graph.invoice.customerId || !graph.invoice.subscriptionId) {
+      return { status: "retryable", reason: "object-retrieval-failed", errorClass: "object-retrieval-failed" };
+    }
+    if (
+      graph.invoice.customerId !== binding.stripeCustomerId ||
+      graph.invoice.subscriptionId !== subscription.id ||
+      (binding.stripeSubscriptionId !== null && graph.invoice.subscriptionId !== binding.stripeSubscriptionId)
+    ) {
+      return { status: "rejected", reason: "binding-conflict", errorClass: "binding-conflict" };
+    }
+  }
+
+  const priceId = subscription.priceId ?? graph.invoice?.priceId ?? null;
+  const productId = subscription.productId ?? graph.invoice?.productId ?? null;
+  const configuredPriceId = env.COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID?.trim();
+  const configuredProductId = env.COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID?.trim();
+  if (!configuredPriceId) {
+    return { status: "retryable", reason: "missing-config", errorClass: "object-retrieval-failed" };
+  }
+  if (!priceId || !productId || configuredPriceId !== priceId || (configuredProductId && configuredProductId !== productId)) {
+    return { status: "rejected", reason: "binding-conflict", errorClass: "binding-conflict" };
+  }
+  if (binding.priceId && binding.priceId !== priceId) {
+    return { status: "rejected", reason: "binding-conflict", errorClass: "binding-conflict" };
+  }
+  if (binding.productId && binding.productId !== productId) {
+    return { status: "rejected", reason: "binding-conflict", errorClass: "binding-conflict" };
+  }
+
+  const adjustment = graph.paymentAdjustment;
+  const requiresTerminalCancellation =
+    (eventType.startsWith("charge.dispute.") &&
+      (eventType === "charge.dispute.funds_withdrawn" || graph.dispute?.status === "lost")) ||
+    ((eventType.startsWith("refund.") || eventType.startsWith("credit_note.")) &&
+      adjustment?.successful === true &&
+      adjustment.fullAmount &&
+      adjustment.targetsCurrentPeriod);
+  if (
+    (eventType.startsWith("refund.") || eventType.startsWith("credit_note.")) &&
+    !requiresTerminalCancellation
+  ) {
+    return { status: "complete", projection: "ignored" };
+  }
+
+  let existingEntitlement;
+  try {
+    existingEntitlement = await store.readEntitlement({
+      ownerUserId: binding.ownerUserId,
+      lifecycleId: binding.lifecycleId
+    });
+  } catch {
+    return { status: "retryable", reason: "database-transaction-failed", errorClass: "database-transaction-failed" };
+  }
+  let currentSubscription = subscription;
+  if (eventType.startsWith("charge.dispute.") && graph.dispute?.status === "won") {
+    return { status: "complete", projection: "ignored" };
+  }
+  if (
+    eventType.startsWith("charge.dispute.") &&
+    !requiresTerminalCancellation &&
+    currentSubscription.status !== "canceled" &&
+    shouldPreserveExistingPaidStop(existingEntitlement)
+  ) {
+    return { status: "complete", projection: "ignored" };
+  }
+  if (
+    !eventType.startsWith("charge.dispute.") &&
+    !eventType.startsWith("refund.") &&
+    !eventType.startsWith("credit_note.") &&
+    currentSubscription.status !== "canceled" &&
+    shouldPreserveExistingPaidStop(existingEntitlement)
+  ) {
+    return { status: "complete", projection: "ignored" };
+  }
+
+  if (!projectionLease || !receiptLeaseIsActive()) {
+    return { status: "retryable", reason: "lease-conflict", errorClass: "lease-conflict" };
+  }
+
+  let subscriptionBindingId = binding.subscriptionBindingId;
+  const writeState = async (
+    state: NonNullable<ReturnType<typeof resolveProjectionState>>,
+    targetSubscription: CommentTranslatorStripeSubscriptionSnapshot,
+    targetProjectionLease: CommentTranslatorPaidEntitlementProjectionClaim
+  ) => {
+    if (!receiptLeaseIsActive()) throw new Error("receipt-lease-conflict");
+    const common = {
+      lifecycleId: binding.lifecycleId,
+      ownerUserId: binding.ownerUserId,
+      customerBindingId: binding.customerBindingId,
+      stripeSubscriptionId: targetSubscription.id,
+      stripeCustomerId: binding.stripeCustomerId,
+      productId,
+      priceId,
+      entitlementStatus: state.status,
+      currentPeriodStartIso: targetSubscription.currentPeriodStartIso,
+      currentPeriodEndIso: targetSubscription.currentPeriodEndIso,
+      cancelAtPeriodEnd: state.cancelAtPeriodEnd,
+      disputeState: state.disputeState,
+      lifecycleState: state.lifecycleState,
+      projectionLeaseToken: targetProjectionLease.projectionLeaseToken,
+      reconcileLeaseToken: null,
+      nowIso
+    } as const;
+    if (!subscriptionBindingId) {
+      subscriptionBindingId = await store.bindFirstSubscription(common);
+      return;
+    }
+    const { entitlementStatus, ...projectionCommon } = common;
+    await store.projectEntitlement({
+      ...projectionCommon,
+      subscriptionBindingId,
+      status: entitlementStatus,
+      subscriptionStatus: state.subscriptionStatus
+    });
+  };
+
+  let activeProjectionLease = projectionLease;
+  if (requiresTerminalCancellation && currentSubscription.status !== "canceled") {
+    const stoppedState = resolveProjectionState(eventType, currentSubscription, graph.dispute, adjustment, false);
+    if (!stoppedState) return { status: "rejected", reason: "unknown-event-type", errorClass: "unknown-event-type" };
+    try {
+      await writeState(stoppedState, currentSubscription, activeProjectionLease);
+    } catch (error) {
+      return error instanceof Error && error.message === "receipt-lease-conflict"
+        ? { status: "retryable", reason: "lease-conflict", errorClass: "lease-conflict" }
+        : { status: "retryable", reason: "database-transaction-failed", errorClass: "database-transaction-failed" };
+    }
+    if (!receiptLeaseIsActive()) {
+      return { status: "retryable", reason: "lease-conflict", errorClass: "lease-conflict" };
+    }
+    try {
+      currentSubscription = await subscriptionCancelAdapter.cancelSubscription({ subscriptionId: currentSubscription.id });
+    } catch {
+      return { status: "retryable", reason: "object-retrieval-failed", errorClass: "object-retrieval-failed" };
+    }
+    if (!receiptLeaseIsActive()) {
+      return { status: "retryable", reason: "lease-conflict", errorClass: "lease-conflict" };
+    }
+    if (
+      !currentSubscription.id ||
+      currentSubscription.status !== "canceled" ||
+      !currentSubscription.customerId ||
+      !currentSubscription.productId ||
+      !currentSubscription.priceId ||
+      !currentSubscription.currentPeriodStartIso ||
+      !currentSubscription.currentPeriodEndIso
+    ) {
+      return { status: "retryable", reason: "object-retrieval-failed", errorClass: "object-retrieval-failed" };
+    }
+    if (
+      currentSubscription.id !== subscription.id ||
+      currentSubscription.customerId !== binding.stripeCustomerId ||
+      currentSubscription.productId !== productId ||
+      currentSubscription.priceId !== priceId
+    ) {
+      return { status: "rejected", reason: "binding-conflict", errorClass: "binding-conflict" };
+    }
+    if (!receiptLeaseIsActive()) {
+      return { status: "retryable", reason: "lease-conflict", errorClass: "lease-conflict" };
+    }
+    try {
+      const nextLease = await store.claimEntitlementProjection({
+        ownerUserId: binding.ownerUserId,
+        lifecycleId: binding.lifecycleId,
+        nowIso
+      });
+      if (!nextLease) {
+        return { status: "retryable", reason: "lease-conflict", errorClass: "lease-conflict" };
+      }
+      activeProjectionLease = nextLease;
+    } catch {
+      return { status: "retryable", reason: "database-transaction-failed", errorClass: "database-transaction-failed" };
+    }
+  }
+
+  const state = resolveProjectionState(
+    eventType,
+    currentSubscription,
+    graph.dispute,
+    adjustment,
+    requiresTerminalCancellation
+  );
+  if (!state) return { status: "rejected", reason: "unknown-event-type", errorClass: "unknown-event-type" };
+  try {
+    await writeState(state, currentSubscription, activeProjectionLease);
+    return { status: "complete", projection: "applied" };
+  } catch (error) {
+    return error instanceof Error && error.message === "receipt-lease-conflict"
+      ? { status: "retryable", reason: "lease-conflict", errorClass: "lease-conflict" }
+      : { status: "retryable", reason: "database-transaction-failed", errorClass: "database-transaction-failed" };
+  }
+}
+
+function resolveProjectionState(
+  eventType: CommentTranslatorStripeWebhookEventType,
+  subscription: CommentTranslatorStripeSubscriptionSnapshot,
+  dispute: CommentTranslatorStripeDisputeSnapshot | undefined,
+  paymentAdjustment: CommentTranslatorStripePaymentAdjustmentSnapshot | undefined,
+  terminalCancellationConfirmed: boolean
+): {
+  status: CommentTranslatorPaidEntitlementStatus;
+  lifecycleState: string;
+  cancelAtPeriodEnd: boolean;
+  disputeState: CommentTranslatorPaidDisputeState;
+  subscriptionStatus: CommentTranslatorStripeSubscriptionStatus | null;
+} | null {
+  if (terminalCancellationConfirmed) {
+    return {
+      status: "canceled",
+      lifecycleState: "canceled",
+      cancelAtPeriodEnd: false,
+      disputeState: "none",
+      subscriptionStatus: "canceled"
+    };
+  }
+  if (eventType.startsWith("charge.dispute.")) {
+    if (!dispute) return null;
+    if (dispute.status === "won") {
+      const currentStatus = mapSubscriptionStatus(subscription.status);
+      const canRestore = currentStatus === "active" || currentStatus === "cancel_at_period_end";
+      return {
+        status: canRestore ? (subscription.cancelAtPeriodEnd ? "cancel_at_period_end" : "active") : currentStatus,
+        lifecycleState: canRestore ? (subscription.cancelAtPeriodEnd ? "cancel_at_period_end" : "active") : mapLifecycleState(subscription.status),
+        cancelAtPeriodEnd: canRestore && subscription.cancelAtPeriodEnd,
+        disputeState: canRestore ? "won" : "none",
+        subscriptionStatus: subscription.status === "trialing" || subscription.status === "paused" ? null : subscription.status
+      };
+    }
+    return {
+      status: "dispute",
+      lifecycleState: "dispute",
+      cancelAtPeriodEnd: false,
+      disputeState: dispute.status === "lost" ? "lost" : "investigating",
+      subscriptionStatus: null
+    };
+  }
+  if (
+    (eventType.startsWith("refund.") || eventType.startsWith("credit_note.")) &&
+    paymentAdjustment?.successful &&
+    paymentAdjustment.fullAmount &&
+    paymentAdjustment.targetsCurrentPeriod
+  ) {
+    return {
+      status: "refund_reconciliation",
+      lifecycleState: "refund_reconciliation",
+      cancelAtPeriodEnd: false,
+      disputeState: "none",
+      subscriptionStatus: null
+    };
+  }
+
+  const status = mapSubscriptionStatus(subscription.status);
+  return {
+    status: subscription.cancelAtPeriodEnd && status === "active" ? "cancel_at_period_end" : status,
+    lifecycleState: subscription.cancelAtPeriodEnd && status === "active" ? "cancel_at_period_end" : mapLifecycleState(subscription.status),
+    cancelAtPeriodEnd: subscription.cancelAtPeriodEnd && status === "active",
+    disputeState: "none",
+    subscriptionStatus: subscription.status === "trialing" || subscription.status === "paused" ? null : subscription.status
+  };
+}
+
+function shouldPreserveExistingPaidStop(
+  entitlement: Awaited<ReturnType<CommentTranslatorPaidEntitlementStore["readEntitlement"]>>
+): boolean {
+  if (!entitlement) return false;
+  if (entitlement.paymentFailureStartedAtIso !== null) {
+    return !["past_due", "unpaid"].includes(entitlement.status);
+  }
+  return (
+    [
+      "dispute",
+      "cancel_pending",
+      "refund_reconciliation",
+      "dispute_reconciliation",
+      "paid_unentitled_reconciliation"
+    ].includes(entitlement.status) ||
+    ["investigating", "lost", "reconciliation"].includes(entitlement.disputeState)
+  );
+}
+
+function mapSubscriptionStatus(status: CommentTranslatorStripeSubscriptionStatus): CommentTranslatorPaidEntitlementStatus {
+  if (status === "trialing") return "active";
+  if (status === "paused") return "incomplete";
+  return status;
+}
+
+function mapLifecycleState(status: CommentTranslatorStripeSubscriptionStatus): string {
+  if (status === "trialing") return "active";
+  if (status === "paused") return "incomplete";
+  return status;
 }
 
 export function createCommentTranslatorStripeAdapter(
@@ -484,12 +1437,372 @@ export function createCommentTranslatorStripeAdapter(
 export function createCommentTranslatorStripeWebhookVerifier(
   env: CommentTranslatorStripeEnv = process.env
 ): CommentTranslatorStripeWebhookVerifier {
-  void env;
   return {
-    async constructEvent() {
-      throw new Error("Paid Core v1 entitlement is unavailable until durable entitlement authority exists");
+    async constructEvent(payload, signature, webhookSecret) {
+      const secret = webhookSecret.trim() || env.STRIPE_WEBHOOK_SECRET?.trim();
+      if (!secret) throw new Error("Stripe webhook secret is unavailable.");
+      const timestamp = readStripeSignatureTimestamp(signature);
+      if (!timestamp || Math.abs(Date.now() - timestamp * 1000) > 300_000) {
+        throw new Error("Stripe webhook signature timestamp is invalid.");
+      }
+      const expected = createHmac("sha256", secret).update(`${timestamp}.${payload}`, "utf8").digest("hex");
+      const candidates = readStripeSignatureValues(signature);
+      if (!candidates.some((candidate) => safeEqualHex(candidate, expected))) {
+        throw new Error("Stripe webhook signature is invalid.");
+      }
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(payload);
+      } catch {
+        throw new Error("Stripe webhook payload is invalid.");
+      }
+      if (!parsed || typeof parsed !== "object") throw new Error("Stripe webhook payload is invalid.");
+      return parsed as CommentTranslatorStripeWebhookEvent;
     }
   };
+}
+
+export function createCommentTranslatorStripeCurrentObjectReader(
+  env: CommentTranslatorStripeEnv = process.env
+): CommentTranslatorStripeCurrentObjectReader {
+  return {
+    async retrieveCurrentObjectState({ eventType, objectId }) {
+      const secretKey = env.STRIPE_SECRET_KEY?.trim();
+      if (!secretKey) throw new Error("Stripe secret key is unavailable.");
+      const fetchObject = async <T>(path: string, query = ""): Promise<T> => {
+        const response = await fetch(`https://api.stripe.com${path}${query}`, {
+          headers: {
+            Authorization: `Bearer ${secretKey}`
+          },
+          cache: "no-store"
+        });
+        if (!response.ok) throw new Error("Stripe current object retrieval failed.");
+        const body: unknown = await response.json();
+        if (!body || typeof body !== "object") throw new Error("Stripe current object retrieval failed.");
+        return body as T;
+      };
+
+      if (eventType.startsWith("checkout.")) {
+        const session = await fetchObject<Record<string, unknown>>(
+          `/v1/checkout/sessions/${encodeURIComponent(objectId)}`,
+          "?expand[]=subscription&expand[]=invoice"
+        );
+        const subscription = await retrieveExpandedSubscription(fetchObject, session.subscription);
+        const invoice = await retrieveExpandedInvoice(fetchObject, session.invoice, subscription?.latest_invoice);
+        return {
+          checkoutSession: mapCheckoutSession(session),
+          subscription: subscription ? mapSubscription(subscription) : undefined,
+          invoice: invoice ? mapInvoice(invoice) : undefined
+        };
+      }
+
+      if (eventType.startsWith("customer.subscription.")) {
+        const subscription = await fetchObject<Record<string, unknown>>(
+          `/v1/subscriptions/${encodeURIComponent(objectId)}`,
+          "?expand[]=latest_invoice"
+        );
+        const mappedSubscription = mapSubscription(subscription);
+        const invoice = await retrieveExpandedInvoice(fetchObject, subscription.latest_invoice, mappedSubscription.latestInvoiceId);
+        return { subscription: mappedSubscription, invoice: invoice ? mapInvoice(invoice) : undefined };
+      }
+
+      if (eventType.startsWith("invoice.")) {
+        const invoice = await fetchObject<Record<string, unknown>>(
+          `/v1/invoices/${encodeURIComponent(objectId)}`
+        );
+        const subscription = await retrieveExpandedSubscription(fetchObject, readInvoiceSubscriptionReference(invoice));
+        return { invoice: mapInvoice(invoice), subscription: subscription ? mapSubscription(subscription) : undefined };
+      }
+
+      if (eventType.startsWith("charge.dispute.")) {
+        const dispute = await fetchObject<Record<string, unknown>>(
+          `/v1/disputes/${encodeURIComponent(objectId)}`,
+          "?expand[]=charge&expand[]=payment_intent"
+        );
+        const chargeReference = readStripeReference(dispute.charge);
+        const charge =
+          dispute.charge && typeof dispute.charge === "object" && !Array.isArray(dispute.charge)
+            ? (dispute.charge as Record<string, unknown>)
+            : chargeReference
+              ? await fetchObject<Record<string, unknown>>(`/v1/charges/${encodeURIComponent(chargeReference)}`, "?expand[]=payment_intent")
+              : null;
+        const paymentIntentReference = readStripeReference(dispute.payment_intent) ?? readStripeReference(charge?.payment_intent);
+        const paymentIntent =
+          dispute.payment_intent && typeof dispute.payment_intent === "object" && !Array.isArray(dispute.payment_intent)
+            ? (dispute.payment_intent as Record<string, unknown>)
+            : paymentIntentReference
+              ? await fetchObject<Record<string, unknown>>(`/v1/payment_intents/${encodeURIComponent(paymentIntentReference)}`)
+              : null;
+        const invoiceId =
+          readStripeReference(dispute.invoice) ??
+          readStripeReference(charge?.invoice) ??
+          readStripeReference(paymentIntent?.invoice);
+        const invoice = invoiceId ? await fetchObject<Record<string, unknown>>(`/v1/invoices/${encodeURIComponent(invoiceId)}`) : null;
+        const subscription = await retrieveExpandedSubscription(fetchObject, invoice ? readInvoiceSubscriptionReference(invoice) : null);
+        return {
+          dispute: mapDispute(dispute, charge, paymentIntent, invoice),
+          invoice: invoice ? mapInvoice(invoice) : undefined,
+          subscription: subscription ? mapSubscription(subscription) : undefined
+        };
+      }
+
+      const object = await fetchObject<Record<string, unknown>>(
+        `/${eventType.startsWith("refund.") ? "v1/refunds" : "v1/credit_notes"}/${encodeURIComponent(objectId)}`
+      );
+      let charge: Record<string, unknown> | null = null;
+      let paymentIntent: Record<string, unknown> | null = null;
+      if (eventType.startsWith("refund.")) {
+        const chargeId = readStripeReference(object.charge);
+        const paymentIntentId = readStripeReference(object.payment_intent);
+        charge = chargeId
+          ? await fetchObject<Record<string, unknown>>(`/v1/charges/${encodeURIComponent(chargeId)}`, "?expand[]=payment_intent")
+          : null;
+        const resolvedPaymentIntent = charge?.payment_intent ?? paymentIntentId;
+        const resolvedPaymentIntentId = readStripeReference(resolvedPaymentIntent);
+        paymentIntent =
+          resolvedPaymentIntent && typeof resolvedPaymentIntent === "object" && !Array.isArray(resolvedPaymentIntent)
+            ? (resolvedPaymentIntent as Record<string, unknown>)
+            : resolvedPaymentIntentId
+              ? await fetchObject<Record<string, unknown>>(`/v1/payment_intents/${encodeURIComponent(resolvedPaymentIntentId)}`)
+              : null;
+      }
+      const invoiceId =
+        readStripeReference(object.invoice) ??
+        readStripeReference(charge?.invoice) ??
+        readStripeReference(paymentIntent?.invoice);
+      const invoice = invoiceId ? await fetchObject<Record<string, unknown>>(`/v1/invoices/${encodeURIComponent(invoiceId)}`) : null;
+      const subscription = await retrieveExpandedSubscription(fetchObject, invoice ? readInvoiceSubscriptionReference(invoice) : null);
+      const mappedInvoice = invoice ? mapInvoice(invoice) : undefined;
+      const mappedSubscription = subscription ? mapSubscription(subscription) : undefined;
+      const chargeAmount = readPositiveInteger(charge?.amount);
+      const refundedAmount = readNonNegativeInteger(charge?.amount_refunded);
+      const invoiceAmountPaid = readPositiveInteger(invoice?.amount_paid);
+      const cumulativePostPaymentCreditAmount = readNonNegativeInteger(invoice?.post_payment_credit_notes_amount);
+      const rawStatus = object.status;
+      const status: CommentTranslatorStripePaymentAdjustmentSnapshot["status"] =
+        rawStatus === "succeeded" ||
+        rawStatus === "pending" ||
+        rawStatus === "failed" ||
+        rawStatus === "canceled" ||
+        rawStatus === "requires_action" ||
+        rawStatus === "issued" ||
+        rawStatus === "void"
+          ? rawStatus
+          : "unknown";
+      const creditType = object.type;
+      const successful = eventType.startsWith("refund.")
+        ? status === "succeeded"
+        : status === "issued" && (creditType === "post_payment" || creditType === "mixed");
+      const fullAmount = eventType.startsWith("refund.")
+        ? successful && chargeAmount !== null && refundedAmount !== null && refundedAmount >= chargeAmount
+        : successful &&
+          invoiceAmountPaid !== null &&
+          cumulativePostPaymentCreditAmount !== null &&
+          cumulativePostPaymentCreditAmount >= invoiceAmountPaid;
+      const targetsCurrentPeriod = Boolean(
+        mappedInvoice?.id &&
+        mappedSubscription?.latestInvoiceId &&
+        mappedSubscription.latestInvoiceId === mappedInvoice.id
+      );
+      return {
+        invoice: mappedInvoice,
+        subscription: mappedSubscription,
+        paymentAdjustment: {
+          status,
+          successful,
+          fullAmount,
+          targetsCurrentPeriod
+        }
+      };
+    }
+  };
+}
+
+export function createCommentTranslatorStripeSubscriptionCancelAdapter(
+  env: CommentTranslatorStripeEnv = process.env
+): CommentTranslatorStripeSubscriptionCancelAdapter {
+  return {
+    async cancelSubscription({ subscriptionId }) {
+      const secretKey = env.STRIPE_SECRET_KEY?.trim();
+      if (!secretKey) throw new Error("Stripe secret key is unavailable.");
+      const subscriptionPath = `/v1/subscriptions/${encodeURIComponent(subscriptionId)}`;
+      const response = await fetch(`https://api.stripe.com${subscriptionPath}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${secretKey}`
+        },
+        cache: "no-store"
+      });
+      if (!response.ok) throw new Error("Stripe subscription cancellation failed.");
+      const currentResponse = await fetch(`https://api.stripe.com${subscriptionPath}?expand[]=latest_invoice`, {
+        headers: {
+          Authorization: `Bearer ${secretKey}`
+        },
+        cache: "no-store"
+      });
+      if (!currentResponse.ok) throw new Error("Stripe canceled subscription refetch failed.");
+      const body: unknown = await currentResponse.json();
+      if (!body || typeof body !== "object" || Array.isArray(body)) {
+        throw new Error("Stripe subscription cancellation returned an invalid object.");
+      }
+      return mapSubscription(body as Record<string, unknown>);
+    }
+  };
+}
+
+function readStripeSignatureTimestamp(signature: string): number | null {
+  const match = /(?:^|,)t=(\d+)(?:,|$)/.exec(signature);
+  if (!match) return null;
+  const timestamp = Number(match[1]);
+  return Number.isSafeInteger(timestamp) ? timestamp : null;
+}
+
+function readStripeSignatureValues(signature: string): string[] {
+  return [...signature.matchAll(/(?:^|,)v1=([a-f0-9]{64})(?:,|$)/gi)].map((match) => match[1].toLowerCase());
+}
+
+function safeEqualHex(left: string, right: string): boolean {
+  try {
+    const leftBuffer = Buffer.from(left, "hex");
+    const rightBuffer = Buffer.from(right, "hex");
+    return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer);
+  } catch {
+    return false;
+  }
+}
+
+async function retrieveExpandedSubscription(
+  fetchObject: <T>(path: string, query?: string) => Promise<T>,
+  value: unknown
+): Promise<Record<string, unknown> | null> {
+  if (value && typeof value === "object" && !Array.isArray(value)) return value as Record<string, unknown>;
+  const id = readStripeReference(value);
+  return id ? fetchObject<Record<string, unknown>>(`/v1/subscriptions/${encodeURIComponent(id)}`, "?expand[]=latest_invoice") : null;
+}
+
+async function retrieveExpandedInvoice(
+  fetchObject: <T>(path: string, query?: string) => Promise<T>,
+  value: unknown,
+  fallbackId: string | null | undefined
+): Promise<Record<string, unknown> | null> {
+  if (value && typeof value === "object" && !Array.isArray(value)) return value as Record<string, unknown>;
+  const id = readStripeReference(value) ?? fallbackId;
+  return id ? fetchObject<Record<string, unknown>>(`/v1/invoices/${encodeURIComponent(id)}`) : null;
+}
+
+function mapCheckoutSession(value: Record<string, unknown>): CommentTranslatorStripeCheckoutSessionSnapshot {
+  const status = value.status;
+  const paymentStatus = value.payment_status;
+  return {
+    id: readObjectId(value) ?? "",
+    customerId: readStripeReference(value.customer),
+    subscriptionId: readStripeReference(value.subscription),
+    status: status === "complete" || status === "expired" || status === "open" ? status : "unknown",
+    expiresAtIso: readUnixSecondsIso(value.expires_at),
+    paymentStatus:
+      paymentStatus === "paid" || paymentStatus === "unpaid" || paymentStatus === "no_payment_required" ? paymentStatus : "unknown"
+  };
+}
+
+function mapSubscription(value: Record<string, unknown>): CommentTranslatorStripeSubscriptionSnapshot {
+  const status = value.status;
+  if (!isStripeSubscriptionStatus(status)) throw new Error("Stripe subscription status is invalid.");
+  const item = readFirstSubscriptionItem(value.items);
+  return {
+    id: readObjectId(value) ?? "",
+    customerId: readStripeReference(value.customer),
+    status,
+    productId: readStripeReference(item?.price && typeof item.price === "object" ? (item.price as Record<string, unknown>).product : null),
+    priceId: readStripeReference(item?.price),
+    currentPeriodStartIso: readUnixSecondsIso(value.current_period_start) ?? readUnixSecondsIso(item?.current_period_start),
+    currentPeriodEndIso: readUnixSecondsIso(value.current_period_end) ?? readUnixSecondsIso(item?.current_period_end),
+    cancelAtPeriodEnd: value.cancel_at_period_end === true,
+    latestInvoiceId: readStripeReference(value.latest_invoice)
+  };
+}
+
+function mapInvoice(value: Record<string, unknown>): CommentTranslatorStripeInvoiceSnapshot {
+  const status = value.status;
+  return {
+    id: readObjectId(value) ?? "",
+    customerId: readStripeReference(value.customer),
+    subscriptionId: readInvoiceSubscriptionReference(value),
+    status: status === "paid" || status === "open" || status === "uncollectible" || status === "void" || status === "draft" ? status : "unknown",
+    paid: value.paid === true || status === "paid",
+    paymentIntentId: readStripeReference(value.payment_intent),
+    chargeId: readStripeReference(value.charge),
+    productId: null,
+    priceId: null
+  };
+}
+
+function readInvoiceSubscriptionReference(value: Record<string, unknown>): string | null {
+  const legacyReference = readStripeReference(value.subscription);
+  const parent = value.parent && typeof value.parent === "object" && !Array.isArray(value.parent)
+    ? (value.parent as Record<string, unknown>)
+    : null;
+  const subscriptionDetails = parent?.subscription_details && typeof parent.subscription_details === "object" && !Array.isArray(parent.subscription_details)
+    ? (parent.subscription_details as Record<string, unknown>)
+    : null;
+  const parentReference = parent?.type === "subscription_details"
+    ? readStripeReference(subscriptionDetails?.subscription)
+    : null;
+  if (legacyReference && parentReference && legacyReference !== parentReference) return null;
+  return parentReference ?? legacyReference;
+}
+
+function mapDispute(
+  value: Record<string, unknown>,
+  resolvedCharge: Record<string, unknown> | null = null,
+  resolvedPaymentIntent: Record<string, unknown> | null = null,
+  resolvedInvoice: Record<string, unknown> | null = null
+): CommentTranslatorStripeDisputeSnapshot {
+  const status = value.status;
+  const charge = value.charge && typeof value.charge === "object" && !Array.isArray(value.charge)
+    ? (value.charge as Record<string, unknown>)
+    : resolvedCharge;
+  const paymentIntent = value.payment_intent && typeof value.payment_intent === "object" && !Array.isArray(value.payment_intent)
+    ? (value.payment_intent as Record<string, unknown>)
+    : resolvedPaymentIntent;
+  return {
+    id: readObjectId(value) ?? "",
+    status: status === "needs_response" || status === "under_review" || status === "won" || status === "lost" || status === "warning_closed" ? status : "unknown",
+    customerId: readStripeReference(value.customer) ?? readStripeReference(charge?.customer) ?? readStripeReference(paymentIntent?.customer),
+    subscriptionId:
+      readStripeReference(value.subscription) ??
+      readStripeReference(charge?.subscription) ??
+      readInvoiceSubscriptionReference(resolvedInvoice ?? {}),
+    invoiceId:
+      readStripeReference(value.invoice) ??
+      readStripeReference(charge?.invoice) ??
+      readStripeReference(paymentIntent?.invoice) ??
+      readObjectId(resolvedInvoice ?? {}),
+    paymentIntentId: readStripeReference(value.payment_intent) ?? readStripeReference(charge?.payment_intent),
+    chargeId: readStripeReference(value.charge)
+  };
+}
+
+function readFirstSubscriptionItem(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const data = (value as Record<string, unknown>).data;
+  return Array.isArray(data) && data[0] && typeof data[0] === "object" ? (data[0] as Record<string, unknown>) : null;
+}
+
+function readUnixSecondsIso(value: unknown): string | null {
+  if (!Number.isSafeInteger(value) || (value as number) <= 0) return null;
+  return new Date((value as number) * 1000).toISOString();
+}
+
+function readPositiveInteger(value: unknown): number | null {
+  return Number.isSafeInteger(value) && (value as number) > 0 ? (value as number) : null;
+}
+
+function readNonNegativeInteger(value: unknown): number | null {
+  return Number.isSafeInteger(value) && (value as number) >= 0 ? (value as number) : null;
+}
+
+function isStripeSubscriptionStatus(value: unknown): value is CommentTranslatorStripeSubscriptionStatus {
+  return ["active", "trialing", "past_due", "unpaid", "canceled", "incomplete", "incomplete_expired", "paused"].includes(value as string);
 }
 
 export function resetInMemoryCommentTranslatorBillingEntitlementsForTests() {

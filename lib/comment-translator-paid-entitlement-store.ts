@@ -74,6 +74,27 @@ export type CommentTranslatorPaidEntitlementProjectionClaim = {
   projectionLeaseUntilIso: string;
 };
 
+export type CommentTranslatorPaidStripeBinding = {
+  ownerUserId: string;
+  lifecycleId: string;
+  customerBindingId: string;
+  holdId: string | null;
+  stripeCustomerId: string;
+  stripeCheckoutSessionId: string | null;
+  stripeSubscriptionId: string | null;
+  subscriptionBindingId: string | null;
+  productId: string | null;
+  priceId: string | null;
+  lifecycleState: string;
+  stripeExpiresAtIso: string | null;
+  idempotencyKey: string | null;
+};
+
+export type CommentTranslatorPaidStripeBindingResolution =
+  | { status: "ready"; binding: CommentTranslatorPaidStripeBinding }
+  | { status: "missing" }
+  | { status: "conflict" };
+
 export type CommentTranslatorPaidEntitlementStore = {
   beginCheckout: (request: {
     ownerUserId: string;
@@ -114,6 +135,11 @@ export type CommentTranslatorPaidEntitlementStore = {
     nowIso: string;
   }) => Promise<boolean>;
   readEntitlement: (request: { ownerUserId: string; lifecycleId?: string }) => Promise<CommentTranslatorPaidEntitlement | null>;
+  resolveStripeBinding: (request: {
+    stripeCustomerId?: string | null;
+    stripeCheckoutSessionId?: string | null;
+    stripeSubscriptionId?: string | null;
+  }) => Promise<CommentTranslatorPaidStripeBindingResolution>;
   claimEntitlementProjection: (request: {
     ownerUserId: string;
     lifecycleId: string;
@@ -190,8 +216,15 @@ export type CommentTranslatorPaidEntitlementStoreFactoryResult =
 
 type SupabaseError = { code?: string; message?: string } | null;
 type SupabaseRpcResult = { data: unknown; error: SupabaseError };
+type SupabaseQuery = {
+  select: (columns: string) => SupabaseQuery;
+  eq: (column: string, value: unknown) => SupabaseQuery;
+  limit: (count: number) => SupabaseQuery;
+  maybeSingle: () => Promise<SupabaseRpcResult>;
+};
 type SupabaseClient = {
   rpc: (functionName: string, params: Record<string, unknown>) => Promise<SupabaseRpcResult>;
+  from?: (tableName: string) => SupabaseQuery;
 };
 
 export const commentTranslatorPaidEntitlementStoreContract = {
@@ -213,6 +246,7 @@ export const commentTranslatorPaidEntitlementStoreContract = {
   projectionClaimAuthority: "lifecycle-scoped-opaque-120-second-cas-before-stripe-refetch",
   projectionAtomicity: "lifecycle-entitlement-capacity-in-one-trusted-rpc",
   paymentFailureAtomicity: "current-subscription-status-and-entitlement-in-one-trusted-rpc",
+  stripeBindingLookupAuthority: "trusted-read-only-immutable-binding-resolution",
   genericSubscriptionVersion: "not-used",
   remoteSupabaseMigrationApply: "not-run-in-this-thread",
   remoteSupabaseMutation: "not-run-by-codex-in-this-thread",
@@ -342,6 +376,163 @@ export function createCommentTranslatorPaidEntitlementStore({
       if (rows.length === 0) return null;
       if (rows.length !== 1) throw new Error("Paid entitlement read was ambiguous.");
       return mapEntitlementRow(rows[0]);
+    },
+    async resolveStripeBinding(request) {
+      if (!supabase.from) throw new Error("Paid Stripe binding lookup is unavailable.");
+
+      const requestedCheckoutSessionId = normalizeOptionalReference(request.stripeCheckoutSessionId);
+      const requestedSubscriptionId = normalizeOptionalReference(request.stripeSubscriptionId);
+      const requestedCustomerId = normalizeOptionalReference(request.stripeCustomerId);
+      const sessionRow = requestedCheckoutSessionId
+        ? await readMaybeTrustedRow(
+            supabase,
+            "comment_translator_paid_checkout_session_bindings",
+            "stripe_checkout_session_id",
+            requestedCheckoutSessionId
+          )
+        : null;
+      const subscriptionRow = requestedSubscriptionId
+        ? await readMaybeTrustedRow(
+            supabase,
+            "comment_translator_paid_subscription_bindings",
+            "stripe_subscription_id",
+            requestedSubscriptionId
+          )
+        : null;
+
+      if (requestedCheckoutSessionId && !sessionRow) {
+        return { status: "missing" };
+      }
+
+      const directRows = [sessionRow, subscriptionRow].filter((row): row is Record<string, unknown> => row !== null);
+      if (
+        directRows.some(
+          (row) =>
+            requestedCustomerId !== null &&
+            readOptionalString(row, "stripe_customer_id") !== requestedCustomerId
+        )
+      ) {
+        return { status: "conflict" };
+      }
+
+      const stripeCustomerId =
+        requestedCustomerId ??
+        readOptionalString(sessionRow, "stripe_customer_id") ??
+        readOptionalString(subscriptionRow, "stripe_customer_id");
+      if (!stripeCustomerId) return { status: "missing" };
+
+      const customerRow = await readMaybeTrustedRow(
+        supabase,
+        "comment_translator_paid_customers",
+        "stripe_customer_id",
+        stripeCustomerId
+      );
+      if (!customerRow) return { status: "missing" };
+      const customerBindingId = readOptionalString(customerRow, "id");
+      const ownerUserId = readOptionalString(customerRow, "owner_user_id");
+      if (!customerBindingId || !ownerUserId || readOptionalString(customerRow, "stripe_customer_id") !== stripeCustomerId) {
+        return { status: "conflict" };
+      }
+
+      const directLifecycleIds = new Set(
+        directRows.map((row) => readOptionalString(row, "lifecycle_id")).filter((value): value is string => value !== null)
+      );
+      if (directLifecycleIds.size > 1) return { status: "conflict" };
+      const directLifecycleId = [...directLifecycleIds][0] ?? null;
+      const lifecycleRow = directLifecycleId
+        ? await readMaybeTrustedRowById(supabase, "comment_translator_paid_billing_lifecycles", directLifecycleId)
+        : await readMaybeTrustedRow(
+            supabase,
+            "comment_translator_paid_billing_lifecycles",
+            "customer_binding_id",
+            customerBindingId,
+            { extraColumn: "is_terminal", extraValue: false }
+          );
+      if (!lifecycleRow) return { status: "missing" };
+      const lifecycleId = readOptionalString(lifecycleRow, "id");
+      const lifecycleOwnerUserId = readOptionalString(lifecycleRow, "owner_user_id");
+      const lifecycleCustomerBindingId = readOptionalString(lifecycleRow, "customer_binding_id");
+      const lifecycleState = readOptionalString(lifecycleRow, "lifecycle_state");
+      if (
+        !lifecycleId ||
+        !lifecycleOwnerUserId ||
+        !lifecycleCustomerBindingId ||
+        !lifecycleState ||
+        lifecycleOwnerUserId !== ownerUserId ||
+        lifecycleCustomerBindingId !== customerBindingId ||
+        (sessionRow && readOptionalString(sessionRow, "owner_user_id") !== ownerUserId) ||
+        (subscriptionRow && readOptionalString(subscriptionRow, "owner_user_id") !== ownerUserId)
+      ) {
+        return { status: "conflict" };
+      }
+
+      const holdRow = await readMaybeTrustedRow(
+        supabase,
+        "comment_translator_paid_checkout_holds",
+        "lifecycle_id",
+        lifecycleId
+      );
+      const resolvedSessionRow =
+        sessionRow ??
+        (await readMaybeTrustedRow(
+          supabase,
+          "comment_translator_paid_checkout_session_bindings",
+          "lifecycle_id",
+          lifecycleId
+        ));
+      const resolvedSubscriptionRow =
+        subscriptionRow ??
+        (await readMaybeTrustedRow(
+          supabase,
+          "comment_translator_paid_subscription_bindings",
+          "lifecycle_id",
+          lifecycleId
+        ));
+      if (requestedSubscriptionId && !subscriptionRow) {
+        if (!resolvedSessionRow) return { status: "missing" };
+        const existingSubscriptionId = readOptionalString(resolvedSubscriptionRow, "stripe_subscription_id");
+        if (existingSubscriptionId && existingSubscriptionId !== requestedSubscriptionId) {
+          return { status: "conflict" };
+        }
+      }
+      if (
+        readOptionalString(resolvedSessionRow, "stripe_customer_id") !== null &&
+        readOptionalString(resolvedSessionRow, "stripe_customer_id") !== stripeCustomerId
+      ) {
+        return { status: "conflict" };
+      }
+      if (
+        requestedCheckoutSessionId &&
+        readOptionalString(resolvedSessionRow, "stripe_checkout_session_id") !== requestedCheckoutSessionId
+      ) {
+        return { status: "conflict" };
+      }
+      if (
+        requestedSubscriptionId &&
+        subscriptionRow &&
+        readOptionalString(resolvedSubscriptionRow, "stripe_subscription_id") !== requestedSubscriptionId
+      ) {
+        return { status: "conflict" };
+      }
+
+      return {
+        status: "ready",
+        binding: {
+          ownerUserId,
+          lifecycleId,
+          customerBindingId,
+          holdId: readOptionalString(holdRow, "id"),
+          stripeCustomerId,
+          stripeCheckoutSessionId: readOptionalString(resolvedSessionRow, "stripe_checkout_session_id"),
+          stripeSubscriptionId: readOptionalString(resolvedSubscriptionRow, "stripe_subscription_id"),
+          subscriptionBindingId: readOptionalString(resolvedSubscriptionRow, "id"),
+          productId: readOptionalString(resolvedSubscriptionRow, "product_id"),
+          priceId: readOptionalString(resolvedSubscriptionRow, "price_id"),
+          lifecycleState,
+          stripeExpiresAtIso: readOptionalString(resolvedSessionRow, "stripe_expires_at"),
+          idempotencyKey: readOptionalString(holdRow, "idempotency_key")
+        }
+      };
     },
     async claimEntitlementProjection(request) {
       const result = await supabase.rpc("ct_paid_claim_entitlement_projection", {
@@ -478,6 +669,42 @@ function readRpcUuid(result: SupabaseRpcResult, message: string): string {
   const id = row.id ?? row.binding_id ?? row.entitlement_id;
   if (typeof id !== "string" || id.length === 0) throw new Error(message);
   return id;
+}
+
+async function readMaybeTrustedRow(
+  supabase: SupabaseClient,
+  tableName: string,
+  column: string,
+  value: string,
+  extra?: { extraColumn: string; extraValue: unknown }
+): Promise<Record<string, unknown> | null> {
+  if (!supabase.from) throw new Error("Paid Stripe binding lookup is unavailable.");
+  let query = supabase.from(tableName).select("*").eq(column, value);
+  if (extra) query = query.eq(extra.extraColumn, extra.extraValue);
+  const result = await query.limit(2).maybeSingle();
+  if (result.error) throw new Error("Paid Stripe binding lookup failed.");
+  if (result.data === null || result.data === undefined) return null;
+  return asRecord(result.data);
+}
+
+async function readMaybeTrustedRowById(
+  supabase: SupabaseClient,
+  tableName: string,
+  id: string
+): Promise<Record<string, unknown> | null> {
+  return readMaybeTrustedRow(supabase, tableName, "id", id);
+}
+
+function normalizeOptionalReference(value: string | null | undefined): string | null {
+  if (typeof value !== "string") return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
+function readOptionalString(row: Record<string, unknown> | null, key: string): string | null {
+  if (!row) return null;
+  const value = row[key];
+  return typeof value === "string" && value.length > 0 ? value : null;
 }
 
 function firstRpcRow(value: unknown): Record<string, unknown> {

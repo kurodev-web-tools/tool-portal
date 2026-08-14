@@ -1,4 +1,5 @@
 import type { commentTranslatorUiCopy } from "@/lib/comment-translator";
+import type { CommentTranslatorPaidUsageDisplay } from "@/lib/comment-translator-free-beta-usage-display";
 
 export type CommentTranslatorUiCopy = (typeof commentTranslatorUiCopy)[keyof typeof commentTranslatorUiCopy];
 export type SelectOption = {
@@ -43,6 +44,7 @@ export type OperatorSessionUsageDisplay = {
   };
   readonly noProviderCallWhenOverLimit: true;
   readonly clientReadableDetail: "sanitized-usage-only";
+  readonly paid?: CommentTranslatorPaidUsageDisplay;
 };
 
 export type CommentTranslatorDockInitialSessionState = {

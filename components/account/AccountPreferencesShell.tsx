@@ -42,8 +42,8 @@ const accountCopy = {
       "reconnect-required": "再接続が必要",
       error: "確認エラー",
       free: "Free",
-      "paid-active": "Paid Core v1 unavailable",
-      "paid-inactive": "Paid Core v1 unavailable"
+      "paid-active": "Kuro Live Comment Translator Plus",
+      "paid-inactive": "Kuro Live Comment Translator Plus（停止中）"
     },
     accountUnavailable: "確認できません",
     settingsEyebrow: "Settings",
@@ -79,8 +79,8 @@ const accountCopy = {
     },
     openPlan: "現在のアカウント",
     planName: "アカウント状況",
-    planBody: "表示言語、テーマ、タイムゾーンを別ブラウザやスマホでも引き継げます。Comment Translator のYouTube連携管理と Free / Paid Core v1 unavailable の状態は専用ページで確認できます。",
-    planItems: ["表示設定を保存", "Free / Paid Core v1 unavailable", "YouTube連携管理"],
+    planBody: "表示言語、テーマ、タイムゾーンを別ブラウザやスマホでも引き継げます。Comment Translator のYouTube連携管理と Kuro Live Comment Translator Plus の状態は専用ページで確認できます。",
+    planItems: ["表示設定を保存", "Kuro Live Comment Translator Plus", "YouTube連携管理"],
     preferencesTitle: "表示設定",
     preferencesBody: "表示言語、テーマ、タイムゾーンはこのブラウザに保存されます。ログイン中は、同じ内容をアカウントにも明示的に保存でき、別ブラウザやスマホでも引き継げます。",
     language: "表示言語",
@@ -92,7 +92,7 @@ const accountCopy = {
     providerTitle: "YouTube連携",
     providerBody: "Comment Translator のYouTube連携状態は専用ページで確認できます。接続だけではバックグラウンド監視、ポーリング、AI翻訳、クォータ消費は開始しません。",
     boundaryItems: ["Free は常に利用可能", "YouTube連携管理", "tokenやprovider target値は画面に表示しない", "既存ローカルデータは自動移行しない"],
-    manageBilling: "FreeとPaid Core v1状態を開く",
+    manageBilling: "FreeとPlusの状態を開く",
     manageIntegrations: "連携設定を開く",
     backToTools: "ツール一覧へ戻る",
     openSecurity: "パスワード変更"
@@ -116,8 +116,8 @@ const accountCopy = {
       "reconnect-required": "Reconnect required",
       error: "Check failed",
       free: "Free",
-      "paid-active": "Paid Core v1 unavailable",
-      "paid-inactive": "Paid Core v1 unavailable"
+      "paid-active": "Kuro Live Comment Translator Plus",
+      "paid-inactive": "Kuro Live Comment Translator Plus (stopped)"
     },
     accountUnavailable: "Unavailable",
     settingsEyebrow: "Settings",
@@ -153,8 +153,8 @@ const accountCopy = {
     },
     openPlan: "Current account",
     planName: "Account status",
-    planBody: "Language, theme, and time zone can be carried across browsers and phones. Comment Translator YouTube integration management and Free / Paid Core v1 unavailable status are available on dedicated pages.",
-    planItems: ["Save display settings", "Free / Paid Core v1 unavailable", "YouTube integration"],
+    planBody: "Language, theme, and time zone can be carried across browsers and phones. Comment Translator YouTube integration management and Kuro Live Comment Translator Plus status are available on dedicated pages.",
+    planItems: ["Save display settings", "Kuro Live Comment Translator Plus", "YouTube integration"],
     preferencesTitle: "Display settings",
     preferencesBody: "Language, theme, and time zone are saved in this browser. Signed-in users can explicitly save the same values to the account and carry them across browsers and phones.",
     language: "Language",
@@ -166,7 +166,7 @@ const accountCopy = {
     providerTitle: "YouTube integration",
     providerBody: "YouTube integration state for Comment Translator is available on its own page. Connecting alone will not start background monitoring, polling, AI translation, or quota use.",
     boundaryItems: ["Free remains available", "YouTube integration management", "No token or provider target values in UI", "No automatic migration of local data"],
-    manageBilling: "Open Free and Paid Core v1 status",
+    manageBilling: "Open Free and Plus status",
     manageIntegrations: "Open integrations",
     backToTools: "Back to tools",
     openSecurity: "Change password"
@@ -300,7 +300,7 @@ export function AccountPreferencesShell({
     {
       label: copy.currentPlan,
       value: billingStatusLabel,
-      status: billing.billingState === "paid-active" ? copy.status["paid-active"] : copy.status.free
+      status: billingStatusLabel
     }
   ];
   const settingsItems = [
@@ -311,8 +311,8 @@ export function AccountPreferencesShell({
       href: "/account/integrations"
     },
     {
-      title: "Free / Paid Core v1 unavailable",
-      body: locale === "ja" ? "Free の利用上限と、Paid Core v1 の明示的な利用不可状態を確認します。" : "Review Free limits and the explicit Paid Core v1 unavailable state.",
+      title: "Kuro Live Comment Translator Plus",
+      body: locale === "ja" ? "Freeの利用上限と、Plusのserver-derivedな契約・安全状態を確認します。" : "Review Free limits and the Plus server-derived contract and safety state.",
       action: copy.manageBilling,
       href: "/account/billing"
     },

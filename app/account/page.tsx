@@ -4,9 +4,9 @@ import { saveLocaleThemePreferenceAction, signOutAction } from "@/app/account/ac
 import { AccountPreferencesShell } from "@/components/account/AccountPreferencesShell";
 import { PortalShell } from "@/components/portal/PortalShell";
 import {
-  createCommentTranslatorBillingBrowserSafeViewModel,
-  readCommentTranslatorBillingEntitlementSnapshot
+  createCommentTranslatorBillingPageBrowserSafeViewModel
 } from "@/lib/comment-translator-billing-runtime";
+import { readCommentTranslatorPaidRegionFromCloudflareContext } from "@/lib/comment-translator-paid-region-gate";
 import { readYouTubeAccountIntegrationStatusViewModel } from "@/lib/comment-translator-youtube-account-integration-status";
 import { authorizeYouTubeOAuthCredentialStatusCaller } from "@/lib/comment-translator-youtube-credential-status-boundary";
 import { portalMetadata } from "@/lib/portal-metadata";
@@ -41,18 +41,16 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
     redirect("/account/security?auth=recovery-pending");
   }
 
+  const callerAuthorization = authorizeYouTubeOAuthCredentialStatusCaller({
+    callerUserId: accountSession.authStatus === "signed-in" ? accountSession.user?.id ?? null : null,
+    authUnavailable: accountSession.authStatus === "unavailable"
+  });
   const [youtubeIntegration, billing] = await Promise.all([
     readYouTubeAccountIntegrationStatusViewModel({ accountSession }),
-    Promise.resolve().then(() => {
-      const callerAuthorization = authorizeYouTubeOAuthCredentialStatusCaller({
-        callerUserId: accountSession.authStatus === "signed-in" ? accountSession.user?.id ?? null : null,
-        authUnavailable: accountSession.authStatus === "unavailable"
-      });
-      const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
-      return createCommentTranslatorBillingBrowserSafeViewModel({
-        snapshot: billingSnapshot,
-        env: process.env
-      });
+    createCommentTranslatorBillingPageBrowserSafeViewModel({
+      callerAuthorization,
+      env: process.env,
+      regionGate: readCommentTranslatorPaidRegionFromCloudflareContext()
     })
   ]);
   const browserSafeAccountSession = createBrowserSafeAccountSessionViewModel(accountSession);

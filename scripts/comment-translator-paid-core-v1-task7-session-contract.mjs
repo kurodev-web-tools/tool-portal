@@ -730,7 +730,8 @@ for (const stopReason of [
   assert.ok(JSON.parse(sources.copyEn).operatorSession.stopReasons[stopReason], `EN copy includes ${stopReason}`);
 }
 assert.match(sources.dockModel, /nextResetAtIso\?:\s*string\s*\|\s*null/, "dock state accepts the browser-safe UTC reset");
-assert.match(sources.dock, /timeZone:\s*["']UTC["']/, "dock formats the reset timestamp in UTC");
+assert.match(sources.dock, /browserTimeZone/, "dock passes the user's browser timezone to reset formatting");
+assert.match(sources.dock, /formatCommentTranslatorResetAt/, "dock formats the reset timestamp through the shared formatter");
 assert.match(sources.sessionPanel, /sessionNextResetLabel/, "stopped Session panel displays the sanitized reset label");
 assert.match(sources.paidMigration, /billing_period_available\s+boolean/i, "runtime authority RPC returns billing-period availability");
 assert.match(sources.paidMigration, /period_usage\.period_state\s+is\s+null[\s\S]{0,120}period_usage\.period_state\s*=\s*'open'/i, "missing or open billing periods are available");
@@ -1210,7 +1211,8 @@ const paidAuthority = {
     sessionReservedPolls: 720,
     utcDay: "2026-08-14",
     nextResetAtIso: "2026-08-15T00:00:00.000Z",
-    activeAutoPollAllowed: true
+    activeAutoPollAllowed: true,
+    authorityReadable: true
   }
 };
 
@@ -1335,7 +1337,17 @@ const fixtureAuthorityDependencies = {
   },
   paidUsageStore: {
     status: "ready",
-    store: { readRuntimeAuthority: async () => paidAuthority.costAuthority }
+    store: {
+      readRuntimeAuthority: async () => paidAuthority.costAuthority,
+      readPollBudget: async () => ({
+        utcDay: "2026-08-14",
+        dailyBudget: null,
+        reservedPolls: 0,
+        sessionReservedPolls: 0,
+        sessionReservationPresent: false,
+        nextResetAtIso: "2026-08-15T00:00:00.000Z"
+      })
+    }
   },
   providerCircuitAuthority: {
     read: async (provider) => {
@@ -1345,6 +1357,47 @@ const fixtureAuthorityDependencies = {
   },
   providerRuntime: fixtureProviderRuntime
 };
+const emptyPollBucketPaidStartAuthority = await entitlement.readCommentTranslatorPaidSessionAuthority({
+  callerAuthorization: { status: "authorized", ownerUserId: "fixture-owner" },
+  nowMs: Date.parse("2026-08-14T10:00:00.000Z"),
+  pollBudgetSessionReferenceId: "ctpps_fixture_pre_session",
+  allowEmptyPollBudgetInitialization: true,
+  dependencies: fixtureAuthorityDependencies
+});
+assert.equal(emptyPollBucketPaidStartAuthority.status, "ready", "new Paid Start can reach the atomic reservation when the UTC poll bucket is absent");
+assert.equal(emptyPollBucketPaidStartAuthority.pollBudget.dailyBudget, 90_000, "new Paid Start uses the trusted configured poll budget for an empty bucket");
+assert.equal(emptyPollBucketPaidStartAuthority.pollBudget.authorityReadable, true, "empty-bucket initialization remains server-derived and readable");
+const emptyPollBucketWithoutInitialization = await entitlement.readCommentTranslatorPaidSessionAuthority({
+  callerAuthorization: { status: "authorized", ownerUserId: "fixture-owner" },
+  nowMs: Date.parse("2026-08-14T10:00:00.000Z"),
+  pollBudgetSessionReferenceId: "cts_existing_without_reservation",
+  dependencies: fixtureAuthorityDependencies
+});
+assert.equal(emptyPollBucketWithoutInitialization.status, "fail-closed", "an existing session cannot treat an absent poll bucket as usable authority");
+const malformedEmptyPollBucketAuthority = await entitlement.readCommentTranslatorPaidSessionAuthority({
+  callerAuthorization: { status: "authorized", ownerUserId: "fixture-owner" },
+  nowMs: Date.parse("2026-08-14T10:00:00.000Z"),
+  pollBudgetSessionReferenceId: "ctpps_fixture_malformed",
+  allowEmptyPollBudgetInitialization: true,
+  dependencies: {
+    ...fixtureAuthorityDependencies,
+    paidUsageStore: {
+      status: "ready",
+      store: {
+        readRuntimeAuthority: async () => paidAuthority.costAuthority,
+        readPollBudget: async () => ({
+          utcDay: "2026-08-14",
+          dailyBudget: null,
+          reservedPolls: 1,
+          sessionReservedPolls: 0,
+          sessionReservationPresent: false,
+          nextResetAtIso: "2026-08-15T00:00:00.000Z"
+        })
+      }
+    }
+  }
+});
+assert.equal(malformedEmptyPollBucketAuthority.status, "fail-closed", "an absent bucket with reservations remains fail-closed");
 const noEntitlementPaidBoundaryEvents = [];
 const noEntitlementAuthorityFailure = await entitlement.readCommentTranslatorPaidSessionAuthority({
   callerAuthorization: { status: "authorized", ownerUserId: "fixture-owner" },
@@ -1387,6 +1440,7 @@ const noActiveFreeBaseline = entitlement.resolveCommentTranslatorPublicEntitleme
 assert.equal(noActiveFreeBaseline.status, "ready", "no-active authority failure without an entitlement preserves the Free baseline");
 assert.equal(noActiveFreeBaseline.plan, "free");
 assert.equal(noActiveFreeBaseline.entitlementSource, "free-public-beta-baseline");
+authorityCircuitReads.length = 0;
 const authorityRead = await entitlement.readCommentTranslatorPaidSessionAuthority({
   callerAuthorization: { status: "authorized", ownerUserId: "fixture-owner" },
   nowMs: Date.parse("2026-08-14T10:00:00.000Z"),

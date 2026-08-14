@@ -21,6 +21,7 @@ import {
   readCommentTranslatorPrivateLaunchAccess
 } from "@/lib/comment-translator-private-launch-access-gate";
 import {
+  createCommentTranslatorPaidPreSessionPollBudgetReference,
   createCommentTranslatorPaidSessionPlanEntitlement,
   createCommentTranslatorPaidSessionStopPlanEntitlement,
   readCommentTranslatorPaidSessionAuthority,
@@ -111,7 +112,13 @@ async function readCommentTranslatorSessionActionResult({
   const activePaidSession = activeSession?.plan === "paid";
   const paidSessionAuthorityRead = intent === "stop" || (activeSession !== null && !activePaidSession)
     ? { status: "not-entitled" as const, entitlement: null }
-    : await readCommentTranslatorPaidSessionAuthority({ callerAuthorization, nowMs });
+    : await readCommentTranslatorPaidSessionAuthority({
+        callerAuthorization,
+        nowMs,
+        pollBudgetSessionReferenceId: activeSession?.sessionReferenceId
+          ?? createCommentTranslatorPaidPreSessionPollBudgetReference(callerAuthorization),
+        allowEmptyPollBudgetInitialization: activeSession === null
+      });
   if (intent !== "stop" && activePaidSession && activeSession && paidSessionAuthorityRead.status !== "ready") {
     return stopCommentTranslatorActivePaidSessionForUnreadableAuthority({
       callerAuthorization,

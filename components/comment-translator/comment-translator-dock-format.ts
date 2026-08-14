@@ -13,6 +13,24 @@ export function formatDuration(seconds: number): string {
   return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
 }
 
+export function formatCommentTranslatorResetAt(value: string | null | undefined, locale: "ja" | "en", timeZone: string): string | null {
+  if (!value) return null;
+  const resetAtMs = Date.parse(value);
+  if (!Number.isFinite(resetAtMs)) return null;
+  const formatted = new Intl.DateTimeFormat(locale === "ja" ? "ja-JP" : "en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+    timeZone,
+    timeZoneName: "short"
+  }).format(new Date(resetAtMs));
+  return locale === "ja" ? `リセット予定: ${formatted}` : `Reset at: ${formatted}`;
+}
+
 export function statusClassName(status: CommentTranslatorComment["status"]): string {
   if (status === "translated") return "border-emerald-200 bg-emerald-50 text-emerald-700";
   if (status === "skipped") return "border-amber-200 bg-amber-50 text-amber-700";

@@ -49,6 +49,20 @@ export type CommentTranslatorSessionUsageSnapshot = {
   readonly paidBillingPeriodCharacterLimit?: number;
   readonly paidIndividualCostAvailable?: boolean;
   readonly paidGlobalCostAvailable?: boolean;
+  readonly paidBillingPeriodNextResetAtIso?: string | null;
+  readonly paidProviderRoute?: "openai" | "azure-direct" | "blocked" | "unknown";
+  readonly paidProviderFallbackActive?: boolean;
+  readonly paidProviderRecoveryExpected?: boolean;
+  readonly paidSafetyStopReason?:
+    | "character-quota"
+    | "individual-safety-cap"
+    | "global-safety-cap"
+    | "infra-safety-stop"
+    | "poll-budget-stop"
+    | null;
+  readonly paidSafetyStopNextResetAtIso?: string | null;
+  readonly paidPollBudgetStatus?: "allowed" | "stop-checkout" | "stop-active-auto-poll" | "unknown";
+  readonly paidPollBudgetNextResetAtIso?: string | null;
   readonly planEntitlement?: CommentTranslatorSessionPlanEntitlement;
 };
 

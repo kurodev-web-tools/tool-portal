@@ -151,6 +151,26 @@
       "over-limit": "上限到達",
       "unavailable": "確認不可"
     },
+    "paidUsage": {
+      "usageTitle": "Plus利用量",
+      "billingPeriod": "契約更新周期の入力文字数",
+      "remaining": "文字残り",
+      "nextReset": "次回reset",
+      "resetUnavailable": "server側で確認待ち",
+      "maximumNotGuarantee": "最大500,000文字。保証文字数ではありません。個人・全体の安全上限で先に停止する場合があります。",
+      "azureFallback": "AI自然翻訳が一時利用できないため、標準翻訳へ切り替えています。",
+      "azureRecovery": "OpenAI通常経路が同一sessionで復帰すると、この表示はserver-derivedなrouteに合わせて消えます。",
+      "safetyStop": "安全上限によりprovider callを停止しました。tokenや原価は表示しません。",
+      "safetyStops": {
+        "character-quota": "契約更新周期の入力文字上限に到達しました。",
+        "individual-safety-cap": "個別の安全上限に到達しました。",
+        "global-safety-cap": "全体の安全上限に到達しました。",
+        "infra-safety-stop": "運用安全状態を確認できないため停止しました。",
+        "poll-budget-stop": "poll budgetの安全上限に到達しました。"
+      },
+      "pollBudgetStop": "poll budgetのserver-derivedな停止状態です。",
+      "serverDerived": "表示はserver-ownedの利用量・provider route・reset情報だけを使用します。"
+    },
     "states": {
       "not-started": "未開始",
       "active": "実行中",
@@ -419,11 +439,11 @@
   "safety": [
     "YouTube API取得とAI翻訳は、ログインユーザーがStartしたセッション内だけで実行します。",
     "YouTube接続だけでは、バックグラウンド監視、ポーリング、翻訳、クォータ消費は開始しません。",
-    "FreeはAzure Translator、ProはOpenAI miniを優先し、復帰可能なprovider errorだけAzure fallbackを使います。",
+    "FreeはAzure Translator、Kuro Live Comment Translator PlusはOpenAI miniを優先し、復帰可能なprovider errorだけAzure fallbackを使います。",
     "DeepL、Gemini、Workers AIは初期公開では比較用です。",
     "初期Free枠は1日最大30分、1セッション最大30分、1 active session、30翻訳メッセージ/分、月20,000入力文字です。",
     "機密の接続値、配信ターゲット値、認可関連の内部値は画面やブラウザ保存領域に出しません。",
     "raw text loggingは標準で無効です。診断は短期間かつsanitizedに限定します。",
-    "有料プランは準備中で、Stripe連携と上限緩和は後続タスクで扱います。"
+    "Kuro Live Comment Translator Plusはserver-derivedな契約・利用量・安全状態を確認できた場合だけ利用できます。"
   ]
 }

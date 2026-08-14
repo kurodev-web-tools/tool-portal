@@ -151,6 +151,26 @@
       "over-limit": "Over limit",
       "unavailable": "Unavailable"
     },
+    "paidUsage": {
+      "usageTitle": "Plus usage",
+      "billingPeriod": "Input characters in the renewal period",
+      "remaining": "characters remaining",
+      "nextReset": "Next reset",
+      "resetUnavailable": "Waiting for server confirmation",
+      "maximumNotGuarantee": "Maximum 500,000 characters; this is not a guaranteed allowance. Individual and global safety caps may stop earlier.",
+      "azureFallback": "AI natural translation is temporarily unavailable, so standard translation is being used.",
+      "azureRecovery": "This banner clears when the OpenAI normal route recovers in the same session, based on the server-derived route.",
+      "safetyStop": "Provider calls stopped at a safety limit. Tokens and costs are never displayed.",
+      "safetyStops": {
+        "character-quota": "The contract-renewal input character limit was reached.",
+        "individual-safety-cap": "The individual safety limit was reached.",
+        "global-safety-cap": "The global safety limit was reached.",
+        "infra-safety-stop": "The session stopped because operational safety state was unreadable.",
+        "poll-budget-stop": "The poll-budget safety limit was reached."
+      },
+      "pollBudgetStop": "A server-derived poll-budget stop is active.",
+      "serverDerived": "Only server-owned usage, provider-route, and reset metadata is displayed."
+    },
     "states": {
       "not-started": "Not started",
       "active": "Active",
@@ -419,11 +439,11 @@
   "safety": [
     "YouTube API reads and AI translation run only inside a session explicitly started by the signed-in user.",
     "Connecting YouTube alone does not start background monitoring, polling, translation, or quota use.",
-    "Free uses Azure Translator. Pro uses an OpenAI mini model first, with Azure fallback only for recoverable provider errors.",
+    "Free uses Azure Translator. Kuro Live Comment Translator Plus uses the OpenAI mini model first, with Azure fallback only for recoverable provider errors.",
     "DeepL, Gemini, and Workers AI are comparison-only for the initial launch.",
     "Initial Free limits are up to 30 minutes per day, up to 30 minutes per session, 1 active session, 30 translated messages per minute, and 20,000 provider-input/source characters per month.",
     "Sensitive connection values, stream target values, and internal authorization details are not shown or stored in the browser.",
     "Raw text logging is off by default. Diagnostics stay short-lived and sanitized.",
-    "Paid plans are planned; Stripe integration and higher limits are handled in later tasks."
+    "Kuro Live Comment Translator Plus is available only when server-derived contract, usage, and safety state can be confirmed."
   ]
 }

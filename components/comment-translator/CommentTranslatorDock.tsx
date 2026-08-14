@@ -5,6 +5,7 @@ import { CommentTranslatorFeedPanel } from "./CommentTranslatorFeedPanel";
 import { CommentTranslatorSessionPanel } from "./CommentTranslatorSessionPanel";
 import { CommentTranslatorSettingsPanel } from "./CommentTranslatorSettingsPanel";
 import { CommentTranslatorUsageSidebar } from "./CommentTranslatorUsageSidebar";
+import { formatCommentTranslatorResetAt } from "./comment-translator-dock-format";
 import { useLocale } from "@/components/portal/LocaleProvider";
 import { filterCommentTranslatorComments } from "@/lib/comment-translator";
 import {
@@ -129,7 +130,7 @@ export function CommentTranslatorDock({
     ? copy.operatorSession.recommendedActions[sessionReasonUx.recommendedAction]
     : null;
   const sessionNextResetLabel = sessionState.status === "stopped"
-    ? formatSessionNextResetAtUtc(sessionState.nextResetAtIso, locale)
+    ? formatCommentTranslatorResetAt(sessionState.nextResetAtIso, locale, browserTimeZone)
     : null;
   const sessionNextAction = copy.operatorSession.nextActions[sessionState.nextAction];
   const realCommentsFeedUnavailableMessage = realCommentsFeed.unavailableReason
@@ -240,6 +241,9 @@ export function CommentTranslatorDock({
           />
           {!commentOnly ? (
             <CommentTranslatorUsageSidebar
+              locale={locale}
+              timeZone={browserTimeZone}
+              plan={sessionState.plan}
               copy={copy}
               usageDisplay={usageDisplay}
               usagePolicyLabel={usagePolicyLabel}
@@ -254,21 +258,4 @@ export function CommentTranslatorDock({
       </div>
     </div>
   );
-}
-
-function formatSessionNextResetAtUtc(value: string | null | undefined, locale: "ja" | "en"): string | null {
-  if (!value) return null;
-  const resetAtMs = Date.parse(value);
-  if (!Number.isFinite(resetAtMs)) return null;
-  const formatted = new Intl.DateTimeFormat(locale === "ja" ? "ja-JP" : "en-US", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-    timeZone: "UTC"
-  }).format(new Date(resetAtMs));
-  return locale === "ja" ? `リセット予定: ${formatted} UTC` : `Reset at: ${formatted} UTC`;
 }

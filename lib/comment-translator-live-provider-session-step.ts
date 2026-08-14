@@ -29,7 +29,10 @@ import {
   type CommentTranslatorRealCommentsFeedState
 } from "./comment-translator-real-comments-feed-shared";
 import type { CommentTranslatorRealCommentsFeedDurableStoreFactoryResult } from "./comment-translator-real-comments-feed-durable-store";
-import { createTrustedCommentTranslatorRealCommentsFeedDurableStore } from "./comment-translator-real-comments-feed-durable-store";
+import {
+  createCommentTranslatorSafeFeedConvergenceKey,
+  createTrustedCommentTranslatorRealCommentsFeedDurableStore
+} from "./comment-translator-real-comments-feed-durable-store";
 import { createQuotaBudgetStopHandoff } from "./comment-translator-bounded-live-chat-polling-result-projection";
 import {
   resolveCommentTranslatorPaidPollBudgetGate,
@@ -253,7 +256,7 @@ export async function runCommentTranslatorLiveProviderSessionStep({
       });
       const existingFeed = peekCommentTranslatorRealCommentsFeedForActiveSession({ callerAuthorization, activeSession })
         ?? createUnavailableCommentTranslatorRealCommentsFeedState({ reason: "live-provider-polling-not-approved" });
-      const mergedFeed = mergePaidFeedRows(existingFeed, feedBase);
+      const mergedFeed = mergeCommentTranslatorPaidFeedRows(existingFeed, feedBase);
       const paidProviderStopReason = mapPaidProviderStopReason(execution.paidProviderStopReason);
       const paidProviderNextResetAtIso = paidProviderStopReason
         ? resolveCommentTranslatorPaidStopNextResetAtIso({
@@ -415,22 +418,48 @@ function paidAuthorityFeedStore(
   return durableFeedStore ?? createTrustedCommentTranslatorRealCommentsFeedDurableStore();
 }
 
-function mergePaidFeedRows(
+export function mergeCommentTranslatorPaidFeedRows(
   existingFeed: CommentTranslatorRealCommentsFeedState,
   currentFeed: Awaited<ReturnType<typeof createCommentTranslatorRealCommentsFeedStateFromNormalizedMessages>>
 ) {
   if (existingFeed.status !== "ready") return currentFeed;
-  const rows = new Map(existingFeed.rows.map((row) => [row.messageReferenceId, row]));
+  const rows = [...existingFeed.rows];
   for (const row of currentFeed.rows) {
-    const existingRow = rows.get(row.messageReferenceId);
+    let existingIndex = rows.findIndex((candidate) => candidate.messageReferenceId === row.messageReferenceId);
+    if (existingIndex < 0) {
+      const exactSafeKey = createCommentTranslatorSafeFeedConvergenceKey(row);
+      existingIndex = rows.findIndex((candidate) => (
+        candidate.messageReferenceId.startsWith("restored-safe-row-")
+        && createCommentTranslatorSafeFeedConvergenceKey(candidate) === exactSafeKey
+      ));
+    }
+    const existingRow = existingIndex >= 0 ? rows[existingIndex] : undefined;
     const existingSafeTranslationMustSurviveReplay =
       existingRow?.translationStatus === "translated-f10"
       && typeof existingRow.translatedText === "string"
       && existingRow.translatedText.length > 0
       && row.translationStatus !== "translated-f10";
-    if (!existingSafeTranslationMustSurviveReplay) rows.set(row.messageReferenceId, row);
+    const publishedAtIso = existingRow && !isDeterministicRestoredPublishedAt(existingRow)
+      ? existingRow.publishedAtIso
+      : row.publishedAtIso;
+    const replacement = existingSafeTranslationMustSurviveReplay
+      ? {
+          ...row,
+          publishedAtIso,
+          translatedText: existingRow.translatedText,
+          translationStatus: existingRow.translationStatus,
+          translationCacheStatus: existingRow.translationCacheStatus
+        }
+      : { ...row, publishedAtIso };
+    if (existingIndex >= 0) rows[existingIndex] = replacement;
+    else rows.push(replacement);
   }
-  return { ...currentFeed, rows: Array.from(rows.values()) };
+  return { ...currentFeed, rows };
+}
+
+function isDeterministicRestoredPublishedAt(row: CommentTranslatorRealCommentsFeedState["rows"][number]) {
+  return row.messageReferenceId.startsWith("restored-safe-row-")
+    && row.publishedAtIso.startsWith("1970-01-01T00:00:00.");
 }
 
 function createPaidTranslationDiagnostics(

@@ -6,6 +6,7 @@ export type CommentTranslatorPaidReconcileClaim = {
   lifecycleId: string;
   reconcileLeaseToken: string;
   reconcileLeaseUntilIso: string;
+  workKind?: CommentTranslatorPaidReconcilerWorkKind | null;
 };
 
 export type CommentTranslatorPaidReconcilerErrorClass =
@@ -15,6 +16,17 @@ export type CommentTranslatorPaidReconcilerErrorClass =
   | "binding-not-ready"
   | "capacity-reconciliation-failed"
   | "period-reconciliation-failed";
+
+export type CommentTranslatorPaidReconcilerWorkKind =
+  | "checkout-expiry"
+  | "unbound-checkout-session"
+  | "payment-failure-seven-day"
+  | "cancel-pending"
+  | "refund-reconciliation"
+  | "dispute-reconciliation"
+  | "paid-unentitled-reconciliation"
+  | "billing-period-rollover"
+  | "utc-month-cost-rollover";
 
 export type CommentTranslatorPaidCircuitProvider = "openai" | "azure_fallback";
 export type CommentTranslatorPaidCircuitState = "closed" | "degraded" | "half_open" | "disabled";
@@ -29,6 +41,11 @@ export type CommentTranslatorPaidCircuitErrorClass =
 
 export type CommentTranslatorPaidReconcilerStore = {
   claimDue: (request: { nowIso: string; limit?: number }) => Promise<readonly CommentTranslatorPaidReconcileClaim[]>;
+  assertLeaseActive: (request: {
+    lifecycleId: string;
+    reconcileLeaseToken: string;
+    workKind: CommentTranslatorPaidReconcilerWorkKind | null;
+  }) => Promise<boolean>;
   finalize: (request: {
     lifecycleId: string;
     reconcileLeaseToken: string;
@@ -41,6 +58,13 @@ export type CommentTranslatorPaidReconcilerStore = {
     errorClass: CommentTranslatorPaidReconcilerErrorClass;
     nowIso: string;
   }) => Promise<number>;
+  markFailureSafe: (request: {
+    lifecycleId: string;
+    reconcileLeaseToken: string;
+    workKind: CommentTranslatorPaidReconcilerWorkKind | null;
+    errorClass: CommentTranslatorPaidReconcilerErrorClass;
+    nowIso: string;
+  }) => Promise<boolean>;
   recordProviderCircuitFailure: (request: {
     provider: CommentTranslatorPaidCircuitProvider;
     errorClass: CommentTranslatorPaidCircuitErrorClass;
@@ -91,6 +115,7 @@ export const commentTranslatorPaidReconcilerStoreContract = {
   backoffSeconds: [60, 300, 900, 3600, 21600] as const,
   claimAuthority: "atomic-skip-locked-rpc",
   finalizeAuthority: "opaque-token-cas-rpc",
+  failureSafetyAuthority: "ct_paid_mark_reconcile_failure_safe",
   staleTokenPolicy: "reject",
   verificationBoundary: "source-and-fixture-only-no-real-postgresql-rls-or-concurrency-run",
   remoteSupabaseMigrationApply: "not-run-in-this-thread",
@@ -99,8 +124,10 @@ export const commentTranslatorPaidReconcilerStoreContract = {
   failClosedFallback: "billing-reconciliation-unavailable",
   trustedRpcNames: [
     "ct_paid_claim_reconciler",
+    "ct_paid_assert_reconcile_lease_active",
     "ct_paid_finalize_reconciler",
     "ct_paid_retry_reconciler",
+    "ct_paid_mark_reconcile_failure_safe",
     "ct_paid_record_provider_circuit_failure",
     "ct_paid_record_provider_circuit_failure_owned",
     "ct_paid_probe_provider_circuit",
@@ -157,6 +184,14 @@ export function createCommentTranslatorPaidReconcilerStore({
       if (!Array.isArray(result.data)) throw new Error("Paid reconciler claim response is invalid.");
       return result.data.map(mapClaim);
     },
+    async assertLeaseActive(request) {
+      const result = await supabase.rpc("ct_paid_assert_reconcile_lease_active", {
+        p_lifecycle_id: request.lifecycleId,
+        p_reconcile_lease_token: request.reconcileLeaseToken,
+        p_work_kind: request.workKind
+      });
+      return readLeaseAssertionBoolean(result, "Paid reconciler lease assertion failed.");
+    },
     async finalize(request) {
       const result = await supabase.rpc("ct_paid_finalize_reconciler", {
         p_lifecycle_id: request.lifecycleId,
@@ -174,6 +209,18 @@ export function createCommentTranslatorPaidReconcilerStore({
         p_now: request.nowIso
       });
       return readInteger(result, "Paid reconciler retry scheduling failed.");
+    },
+    async markFailureSafe(request) {
+      const workKind = normalizeFailureSafetyWorkKind(request.workKind);
+      const errorClass = normalizeReconcilerErrorClass(request.errorClass);
+      const result = await supabase.rpc("ct_paid_mark_reconcile_failure_safe", {
+        p_lifecycle_id: request.lifecycleId,
+        p_reconcile_lease_token: request.reconcileLeaseToken,
+        p_work_kind: workKind,
+        p_error_class: errorClass,
+        p_now: request.nowIso
+      });
+      return readBoolean(result, "Paid reconciler failure safety transition failed.");
     },
     async recordProviderCircuitFailure(request) {
       const result = await supabase.rpc("ct_paid_record_provider_circuit_failure", {
@@ -218,18 +265,68 @@ function normalizeClaimLimit(requestedLimit: number | undefined): number {
   return Math.min(Math.max(limit, 0), commentTranslatorPaidReconcilerStoreContract.maxBatchSize);
 }
 
+const failureSafetyWorkKinds: readonly CommentTranslatorPaidReconcilerWorkKind[] = [
+  "checkout-expiry",
+  "unbound-checkout-session",
+  "payment-failure-seven-day",
+  "cancel-pending",
+  "refund-reconciliation",
+  "dispute-reconciliation",
+  "paid-unentitled-reconciliation",
+  "billing-period-rollover",
+  "utc-month-cost-rollover"
+];
+
+const reconcilerErrorClasses: readonly CommentTranslatorPaidReconcilerErrorClass[] = [
+  "object-retrieval-failed",
+  "database-transaction-failed",
+  "external-action-failed",
+  "binding-not-ready",
+  "capacity-reconciliation-failed",
+  "period-reconciliation-failed"
+];
+
+function normalizeFailureSafetyWorkKind(value: unknown): CommentTranslatorPaidReconcilerWorkKind | null {
+  if (value === null) return null;
+  if (typeof value === "string" && (failureSafetyWorkKinds as readonly string[]).includes(value)) {
+    return value as CommentTranslatorPaidReconcilerWorkKind;
+  }
+  throw new Error("Paid reconciler failure-safety work kind is invalid.");
+}
+
+function normalizeReconcilerErrorClass(value: unknown): CommentTranslatorPaidReconcilerErrorClass {
+  if (typeof value === "string" && (reconcilerErrorClasses as readonly string[]).includes(value)) {
+    return value as CommentTranslatorPaidReconcilerErrorClass;
+  }
+  throw new Error("Paid reconciler error class is invalid.");
+}
+
 function mapClaim(value: unknown): CommentTranslatorPaidReconcileClaim {
   const row = asRecord(value);
   return {
     lifecycleId: readString(row, "lifecycle_id"),
     reconcileLeaseToken: readString(row, "reconcile_lease_token"),
-    reconcileLeaseUntilIso: readString(row, "reconcile_lease_until")
+    reconcileLeaseUntilIso: readString(row, "reconcile_lease_until"),
+    workKind: readOptionalWorkKind(row.work_kind)
   };
+}
+
+function readOptionalWorkKind(value: unknown): CommentTranslatorPaidReconcilerWorkKind | null {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string" && (failureSafetyWorkKinds as readonly string[]).includes(value)) {
+    return value as CommentTranslatorPaidReconcilerWorkKind;
+  }
+  throw new Error("Trusted Paid reconciler claim work kind is invalid.");
 }
 
 function readBoolean(result: SupabaseRpcResult, message: string): boolean {
   if (result.error || result.data !== true) throw new Error(message);
   return true;
+}
+
+function readLeaseAssertionBoolean(result: SupabaseRpcResult, message: string): boolean {
+  if (result.error || typeof result.data !== "boolean") throw new Error(message);
+  return result.data;
 }
 
 function readInteger(result: SupabaseRpcResult, message: string): number {

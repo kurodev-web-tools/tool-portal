@@ -54,7 +54,7 @@ export async function clearCommentTranslatorPreviewFeedAction({
 export async function restoreCommentTranslatorPersistedRealCommentsFeedAction(
   options: CommentTranslatorFeedLanguageOptions = {}
 ) {
-  void options;
+  const targetLanguage = resolvePresentationTargetLanguage(options.targetLanguage);
   const callerAuthorization = await readCommentTranslatorActionCallerAuthorization();
   const durableActiveSessionRead = await readCommentTranslatorDurableActiveSessionOrFailClosed({
     callerAuthorization,
@@ -66,8 +66,13 @@ export async function restoreCommentTranslatorPersistedRealCommentsFeedAction(
   return readCommentTranslatorRealCommentsFeedForActiveSession({
     callerAuthorization,
     activeSession: durableActiveSessionRead.activeSession,
+    targetLanguage,
     durableFeedStore: createTrustedCommentTranslatorRealCommentsFeedDurableStore()
   });
+}
+
+function resolvePresentationTargetLanguage(value: CommentTranslatorTargetLanguageId | undefined): CommentTranslatorTargetLanguageId {
+  return value === "en" ? "en" : "ja";
 }
 
 export async function getCommentTranslatorRealCommentsFeedAction(options: CommentTranslatorFeedLanguageOptions = {}) {

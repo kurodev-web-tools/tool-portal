@@ -6,6 +6,7 @@ import {
   createUnavailableCommentTranslatorRealCommentsFeedState
 } from "./comment-translator-real-comments-ui-wiring";
 import type { CommentTranslatorRealCommentsFeedState } from "./comment-translator-real-comments-feed-shared";
+import type { CommentTranslatorTargetLanguageId } from "./comment-translator";
 import {
   createTrustedCommentTranslatorRealCommentsFeedDurableStore,
   createFailedCommentTranslatorRealCommentsFeedDurablePersistDiagnostics,
@@ -128,10 +129,12 @@ export function persistCommentTranslatorRealCommentsFeedForActiveSession({
 export async function readCommentTranslatorRealCommentsFeedForActiveSession({
   callerAuthorization,
   activeSession,
+  targetLanguage,
   durableFeedStore
 }: {
   callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
   activeSession: CommentTranslatorActiveSessionRecord | null;
+  targetLanguage: CommentTranslatorTargetLanguageId;
   durableFeedStore?: CommentTranslatorRealCommentsFeedDurableStoreFactoryResult;
 }): Promise<CommentTranslatorRealCommentsFeedState> {
   if (callerAuthorization.status !== "authorized" || !activeSession) {
@@ -145,6 +148,7 @@ export async function readCommentTranslatorRealCommentsFeedForActiveSession({
     const durableFeed = await readDurableSafeFeed({
       callerAuthorization,
       activeSession,
+      targetLanguage,
       durableFeedStore
     });
     if (durableFeed) {
@@ -265,10 +269,12 @@ async function persistDurableSafeFeed({
 async function readDurableSafeFeed({
   callerAuthorization,
   activeSession,
+  targetLanguage,
   durableFeedStore
 }: {
   callerAuthorization: Extract<YouTubeOAuthCredentialStatusCallerAuthorization, { status: "authorized" }>;
   activeSession: CommentTranslatorActiveSessionRecord;
+  targetLanguage: CommentTranslatorTargetLanguageId;
   durableFeedStore?: CommentTranslatorRealCommentsFeedDurableStoreFactoryResult;
 }) {
   const durableStore = durableFeedStore ?? createTrustedCommentTranslatorRealCommentsFeedDurableStore();
@@ -279,7 +285,8 @@ async function readDurableSafeFeed({
   try {
     return await durableStore.store.readSafeFeed({
       ownerUserId: callerAuthorization.ownerUserId,
-      sessionReferenceId: activeSession.sessionReferenceId
+      sessionReferenceId: activeSession.sessionReferenceId,
+      targetLanguage
     });
   } catch {
     return null;

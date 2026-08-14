@@ -17,6 +17,10 @@ export {
   persistInMemoryCommentTranslatorActiveSession,
   readInMemoryCommentTranslatorActiveSession
 } from "./comment-translator-session-memory-store";
+export {
+  resolveCommentTranslatorAutoPollingDisposition,
+  type CommentTranslatorAutoPollingDispositionInput
+} from "./comment-translator-session-auto-polling-disposition";
 
 export const commentTranslatorSessionRuntimeContract = {
   implementationStage: "server-owned-session-start-stop-contract",
@@ -29,7 +33,7 @@ export const commentTranslatorSessionRuntimeContract = {
   ],
   providerApiUsageBeforeExplicitStart: "not-started-before-explicit-start",
   aiUsageBeforeExplicitStart: "not-started-before-explicit-start",
-  liveProviderExecution: "not-run-in-f7",
+  liveProviderExecution: "allowed-after-explicit-start",
   providerTargetLookup: "start-only-server-boundary-f6",
   liveChatTargetReadiness: "server-only-start-input",
   providerSignal: "sanitized-terminal-signal-only",

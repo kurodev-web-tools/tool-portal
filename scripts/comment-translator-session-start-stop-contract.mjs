@@ -300,8 +300,8 @@ assert.equal(active.status, "active", "explicit Start creates an active server-o
 assert.equal(active.sessionReferenceId, "cts_session_reference_001", "active session returns only an opaque session reference");
 assert.equal(active.remainingSessionSeconds, 1_800, "active session starts with the free per-session cap");
 assert.equal(active.remainingDailySeconds, 1_800, "active session starts with the free daily cap");
-assert.equal(active.providerApiUsage, "allowed-after-explicit-start-not-run-in-task-7");
-assert.equal(active.aiTranslationUsage, "allowed-after-explicit-start-not-run-in-task-7");
+assert.equal(active.providerApiUsage, "allowed-after-explicit-start");
+assert.equal(active.aiTranslationUsage, "allowed-after-explicit-start");
 assert.doesNotMatch(
   JSON.stringify(active),
   /server-only-owner-reference|providerChannelId|liveChatId|access_token|refresh_token|authorization_code|Authorization|service_role|ciphertext|decrypt|provider target/i,

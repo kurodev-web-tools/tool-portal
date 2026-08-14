@@ -4,17 +4,19 @@ import { operatorSessionTone, toneClassName } from "./comment-translator-dock-fo
 import type { CommentTranslatorUiCopy, OperatorSessionState, OperatorSessionUsageDisplay } from "./comment-translator-dock-model";
 import { shouldShowCommentTranslatorStartReadiness } from "./comment-translator-session-panel-visibility";
 
-export function CommentTranslatorSessionPanel({ locale, copy, operatorFlowStatus, sessionState, usageDisplay, credentialStatusLabel, sessionReasonGroup, sessionStopReason, sessionReasonMessage, sessionRecommendedAction, usagePolicyStopReason, isSessionPending, startBlockedByCredentialStatus, startBlockedByUsagePolicy, startBlockedByRateLimit, showReconnectGuidance, onStart, onStop, onRefresh }: {
+export function CommentTranslatorSessionPanel({ locale, copy, operatorFlowStatus, sessionState, sessionError, usageDisplay, credentialStatusLabel, sessionReasonGroup, sessionStopReason, sessionReasonMessage, sessionRecommendedAction, sessionNextResetLabel, usagePolicyStopReason, isSessionPending, startBlockedByCredentialStatus, startBlockedByUsagePolicy, startBlockedByRateLimit, showReconnectGuidance, onStart, onStop, onRefresh }: {
   readonly locale: "ja" | "en";
   readonly copy: CommentTranslatorUiCopy;
   readonly operatorFlowStatus: "ready" | "standby" | "blocked";
   readonly sessionState: OperatorSessionState;
+  readonly sessionError: string | null;
   readonly usageDisplay: OperatorSessionUsageDisplay;
   readonly credentialStatusLabel: string;
   readonly sessionReasonGroup: string | null;
   readonly sessionStopReason: string;
   readonly sessionReasonMessage: string;
   readonly sessionRecommendedAction: string | null;
+  readonly sessionNextResetLabel: string | null;
   readonly usagePolicyStopReason: string | null;
   readonly isSessionPending: boolean;
   readonly startBlockedByCredentialStatus: boolean;
@@ -34,7 +36,8 @@ export function CommentTranslatorSessionPanel({ locale, copy, operatorFlowStatus
         <span className={["rounded-base border px-2 py-1 text-xs font-black", toneClassName(operatorSessionTone(sessionState.status))].join(" ")}>{isSessionPending ? copy.operatorSession.pending : copy.operatorSession.states[sessionState.status]}</span>
       </div>
       <p className="mt-2 break-words text-sm font-semibold leading-6 text-muted">{copy.operatorSession.helper}</p>
-      {sessionState.status === "stopped" && sessionState.reasonUx ? <div data-comment-translator-start-stop-reason-ux="sanitized-reason-only" className="mt-3 rounded-base border border-border bg-background/70 p-3 text-xs"><div className="flex flex-wrap items-center justify-between gap-2"><span className="font-black text-foreground">{sessionReasonGroup}</span><span className="rounded-base border border-border bg-surface px-2 py-1 font-black text-muted">{sessionStopReason}</span></div><p className="mt-2 break-words font-semibold leading-5 text-muted">{sessionReasonMessage}</p>{sessionRecommendedAction ? <p className="mt-1 break-words font-black leading-5 text-primary-strong">{sessionRecommendedAction}</p> : null}</div> : null}
+      {sessionError ? <p data-comment-translator-session-error="sanitized-action-failure-only" className="mt-3 break-words rounded-base border border-amber-200 bg-amber-50 p-3 text-xs font-black leading-5 text-amber-800">{sessionError}</p> : null}
+      {sessionState.status === "stopped" && sessionState.reasonUx ? <div data-comment-translator-start-stop-reason-ux="sanitized-reason-only" className="mt-3 rounded-base border border-border bg-background/70 p-3 text-xs"><div className="flex flex-wrap items-center justify-between gap-2"><span className="font-black text-foreground">{sessionReasonGroup}</span><span className="rounded-base border border-border bg-surface px-2 py-1 font-black text-muted">{sessionStopReason}</span></div><p className="mt-2 break-words font-semibold leading-5 text-muted">{sessionReasonMessage}</p>{sessionRecommendedAction ? <p className="mt-1 break-words font-black leading-5 text-primary-strong">{sessionRecommendedAction}</p> : null}{sessionNextResetLabel ? <p data-comment-translator-next-reset="sanitized-utc-label-only" className="mt-2 break-words font-black leading-5 text-foreground">{sessionNextResetLabel}</p> : null}</div> : null}
       <div data-comment-translator-session-actions="start-stop-refresh" className="mt-4 grid gap-2">
         <button type="button" onClick={onStart} disabled={isSessionPending || sessionState.status === "active" || startBlockedByCredentialStatus || startBlockedByUsagePolicy || startBlockedByRateLimit} className="min-h-12 rounded-base border border-primary bg-primary px-4 py-3 text-base font-black text-white transition hover:bg-primary-strong disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70">{isSessionPending ? copy.operatorSession.pending : copy.actions.startSession}</button>
         <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1"><button type="button" onClick={onStop} disabled={isSessionPending || sessionState.status !== "active"} className="min-h-10 rounded-base border border-border bg-surface px-3 py-2 text-sm font-black text-muted transition hover:border-primary/60 hover:bg-primary-soft/40 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70">{copy.actions.stopSession}</button><button type="button" onClick={onRefresh} disabled={isSessionPending} className="min-h-10 rounded-base border border-border bg-surface px-3 py-2 text-sm font-black text-muted transition hover:border-primary/60 hover:bg-primary-soft/40 disabled:cursor-not-allowed disabled:border-border disabled:bg-surface-muted disabled:text-muted/70">{copy.actions.refreshSession}</button></div>

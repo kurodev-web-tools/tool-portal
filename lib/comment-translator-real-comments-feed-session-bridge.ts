@@ -63,6 +63,18 @@ export const commentTranslatorRealCommentsFeedSessionBridgeContract = {
 
 const feedByAuthorizedOwner = new Map<string, CommentTranslatorRealCommentsFeedSessionBridgeRecord>();
 
+export function peekCommentTranslatorRealCommentsFeedForActiveSession({
+  callerAuthorization,
+  activeSession
+}: {
+  callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
+  activeSession: CommentTranslatorActiveSessionRecord | null;
+}): CommentTranslatorRealCommentsFeedState | null {
+  if (callerAuthorization.status !== "authorized" || !activeSession) return null;
+  const record = feedByAuthorizedOwner.get(callerAuthorization.ownerUserId);
+  return record?.sessionReferenceId === activeSession.sessionReferenceId ? record.feed : null;
+}
+
 export function persistCommentTranslatorRealCommentsFeedForActiveSession({
   callerAuthorization,
   sessionReferenceId,
@@ -128,8 +140,8 @@ export async function readCommentTranslatorRealCommentsFeedForActiveSession({
     });
   }
 
-  const record = feedByAuthorizedOwner.get(callerAuthorization.ownerUserId);
-  if (!record || record.sessionReferenceId !== activeSession.sessionReferenceId) {
+  const inMemoryFeed = peekCommentTranslatorRealCommentsFeedForActiveSession({ callerAuthorization, activeSession });
+  if (!inMemoryFeed) {
     const durableFeed = await readDurableSafeFeed({
       callerAuthorization,
       activeSession,
@@ -150,8 +162,7 @@ export async function readCommentTranslatorRealCommentsFeedForActiveSession({
     });
   }
 
-  void record.recordedAtMs;
-  return record.feed;
+  return inMemoryFeed;
 }
 
 export async function clearCommentTranslatorRealCommentsFeedForSession({

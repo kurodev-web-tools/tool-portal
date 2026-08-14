@@ -19,7 +19,9 @@ export function assessPollingTerminalStopReason({
   const activeElapsedMs = usage.currentSessionElapsedMs ?? Math.max(0, nowMs - activeSession.startedAtMs);
   if (nowMs - activeSession.lastHeartbeatAtMs > 45_000) return "missing-heartbeat";
   if (activeElapsedMs >= sessionLimitMs) return "session-time-limit";
-  if (usage.dailyUsedMs > 0 && usage.dailyUsedMs + Math.max(0, activeElapsedMs) >= dailyLimitMs) return "daily-time-limit";
+  if (usage.planEntitlement?.plan !== "paid" && usage.dailyUsedMs > 0 && usage.dailyUsedMs + Math.max(0, activeElapsedMs) >= dailyLimitMs) {
+    return "daily-time-limit";
+  }
   const monthlyLimit = usage.planEntitlement?.monthlyProviderInputCharacterLimit ?? 20_000;
   if ((usage.monthlyProviderInputCharacterEstimate ?? 0) >= monthlyLimit) return "ai-budget-stop";
   if (!usage.providerBudgetAvailable) return "provider-quota-stop";

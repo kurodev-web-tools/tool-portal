@@ -170,14 +170,17 @@ export function resolvePollingSuccessStatus(input: { readonly acceptedCount: num
 }
 
 export function createQuotaBudgetStopHandoff(
-  stopReason: CommentTranslatorPollingQuotaStopReason
+  stopReason: CommentTranslatorPollingQuotaStopReason,
+  nextResetAtIso?: string
 ): Extract<CommentTranslatorBoundedLiveChatPollingTickResult, { readonly status: "skipped-quota-budget-stop-handoff" }> {
+  const resetProjection = nextResetAtIso === undefined ? {} : { nextResetAtIso };
   return {
     status: "skipped-quota-budget-stop-handoff",
     providerAccess: "not-run",
     providerSignal: stopReason,
     stopReason,
     reasonUxCode: resolvePollingQuotaStopReasonUxCode(stopReason),
-    publicLaunchAllowed: false
+    publicLaunchAllowed: false,
+    ...resetProjection
   };
 }

@@ -53,6 +53,7 @@ export type CommentTranslatorDockInitialSessionState = {
   readonly remainingSessionSeconds: number;
   readonly remainingDailySeconds: number;
   readonly stopReason: OperatorSessionStopReason | null;
+  readonly nextResetAtIso?: string | null;
   readonly reasonUx: {
     readonly code: OperatorSessionReasonCode;
     readonly group: OperatorSessionReasonGroup;

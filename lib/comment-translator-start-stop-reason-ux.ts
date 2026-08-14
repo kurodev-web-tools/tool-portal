@@ -151,7 +151,11 @@ export function resolveCommentTranslatorStopReasonUxCode({
     stopReason === "translated-message-cap" ||
     stopReason === "provider-quota-stop" ||
     stopReason === "global-budget-stop" ||
-    stopReason === "ai-budget-stop"
+    stopReason === "ai-budget-stop" ||
+    stopReason === "paid-authority-unreadable" ||
+    stopReason === "paid-character-quota-stop" ||
+    stopReason === "paid-individual-cost-stop" ||
+    stopReason === "paid-global-cost-stop"
   ) {
     return "quota-or-budget-stop";
   }

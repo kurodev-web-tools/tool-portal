@@ -6,10 +6,16 @@ import {
   stopCommentTranslatorSession,
   type CommentTranslatorActiveSessionRecord,
   type CommentTranslatorSessionBrowserSafeState,
+  type CommentTranslatorPreAuthorityFailClosedResult,
   type CommentTranslatorSessionPlan,
   type CommentTranslatorSessionStopReason
 } from "./comment-translator-session-runtime";
+import {
+  commentTranslatorPaidPlanEntitlementReferenceId,
+  createCommentTranslatorPaidSessionStopPlanEntitlement
+} from "./comment-translator-public-entitlement-baseline";
 import { type YouTubeOAuthCredentialStatusCallerAuthorization } from "./comment-translator-youtube-credential-status-boundary";
+import type { CommentTranslatorAbuseRateLimitBlockedResult } from "./comment-translator-abuse-rate-limit-runtime";
 
 export type CommentTranslatorDurableSessionRow = {
   id: string;
@@ -57,8 +63,88 @@ export type CommentTranslatorDurableSessionPersistResult =
     }
   | Extract<CommentTranslatorDurableSessionRead, { status: "fail-closed" }>;
 
+export type CommentTranslatorPaidStopPersistenceFailure = {
+  readonly status: "fail-closed";
+  readonly plan: "paid";
+  readonly stopReason: CommentTranslatorSessionStopReason;
+  readonly durableStop: "unconfirmed";
+  readonly clientReadableDetail: "sanitized-stop-reason-only";
+};
+
+export type CommentTranslatorPaidAuthorityStopPersistenceFailure = CommentTranslatorPaidStopPersistenceFailure & {
+  readonly stopReason: "paid-authority-unreadable";
+};
+
+export type CommentTranslatorPaidHeartbeatTouchResult =
+  | {
+      readonly status: "touched";
+      readonly heartbeatAtIso: string;
+    }
+  | {
+      readonly status: "missing-heartbeat";
+    }
+  | {
+      readonly status: "expired";
+    };
+
+export function createCommentTranslatorPreAuthorityFailClosedResult({
+  durableActiveSessionRead
+}: {
+  durableActiveSessionRead: Pick<CommentTranslatorDurableSessionRead, "status" | "activeSession">;
+}): CommentTranslatorPreAuthorityFailClosedResult {
+  const confirmedPaid = durableActiveSessionRead.status === "ready"
+    && durableActiveSessionRead.activeSession?.plan === "paid";
+  return {
+    status: "fail-closed",
+    authority: "unconfirmed",
+    durableStop: "unconfirmed",
+    clientReadableDetail: "sanitized-stop-reason-only",
+    ...(confirmedPaid ? { plan: "paid" as const } : {})
+  };
+}
+
+export function createCommentTranslatorPreAuthorityRateLimitResult({
+  check
+}: {
+  check: Pick<CommentTranslatorAbuseRateLimitBlockedResult, "rateLimit" | "reason" | "retryAfterSeconds">;
+}): CommentTranslatorPreAuthorityFailClosedResult {
+  return {
+    status: "fail-closed",
+    authority: "unconfirmed",
+    durableStop: "unconfirmed",
+    clientReadableDetail: "sanitized-stop-reason-only",
+    rateLimit: check.rateLimit,
+    rateLimitReason: check.reason,
+    retryAfterSeconds: check.retryAfterSeconds
+  };
+}
+
+export function resolveCommentTranslatorPreAuthorityBlockedResult<TBlockedResult>({
+  durableActiveSessionRead,
+  blockedResult
+}: {
+  durableActiveSessionRead: Pick<CommentTranslatorDurableSessionRead, "status" | "activeSession">;
+  blockedResult: TBlockedResult;
+}): TBlockedResult | CommentTranslatorPreAuthorityFailClosedResult {
+  if (durableActiveSessionRead.status === "ready" && durableActiveSessionRead.activeSession?.plan !== "paid") {
+    return blockedResult;
+  }
+  return createCommentTranslatorPreAuthorityFailClosedResult({ durableActiveSessionRead });
+}
+
 export type CommentTranslatorDurableSessionStore = {
   readActiveSession: (request: { ownerUserId: string }) => Promise<CommentTranslatorActiveSessionRecord | null>;
+  startPaidSessionAndReservePollBudget?: (request: {
+    ownerUserId: string;
+    state: CommentTranslatorSessionBrowserSafeState;
+    planEntitlementReferenceId: string;
+    dailyBudget: number;
+    nowIso: string;
+  }) => Promise<number>;
+  touchActivePaidSessionHeartbeat?: (request: {
+    ownerUserId: string;
+    sessionReferenceId: string;
+  }) => Promise<CommentTranslatorPaidHeartbeatTouchResult>;
   persistSessionState: (request: {
     ownerUserId: string;
     state: CommentTranslatorSessionBrowserSafeState;
@@ -91,6 +177,11 @@ type SupabaseSingleResult = {
   error: { code?: string; message?: string } | null;
 };
 
+type SupabaseRpcResult<T> = {
+  data: T | null;
+  error: { code?: string; message?: string } | null;
+};
+
 type SupabaseQuery = {
   select: (columns: typeof commentTranslatorDurableSessionStoreContract.trustedSelectColumns) => SupabaseQuery;
   upsert: (
@@ -104,6 +195,26 @@ type SupabaseQuery = {
 
 export type CommentTranslatorDurableSessionSupabaseClient = {
   from: (tableName: typeof commentTranslatorDurableSessionStoreContract.tableName) => SupabaseQuery;
+  rpc: {
+    (
+      functionName: "ct_paid_start_session_and_reserve_poll_budget",
+      args: {
+        p_owner_user_id: string;
+        p_session_reference_id: string;
+        p_plan_entitlement_reference_id: string;
+        p_credential_reference_id: string;
+        p_daily_budget: number;
+        p_now: string;
+      }
+    ): Promise<SupabaseRpcResult<number>>;
+    (
+      functionName: "ct_paid_touch_active_paid_session_heartbeat",
+      args: {
+        p_owner_user_id: string;
+        p_session_reference_id: string;
+      }
+    ): Promise<SupabaseRpcResult<CommentTranslatorPaidHeartbeatTouchResult>>;
+  };
 };
 
 export const commentTranslatorDurableSessionStoreContract = {
@@ -204,6 +315,55 @@ export function createCommentTranslatorDurableSessionSupabaseStore({
 
       return createCommentTranslatorActiveSessionRecordFromRow(result.data);
     },
+    async startPaidSessionAndReservePollBudget(request) {
+      if (request.state.status !== "active" || request.state.plan !== "paid") {
+        throw new Error("Trusted Paid atomic session start requires an active Paid state.");
+      }
+      const rowDraft = createCommentTranslatorDurableSessionRowDraft({
+        ownerUserId: request.ownerUserId,
+        state: request.state,
+        planEntitlementReferenceId: request.planEntitlementReferenceId,
+        nowIso: request.nowIso
+      });
+      if (!rowDraft.credential_reference_id) {
+        throw new Error("Trusted Paid atomic session start requires a credential reference.");
+      }
+      const result = await supabase.rpc("ct_paid_start_session_and_reserve_poll_budget", {
+        p_owner_user_id: request.ownerUserId,
+        p_session_reference_id: rowDraft.session_reference_id,
+        p_plan_entitlement_reference_id: rowDraft.plan_entitlement_reference_id,
+        p_credential_reference_id: rowDraft.credential_reference_id,
+        p_daily_budget: request.dailyBudget,
+        p_now: request.nowIso
+      });
+      if (result.error || typeof result.data !== "number") {
+        throw new Error("Trusted Paid atomic session start failed.");
+      }
+      return result.data;
+    },
+    async touchActivePaidSessionHeartbeat(request) {
+      const result = await supabase.rpc("ct_paid_touch_active_paid_session_heartbeat", {
+        p_owner_user_id: request.ownerUserId,
+        p_session_reference_id: request.sessionReferenceId
+      });
+      if (result.error || !result.data || typeof result.data !== "object") {
+        throw new Error("Trusted Paid session heartbeat touch failed.");
+      }
+      if (result.data.status === "missing-heartbeat") {
+        return { status: "missing-heartbeat" };
+      }
+      if (result.data.status === "expired") {
+        return { status: "expired" };
+      }
+      if (
+        result.data.status !== "touched"
+        || typeof result.data.heartbeatAtIso !== "string"
+        || !Number.isFinite(Date.parse(result.data.heartbeatAtIso))
+      ) {
+        throw new Error("Trusted Paid session heartbeat touch failed.");
+      }
+      return { status: "touched", heartbeatAtIso: result.data.heartbeatAtIso };
+    },
     async persistSessionState(request) {
       if (request.state.status === "not-started") {
         return;
@@ -233,15 +393,23 @@ export function createCommentTranslatorDurableSessionSupabaseStore({
         return;
       }
 
+      const stoppedUpdate = row.status === "stopped" && row.plan === "paid"
+        ? {
+            status: row.status,
+            stopped_at: row.stopped_at,
+            stop_reason: row.stop_reason,
+            updated_at: row.updated_at
+          }
+        : {
+            status: row.status,
+            last_heartbeat_at: row.last_heartbeat_at,
+            stopped_at: row.stopped_at,
+            stop_reason: row.stop_reason,
+            updated_at: row.updated_at
+          };
       const result = await supabase
         .from(commentTranslatorDurableSessionStoreContract.tableName)
-        .update({
-          status: row.status,
-          last_heartbeat_at: row.last_heartbeat_at,
-          stopped_at: row.stopped_at,
-          stop_reason: row.stop_reason,
-          updated_at: row.updated_at
-        })
+        .update(stoppedUpdate)
         .eq("owner_user_id", request.ownerUserId)
         .eq("session_reference_id", row.session_reference_id)
         .select(commentTranslatorDurableSessionStoreContract.trustedSelectColumns)
@@ -361,16 +529,18 @@ export function createUnavailableCommentTranslatorDurableSessionRead({
 
 export function createCommentTranslatorDurableSessionFailClosedState({
   nowMs,
-  plan
+  plan,
+  reason = "session-limit"
 }: {
   nowMs: number;
   plan: CommentTranslatorSessionPlan;
+  reason?: Extract<CommentTranslatorSessionStopReason, "session-limit" | "global-budget-stop" | "paid-authority-unreadable">;
 }): CommentTranslatorSessionBrowserSafeState {
   return stopCommentTranslatorSession({
     activeSession: null,
     nowMs,
     plan,
-    reason: "session-limit",
+    reason,
     usage: {
       dailyUsedMs: 0,
       translatedMessagesInCurrentMinute: 0,
@@ -381,6 +551,22 @@ export function createCommentTranslatorDurableSessionFailClosedState({
       planEntitlement: createCommentTranslatorSessionPlanEntitlement({ plan })
     }
   });
+}
+
+export function createCommentTranslatorPaidStopPersistenceFailure<
+  TReason extends CommentTranslatorSessionStopReason
+>({
+  stopReason
+}: {
+  stopReason: TReason;
+}): Omit<CommentTranslatorPaidStopPersistenceFailure, "stopReason"> & { readonly stopReason: TReason } {
+  return {
+    status: "fail-closed",
+    plan: "paid",
+    stopReason,
+    durableStop: "unconfirmed",
+    clientReadableDetail: "sanitized-stop-reason-only"
+  };
 }
 
 export function createCommentTranslatorDurableSessionRowDraft({
@@ -429,8 +615,55 @@ function createCommentTranslatorActiveSessionRecordFromRow(
     sessionReferenceId: row.session_reference_id,
     startedAtMs: Date.parse(row.started_at),
     lastHeartbeatAtMs: Date.parse(row.last_heartbeat_at),
-    credentialReferenceId: row.credential_reference_id ?? undefined
+    credentialReferenceId: row.credential_reference_id ?? undefined,
+    plan: row.plan
   };
+}
+
+export async function stopCommentTranslatorActivePaidSessionForUnreadableAuthority({
+  callerAuthorization,
+  durableSessionStore,
+  activeSession,
+  nowMs
+}: {
+  callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
+  durableSessionStore: CommentTranslatorDurableSessionStoreFactoryResult;
+  activeSession: CommentTranslatorActiveSessionRecord;
+  nowMs: number;
+}): Promise<CommentTranslatorSessionBrowserSafeState | CommentTranslatorPaidAuthorityStopPersistenceFailure> {
+  const sanitizedActiveSession: CommentTranslatorActiveSessionRecord = {
+    sessionReferenceId: activeSession.sessionReferenceId,
+    startedAtMs: activeSession.startedAtMs,
+    lastHeartbeatAtMs: activeSession.lastHeartbeatAtMs,
+    plan: "paid"
+  };
+  const state = stopCommentTranslatorSession({
+    activeSession: sanitizedActiveSession,
+    nowMs,
+    plan: "paid",
+    reason: "paid-authority-unreadable",
+    usage: {
+      dailyUsedMs: 0,
+      translatedMessagesInCurrentMinute: 0,
+      providerBudgetAvailable: false,
+      globalBudgetAvailable: false,
+      aiBudgetAvailable: false,
+      translationProviderAvailable: false,
+      planEntitlement: createCommentTranslatorPaidSessionStopPlanEntitlement()
+    }
+  });
+
+  const persistResult = await persistCommentTranslatorDurableSessionStateOrFailClosed({
+    callerAuthorization,
+    durableSessionStore,
+    state,
+    planEntitlementReferenceId: commentTranslatorPaidPlanEntitlementReferenceId,
+    nowIso: () => new Date(nowMs).toISOString()
+  });
+  if (persistResult.status !== "persisted") {
+    return createCommentTranslatorPaidStopPersistenceFailure({ stopReason: "paid-authority-unreadable" });
+  }
+  return state;
 }
 
 function omitBrowserSafetyMarkers(

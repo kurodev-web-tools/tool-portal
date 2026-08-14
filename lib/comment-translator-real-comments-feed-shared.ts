@@ -27,6 +27,7 @@ export type CommentTranslatorLiveProviderDiagnostics = {
   persistedFeedRowCount: number;
   nextPollDue: "due" | "waiting";
   stopReason: string | null;
+  nextResetAtIso?: string | null;
   rawProviderPayload: "not-returned-by-design";
   rawComments: "not-returned-by-design";
   providerTargetMetadata: "forbidden";

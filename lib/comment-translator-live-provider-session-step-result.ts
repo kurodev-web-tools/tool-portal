@@ -14,6 +14,7 @@ export type CommentTranslatorLiveProviderSessionStepResult = {
   readonly translatedCount: number;
   readonly persistedFeedRowCount: number;
   readonly diagnostics: CommentTranslatorLiveProviderDiagnostics;
+  readonly safeFeed?: CommentTranslatorRealCommentsFeedState;
   readonly rawProviderPayload: "not-returned-by-design";
   readonly rawComments: "not-returned-by-design";
   readonly providerTargetMetadata: "forbidden";
@@ -52,6 +53,7 @@ export function createCommentTranslatorLiveProviderSessionStepResult({
       translationStatus,
       translationDiagnostics: translationDiagnostics ?? createEmptyTranslationDiagnostics()
     }),
+    ...(feed ? { safeFeed: feed } : {}),
     rawProviderPayload: "not-returned-by-design",
     rawComments: "not-returned-by-design",
     providerTargetMetadata: "forbidden"
@@ -109,6 +111,7 @@ function createLiveProviderDiagnostics({
     persistedFeedRowCount,
     nextPollDue: polling?.nextPollDue ?? "waiting",
     stopReason: polling?.stopReason ?? ("providerSignal" in pollingTick ? pollingTick.providerSignal : null),
+    nextResetAtIso: "nextResetAtIso" in pollingTick ? pollingTick.nextResetAtIso ?? null : null,
     rawProviderPayload: "not-returned-by-design",
     rawComments: "not-returned-by-design",
     providerTargetMetadata: "forbidden",

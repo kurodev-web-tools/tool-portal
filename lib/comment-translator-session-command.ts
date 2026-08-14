@@ -5,7 +5,7 @@ import {
   assessCommentTranslatorUsageStopReason,
   chargeableCommentTranslatorSessionElapsedMs,
   createDefaultCommentTranslatorUsageSnapshot,
-  isCommentTranslatorHeartbeatMissing,
+  isCommentTranslatorHeartbeatMissingForPlan,
   mapCommentTranslatorCredentialReadinessToStopReason,
   normalizeCommentTranslatorActiveSession,
   commentTranslatorSessionLimitMs
@@ -36,53 +36,55 @@ export function evaluateCommentTranslatorSessionStopCondition(
   if (!request.browserConnected) {
     return stopCommentTranslatorSession({
       activeSession, nowMs: request.nowMs, plan: request.plan, usage: request.usage,
-      reason: "browser-disconnect", reasonUxCode: "heartbeat-or-browser-disconnect"
+      reason: "browser-disconnect", reasonUxCode: "heartbeat-or-browser-disconnect", nextResetAtIso: request.nextResetAtIso
     });
   }
   if (request.callerAuthorization.status !== "authorized") {
     return stopCommentTranslatorSession({
       activeSession, nowMs: request.nowMs, plan: request.plan, usage: request.usage,
-      reason: "auth-failed", reasonUxCode: "auth-unavailable"
+      reason: "auth-failed", reasonUxCode: "auth-unavailable", nextResetAtIso: request.nextResetAtIso
     });
   }
   if (request.credentialReadiness && request.credentialReadiness.status !== "ready") {
     return stopCommentTranslatorSession({
       activeSession, nowMs: request.nowMs, plan: request.plan, usage: request.usage,
       reason: mapCommentTranslatorCredentialReadinessToStopReason(request.credentialReadiness),
-      reasonUxCode: resolveCommentTranslatorCredentialReadinessReasonUxCode({ reason: request.credentialReadiness.reason })
+      reasonUxCode: resolveCommentTranslatorCredentialReadinessReasonUxCode({ reason: request.credentialReadiness.reason }),
+      nextResetAtIso: request.nextResetAtIso
     });
   }
-  if (isCommentTranslatorHeartbeatMissing(activeSession, request.nowMs)) {
+  if (isCommentTranslatorHeartbeatMissingForPlan(activeSession, request.nowMs, request.plan)) {
     return stopCommentTranslatorSession({
       activeSession, nowMs: request.nowMs, plan: request.plan, usage: request.usage,
-      reason: "missing-heartbeat", reasonUxCode: "heartbeat-or-browser-disconnect"
+      reason: "missing-heartbeat", reasonUxCode: "heartbeat-or-browser-disconnect", nextResetAtIso: request.nextResetAtIso
     });
   }
   const activeElapsedMs = chargeableCommentTranslatorSessionElapsedMs(activeSession, request.nowMs, request.plan, request.usage);
   if (activeElapsedMs >= commentTranslatorSessionLimitMs(request.plan, request.usage)) {
     return stopCommentTranslatorSession({
       activeSession, nowMs: request.nowMs, plan: request.plan, usage: request.usage,
-      reason: "session-time-limit", reasonUxCode: "quota-or-budget-stop"
+      reason: "session-time-limit", reasonUxCode: "quota-or-budget-stop", nextResetAtIso: request.nextResetAtIso
     });
   }
   const usageStopReason = assessCommentTranslatorUsageStopReason(request.usage, request.plan, activeElapsedMs);
   if (usageStopReason) {
     return stopCommentTranslatorSession({
       activeSession, nowMs: request.nowMs, plan: request.plan, usage: request.usage,
-      reason: usageStopReason, reasonUxCode: resolveCommentTranslatorStopReasonUxCode({ stopReason: usageStopReason })
+      reason: usageStopReason, reasonUxCode: resolveCommentTranslatorStopReasonUxCode({ stopReason: usageStopReason }),
+      nextResetAtIso: request.nextResetAtIso
     });
   }
   if (request.providerSignal) {
     return stopCommentTranslatorSession({
       activeSession, nowMs: request.nowMs, plan: request.plan, usage: request.usage,
-      reason: request.providerSignal, reasonUxCode: request.providerSignalReasonUxCode
+      reason: request.providerSignal, reasonUxCode: request.providerSignalReasonUxCode, nextResetAtIso: request.nextResetAtIso
     });
   }
   const ratePauseResolution = request.ratePauseResolution;
   if (ratePauseResolution.status === "fail-closed") {
     return stopCommentTranslatorSession({
       activeSession, nowMs: request.nowMs, plan: request.plan, usage: request.usage,
-      reason: ratePauseResolution.stopReason, reasonUxCode: "quota-or-budget-stop"
+      reason: ratePauseResolution.stopReason, reasonUxCode: "quota-or-budget-stop", nextResetAtIso: request.nextResetAtIso
     });
   }
   return createCommentTranslatorActiveSessionState({
@@ -110,6 +112,7 @@ export function stopCommentTranslatorSession(
     usage,
     reason: request.reason,
     reasonUxCode: request.reasonUxCode,
+    nextResetAtIso: request.nextResetAtIso,
     nextAction: request.reason === "auth-failed" || request.reason === "reconnect-required"
       ? "reconnect-or-sign-in"
       : "session-stopped"
@@ -131,7 +134,8 @@ export async function readCommentTranslatorSessionCommand(
       reason: request.stopReason ?? "user-stop",
       reasonUxCode: request.stopReason
         ? resolveCommentTranslatorStopReasonUxCode({ stopReason: request.stopReason })
-        : "user-stop"
+        : "user-stop",
+      nextResetAtIso: request.nextResetAtIso
     });
   }
   if (request.intent === "heartbeat") {
@@ -151,7 +155,8 @@ export async function readCommentTranslatorSessionCommand(
       usage: request.usage,
       ratePauseResolution: request.ratePauseResolution,
       providerSignal: request.providerSignal,
-      providerSignalReasonUxCode: request.providerSignalReasonUxCode
+      providerSignalReasonUxCode: request.providerSignalReasonUxCode,
+      nextResetAtIso: request.nextResetAtIso
     });
   }
   return evaluateCommentTranslatorSessionStopCondition({
@@ -164,6 +169,7 @@ export async function readCommentTranslatorSessionCommand(
     usage: request.usage,
     ratePauseResolution: request.ratePauseResolution,
     providerSignal: request.providerSignal,
-    providerSignalReasonUxCode: request.providerSignalReasonUxCode
+    providerSignalReasonUxCode: request.providerSignalReasonUxCode,
+    nextResetAtIso: request.nextResetAtIso
   });
 }

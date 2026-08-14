@@ -61,6 +61,7 @@ export function CommentTranslatorDock({
   } = useCommentTranslatorDockControls(locale);
   const {
     sessionState,
+    sessionError,
     realCommentsFeed,
     realCommentsFeedError,
     isSessionPending,
@@ -127,6 +128,9 @@ export function CommentTranslatorDock({
   const sessionRecommendedAction = sessionReasonUx
     ? copy.operatorSession.recommendedActions[sessionReasonUx.recommendedAction]
     : null;
+  const sessionNextResetLabel = sessionState.status === "stopped"
+    ? formatSessionNextResetAtUtc(sessionState.nextResetAtIso, locale)
+    : null;
   const sessionNextAction = copy.operatorSession.nextActions[sessionState.nextAction];
   const realCommentsFeedUnavailableMessage = realCommentsFeed.unavailableReason
     ? `unavailableReason: ${realCommentsFeed.unavailableReason}`
@@ -168,12 +172,14 @@ export function CommentTranslatorDock({
                 copy={copy}
                 operatorFlowStatus={operatorFlowStatus}
                 sessionState={sessionState}
+                sessionError={sessionError}
                 usageDisplay={usageDisplay}
                 credentialStatusLabel={credentialStatusLabel}
                 sessionReasonGroup={sessionReasonGroup}
                 sessionStopReason={sessionStopReason}
                 sessionReasonMessage={sessionReasonMessage}
                 sessionRecommendedAction={sessionRecommendedAction}
+                sessionNextResetLabel={sessionNextResetLabel}
                 usagePolicyStopReason={usagePolicyStopReason}
                 isSessionPending={isSessionPending}
                 startBlockedByCredentialStatus={startBlockedByCredentialStatus}
@@ -248,4 +254,21 @@ export function CommentTranslatorDock({
       </div>
     </div>
   );
+}
+
+function formatSessionNextResetAtUtc(value: string | null | undefined, locale: "ja" | "en"): string | null {
+  if (!value) return null;
+  const resetAtMs = Date.parse(value);
+  if (!Number.isFinite(resetAtMs)) return null;
+  const formatted = new Intl.DateTimeFormat(locale === "ja" ? "ja-JP" : "en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+    timeZone: "UTC"
+  }).format(new Date(resetAtMs));
+  return locale === "ja" ? `リセット予定: ${formatted} UTC` : `Reset at: ${formatted} UTC`;
 }

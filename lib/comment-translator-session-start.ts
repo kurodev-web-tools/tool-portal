@@ -49,6 +49,7 @@ export function startCommentTranslatorSession(
       reason: usageStopReason,
       reasonUxCode: resolveCommentTranslatorStopReasonUxCode({ stopReason: usageStopReason }),
       nextAction: usageStopReason === "daily-time-limit" ? "wait-for-limit-reset" : "session-stopped",
+      nextResetAtIso: request.nextResetAtIso,
       credentialReferenceId: request.credentialReadiness.credentialReferenceId
     });
   }

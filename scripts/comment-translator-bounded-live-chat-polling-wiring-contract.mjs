@@ -257,7 +257,7 @@ for (const [file, source] of [
 }
 
 assert.match(sessionRuntimeSource, /providerSignal/, "session runtime accepts F7 provider signal");
-assert.match(sessionRuntimeSource, /liveProviderExecution:\s*"not-run-in-f7"/, "session contract records F7 live provider execution not-run");
+assert.match(sessionRuntimeSource, /liveProviderExecution:\s*"allowed-after-explicit-start"/, "session contract records the Task 7 live provider execution boundary");
 assert.match(routeSource, /executeCommentTranslatorSessionCommand/, "session route delegates F7 polling to shared command execution");
 assert.match(actionSource, /session-actions/, "server action facade delegates session commands to the focused action owner");
 assert.match(sessionActionsSource, /executeCommentTranslatorSessionCommand/, "server actions delegate F7 polling to shared command execution");

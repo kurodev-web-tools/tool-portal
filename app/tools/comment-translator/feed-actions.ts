@@ -99,7 +99,11 @@ export async function getCommentTranslatorRealCommentsFeedAction(options: Commen
   }
   const activeSession = durableActiveSessionRead.activeSession;
   if (activeSession?.plan === "paid") {
-    const paidSessionAuthorityRead = await readCommentTranslatorPaidSessionAuthority({ callerAuthorization, nowMs });
+    const paidSessionAuthorityRead = await readCommentTranslatorPaidSessionAuthority({
+      callerAuthorization,
+      nowMs,
+      pollBudgetSessionReferenceId: activeSession.sessionReferenceId
+    });
     if (paidSessionAuthorityRead.status !== "ready") {
       const sessionState = await stopCommentTranslatorActivePaidSessionForUnreadableAuthority({
         callerAuthorization,

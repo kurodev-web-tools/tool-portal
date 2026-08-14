@@ -27,6 +27,10 @@ export type CommentTranslatorFreeBetaUsageProviderCallPolicy =
         | "global-budget-stop"
         | "ai-budget-stop"
         | "translation-provider-limit"
+        | "paid-authority-unreadable"
+        | "paid-character-quota-stop"
+        | "paid-individual-cost-stop"
+        | "paid-global-cost-stop"
       >;
       clientReadableDetail: "sanitized-usage-only";
     }
@@ -40,6 +44,30 @@ export type CommentTranslatorFreeBetaUsageLimitDisplay = {
   used: number;
   limit: number;
   remaining: number;
+};
+
+export type CommentTranslatorPaidUsageStopReason =
+  | "character-quota"
+  | "individual-safety-cap"
+  | "global-safety-cap"
+  | "infra-safety-stop"
+  | "poll-budget-stop";
+
+export type CommentTranslatorPaidUsageDisplay = {
+  billingPeriod: CommentTranslatorFreeBetaUsageLimitDisplay;
+  nextResetAtIso: string | null;
+  providerRoute: "openai" | "azure-direct" | "blocked" | "unknown";
+  fallbackActive: boolean;
+  recoveryExpected: boolean;
+  safetyStop: {
+    reason: CommentTranslatorPaidUsageStopReason;
+    nextResetAtIso: string | null;
+  } | null;
+  pollBudget: {
+    status: "allowed" | "stop-checkout" | "stop-active-auto-poll" | "unknown";
+    nextResetAtIso: string | null;
+  };
+  clientReadableDetail: "sanitized-paid-usage-only";
 };
 
 export type CommentTranslatorFreeBetaUsageTimeDisplay = {
@@ -64,6 +92,7 @@ export type CommentTranslatorFreeBetaUsageDisplay = {
   serverOnlyCursor: "not-returned-by-design";
   browserStorage: "unchanged";
   handoffPayload: "unchanged";
+  paid?: CommentTranslatorPaidUsageDisplay;
   publicLaunchAllowed: false;
 };
 
@@ -76,6 +105,19 @@ export type CommentTranslatorFreeBetaUsageDisplayInput = {
   globalBudgetAvailable: boolean;
   aiBudgetAvailable: boolean;
   translationProviderAvailable?: boolean;
+  paidAuthorityReadable?: boolean;
+  paidBillingPeriodInputCharacters?: number;
+  paidBillingPeriodCharacterLimit?: number;
+  paidIndividualCostAvailable?: boolean;
+  paidGlobalCostAvailable?: boolean;
+  paidBillingPeriodNextResetAtIso?: string | null;
+  paidProviderRoute?: CommentTranslatorPaidUsageDisplay["providerRoute"];
+  paidProviderFallbackActive?: boolean;
+  paidProviderRecoveryExpected?: boolean;
+  paidSafetyStopReason?: CommentTranslatorPaidUsageStopReason | null;
+  paidSafetyStopNextResetAtIso?: string | null;
+  paidPollBudgetStatus?: CommentTranslatorPaidUsageDisplay["pollBudget"]["status"];
+  paidPollBudgetNextResetAtIso?: string | null;
   planEntitlement?: CommentTranslatorSessionPlanEntitlement;
 };
 
@@ -152,7 +194,10 @@ export function createCommentTranslatorFreeBetaUsageDisplay({
       remaining: Math.max(0, monthlyLimit - monthlyUsed)
     },
     unavailableReason: null,
-    providerCallPolicy
+    providerCallPolicy,
+    paid: usage.planEntitlement.plan === "paid"
+      ? createPaidUsageDisplay({ usage, monthlyUsed, monthlyLimit })
+      : undefined
   });
 }
 
@@ -207,6 +252,22 @@ export function resolveCommentTranslatorFreeBetaProviderCallPolicy({
     return blockedOverLimit("translated-message-cap");
   }
 
+  if (usage.planEntitlement.plan === "paid" && usage.paidAuthorityReadable !== true) {
+    return blockedOverLimit("paid-authority-unreadable");
+  }
+
+  if (usage.planEntitlement.plan === "paid" && monthlyUsed >= monthlyLimit) {
+    return blockedOverLimit("paid-character-quota-stop");
+  }
+
+  if (usage.planEntitlement.plan === "paid" && usage.paidIndividualCostAvailable === false) {
+    return blockedOverLimit("paid-individual-cost-stop");
+  }
+
+  if (usage.planEntitlement.plan === "paid" && usage.paidGlobalCostAvailable === false) {
+    return blockedOverLimit("paid-global-cost-stop");
+  }
+
   if (!usage.providerBudgetAvailable) {
     return blockedOverLimit("provider-quota-stop");
   }
@@ -215,7 +276,7 @@ export function resolveCommentTranslatorFreeBetaProviderCallPolicy({
     return blockedOverLimit("global-budget-stop");
   }
 
-  if (!usage.aiBudgetAvailable || monthlyUsed >= monthlyLimit) {
+  if (!usage.aiBudgetAvailable || (usage.planEntitlement.plan !== "paid" && monthlyUsed >= monthlyLimit)) {
     return blockedOverLimit("ai-budget-stop");
   }
 
@@ -247,10 +308,11 @@ function createDisplay({
   perMinute,
   monthlyInputCharacterCap,
   unavailableReason,
-  providerCallPolicy
+  providerCallPolicy,
+  paid
 }: Pick<
   CommentTranslatorFreeBetaUsageDisplay,
-  "status" | "session" | "daily" | "perMinute" | "monthlyInputCharacterCap" | "unavailableReason" | "providerCallPolicy"
+  "status" | "session" | "daily" | "perMinute" | "monthlyInputCharacterCap" | "unavailableReason" | "providerCallPolicy" | "paid"
 >): CommentTranslatorFreeBetaUsageDisplay {
   return {
     status,
@@ -268,7 +330,44 @@ function createDisplay({
     serverOnlyCursor: "not-returned-by-design",
     browserStorage: "unchanged",
     handoffPayload: "unchanged",
+    ...(paid ? { paid } : {}),
     publicLaunchAllowed: false
+  };
+}
+
+function createPaidUsageDisplay({
+  usage,
+  monthlyUsed,
+  monthlyLimit
+}: {
+  usage: CommentTranslatorFreeBetaUsageDisplayInput;
+  monthlyUsed: number;
+  monthlyLimit: number;
+}): CommentTranslatorPaidUsageDisplay {
+  const safetyStop = usage.paidSafetyStopReason
+    ? {
+        reason: usage.paidSafetyStopReason,
+        nextResetAtIso: usage.paidSafetyStopNextResetAtIso ?? usage.paidBillingPeriodNextResetAtIso ?? null
+      }
+    : usage.paidAuthorityReadable !== true
+      ? { reason: "infra-safety-stop" as const, nextResetAtIso: usage.paidBillingPeriodNextResetAtIso ?? null }
+      : null;
+  return {
+    billingPeriod: {
+      used: monthlyUsed,
+      limit: monthlyLimit,
+      remaining: Math.max(0, monthlyLimit - monthlyUsed)
+    },
+    nextResetAtIso: usage.paidBillingPeriodNextResetAtIso ?? null,
+    providerRoute: usage.paidProviderRoute ?? "unknown",
+    fallbackActive: usage.paidProviderFallbackActive ?? usage.paidProviderRoute === "azure-direct",
+    recoveryExpected: usage.paidProviderRecoveryExpected ?? usage.paidProviderRoute === "azure-direct",
+    safetyStop,
+    pollBudget: {
+      status: usage.paidPollBudgetStatus ?? "unknown",
+      nextResetAtIso: usage.paidPollBudgetNextResetAtIso ?? null
+    },
+    clientReadableDetail: "sanitized-paid-usage-only"
   };
 }
 

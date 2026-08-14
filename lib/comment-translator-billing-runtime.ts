@@ -1,6 +1,7 @@
 import "server-only";
 
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
+import { createClient } from "@supabase/supabase-js";
 
 import {
   createCommentTranslatorSessionPlanEntitlement,
@@ -19,6 +20,7 @@ import {
   type CommentTranslatorPaidDisputeState,
   type CommentTranslatorPaidCheckoutLifecycle,
   type CommentTranslatorPaidCheckoutInitialization,
+  type CommentTranslatorPaidEntitlement,
   type CommentTranslatorPaidEntitlementStatus,
   type CommentTranslatorPaidEntitlementProjectionClaim,
   type CommentTranslatorPaidEntitlementStore,
@@ -29,7 +31,84 @@ import {
   type CommentTranslatorPaidConsentDocumentType,
   createTrustedCommentTranslatorPaidConsentStore
 } from "./comment-translator-paid-consent-store";
+import { createTrustedCommentTranslatorPaidUsageStore } from "./comment-translator-paid-usage-store";
 import type { CommentTranslatorPaidRegionDecision } from "./comment-translator-paid-region-gate";
+import {
+  readCommentTranslatorPaidPositiveIntegerEnv,
+  resolveCommentTranslatorPaidPollBudgetGate
+} from "./comment-translator-paid-poll-budget-gate";
+
+export const commentTranslatorPaidV1Task8BillingUiContract = {
+  implementationStage: "comment-translator-paid-v1-task8-billing-ui-and-safe-projection",
+  runtime: "server-only",
+  productName: "Kuro Live Comment Translator Plus",
+  monthlyPrice: {
+    currency: "USD",
+    monthlyAmount: 6,
+    yearlyAmount: null,
+    taxInclusive: true,
+    automaticRenewal: true
+  },
+  paidBillingPeriod: {
+    inputCharactersMaximum: 500_000,
+    maximumIsNotAGuarantee: true,
+    resetAuthority: "durable-stripe-billing-period-or-contract-renewal"
+  },
+  individualCost: {
+    safetyCapUsd: 3,
+    browserProjection: "stop-reason-only"
+  },
+  globalCost: {
+    safetyCapUsd: 25,
+    browserProjection: "stop-reason-only"
+  },
+  serverDerivedGates: [
+    "region-unavailable",
+    "unsupported-region",
+    "capacity-full",
+    "settings-stopped",
+    "payment-stopped",
+    "lifecycle-processing",
+    "poll-budget",
+    "infra"
+  ] as const,
+  checkoutConsent: "durable-server-record-before-stripe-checkout",
+  portalIndependence: "portal-does-not-require-checkout-consent",
+  browserAuthority: "server-derived-sanitized-fields-only",
+  browserStorage: "forbidden",
+  privateIdentifiers: "never-returned-by-design"
+} as const;
+
+export type CommentTranslatorBillingUiState =
+  | "ready"
+  | "region-unavailable"
+  | "unsupported-region"
+  | "capacity-full"
+  | "settings-stopped"
+  | "payment-stopped"
+  | "lifecycle-processing"
+  | "poll-budget-stop"
+  | "infra";
+
+export type CommentTranslatorBillingPlanEntitlementBrowserSafe = Omit<
+  CommentTranslatorSessionPlanEntitlement,
+  "paidIndividualCostLimitMicros" | "paidGlobalCostLimitMicros"
+>;
+
+export type CommentTranslatorPaidConsentVersions = {
+  terms: string | null;
+  privacy: string | null;
+  paidConditions: string | null;
+};
+
+export type CommentTranslatorPaidCheckoutConsentFieldNames = {
+  termsChecked: "paid-consent-terms";
+  privacyChecked: "paid-consent-privacy";
+  paidConditionsChecked: "paid-consent-paid-conditions";
+  termsVersion: "paid-terms-version";
+  privacyVersion: "paid-privacy-version";
+  paidConditionsVersion: "paid-conditions-version";
+};
 
 export type CommentTranslatorBillingUserReference = `ctbill_${string}`;
 export type CommentTranslatorBillingState = "free" | "paid-active" | "paid-inactive";
@@ -74,6 +153,8 @@ export type CommentTranslatorBillingEntitlementSnapshot = {
   paidPlan: {
     status: "available" | "inactive" | "unconfigured";
     currentPeriodEndIso: string | null;
+    cancelAtPeriodEnd: boolean;
+    paymentState: "current" | "past-due" | "unpaid" | "processing" | "none";
     provider: "stripe";
   };
   tokenValue: "never-returned-by-design";
@@ -82,13 +163,135 @@ export type CommentTranslatorBillingEntitlementSnapshot = {
 
 export type CommentTranslatorBillingBrowserSafeViewModel = Omit<
   CommentTranslatorBillingEntitlementSnapshot,
-  "billingUserReferenceId" | "stripeCustomerReferenceId" | "stripeSubscriptionReferenceId"
+  "billingUserReferenceId" | "stripeCustomerReferenceId" | "stripeSubscriptionReferenceId" | "planEntitlement"
 > & {
-  paidCoreV1Availability: "unavailable-until-durable-entitlement";
+  planEntitlement: CommentTranslatorBillingPlanEntitlementBrowserSafe;
+  paidCoreV1Availability: "available" | "unavailable-until-durable-entitlement" | "unavailable";
+  uiState: CommentTranslatorBillingUiState;
+  uiStateSource: "server-derived";
   checkoutAvailable: boolean;
+  checkoutRetryAtIso: string | null;
   portalAvailable: boolean;
+  consentVersions: CommentTranslatorPaidConsentVersions;
+  consentFieldNames: CommentTranslatorPaidCheckoutConsentFieldNames;
   planComparison: CommentTranslatorPlanComparisonViewModel;
 };
+
+export type CommentTranslatorBillingCheckoutSafetyAuthorityReader = {
+  readCheckoutSafetyAuthority: (request: {
+    ownerUserId: string;
+    nowIso: string;
+    capacityReservationAlreadyHeld?: boolean;
+  }) => Promise<
+    | {
+        status: "ready";
+        capacityAvailable: boolean;
+        dailyPollBudget: number;
+        reservedPolls: number;
+      }
+    | {
+        status: "unreadable";
+      }
+  >;
+};
+
+type CommentTranslatorBillingCheckoutSafetyGate = {
+  uiState: Extract<CommentTranslatorBillingUiState, "ready" | "capacity-full" | "poll-budget-stop">;
+  checkoutAvailable: boolean;
+  checkoutRetryAtIso: string | null;
+};
+
+export function createDefaultCommentTranslatorBillingCheckoutSafetyAuthorityReader(
+  env: CommentTranslatorStripeEnv,
+  dependencies: { createSupabaseClient?: typeof createClient } = {}
+): CommentTranslatorBillingCheckoutSafetyAuthorityReader | null {
+  const supabaseUrl = env.NEXT_PUBLIC_SUPABASE_URL?.trim();
+  const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  if (!supabaseUrl || !serviceRoleKey) return null;
+  const usageStoreResult = createTrustedCommentTranslatorPaidUsageStore({
+    env: {
+      NEXT_PUBLIC_SUPABASE_URL: supabaseUrl,
+      SUPABASE_SERVICE_ROLE_KEY: serviceRoleKey
+    },
+    ...(dependencies.createSupabaseClient ? { createSupabaseClient: dependencies.createSupabaseClient } : {})
+  });
+  if (usageStoreResult.status !== "ready") return null;
+  const supabase = dependencies.createSupabaseClient
+    ? dependencies.createSupabaseClient(supabaseUrl, serviceRoleKey)
+    : createClient(supabaseUrl, serviceRoleKey, {
+        auth: {
+          persistSession: false,
+          autoRefreshToken: false
+        }
+      });
+  const configuredDailyPollBudget = readCommentTranslatorPaidPositiveIntegerEnv(env.COMMENT_TRANSLATOR_PAID_POLL_DAILY_BUDGET);
+  return {
+    async readCheckoutSafetyAuthority({ ownerUserId, nowIso, capacityReservationAlreadyHeld = false }) {
+      try {
+        const [authority, capacityConfigResult, capacityReservationsResult] = await Promise.all([
+          usageStoreResult.store.readPollBudget({
+            sessionReferenceId: createCommentTranslatorBillingPollBudgetReference(ownerUserId),
+            ownerUserId,
+            nowIso
+          }),
+          supabase
+            .from("comment_translator_paid_capacity_config")
+            .select("capacity_limit, poll_limit")
+            .eq("config_key", true)
+            .maybeSingle(),
+          supabase
+            .from("comment_translator_paid_capacity_reservations")
+            .select("id", { count: "exact", head: true })
+            .in("reservation_state", ["held", "consuming"])
+        ]);
+        const capacityLimit = capacityConfigResult.data?.capacity_limit;
+        const pollLimit = capacityConfigResult.data?.poll_limit;
+        const reservationCount = capacityReservationsResult.count;
+        if (
+          !Number.isSafeInteger(authority.reservedPolls)
+          || authority.reservedPolls < 0
+          || (authority.dailyBudget !== null && (!Number.isSafeInteger(authority.dailyBudget) || authority.dailyBudget <= 0))
+          || (authority.dailyBudget === null && authority.reservedPolls !== 0)
+          || (authority.dailyBudget === null && configuredDailyPollBudget === null)
+          || capacityConfigResult.error
+          || capacityReservationsResult.error
+          || typeof capacityLimit !== "number"
+          || !Number.isFinite(capacityLimit)
+          || !Number.isSafeInteger(capacityLimit)
+          || capacityLimit !== 20
+          || typeof pollLimit !== "number"
+          || !Number.isFinite(pollLimit)
+          || !Number.isSafeInteger(pollLimit)
+          || pollLimit !== 720
+          || typeof reservationCount !== "number"
+          || !Number.isFinite(reservationCount)
+          || !Number.isSafeInteger(reservationCount)
+          || reservationCount < 0
+        ) return { status: "unreadable" };
+        const dailyPollBudget = authority.dailyBudget ?? configuredDailyPollBudget;
+        if (dailyPollBudget === null) return { status: "unreadable" };
+        const reservedPolls = authority.dailyBudget === null ? 0 : authority.reservedPolls;
+        const effectiveReservationCount = reservationCount - (capacityReservationAlreadyHeld ? 1 : 0);
+        if (effectiveReservationCount < 0) return { status: "unreadable" };
+        return {
+          status: "ready",
+          capacityAvailable: effectiveReservationCount < capacityLimit,
+          dailyPollBudget,
+          reservedPolls
+        };
+      } catch {
+        return { status: "unreadable" };
+      }
+    }
+  };
+}
+
+function createCommentTranslatorBillingPollBudgetReference(ownerUserId: string): string {
+  const digest = createHash("sha256")
+    .update(`comment-translator-billing-poll:${ownerUserId}`, "utf8")
+    .digest("hex");
+  return `ctbill_poll_${digest}`;
+}
 
 export type CommentTranslatorPlanOptionId = string;
 
@@ -101,8 +304,10 @@ export type CommentTranslatorPlanOptionViewModel = {
     currency: "USD";
     monthlyAmount: number;
     yearlyAmount: number | null;
+    taxInclusive: true;
+    automaticRenewal: boolean;
   };
-  entitlement: CommentTranslatorSessionPlanEntitlement;
+  entitlement: CommentTranslatorBillingPlanEntitlementBrowserSafe;
   badge: {
     ja: string;
     en: string;
@@ -119,8 +324,8 @@ export type CommentTranslatorPlanOptionViewModel = {
 
 export type CommentTranslatorPlanComparisonViewModel = {
   currentPlanId: CommentTranslatorPlanOptionId;
-  implementationEntitlementShape: "free-only-until-durable-paid-entitlement";
-  intervalPresentation: "free-only-paid-unavailable-until-durable-entitlement";
+  implementationEntitlementShape: "free-and-paid-server-derived";
+  intervalPresentation: "monthly-paid-only-no-yearly";
   advanceNoticeCopy: {
     ja: string;
     en: string;
@@ -181,7 +386,7 @@ export type CommentTranslatorStripeAdapter = {
   createPortalSession: (params: CommentTranslatorStripePortalSessionParams) => Promise<{ url: string | null }>;
 };
 
-export const commentTranslatorPaidCheckoutConsentFieldNames = {
+export const commentTranslatorPaidCheckoutConsentFieldNames: CommentTranslatorPaidCheckoutConsentFieldNames = {
   termsChecked: "paid-consent-terms",
   privacyChecked: "paid-consent-privacy",
   paidConditionsChecked: "paid-consent-paid-conditions",
@@ -410,25 +615,120 @@ export function createCommentTranslatorBillingBrowserSafeViewModel({
   env: CommentTranslatorStripeEnv;
 }): CommentTranslatorBillingBrowserSafeViewModel {
   void snapshot;
-  void env;
-  const freeSnapshot = createFreeBillingSnapshot();
-
-  return {
-    plan: freeSnapshot.plan,
-    billingState: freeSnapshot.billingState,
-    freePlanAvailable: freeSnapshot.freePlanAvailable,
-    planEntitlement: freeSnapshot.planEntitlement,
-    paidPlan: freeSnapshot.paidPlan,
-    paidCoreV1Availability: "unavailable-until-durable-entitlement",
+  return createCommentTranslatorBillingBrowserSafeViewModelFromSnapshot({
+    snapshot: createFreeBillingSnapshot(),
+    env,
+    uiState: "infra",
     checkoutAvailable: false,
     portalAvailable: false,
-    planComparison: createCommentTranslatorPlanComparisonViewModel({
-      billingState: freeSnapshot.billingState,
-      planEntitlement: freeSnapshot.planEntitlement
-    }),
-    tokenValue: "never-returned-by-design",
-    providerTargetMetadata: "forbidden"
-  };
+    preserveUnavailableBaseline: true
+  });
+}
+
+export async function createCommentTranslatorBillingPageBrowserSafeViewModel({
+  callerAuthorization,
+  env,
+  regionGate,
+  paidEntitlementStore,
+  checkoutSafetyAuthorityReader,
+  nowMs = Date.now()
+}: {
+  callerAuthorization: CommentTranslatorBillingCallerAuthorization;
+  env: CommentTranslatorStripeEnv;
+  regionGate: CommentTranslatorPaidRegionDecision;
+  paidEntitlementStore?: CommentTranslatorPaidEntitlementStore | null;
+  checkoutSafetyAuthorityReader?: CommentTranslatorBillingCheckoutSafetyAuthorityReader | null;
+  nowMs?: number;
+}): Promise<CommentTranslatorBillingBrowserSafeViewModel> {
+  const base = createCommentTranslatorBillingBrowserSafeViewModel({
+    snapshot: createFreeBillingSnapshot(),
+    env
+  });
+  if (callerAuthorization.status !== "authorized") {
+    return { ...base, uiState: "infra" };
+  }
+
+  const checkoutConfig = readCommentTranslatorPaidCheckoutConfig(env);
+  const consentVersions = readCommentTranslatorPaidConsentVersions(env);
+  const consentReady = Object.values(consentVersions).every((value) => value !== null);
+  const entitlementStore = paidEntitlementStore ?? createDefaultPaidEntitlementStore(env);
+  if (!entitlementStore) {
+    return {
+      ...base,
+      consentVersions,
+      uiState: regionGate.status === "denied" ? regionGate.reason : "infra"
+    };
+  }
+
+  let entitlement: CommentTranslatorPaidEntitlement | null;
+  let lifecycle: CommentTranslatorPaidCheckoutLifecycle | null;
+  try {
+    [entitlement, lifecycle] = await Promise.all([
+      entitlementStore.readEntitlement({ ownerUserId: callerAuthorization.ownerUserId }),
+      entitlementStore.readCheckoutLifecycle({ ownerUserId: callerAuthorization.ownerUserId })
+    ]);
+  } catch {
+    return {
+      ...base,
+      consentVersions,
+      uiState: "infra"
+    };
+  }
+
+  const portalAvailable = isCommentTranslatorBillingPortalAvailable({ lifecycle, env });
+  if (checkoutConfig.status === "missing") {
+    return createCommentTranslatorBillingBrowserSafeViewModelFromSnapshot({
+      snapshot: createCommentTranslatorBillingSnapshotFromDurableState({
+        callerAuthorization,
+        entitlement,
+        lifecycle,
+        nowMs
+      }),
+      env,
+      uiState: regionGate.status === "denied" ? regionGate.reason : "infra",
+      checkoutAvailable: false,
+      portalAvailable,
+      consentVersions
+    });
+  }
+
+  const resolvedCheckoutSafetyAuthorityReader = checkoutSafetyAuthorityReader
+    ?? createDefaultCommentTranslatorBillingCheckoutSafetyAuthorityReader(env);
+  const checkoutSafetyGate = await readCommentTranslatorBillingCheckoutSafetyGate({
+    checkoutSafetyAuthorityReader: resolvedCheckoutSafetyAuthorityReader,
+    ownerUserId: callerAuthorization.ownerUserId,
+    nowMs
+  });
+  const projection = projectCommentTranslatorBillingPageState({
+    callerAuthorization,
+    entitlement,
+    lifecycle,
+    checkoutConfig,
+    checkoutSafetyGate,
+    nowMs
+  });
+  let uiState = projection.uiState;
+  let checkoutAvailable = projection.checkoutAvailable;
+  const checkoutRetryAtIso = projection.checkoutRetryAtIso;
+  if (checkoutAvailable && regionGate.status === "denied") {
+    uiState = regionGate.reason;
+    checkoutAvailable = false;
+  } else if (checkoutAvailable && !consentReady) {
+    uiState = "infra";
+    checkoutAvailable = false;
+  } else if (checkoutAvailable && readExplicitBooleanEnv(env.COMMENT_TRANSLATOR_PAID_CHECKOUT_ENABLED) !== true) {
+    uiState = "settings-stopped";
+    checkoutAvailable = false;
+  }
+  return createCommentTranslatorBillingBrowserSafeViewModelFromSnapshot({
+    snapshot: projection.snapshot,
+    env,
+    uiState,
+    checkoutAvailable,
+    checkoutRetryAtIso,
+    portalAvailable: projection.portalAvailable || portalAvailable,
+    consentVersions
+  });
 }
 
 export function createCommentTranslatorPlanComparisonViewModel({
@@ -438,17 +738,18 @@ export function createCommentTranslatorPlanComparisonViewModel({
   billingState: CommentTranslatorBillingState;
   planEntitlement: CommentTranslatorSessionPlanEntitlement;
 }): CommentTranslatorPlanComparisonViewModel {
-  void billingState;
   void planEntitlement;
   const freeEntitlement = createCommentTranslatorSessionPlanEntitlement({ plan: "free" });
+  const paidEntitlement = createCommentTranslatorPaidBillingPlanEntitlement();
+  const currentPlanId = billingState === "paid-active" || billingState === "paid-inactive" ? "paid" : "free";
 
   return {
-    currentPlanId: "free",
-    implementationEntitlementShape: "free-only-until-durable-paid-entitlement",
-    intervalPresentation: "free-only-paid-unavailable-until-durable-entitlement",
+    currentPlanId,
+    implementationEntitlementShape: "free-and-paid-server-derived",
+    intervalPresentation: "monthly-paid-only-no-yearly",
     advanceNoticeCopy: {
-      ja: "Free は常に利用できます。Paid Core v1 は、永続的な権限情報が接続されるまで利用不可として扱います。",
-      en: "Free remains available. Paid Core v1 stays unavailable until durable entitlement authority is connected."
+      ja: "Free は常に利用できます。Kuro Live Comment Translator Plus は、server-derivedな契約状態と安全確認が完了した場合だけ表示どおりに利用できます。",
+      en: "Free remains available. Kuro Live Comment Translator Plus follows the displayed state only after server-derived contract and safety checks complete."
     },
     planOptions: [
       {
@@ -459,9 +760,11 @@ export function createCommentTranslatorPlanComparisonViewModel({
         displayPrice: {
           currency: "USD",
           monthlyAmount: 0,
-          yearlyAmount: null
+          yearlyAmount: null,
+          taxInclusive: true,
+          automaticRenewal: false
         },
-        entitlement: freeEntitlement,
+        entitlement: createCommentTranslatorBillingPlanEntitlementBrowserSafe(freeEntitlement),
         badge: {
           ja: "常に利用可能",
           en: "Always available"
@@ -474,8 +777,384 @@ export function createCommentTranslatorPlanComparisonViewModel({
           ja: "現在のFree枠を確認",
           en: "Review Free limits"
         }
+      },
+      {
+        id: "paid",
+        productName: "Kuro Live Comment Translator Plus",
+        interval: "monthly",
+        implementationEntitlement: "paid",
+        displayPrice: {
+          currency: "USD",
+          monthlyAmount: 6,
+          yearlyAmount: null,
+          taxInclusive: true,
+          automaticRenewal: true
+        },
+        entitlement: createCommentTranslatorBillingPlanEntitlementBrowserSafe(paidEntitlement),
+        badge: {
+          ja: "月額・自動更新",
+          en: "Monthly · auto-renewing"
+        },
+        description: {
+          ja: "Stripeの請求／契約更新期間ごとに入力文字数を管理するPaidプランです。",
+          en: "The Paid plan tracks input characters for each Stripe billing or contract renewal period."
+        },
+        cta: {
+          ja: "利用条件と同意を確認",
+          en: "Review terms and consent"
+        }
       }
     ]
+  };
+}
+
+function createCommentTranslatorBillingBrowserSafeViewModelFromSnapshot({
+  snapshot,
+  env,
+  uiState,
+  checkoutAvailable,
+  checkoutRetryAtIso = null,
+  portalAvailable,
+  consentVersions = readCommentTranslatorPaidConsentVersions(env),
+  preserveUnavailableBaseline = false
+}: {
+  snapshot: CommentTranslatorBillingEntitlementSnapshot;
+  env: CommentTranslatorStripeEnv;
+  uiState: CommentTranslatorBillingUiState;
+  checkoutAvailable: boolean;
+  checkoutRetryAtIso?: string | null;
+  portalAvailable: boolean;
+  consentVersions?: CommentTranslatorPaidConsentVersions;
+  preserveUnavailableBaseline?: boolean;
+}): CommentTranslatorBillingBrowserSafeViewModel {
+  const safeSnapshot = preserveUnavailableBaseline ? createFreeBillingSnapshot() : snapshot;
+  const paidKnown = safeSnapshot.billingState !== "free";
+  return {
+    plan: safeSnapshot.plan,
+    billingState: safeSnapshot.billingState,
+    freePlanAvailable: true,
+    planEntitlement: createCommentTranslatorBillingPlanEntitlementBrowserSafe(safeSnapshot.planEntitlement),
+    paidPlan: safeSnapshot.paidPlan,
+    paidCoreV1Availability: paidKnown ? "available" : "unavailable-until-durable-entitlement",
+    uiState,
+    uiStateSource: "server-derived",
+    checkoutAvailable,
+    checkoutRetryAtIso,
+    portalAvailable,
+    consentVersions,
+    consentFieldNames: commentTranslatorPaidCheckoutConsentFieldNames,
+    planComparison: createCommentTranslatorPlanComparisonViewModel({
+      billingState: safeSnapshot.billingState,
+      planEntitlement: safeSnapshot.planEntitlement
+    }),
+    tokenValue: "never-returned-by-design",
+    providerTargetMetadata: "forbidden"
+  };
+}
+
+function createCommentTranslatorPaidBillingPlanEntitlement(): CommentTranslatorSessionPlanEntitlement {
+  return createCommentTranslatorSessionPlanEntitlement({
+    plan: "paid",
+    paidEntitlement: {
+      planEntitlementReferenceId: "comment-translator-paid-core-v1",
+      dailyLimitMs: Number.MAX_SAFE_INTEGER,
+      sessionLimitMs: 3 * 60 * 60 * 1_000,
+      translatedMessagesPerMinute: 60,
+      activeSessionsPerUser: 1,
+      monthlyProviderInputCharacterLimit: 500_000,
+      paidIndividualCostLimitMicros: 3_000_000,
+      paidGlobalCostLimitMicros: 25_000_000,
+      paidAzureFallbackMonthlyCharacterLimit: 200_000,
+      paidAuthorityReadable: true
+    }
+  });
+}
+
+function createCommentTranslatorBillingPlanEntitlementBrowserSafe(
+  entitlement: CommentTranslatorSessionPlanEntitlement
+): CommentTranslatorBillingPlanEntitlementBrowserSafe {
+  const {
+    paidIndividualCostLimitMicros: _paidIndividualCostLimitMicros,
+    paidGlobalCostLimitMicros: _paidGlobalCostLimitMicros,
+    ...safeEntitlement
+  } = entitlement;
+  return safeEntitlement;
+}
+
+function readCommentTranslatorPaidConsentVersions(env: CommentTranslatorStripeEnv): CommentTranslatorPaidConsentVersions {
+  return {
+    terms: readOptionalEnv(env.COMMENT_TRANSLATOR_TERMS_VERSION),
+    privacy: readOptionalEnv(env.COMMENT_TRANSLATOR_PRIVACY_VERSION),
+    paidConditions: readOptionalEnv(env.COMMENT_TRANSLATOR_PAID_CONDITIONS_VERSION)
+  };
+}
+
+function readExplicitBooleanEnv(value: string | undefined): boolean | null {
+  const normalized = value?.trim().toLowerCase();
+  if (normalized === "true") return true;
+  if (normalized === "false") return false;
+  return null;
+}
+
+async function readCommentTranslatorBillingCheckoutSafetyGate({
+  checkoutSafetyAuthorityReader,
+  ownerUserId,
+  nowMs,
+  capacityReservationAlreadyHeld = false
+}: {
+  checkoutSafetyAuthorityReader?: CommentTranslatorBillingCheckoutSafetyAuthorityReader | null;
+  ownerUserId: string;
+  nowMs: number;
+  capacityReservationAlreadyHeld?: boolean;
+}): Promise<CommentTranslatorBillingCheckoutSafetyGate> {
+  const failClosedPollGate = resolveCommentTranslatorPaidPollBudgetGate({
+    dailyBudget: 0,
+    reservedPolls: 0,
+    isNewSession: true,
+    nowMs
+  });
+  if (!checkoutSafetyAuthorityReader) {
+    return {
+      uiState: "poll-budget-stop",
+      checkoutAvailable: false,
+      checkoutRetryAtIso: failClosedPollGate.nextResetAtIso
+    };
+  }
+
+  let authority: Awaited<ReturnType<CommentTranslatorBillingCheckoutSafetyAuthorityReader["readCheckoutSafetyAuthority"]>>;
+  try {
+    authority = await checkoutSafetyAuthorityReader.readCheckoutSafetyAuthority({
+      ownerUserId,
+      nowIso: new Date(nowMs).toISOString(),
+      capacityReservationAlreadyHeld
+    });
+  } catch {
+    authority = { status: "unreadable" };
+  }
+  if (authority.status !== "ready") {
+    return {
+      uiState: "poll-budget-stop",
+      checkoutAvailable: false,
+      checkoutRetryAtIso: failClosedPollGate.nextResetAtIso
+    };
+  }
+  if (!authority.capacityAvailable) {
+    return { uiState: "capacity-full", checkoutAvailable: false, checkoutRetryAtIso: null };
+  }
+
+  const pollGate = resolveCommentTranslatorPaidPollBudgetGate({
+    dailyBudget: authority.dailyPollBudget,
+    reservedPolls: authority.reservedPolls,
+    additionalReservedPolls: 720,
+    isNewSession: true,
+    nowMs
+  });
+  if (pollGate.status !== "allowed") {
+    return {
+      uiState: "poll-budget-stop",
+      checkoutAvailable: false,
+      checkoutRetryAtIso: pollGate.nextResetAtIso
+    };
+  }
+  return { uiState: "ready", checkoutAvailable: true, checkoutRetryAtIso: null };
+}
+
+function isCommentTranslatorBillingPortalAvailable({
+  lifecycle,
+  env
+}: {
+  lifecycle: CommentTranslatorPaidCheckoutLifecycle | null;
+  env: CommentTranslatorStripeEnv;
+}): boolean {
+  return Boolean(
+    readSiteOrigin(env.NEXT_PUBLIC_SITE_URL)
+    && env.STRIPE_SECRET_KEY?.trim()
+    && lifecycle?.stripeCustomerId
+    && ["active", "cancel_at_period_end", "past_due", "unpaid"].includes(lifecycle.lifecycleState)
+  );
+}
+
+function createCommentTranslatorBillingSnapshotFromDurableState({
+  callerAuthorization,
+  entitlement,
+  lifecycle,
+  nowMs
+}: {
+  callerAuthorization: Extract<CommentTranslatorBillingCallerAuthorization, { status: "authorized" }>;
+  entitlement: CommentTranslatorPaidEntitlement | null;
+  lifecycle: CommentTranslatorPaidCheckoutLifecycle | null;
+  nowMs: number;
+}): CommentTranslatorBillingEntitlementSnapshot {
+  const durableEntitlementIsCurrent = Boolean(
+    entitlement
+    && isCurrentCommentTranslatorPaidBillingEntitlement({
+      entitlement,
+      ownerUserId: callerAuthorization.ownerUserId,
+      productId: entitlement.productId,
+      priceId: entitlement.priceId,
+      nowMs
+    })
+  );
+  const paymentStopped = Boolean(
+    entitlement && [
+      "past_due",
+      "unpaid",
+      "dispute",
+      "cancel_pending",
+      "paid_unentitled_reconciliation",
+      "refund_reconciliation",
+      "dispute_reconciliation",
+      "reconciliation"
+    ].includes(entitlement.status)
+  ) || Boolean(lifecycle && ["past_due", "unpaid", "dispute", "reconciliation"].includes(lifecycle.lifecycleState));
+  if (durableEntitlementIsCurrent) {
+    return createPaidBillingSnapshot({ entitlement, billingState: "paid-active" });
+  }
+  if (paymentStopped) {
+    return createPaidBillingSnapshot({ entitlement, billingState: "paid-inactive" });
+  }
+  return createFreeBillingSnapshot();
+}
+
+function projectCommentTranslatorBillingPageState({
+  callerAuthorization,
+  entitlement,
+  lifecycle,
+  checkoutConfig,
+  checkoutSafetyGate,
+  nowMs
+}: {
+  callerAuthorization: Extract<CommentTranslatorBillingCallerAuthorization, { status: "authorized" }>;
+  entitlement: CommentTranslatorPaidEntitlement | null;
+  lifecycle: CommentTranslatorPaidCheckoutLifecycle | null;
+  checkoutConfig: Extract<ReturnType<typeof readCommentTranslatorPaidCheckoutConfig>, { status: "ready" }>;
+  checkoutSafetyGate: CommentTranslatorBillingCheckoutSafetyGate;
+  nowMs: number;
+}): {
+  snapshot: CommentTranslatorBillingEntitlementSnapshot;
+  uiState: CommentTranslatorBillingUiState;
+  checkoutAvailable: boolean;
+  checkoutRetryAtIso: string | null;
+  portalAvailable: boolean;
+} {
+  const activeEntitlement = entitlement && isCurrentCommentTranslatorPaidBillingEntitlement({
+    entitlement,
+    ownerUserId: callerAuthorization.ownerUserId,
+    productId: checkoutConfig.config.productReferenceId,
+    priceId: checkoutConfig.config.priceReferenceId,
+    nowMs
+  });
+  const paymentStopped = Boolean(
+    entitlement && [
+      "past_due",
+      "unpaid",
+      "dispute",
+      "cancel_pending",
+      "paid_unentitled_reconciliation",
+      "refund_reconciliation",
+      "dispute_reconciliation",
+      "reconciliation"
+    ].includes(entitlement.status)
+  ) || Boolean(lifecycle && ["past_due", "unpaid", "dispute", "reconciliation"].includes(lifecycle.lifecycleState));
+  const portalAvailable = Boolean(
+    lifecycle?.stripeCustomerId
+    && ["active", "cancel_at_period_end", "past_due", "unpaid"].includes(lifecycle.lifecycleState)
+  );
+
+  if (activeEntitlement) {
+    const snapshot = createPaidBillingSnapshot({ entitlement, billingState: "paid-active" });
+    return {
+      snapshot,
+      uiState: "ready",
+      checkoutAvailable: false,
+      checkoutRetryAtIso: null,
+      portalAvailable
+    };
+  }
+  if (paymentStopped) {
+    return {
+      snapshot: createPaidBillingSnapshot({ entitlement, billingState: "paid-inactive" }),
+      uiState: "payment-stopped",
+      checkoutAvailable: false,
+      checkoutRetryAtIso: null,
+      portalAvailable
+    };
+  }
+  if (lifecycle && !lifecycle.isTerminal) {
+    return {
+      snapshot: createFreeBillingSnapshot(),
+      uiState: "lifecycle-processing",
+      checkoutAvailable: false,
+      checkoutRetryAtIso: null,
+      portalAvailable
+    };
+  }
+  return {
+    snapshot: createFreeBillingSnapshot(),
+    uiState: checkoutSafetyGate.uiState,
+    checkoutAvailable: checkoutSafetyGate.checkoutAvailable,
+    checkoutRetryAtIso: checkoutSafetyGate.checkoutRetryAtIso,
+    portalAvailable: false
+  };
+}
+
+function isCurrentCommentTranslatorPaidBillingEntitlement({
+  entitlement,
+  ownerUserId,
+  productId,
+  priceId,
+  nowMs
+}: {
+  entitlement: CommentTranslatorPaidEntitlement;
+  ownerUserId: string;
+  productId: string;
+  priceId: string;
+  nowMs: number;
+}): boolean {
+  if (
+    entitlement.ownerUserId !== ownerUserId
+    || entitlement.productId !== productId
+    || entitlement.priceId !== priceId
+    || !["active", "cancel_at_period_end"].includes(entitlement.status)
+    || entitlement.disputeState !== "none"
+  ) return false;
+  const periodStartMs = entitlement.currentPeriodStartIso ? Date.parse(entitlement.currentPeriodStartIso) : NaN;
+  const periodEndMs = entitlement.currentPeriodEndIso ? Date.parse(entitlement.currentPeriodEndIso) : NaN;
+  return Number.isFinite(periodStartMs) && Number.isFinite(periodEndMs) && periodStartMs <= nowMs && nowMs < periodEndMs;
+}
+
+function createPaidBillingSnapshot({
+  entitlement,
+  billingState
+}: {
+  entitlement: CommentTranslatorPaidEntitlement | null;
+  billingState: Extract<CommentTranslatorBillingState, "paid-active" | "paid-inactive">;
+}): CommentTranslatorBillingEntitlementSnapshot {
+  const planEntitlement = createCommentTranslatorPaidBillingPlanEntitlement();
+  const paymentState = entitlement?.status === "past_due"
+    ? "past-due" as const
+    : entitlement?.status === "unpaid"
+      ? "unpaid" as const
+      : billingState === "paid-active"
+        ? "current" as const
+        : "processing" as const;
+  return {
+    plan: "paid",
+    billingState,
+    freePlanAvailable: true,
+    planEntitlement,
+    billingUserReferenceId: null,
+    stripeCustomerReferenceId: null,
+    stripeSubscriptionReferenceId: null,
+    paidPlan: {
+      status: billingState === "paid-active" ? "available" : "inactive",
+      currentPeriodEndIso: entitlement?.currentPeriodEndIso ?? null,
+      cancelAtPeriodEnd: entitlement?.cancelAtPeriodEnd ?? false,
+      paymentState,
+      provider: "stripe"
+    },
+    tokenValue: "never-returned-by-design",
+    providerTargetMetadata: "forbidden"
   };
 }
 
@@ -489,6 +1168,7 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
   consent = readCommentTranslatorPaidCheckoutConsentInput(),
   paidEntitlementStore,
   paidConsentStore,
+  checkoutSafetyAuthorityReader,
   nowMs = Date.now()
 }: {
   callerAuthorization: CommentTranslatorBillingCallerAuthorization;
@@ -502,6 +1182,7 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
   consent?: CommentTranslatorPaidCheckoutConsentInput;
   paidEntitlementStore?: CommentTranslatorPaidEntitlementStore | null;
   paidConsentStore?: CommentTranslatorPaidConsentStore | null;
+  checkoutSafetyAuthorityReader?: CommentTranslatorBillingCheckoutSafetyAuthorityReader | null;
   nowMs?: number;
   abuseRateLimit?: {
     nowMs?: number;
@@ -538,9 +1219,12 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
         | "processing"
         | "stripe-session-url-missing"
         | "rate-limit-exceeded"
+        | "settings-stopped"
+        | "poll-budget-stop"
         | "paid-core-v1-unavailable";
       missingEnvReferences: CommentTranslatorStripeEnvName[];
       retryAfterSeconds?: number;
+      nextRetryAtIso?: string;
     }
 > {
   const abuseCheck =
@@ -582,6 +1266,14 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
     };
   }
 
+  if (readExplicitBooleanEnv(env.COMMENT_TRANSLATOR_PAID_CHECKOUT_ENABLED) !== true) {
+    return {
+      status: "unavailable",
+      reason: "settings-stopped",
+      missingEnvReferences: []
+    };
+  }
+
   const checkoutConfig = readCommentTranslatorPaidCheckoutConfig(env);
   if (checkoutConfig.status === "missing") {
     return {
@@ -597,6 +1289,8 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
     return { status: "unavailable", reason: "billing-store-unavailable", missingEnvReferences: [] };
   }
 
+  const resolvedCheckoutSafetyAuthorityReader = checkoutSafetyAuthorityReader
+    ?? createDefaultCommentTranslatorBillingCheckoutSafetyAuthorityReader(env);
   const nowIso = new Date(nowMs).toISOString();
   const ownerUserId = callerAuthorization.ownerUserId;
   let existingLifecycle: CommentTranslatorPaidCheckoutLifecycle | null;
@@ -607,6 +1301,10 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
   }
   const existingLifecycleNeedsCheckoutConsent =
     existingLifecycle?.lifecycleState === "checkout_hold" || existingLifecycle?.lifecycleState === "incomplete";
+  const existingLifecycleHasCapacityHold =
+    existingLifecycleNeedsCheckoutConsent
+    && existingLifecycle?.holdId !== null
+    && existingLifecycle?.holdId !== undefined;
   if (existingLifecycle && !existingLifecycleNeedsCheckoutConsent) {
     return convergeExistingPaidBillingLifecycle({
       lifecycle: existingLifecycle,
@@ -617,8 +1315,27 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
       ownerUserId,
       customerEmail: customerEmail ?? null,
       env,
-      nowIso
+      nowIso,
+      checkoutSafetyAuthorityReader: resolvedCheckoutSafetyAuthorityReader,
+      nowMs
     });
+  }
+
+  const checkoutSafetyGate = await readCommentTranslatorBillingCheckoutSafetyGate({
+    checkoutSafetyAuthorityReader: resolvedCheckoutSafetyAuthorityReader,
+    ownerUserId,
+    nowMs,
+    capacityReservationAlreadyHeld: existingLifecycleHasCapacityHold
+  });
+  if (!checkoutSafetyGate.checkoutAvailable) {
+    return {
+      status: "unavailable",
+      reason: checkoutSafetyGate.uiState === "capacity-full" ? "capacity-full" : "poll-budget-stop",
+      missingEnvReferences: [],
+      ...(checkoutSafetyGate.checkoutRetryAtIso
+        ? { nextRetryAtIso: checkoutSafetyGate.checkoutRetryAtIso }
+        : {})
+    };
   }
 
   if (!consentStore) {
@@ -670,7 +1387,9 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
       ownerUserId,
       customerEmail: customerEmail ?? null,
       env,
-      nowIso
+      nowIso,
+      checkoutSafetyAuthorityReader: resolvedCheckoutSafetyAuthorityReader,
+      nowMs
     });
   }
   if (existingLifecycle) {
@@ -683,7 +1402,9 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
       ownerUserId,
       customerEmail: customerEmail ?? null,
       env,
-      nowIso
+      nowIso,
+      checkoutSafetyAuthorityReader: resolvedCheckoutSafetyAuthorityReader,
+      nowMs
     });
   }
 
@@ -720,6 +1441,23 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
   const checkoutExpiresAtTargetIso = readOptionalIso(initialization.checkoutExpiresAtTargetIso);
   if (!checkoutExpiresAtTargetIso) {
     return { status: "unavailable", reason: "checkout-response-unknown", missingEnvReferences: [] };
+  }
+
+  const finalCheckoutSafetyGate = await readCommentTranslatorBillingCheckoutSafetyGate({
+    checkoutSafetyAuthorityReader: resolvedCheckoutSafetyAuthorityReader,
+    ownerUserId,
+    nowMs,
+    capacityReservationAlreadyHeld: true
+  });
+  if (!finalCheckoutSafetyGate.checkoutAvailable) {
+    return {
+      status: "unavailable",
+      reason: finalCheckoutSafetyGate.uiState === "capacity-full" ? "capacity-full" : "poll-budget-stop",
+      missingEnvReferences: [],
+      ...(finalCheckoutSafetyGate.checkoutRetryAtIso
+        ? { nextRetryAtIso: finalCheckoutSafetyGate.checkoutRetryAtIso }
+        : {})
+    };
   }
 
   const checkoutParams: CommentTranslatorStripeCheckoutSessionParams = {
@@ -897,6 +1635,9 @@ export async function createCommentTranslatorStripePortalSessionResult({
   if (!siteOrigin) {
     return { status: "unavailable", reason: "missing-config", missingEnvReferences: ["NEXT_PUBLIC_SITE_URL"] };
   }
+  if (!env.STRIPE_SECRET_KEY?.trim()) {
+    return { status: "unavailable", reason: "missing-config", missingEnvReferences: ["STRIPE_SECRET_KEY"] };
+  }
   const entitlementStore = paidEntitlementStore ?? createDefaultPaidEntitlementStore(env);
   if (!entitlementStore) {
     return { status: "unavailable", reason: "paid-core-v1-unavailable", missingEnvReferences: [] };
@@ -918,12 +1659,21 @@ export async function createCommentTranslatorStripePortalSessionResult({
     return { status: "unavailable", reason: "processing", missingEnvReferences: [] };
   }
 
-  const portal = await stripeAdapter.createPortalSession({
-    customerReferenceId: lifecycle.stripeCustomerId,
-    returnUrl: new URL("/account/billing?billing=portal-returned", siteOrigin).toString(),
-    flow: paymentMethodOnly ? "payment-method-update" : "contract-management",
-    subscriptionReferenceId: lifecycle.subscriptionId
-  });
+  let portal: Awaited<ReturnType<CommentTranslatorStripeAdapter["createPortalSession"]>>;
+  try {
+    portal = await stripeAdapter.createPortalSession({
+      customerReferenceId: lifecycle.stripeCustomerId,
+      returnUrl: new URL("/account/billing?billing=portal-returned", siteOrigin).toString(),
+      flow: paymentMethodOnly ? "payment-method-update" : "contract-management",
+      subscriptionReferenceId: lifecycle.subscriptionId
+    });
+  } catch {
+    return {
+      status: "unavailable",
+      reason: paymentMethodOnly ? "portal-payment-method-update" : "contract-management",
+      missingEnvReferences: []
+    };
+  }
   if (!portal.url) {
     return { status: "unavailable", reason: "stripe-session-url-missing", missingEnvReferences: [] };
   }
@@ -1260,7 +2010,9 @@ async function convergeExistingPaidBillingLifecycle({
   ownerUserId,
   customerEmail,
   env,
-  nowIso
+  nowIso,
+  checkoutSafetyAuthorityReader,
+  nowMs
 }: {
   lifecycle: CommentTranslatorPaidCheckoutLifecycle;
   stripeAdapter: Pick<
@@ -1274,6 +2026,8 @@ async function convergeExistingPaidBillingLifecycle({
   customerEmail: string | null;
   env: CommentTranslatorStripeEnv;
   nowIso: string;
+  checkoutSafetyAuthorityReader?: CommentTranslatorBillingCheckoutSafetyAuthorityReader | null;
+  nowMs: number;
 }) {
   if (
     lifecycle.lifecycleState === "expire_required" &&
@@ -1381,6 +2135,22 @@ async function convergeExistingPaidBillingLifecycle({
         idempotencyKey: lifecycle.idempotencyKey,
         checkoutExpiresAtTargetIso: lifecycle.checkoutExpiresAtTargetIso
       };
+      const finalCheckoutSafetyGate = await readCommentTranslatorBillingCheckoutSafetyGate({
+        checkoutSafetyAuthorityReader,
+        ownerUserId,
+        nowMs,
+        capacityReservationAlreadyHeld: true
+      });
+      if (!finalCheckoutSafetyGate.checkoutAvailable) {
+        return {
+          status: "unavailable" as const,
+          reason: finalCheckoutSafetyGate.uiState === "capacity-full" ? "capacity-full" as const : "poll-budget-stop" as const,
+          missingEnvReferences: [],
+          ...(finalCheckoutSafetyGate.checkoutRetryAtIso
+            ? { nextRetryAtIso: finalCheckoutSafetyGate.checkoutRetryAtIso }
+            : {})
+        };
+      }
       const checkoutParams: CommentTranslatorStripeCheckoutSessionParams = {
         mode: "subscription",
         customerReferenceId: lifecycle.stripeCustomerId,
@@ -1477,13 +2247,17 @@ async function convergeExistingPaidBillingLifecycle({
   }
   if (lifecycle.lifecycleState === "past_due" || lifecycle.lifecycleState === "unpaid") {
     if (lifecycle.stripeCustomerId && stripeAdapter.createPortalSession) {
-      const portal = await stripeAdapter.createPortalSession({
-        customerReferenceId: lifecycle.stripeCustomerId,
-        returnUrl: new URL("/account/billing?billing=portal-returned", siteOrigin).toString(),
-        flow: "payment-method-update",
-        subscriptionReferenceId: lifecycle.subscriptionId
-      });
-      if (portal.url) return { status: "redirect-ready" as const, url: portal.url };
+      try {
+        const portal = await stripeAdapter.createPortalSession({
+          customerReferenceId: lifecycle.stripeCustomerId,
+          returnUrl: new URL("/account/billing?billing=portal-returned", siteOrigin).toString(),
+          flow: "payment-method-update",
+          subscriptionReferenceId: lifecycle.subscriptionId
+        });
+        if (portal.url) return { status: "redirect-ready" as const, url: portal.url };
+      } catch {
+        // Preserve the sanitized Portal-unavailable result below.
+      }
     }
     return { status: "unavailable" as const, reason: "portal-payment-method-update" as const, missingEnvReferences: [] };
   }
@@ -2960,6 +3734,8 @@ function createFreeBillingSnapshot(): CommentTranslatorBillingEntitlementSnapsho
     paidPlan: {
       status: "unconfigured",
       currentPeriodEndIso: null,
+      cancelAtPeriodEnd: false,
+      paymentState: "none",
       provider: "stripe"
     },
     tokenValue: "never-returned-by-design",

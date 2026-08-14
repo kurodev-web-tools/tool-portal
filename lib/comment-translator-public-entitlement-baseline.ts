@@ -1,5 +1,6 @@
 import "server-only";
 
+import { createHash } from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
 import {
   createCommentTranslatorProviderCircuitAuthority,
@@ -40,11 +41,31 @@ import {
 import { type CommentTranslatorFreeBetaPreviewRateLimitSmokeOverride } from "./comment-translator-free-beta-preview-rate-limit-smoke-override";
 import type { YouTubeOAuthCredentialStatusCallerAuthorization } from "./comment-translator-youtube-credential-status-boundary";
 import { commentTranslatorPaidCostLedgerContract } from "./comment-translator-paid-cost-ledger";
+import {
+  readCommentTranslatorPaidPositiveIntegerEnv,
+  resolveCommentTranslatorPaidPollBudgetGate
+} from "./comment-translator-paid-poll-budget-gate";
+
+export {
+  readCommentTranslatorPaidPositiveIntegerEnv,
+  resolveCommentTranslatorPaidPollBudgetGate
+} from "./comment-translator-paid-poll-budget-gate";
 
 const paidSessionLimitMs = 3 * 60 * 60 * 1_000;
 const paidDailyTimeLimitMs = Number.MAX_SAFE_INTEGER;
 const paidPollIntervalMs = 15_000;
 export const commentTranslatorPaidPlanEntitlementReferenceId = "comment-translator-paid-core-v1";
+
+export function createCommentTranslatorPaidPreSessionPollBudgetReference(
+  callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization
+): string | null {
+  if (callerAuthorization.status !== "authorized") return null;
+  const digest = createHash("sha256")
+    .update(`comment-translator-paid-pre-session-poll-budget:${callerAuthorization.ownerUserId}`)
+    .digest("hex")
+    .slice(0, 32);
+  return `ctpps_${digest}`;
+}
 
 export type CommentTranslatorPaidProviderRuntime = {
   usageStore: CommentTranslatorPaidUsageStore;
@@ -76,6 +97,7 @@ export type CommentTranslatorPaidSessionAuthoritySnapshot = {
     utcDay: string;
     nextResetAtIso: string;
     activeAutoPollAllowed: boolean;
+    authorityReadable?: boolean;
   };
 };
 
@@ -246,10 +268,14 @@ export function createCommentTranslatorPaidSessionAuthorityDependencies({
 export async function readCommentTranslatorPaidSessionAuthority({
   callerAuthorization,
   nowMs,
+  pollBudgetSessionReferenceId,
+  allowEmptyPollBudgetInitialization = false,
   dependencies = createCommentTranslatorPaidSessionAuthorityDependencies()
 }: {
   callerAuthorization: YouTubeOAuthCredentialStatusCallerAuthorization;
   nowMs: number;
+  pollBudgetSessionReferenceId?: string | null;
+  allowEmptyPollBudgetInitialization?: boolean;
   dependencies?: CommentTranslatorPaidSessionAuthorityDependencies;
 }): Promise<CommentTranslatorPaidSessionAuthorityRead> {
   if (callerAuthorization.status !== "authorized") {
@@ -340,20 +366,56 @@ export async function readCommentTranslatorPaidSessionAuthority({
   if (effectiveRoute === "blocked") {
     return { status: "fail-closed", reason: "provider-configuration-unreadable", entitlement };
   }
-  const nextResetAtIso = utcDayEndIso(nowMs);
+  let pollBudget: CommentTranslatorPaidSessionAuthoritySnapshot["pollBudget"] = {
+    dailyBudget: dependencies.providerRuntime.dailyPollBudget,
+    reservedPolls: 0,
+    sessionReservedPolls: 0,
+    utcDay: dayBucket(nowMs),
+    nextResetAtIso: utcDayEndIso(nowMs),
+    activeAutoPollAllowed: false,
+    authorityReadable: false
+  };
+  if (pollBudgetSessionReferenceId) {
+    try {
+      const authority = await dependencies.paidUsageStore.store.readPollBudget({
+        sessionReferenceId: pollBudgetSessionReferenceId,
+        ownerUserId: callerAuthorization.ownerUserId,
+        nowIso: new Date(nowMs).toISOString()
+      });
+      const canInitializeEmptyPollBudget = allowEmptyPollBudgetInitialization
+        && authority.dailyBudget === null
+        && authority.reservedPolls === 0
+        && authority.sessionReservedPolls === 0
+        && !authority.sessionReservationPresent;
+      const dailyBudget = authority.dailyBudget ?? (canInitializeEmptyPollBudget ? dependencies.providerRuntime.dailyPollBudget : null);
+      if (dailyBudget === null) {
+        return { status: "fail-closed", reason: "poll-budget-config-unreadable", entitlement };
+      }
+      const gate = resolveCommentTranslatorPaidPollBudgetGate({
+        dailyBudget,
+        reservedPolls: authority.reservedPolls,
+        isNewSession: false,
+        nowMs
+      });
+      pollBudget = {
+        dailyBudget,
+        reservedPolls: authority.reservedPolls,
+        sessionReservedPolls: authority.sessionReservedPolls,
+        utcDay: authority.utcDay,
+        nextResetAtIso: authority.nextResetAtIso,
+        activeAutoPollAllowed: gate.status === "allowed",
+        authorityReadable: true
+      };
+    } catch {
+      return { status: "fail-closed", reason: "poll-budget-config-unreadable", entitlement };
+    }
+  }
   return {
     status: "ready",
     entitlement,
     costAuthority,
     providerAuthority: { openAiAvailable, azureFallbackAvailable, effectiveRoute },
-    pollBudget: {
-      dailyBudget: dependencies.providerRuntime.dailyPollBudget,
-      reservedPolls: 0,
-      sessionReservedPolls: 0,
-      utcDay: dayBucket(nowMs),
-      nextResetAtIso,
-      activeAutoPollAllowed: true
-    },
+    pollBudget,
     providerRuntime: dependencies.providerRuntime
   };
 }
@@ -458,7 +520,8 @@ export function resolveCommentTranslatorPublicEntitlementBaseline({
   billingSnapshot,
   durableUsageRead,
   paidAuthority,
-  previewRateLimitSmokeOverride
+  previewRateLimitSmokeOverride,
+  nowMs = Date.now()
 }: {
   billingSnapshot?: Pick<CommentTranslatorBillingEntitlementSnapshot, "plan" | "billingState" | "planEntitlement"> | null;
   durableUsageRead: CommentTranslatorDurableUsageRead;
@@ -466,6 +529,7 @@ export function resolveCommentTranslatorPublicEntitlementBaseline({
     | CommentTranslatorPaidSessionAuthoritySnapshot
     | Pick<Extract<CommentTranslatorPaidSessionAuthorityRead, { status: "fail-closed" }>, "status" | "reason">;
   previewRateLimitSmokeOverride?: CommentTranslatorFreeBetaPreviewRateLimitSmokeOverride;
+  nowMs?: number;
 }): CommentTranslatorPublicEntitlementBaselineResult {
   if (durableUsageRead.status === "fail-closed") {
     return {
@@ -490,7 +554,8 @@ export function resolveCommentTranslatorPublicEntitlementBaseline({
   if (paidAuthority?.status === "ready") {
     return resolvePaidBaseline({
       durableUsageRead,
-      paidAuthority
+      paidAuthority,
+      nowMs
     });
   }
 
@@ -528,36 +593,6 @@ export function resolveCommentTranslatorPublicEntitlementBaseline({
   };
 }
 
-export function resolveCommentTranslatorPaidPollBudgetGate({
-  dailyBudget,
-  reservedPolls,
-  isNewSession,
-  nowMs
-}: {
-  dailyBudget: number;
-  reservedPolls: number;
-  isNewSession: boolean;
-  nowMs: number;
-}): {
-  status: "allowed" | "stop-checkout" | "stop-new-session" | "stop-active-auto-poll";
-  nextResetAtIso: string;
-} {
-  if (!Number.isSafeInteger(dailyBudget) || dailyBudget <= 0 || !Number.isSafeInteger(reservedPolls) || reservedPolls < 0) {
-    return { status: isNewSession ? "stop-new-session" : "stop-active-auto-poll", nextResetAtIso: utcDayEndIso(nowMs) };
-  }
-  const ratio = reservedPolls / dailyBudget;
-  if (isNewSession && ratio >= 0.9) {
-    return { status: "stop-new-session", nextResetAtIso: utcDayEndIso(nowMs) };
-  }
-  if (!isNewSession && ratio >= 0.95) {
-    return { status: "stop-active-auto-poll", nextResetAtIso: utcDayEndIso(nowMs) };
-  }
-  if (isNewSession && ratio >= 0.8) {
-    return { status: "stop-checkout", nextResetAtIso: utcDayEndIso(nowMs) };
-  }
-  return { status: "allowed", nextResetAtIso: utcDayEndIso(nowMs) };
-}
-
 export function resolveCommentTranslatorPaidMessageRateGate({
   usedMessages,
   candidateMessages,
@@ -585,10 +620,12 @@ export function resolveCommentTranslatorPaidMessageRateGate({
 
 function resolvePaidBaseline({
   durableUsageRead,
-  paidAuthority
+  paidAuthority,
+  nowMs
 }: {
   durableUsageRead: Extract<CommentTranslatorDurableUsageRead, { status: "ready" }>;
   paidAuthority: CommentTranslatorPaidSessionAuthoritySnapshot;
+  nowMs: number;
 }): Extract<CommentTranslatorPublicEntitlementBaselineResult, { status: "ready" }> {
   const planEntitlement = createCommentTranslatorPaidSessionPlanEntitlement({ costAuthority: paidAuthority.costAuthority });
   const publicUsageSnapshot = createPaidPublicUsageSnapshot(durableUsageRead.snapshot);
@@ -599,6 +636,24 @@ function resolvePaidBaseline({
     0,
     monthlyProviderInputCharacterLimit - monthlyProviderInputCharacterEstimate
   );
+  const paidPollAuthorityReadable = paidAuthority.pollBudget.authorityReadable === true;
+  const paidAuthorityReadable = paidPollAuthorityReadable && providerAuthorityAvailable;
+  const paidSafetyStopReason = !paidPollAuthorityReadable
+      ? "poll-budget-stop" as const
+    : !providerAuthorityAvailable
+      ? "infra-safety-stop" as const
+      : monthlyProviderInputCharacterEstimate >= monthlyProviderInputCharacterLimit
+        ? "character-quota" as const
+        : !paidAuthority.costAuthority.individualCostAvailable
+          ? "individual-safety-cap" as const
+          : !paidAuthority.costAuthority.globalCostAvailable
+            ? "global-safety-cap" as const
+            : null;
+  const paidPollBudgetStatus = !paidPollAuthorityReadable
+    ? "unknown" as const
+    : paidAuthority.pollBudget.activeAutoPollAllowed
+    ? "allowed" as const
+    : "stop-active-auto-poll" as const;
   return {
     status: "ready",
     plan: "paid",
@@ -611,15 +666,26 @@ function resolvePaidBaseline({
         ? Date.parse(paidAuthority.costAuthority.translatedMessageCapacityAvailableAtIso)
         : null,
       translationProviderAvailable: providerAuthorityAvailable,
-      paidAuthorityReadable: true,
+      paidAuthorityReadable: paidAuthorityReadable,
       paidBillingPeriodInputCharacters: monthlyProviderInputCharacterEstimate,
       paidBillingPeriodCharacterLimit: monthlyProviderInputCharacterLimit,
       paidIndividualCostAvailable: paidAuthority.costAuthority.individualCostAvailable,
       paidGlobalCostAvailable: paidAuthority.costAuthority.globalCostAvailable,
+      paidBillingPeriodNextResetAtIso: paidAuthority.entitlement.currentPeriodEndIso,
+      paidProviderRoute: paidAuthority.providerAuthority.effectiveRoute,
+      paidProviderFallbackActive: paidAuthority.providerAuthority.effectiveRoute === "azure-direct",
+      paidProviderRecoveryExpected: paidAuthority.providerAuthority.effectiveRoute === "azure-direct",
+      paidSafetyStopReason,
+      paidSafetyStopNextResetAtIso: paidSafetyStopReason === "global-safety-cap"
+        ? nextUtcMonthIso(nowMs)
+        : paidAuthority.entitlement.currentPeriodEndIso,
+      paidPollBudgetStatus,
+      paidPollBudgetNextResetAtIso: paidAuthority.pollBudget.nextResetAtIso,
       aiBudgetAvailable:
         monthlyProviderInputCharacterEstimate < monthlyProviderInputCharacterLimit
         && paidAuthority.costAuthority.individualCostAvailable
         && paidAuthority.costAuthority.globalCostAvailable
+        && paidAuthorityReadable
         && providerAuthorityAvailable,
       providerBudgetAvailable: providerAuthorityAvailable,
       globalBudgetAvailable: true
@@ -655,8 +721,8 @@ function createPaidProviderRuntime({
 }): CommentTranslatorPaidProviderRuntime | null {
   const serverSecret = readNonEmptyEnv(env.COMMENT_TRANSLATOR_PAID_ATTEMPT_HMAC_SECRET);
   const attemptKeyVersion = readNonEmptyEnv(env.COMMENT_TRANSLATOR_PAID_ATTEMPT_KEY_VERSION);
-  const dailyPollBudget = readPositiveIntegerEnv(env.COMMENT_TRANSLATOR_PAID_POLL_DAILY_BUDGET);
-  const killSwitches = readPaidKillSwitches(env);
+  const dailyPollBudget = readCommentTranslatorPaidPositiveIntegerEnv(env.COMMENT_TRANSLATOR_PAID_POLL_DAILY_BUDGET);
+  const killSwitches = readCommentTranslatorPaidProviderKillSwitches(env);
   const openAiConfig = readOpenAIMiniCommentTranslationProviderConfig(env);
   const azureConfig = readAzureCommentTranslationProviderConfig(env);
   if (!serverSecret || !attemptKeyVersion || dailyPollBudget === null || !killSwitches) return null;
@@ -680,7 +746,7 @@ function openAzureProvider(config: AzureCommentTranslationProviderConfig) {
   return createAzureCommentTranslationProvider(config);
 }
 
-function readPaidKillSwitches(
+export function readCommentTranslatorPaidProviderKillSwitches(
   env: Partial<Record<string, string | undefined>>
 ): CommentTranslatorPaidProviderKillSwitches | null {
   const values = {
@@ -708,17 +774,10 @@ function readNonEmptyEnv(value: string | undefined): string | null {
   return normalized || null;
 }
 
-function readPositiveIntegerEnv(value: string | undefined): number | null {
-  const normalized = value?.trim();
-  if (!normalized || !/^\d+$/.test(normalized)) return null;
-  const parsed = Number(normalized);
-  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : null;
-}
-
 function readBooleanEnv(value: string | undefined): boolean | null {
   const normalized = value?.trim().toLowerCase();
-  if (normalized === "true" || normalized === "1" || normalized === "on") return true;
-  if (normalized === "false" || normalized === "0" || normalized === "off") return false;
+  if (normalized === "true") return true;
+  if (normalized === "false") return false;
   return null;
 }
 

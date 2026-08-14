@@ -8,9 +8,9 @@ import { AccountBillingShell } from "@/components/account/AccountBillingShell";
 import { CommentTranslatorPrivateLaunchUnavailable } from "@/components/comment-translator/CommentTranslatorPrivateLaunchUnavailable";
 import { PortalShell } from "@/components/portal/PortalShell";
 import {
-  createCommentTranslatorBillingBrowserSafeViewModel,
-  readCommentTranslatorBillingEntitlementSnapshot
+  createCommentTranslatorBillingPageBrowserSafeViewModel
 } from "@/lib/comment-translator-billing-runtime";
+import { readCommentTranslatorPaidRegionFromCloudflareContext } from "@/lib/comment-translator-paid-region-gate";
 import { readCommentTranslatorPrivateLaunchAccessForAccountSession } from "@/lib/comment-translator-private-launch-access-gate";
 import { authorizeYouTubeOAuthCredentialStatusCaller } from "@/lib/comment-translator-youtube-credential-status-boundary";
 import { isRecoverySessionPending } from "@/lib/supabase/recovery-session";
@@ -58,10 +58,10 @@ export default async function AccountBillingPage({ searchParams }: AccountBillin
     callerUserId: accountSession.authStatus === "signed-in" ? accountSession.user?.id ?? null : null,
     authUnavailable: accountSession.authStatus === "unavailable"
   });
-  const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
-  const billingView = createCommentTranslatorBillingBrowserSafeViewModel({
-    snapshot: billingSnapshot,
-    env: process.env
+  const billingView = await createCommentTranslatorBillingPageBrowserSafeViewModel({
+    callerAuthorization,
+    env: process.env,
+    regionGate: readCommentTranslatorPaidRegionFromCloudflareContext()
   });
   const browserSafeAccountSession = createBrowserSafeAccountSessionViewModel(accountSession);
 

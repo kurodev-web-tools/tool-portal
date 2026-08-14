@@ -1,7 +1,7 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "v-streamer-tools",
-  "main": ".open-next/worker.js",
+  "main": "workers/comment-translator-paid-open-next-wrapper.mjs",
   "compatibility_date": "2026-05-27",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
@@ -10,5 +10,8 @@
   },
   "observability": {
     "enabled": true
+  },
+  "triggers": {
+    "crons": ["*/5 * * * *"]
   }
 }

@@ -1,13 +1,46 @@
 import "server-only";
 
 import { createClient } from "@supabase/supabase-js";
-import type { CommentTranslatorRealCommentsFeedState } from "./comment-translator-real-comments-feed-shared";
+import type {
+  CommentTranslatorRealCommentsDisplayRow,
+  CommentTranslatorRealCommentsFeedState
+} from "./comment-translator-real-comments-feed-shared";
+import type { CommentTranslatorTargetLanguageId } from "./comment-translator";
+import {
+  commentTranslatorPaidRetentionPolicy,
+  isCommentTranslatorPaidFeedSnapshotWithinHardLimit
+} from "./comment-translator-paid-retention";
+
+export type CommentTranslatorRealCommentsDurableFeedSnapshotRow = Pick<
+  CommentTranslatorRealCommentsDisplayRow,
+  | "originalText"
+  | "translatedText"
+  | "authorDisplayName"
+> & {
+  publishedAtIso: string | null;
+};
+
+export type CommentTranslatorRealCommentsDurableFeedSnapshot = Pick<
+  CommentTranslatorRealCommentsFeedState,
+  | "status"
+  | "source"
+  | "unavailableReason"
+  | "rawProviderPayload"
+  | "rawComments"
+  | "providerTargetMetadata"
+  | "serverOnlyCursor"
+  | "browserStorage"
+  | "handoffPayload"
+  | "publicLaunchAllowed"
+> & {
+  rows: readonly CommentTranslatorRealCommentsDurableFeedSnapshotRow[];
+};
 
 export type CommentTranslatorRealCommentsFeedDurableRow = {
   id: string;
   owner_user_id: string;
   session_reference_id: string;
-  feed_snapshot: CommentTranslatorRealCommentsFeedState;
+  feed_snapshot: CommentTranslatorRealCommentsDurableFeedSnapshot;
   display_row_count: number;
   recorded_at: string;
   created_at: string;
@@ -24,6 +57,7 @@ export type CommentTranslatorRealCommentsFeedDurableStore = {
   readSafeFeed: (request: {
     ownerUserId: string;
     sessionReferenceId: string;
+    targetLanguage: CommentTranslatorTargetLanguageId;
   }) => Promise<CommentTranslatorRealCommentsFeedState | null>;
   clearSafeFeed: (request: {
     ownerUserId: string;
@@ -88,7 +122,12 @@ type SupabaseSingleResult = {
 };
 
 type SupabaseQuery = {
-  select: (columns: typeof commentTranslatorRealCommentsFeedDurableStoreContract.trustedSelectColumns) => SupabaseQuery;
+  select: (
+    columns:
+      | typeof commentTranslatorRealCommentsFeedDurableStoreContract.trustedSelectColumns
+      | "id, display_row_count"
+      | "id"
+  ) => SupabaseQuery;
   upsert: (
     row: Omit<CommentTranslatorRealCommentsFeedDurableRow, "id" | "created_at">,
     options: { onConflict: "session_reference_id" }
@@ -118,6 +157,19 @@ export const commentTranslatorRealCommentsFeedDurableStoreContract = {
   handoffPayload: "unchanged",
   remoteSupabaseMigrationApply: "not-run-in-this-thread",
   remoteSupabaseMutation: "not-run-by-codex-in-this-thread",
+  retentionBoundary: "session-end-plus-24-hours",
+  latestRowOnly: true,
+  standardFeedSnapshotBytes: commentTranslatorPaidRetentionPolicy.standardFeedSnapshotBytes,
+  hardFeedSnapshotBytes: commentTranslatorPaidRetentionPolicy.hardFeedSnapshotBytes,
+  persistReadback: "id-and-count-only",
+  activePollSupabaseEgress: "no-full-row-readback",
+  durableFeedSnapshotRowKeys: [
+    "originalText",
+    "translatedText",
+    "authorDisplayName",
+    "publishedAtIso"
+  ] as const,
+  restoredIdentifierPolicy: "deterministic-browser-safe-not-provider-derived",
   publicLaunchAllowed: false,
   trustedSelectColumns:
     "id, owner_user_id, session_reference_id, feed_snapshot, display_row_count, recorded_at, created_at, updated_at",
@@ -192,20 +244,35 @@ export function createCommentTranslatorRealCommentsFeedSupabaseDurableStore({
 }): CommentTranslatorRealCommentsFeedDurableStore {
   return {
     async persistSafeFeed(request) {
+      const feedSnapshot = projectCommentTranslatorRealCommentsFeedSnapshot(request.feed);
+      if (!feedSnapshot || !isCommentTranslatorPaidFeedSnapshotWithinHardLimit(feedSnapshot)) {
+        return {
+          durableFeedPersistResultLabel: "durable-feed-persist-failed",
+          durableFeedPersistDiagnostics: {
+            storeReadyLabel: "ready",
+            tableShapeLabel: "available",
+            persistOperationLabel: "not-run",
+            persistFailureBucketLabel: "safe-feed-shape-rejected",
+            rowsTouchedCount: 0,
+            readbackLabel: "not-run-persist-failed"
+          }
+        };
+      }
+
       const result = await supabase
         .from(commentTranslatorRealCommentsFeedDurableStoreContract.tableName)
         .upsert(
           {
             owner_user_id: request.ownerUserId,
             session_reference_id: request.sessionReferenceId,
-            feed_snapshot: request.feed,
-            display_row_count: request.feed.rows.length,
+            feed_snapshot: feedSnapshot,
+            display_row_count: feedSnapshot.rows.length,
             recorded_at: request.recordedAtIso,
             updated_at: nowIso()
           },
           { onConflict: "session_reference_id" }
         )
-        .select(commentTranslatorRealCommentsFeedDurableStoreContract.trustedSelectColumns)
+        .select("id, display_row_count")
         .single();
 
       const writeFailure = createPersistFailureDiagnosticsFromSupabaseResult(result);
@@ -216,23 +283,33 @@ export function createCommentTranslatorRealCommentsFeedSupabaseDurableStore({
         };
       }
 
-      const readback = await supabase
-        .from(commentTranslatorRealCommentsFeedDurableStoreContract.tableName)
-        .select(commentTranslatorRealCommentsFeedDurableStoreContract.trustedSelectColumns)
-        .eq("owner_user_id", request.ownerUserId)
-        .eq("session_reference_id", request.sessionReferenceId)
-        .single();
+      if (
+        typeof result.data?.id !== "string"
+        || result.data.id.trim().length === 0
+        || result.data.display_row_count !== feedSnapshot.rows.length
+      ) {
+        return {
+          durableFeedPersistResultLabel: "durable-feed-persist-failed",
+          durableFeedPersistDiagnostics: {
+            storeReadyLabel: "ready",
+            tableShapeLabel: "available",
+            persistOperationLabel: "upsert-select-single",
+            persistFailureBucketLabel: "row-write-not-confirmed",
+            rowsTouchedCount: 0,
+            readbackLabel: "readback-shape-mismatch"
+          }
+        };
+      }
 
-      const readbackLabel = resolvePersistReadbackLabel(readback);
       return {
-        durableFeedPersistResultLabel: readbackLabel === "readback-ready" ? "durable-feed-persisted" : "durable-feed-persist-failed",
+        durableFeedPersistResultLabel: "durable-feed-persisted",
         durableFeedPersistDiagnostics: {
           storeReadyLabel: "ready",
           tableShapeLabel: "available",
           persistOperationLabel: "upsert-select-single",
-          persistFailureBucketLabel: readbackLabel === "readback-ready" ? "none" : "row-write-not-confirmed",
-          rowsTouchedCount: readbackLabel === "readback-ready" ? 1 : 0,
-          readbackLabel
+          persistFailureBucketLabel: "none",
+          rowsTouchedCount: 1,
+          readbackLabel: "readback-ready"
         }
       };
     },
@@ -252,7 +329,14 @@ export function createCommentTranslatorRealCommentsFeedSupabaseDurableStore({
         throw new Error("Trusted comment translator feed snapshot read failed.");
       }
 
-      return isDurableSafeFeedState(result.data.feed_snapshot) ? result.data.feed_snapshot : null;
+      const snapshot = normalizeDurableFeedSnapshot(result.data.feed_snapshot);
+      return snapshot
+        ? restoreCommentTranslatorRealCommentsFeedState({
+            snapshot,
+            restoredAtIso: nowIso(),
+            targetLanguage: request.targetLanguage
+          })
+        : null;
     },
     async clearSafeFeed(request) {
       const result = await supabase
@@ -260,7 +344,7 @@ export function createCommentTranslatorRealCommentsFeedSupabaseDurableStore({
         .delete()
         .eq("owner_user_id", request.ownerUserId)
         .eq("session_reference_id", request.sessionReferenceId)
-        .select(commentTranslatorRealCommentsFeedDurableStoreContract.trustedSelectColumns)
+        .select("id")
         .single();
 
       if (result.error && result.error.code !== "PGRST116") {
@@ -271,11 +355,25 @@ export function createCommentTranslatorRealCommentsFeedSupabaseDurableStore({
 }
 
 export function createInMemoryCommentTranslatorRealCommentsFeedDurableStoreForTests(): CommentTranslatorRealCommentsFeedDurableStore {
-  const rowsByOwnerAndSession = new Map<string, CommentTranslatorRealCommentsFeedState>();
+  const rowsByOwnerAndSession = new Map<string, CommentTranslatorRealCommentsDurableFeedSnapshot>();
 
   return {
     async persistSafeFeed(request) {
-      rowsByOwnerAndSession.set(toStoreKey(request), request.feed);
+      const snapshot = projectCommentTranslatorRealCommentsFeedSnapshot(request.feed);
+      if (!snapshot) {
+        return {
+          durableFeedPersistResultLabel: "durable-feed-persist-failed",
+          durableFeedPersistDiagnostics: {
+            storeReadyLabel: "ready",
+            tableShapeLabel: "available",
+            persistOperationLabel: "not-run",
+            persistFailureBucketLabel: "safe-feed-shape-rejected",
+            rowsTouchedCount: 0,
+            readbackLabel: "not-run-persist-failed"
+          }
+        };
+      }
+      rowsByOwnerAndSession.set(toStoreKey(request), snapshot);
       return {
         durableFeedPersistResultLabel: "durable-feed-persisted",
         durableFeedPersistDiagnostics: {
@@ -289,7 +387,14 @@ export function createInMemoryCommentTranslatorRealCommentsFeedDurableStoreForTe
       };
     },
     async readSafeFeed(request) {
-      return rowsByOwnerAndSession.get(toStoreKey(request)) ?? null;
+      const snapshot = rowsByOwnerAndSession.get(toStoreKey(request));
+      return snapshot
+        ? restoreCommentTranslatorRealCommentsFeedState({
+            snapshot,
+            restoredAtIso: new Date().toISOString(),
+            targetLanguage: request.targetLanguage
+          })
+        : null;
     },
     async clearSafeFeed(request) {
       rowsByOwnerAndSession.delete(toStoreKey(request));
@@ -297,24 +402,202 @@ export function createInMemoryCommentTranslatorRealCommentsFeedDurableStoreForTe
   };
 }
 
-function isDurableSafeFeedState(value: unknown): value is CommentTranslatorRealCommentsFeedState {
-  if (!value || typeof value !== "object") {
-    return false;
+export function projectCommentTranslatorRealCommentsFeedSnapshot(
+  value: unknown
+): CommentTranslatorRealCommentsDurableFeedSnapshot | null {
+  if (!isRecord(value) || !isFeedProtocolEnvelope(value) || !Array.isArray(value.rows)) {
+    return null;
   }
 
-  const feed = value as Partial<CommentTranslatorRealCommentsFeedState>;
+  const rows: CommentTranslatorRealCommentsDurableFeedSnapshotRow[] = [];
+  for (const valueRow of value.rows) {
+    if (!isRecord(valueRow) || !isProjectableFeedRow(valueRow)) {
+      return null;
+    }
+    rows.push({
+      originalText: valueRow.originalText,
+      translatedText: valueRow.translatedText,
+      authorDisplayName: sanitizeAuthorDisplayName(valueRow.authorDisplayName),
+      publishedAtIso: normalizeSafePublishedAtIso(valueRow.publishedAtIso)
+    });
+  }
+
+  const snapshot: CommentTranslatorRealCommentsDurableFeedSnapshot = {
+    status: value.status,
+    source: "server-owned-live-session-state",
+    rows,
+    unavailableReason: isUnavailableReason(value.unavailableReason) ? value.unavailableReason : null,
+    rawProviderPayload: "not-returned-by-design",
+    rawComments: "not-returned-by-design",
+    providerTargetMetadata: "forbidden",
+    serverOnlyCursor: "not-returned-by-design",
+    browserStorage: "unchanged",
+    handoffPayload: "unchanged",
+    publicLaunchAllowed: false
+  };
+  return isCommentTranslatorPaidFeedSnapshotWithinHardLimit(snapshot) ? snapshot : null;
+}
+
+export function restoreCommentTranslatorRealCommentsFeedState({
+  snapshot,
+  targetLanguage
+}: {
+  snapshot: CommentTranslatorRealCommentsDurableFeedSnapshot;
+  restoredAtIso: string;
+  targetLanguage: CommentTranslatorTargetLanguageId;
+}): CommentTranslatorRealCommentsFeedState {
+  const rows = snapshot.rows.map((row, index): CommentTranslatorRealCommentsDisplayRow => ({
+    id: `restored-safe-row-${index}`,
+    provider: "youtube",
+    messageReferenceId: `restored-safe-row-${index}`,
+    kind: "text",
+    timestamp: "--:-- UTC",
+    publishedAtIso: row.publishedAtIso ?? deterministicRestoredPublishedAtIso(snapshot.rows.length, index),
+    source: "youtube-live-chat",
+    sourceAttributionLabel: "Source: YouTube Live Chat",
+    role: "unknown",
+    authorLabel: "YouTube viewer",
+    authorDisplayName: row.authorDisplayName,
+    originalText: row.originalText,
+    translatedText: row.translatedText,
+    targetLanguage,
+    translationStatus: row.translatedText !== null ? "translated-f10" : "not-run-f9",
+    translationCacheStatus: null,
+    moderationLabel: "visible",
+    deletionPropagation: "not-deleted",
+    badgeLabel: null,
+    purchaseLabel: null,
+    memberMonthCount: null,
+    rawProviderPayload: "not-returned-by-design",
+    rawComments: "not-returned-by-design",
+    authorChannelMaterial: "not-returned-by-design",
+    providerTargetMetadata: "forbidden",
+    serverOnlyCursor: "not-returned-by-design"
+  }));
+
+  return {
+    status: snapshot.status,
+    source: "server-owned-live-session-state",
+    rows,
+    unavailableReason: snapshot.unavailableReason,
+    sanitizedSummary: {
+      displayRowCount: rows.length,
+      safeRowSource: "f8-browser-safe-projection",
+      fixtureFeedAuthority: "disabled",
+      manualFeedAuthority: "disabled",
+      rawProviderPayload: "not-returned-by-design",
+      rawComments: "not-returned-by-design",
+      authorChannelMaterial: "not-returned-by-design",
+      providerTargetMetadata: "forbidden",
+      serverOnlyCursor: "not-returned-by-design",
+      liveProviderDiagnostics: null
+    },
+    rawProviderPayload: "not-returned-by-design",
+    rawComments: "not-returned-by-design",
+    providerTargetMetadata: "forbidden",
+    serverOnlyCursor: "not-returned-by-design",
+    browserStorage: "unchanged",
+    handoffPayload: "unchanged",
+    publicLaunchAllowed: false
+  };
+}
+
+function normalizeDurableFeedSnapshot(value: unknown): CommentTranslatorRealCommentsDurableFeedSnapshot | null {
+  if (isDurableFeedSnapshot(value)) {
+    return value;
+  }
+  return projectCommentTranslatorRealCommentsFeedSnapshot(value);
+}
+
+function isDurableFeedSnapshot(value: unknown): value is CommentTranslatorRealCommentsDurableFeedSnapshot {
+  if (!isRecord(value) || !isFeedProtocolEnvelope(value) || !Array.isArray(value.rows)) {
+    return false;
+  }
+  return value.rows.every((row) => {
+    if (!isRecord(row) || !isDurableFeedSnapshotRow(row)) {
+      return false;
+    }
+    const keys = Object.keys(row).sort();
+    const allowedKeys = [...commentTranslatorRealCommentsFeedDurableStoreContract.durableFeedSnapshotRowKeys].sort();
+    return keys.length === allowedKeys.length && keys.every((key, index) => key === allowedKeys[index]);
+  }) && isCommentTranslatorPaidFeedSnapshotWithinHardLimit(value as { rows: readonly unknown[] });
+}
+
+function isFeedProtocolEnvelope(value: Record<string, unknown>) {
   return (
-    (feed.status === "ready" || feed.status === "inactive" || feed.status === "unavailable") &&
-    feed.source === "server-owned-live-session-state" &&
-    Array.isArray(feed.rows) &&
-    feed.rawProviderPayload === "not-returned-by-design" &&
-    feed.rawComments === "not-returned-by-design" &&
-    feed.providerTargetMetadata === "forbidden" &&
-    feed.serverOnlyCursor === "not-returned-by-design" &&
-    feed.browserStorage === "unchanged" &&
-    feed.handoffPayload === "unchanged" &&
-    feed.publicLaunchAllowed === false
+    (value.status === "ready" || value.status === "inactive" || value.status === "unavailable")
+    && value.source === "server-owned-live-session-state"
+    && value.rawProviderPayload === "not-returned-by-design"
+    && value.rawComments === "not-returned-by-design"
+    && value.providerTargetMetadata === "forbidden"
+    && value.serverOnlyCursor === "not-returned-by-design"
+    && isUnavailableReason(value.unavailableReason)
+    && value.browserStorage === "unchanged"
+    && value.handoffPayload === "unchanged"
+    && value.publicLaunchAllowed === false
   );
+}
+
+function isProjectableFeedRow(row: Record<string, unknown>): boolean {
+  return (
+    isNullableString(row.originalText)
+    && isNullableString(row.translatedText)
+    && isNullableString(row.authorDisplayName)
+    && (row.publishedAtIso === undefined || row.publishedAtIso === null || normalizeSafePublishedAtIso(row.publishedAtIso) !== null)
+  );
+}
+
+function isDurableFeedSnapshotRow(row: Record<string, unknown>): row is CommentTranslatorRealCommentsDurableFeedSnapshotRow {
+  return isProjectableFeedRow(row)
+    && Object.keys(row).length === commentTranslatorRealCommentsFeedDurableStoreContract.durableFeedSnapshotRowKeys.length;
+}
+
+export function createCommentTranslatorSafeFeedConvergenceKey(
+  row: Pick<
+    CommentTranslatorRealCommentsDisplayRow,
+    "originalText" | "authorDisplayName" | "publishedAtIso"
+  >
+) {
+  return JSON.stringify([
+    row.originalText,
+    sanitizeAuthorDisplayName(row.authorDisplayName),
+    normalizeSafePublishedAtIso(row.publishedAtIso)
+  ]);
+}
+
+function normalizeSafePublishedAtIso(value: unknown): string | null {
+  if (typeof value !== "string") return null;
+  const parsed = Date.parse(value);
+  return Number.isFinite(parsed) ? new Date(parsed).toISOString() : null;
+}
+
+function deterministicRestoredPublishedAtIso(rowCount: number, index: number) {
+  return new Date(Math.max(0, rowCount - index)).toISOString();
+}
+
+function sanitizeAuthorDisplayName(value: string | null): string | null {
+  if (value === null) {
+    return null;
+  }
+  const compact = value.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim();
+  return compact || null;
+}
+
+function isUnavailableReason(value: unknown): value is CommentTranslatorRealCommentsFeedState["unavailableReason"] {
+  return value === null || [
+    "session-not-active",
+    "live-provider-polling-not-approved",
+    "polling-runtime-not-wired",
+    "durable-usage-ledger-unavailable"
+  ].includes(String(value));
+}
+
+function isNullableString(value: unknown): value is string | null {
+  return value === null || typeof value === "string";
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
 function toStoreKey({
@@ -368,18 +651,6 @@ function createPersistFailureDiagnosticsFromSupabaseResult(
     rowsTouchedCount: 0,
     readbackLabel: "not-run-persist-failed"
   };
-}
-
-function resolvePersistReadbackLabel(result: SupabaseSingleResult): CommentTranslatorRealCommentsFeedDurablePersistDiagnostics["readbackLabel"] {
-  if (!result.data && (!result.error || result.error.code === "PGRST116")) {
-    return "readback-missing";
-  }
-
-  if (result.error || !result.data) {
-    return "readback-failed";
-  }
-
-  return isDurableSafeFeedState(result.data.feed_snapshot) ? "readback-ready" : "readback-shape-mismatch";
 }
 
 function resolvePersistFailureBucket(code: string | undefined): CommentTranslatorRealCommentsFeedDurablePersistFailureBucketLabel {

@@ -222,12 +222,19 @@ export type CommentTranslatorPaidUsageStore = {
     limit?: number;
   }) => Promise<number>;
   closeBillingPeriod: (request: {
+    lifecycleId: string;
+    reconcileLeaseToken: string;
     ownerUserId: string;
     periodStartIso: string;
     periodEndIso: string;
     nowIso: string;
   }) => Promise<boolean>;
-  closeUtcMonth: (request: { utcMonth: string; nowIso: string }) => Promise<boolean>;
+  closeUtcMonth: (request: {
+    workItemId: string;
+    reconcileLeaseToken: string;
+    utcMonth: string;
+    nowIso: string;
+  }) => Promise<boolean>;
   openaiAttempt: (request: {
     attemptId: string;
     providerAttempt: string;
@@ -386,8 +393,8 @@ export const commentTranslatorPaidUsageStoreContract = {
     "ct_paid_release_billing_period_characters",
     "ct_paid_abandon_logical_attempt",
     "ct_paid_cleanup_attempt_ledgers",
-    "ct_paid_close_billing_period",
-    "ct_paid_close_utc_month",
+    "ct_paid_close_billing_period_reconciled",
+    "ct_paid_close_utc_month_reconciled",
     "ct_paid_openai_attempt",
     "ct_paid_claim_provider_dispatch",
     "ct_paid_read_openai_attempt",
@@ -610,7 +617,9 @@ export function createCommentTranslatorPaidUsageStore({
       return readInteger(result, "Paid attempt-ledger cleanup failed.");
     },
     async closeBillingPeriod(request) {
-      const result = await supabase.rpc("ct_paid_close_billing_period", {
+      const result = await supabase.rpc("ct_paid_close_billing_period_reconciled", {
+        p_lifecycle_id: request.lifecycleId,
+        p_reconcile_lease_token: request.reconcileLeaseToken,
         p_owner_user_id: request.ownerUserId,
         p_period_start: request.periodStartIso,
         p_period_end: request.periodEndIso,
@@ -619,7 +628,9 @@ export function createCommentTranslatorPaidUsageStore({
       return readBoolean(result, "Paid billing-period close failed.");
     },
     async closeUtcMonth(request) {
-      const result = await supabase.rpc("ct_paid_close_utc_month", {
+      const result = await supabase.rpc("ct_paid_close_utc_month_reconciled", {
+        p_work_item_id: request.workItemId,
+        p_reconcile_lease_token: request.reconcileLeaseToken,
         p_utc_month: request.utcMonth,
         p_now: request.nowIso
       });

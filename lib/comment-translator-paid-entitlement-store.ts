@@ -75,6 +75,10 @@ export type CommentTranslatorPaidCustomerBinding = {
   stripeCustomerId: string;
 };
 
+export type CommentTranslatorPaidUnentitledOperatorDisposition =
+  | "refund-cancel"
+  | "capacity-correction-approved";
+
 export type CommentTranslatorPaidCheckoutLifecycle = {
   lifecycleId: string;
   ownerUserId: string;
@@ -90,6 +94,13 @@ export type CommentTranslatorPaidCheckoutLifecycle = {
   subscriptionId: string | null;
   paymentFailureStartedAtIso: string | null;
   nextReconcileAtIso: string | null;
+  subscriptionBindingId?: string | null;
+  productId?: string | null;
+  priceId?: string | null;
+  currentPeriodStartIso?: string | null;
+  currentPeriodEndIso?: string | null;
+  disputeState?: CommentTranslatorPaidDisputeState;
+  operatorDisposition?: CommentTranslatorPaidUnentitledOperatorDisposition | null;
 };
 
 export type CommentTranslatorPaidEntitlementProjectionClaim = {
@@ -121,6 +132,7 @@ export type CommentTranslatorPaidStripeBindingResolution =
 export type CommentTranslatorPaidEntitlementStore = {
   readCustomerBinding: (request: { ownerUserId: string }) => Promise<CommentTranslatorPaidCustomerBinding | null>;
   readCheckoutLifecycle: (request: { ownerUserId: string }) => Promise<CommentTranslatorPaidCheckoutLifecycle | null>;
+  readBillingLifecycle?: (request: { lifecycleId: string }) => Promise<CommentTranslatorPaidCheckoutLifecycle | null>;
   beginCheckout: (request: {
     ownerUserId: string;
     stripeCustomerId: string;
@@ -197,6 +209,25 @@ export type CommentTranslatorPaidEntitlementStore = {
     subscriptionStatus?: string | null;
     projectionLeaseToken: string;
     reconcileLeaseToken: string | null;
+    nowIso: string;
+  }) => Promise<string>;
+  projectPaidUnentitledDisposition: (request: {
+    lifecycleId: string;
+    ownerUserId: string;
+    customerBindingId: string;
+    subscriptionBindingId: string | null;
+    productId: string;
+    priceId: string;
+    status: CommentTranslatorPaidEntitlementStatus;
+    currentPeriodStartIso: string | null;
+    currentPeriodEndIso: string | null;
+    cancelAtPeriodEnd: boolean;
+    disputeState: CommentTranslatorPaidDisputeState;
+    lifecycleState?: string | null;
+    subscriptionStatus?: string | null;
+    projectionLeaseToken: string;
+    reconcileLeaseToken: string;
+    operatorDisposition: CommentTranslatorPaidUnentitledOperatorDisposition;
     nowIso: string;
   }) => Promise<string>;
   bindFirstSubscription: (request: {
@@ -443,6 +474,99 @@ export function createCommentTranslatorPaidEntitlementStore({
         stripeExpiresAtIso: readOptionalString(sessionRow, "stripe_expires_at"),
         idempotencyKey: readOptionalString(holdRow, "idempotency_key"),
         subscriptionId: readOptionalString(subscriptionRow, "stripe_subscription_id"),
+        paymentFailureStartedAtIso: readOptionalString(lifecycleRow, "payment_failure_started_at"),
+        nextReconcileAtIso: readOptionalString(lifecycleRow, "next_reconcile_at")
+      };
+    },
+    async readBillingLifecycle({ lifecycleId }) {
+      const lifecycleRow = await readMaybeTrustedRowById(
+        supabase,
+        "comment_translator_paid_billing_lifecycles",
+        lifecycleId
+      );
+      if (!lifecycleRow) return null;
+
+      const lifecycleOwnerUserId = readOptionalString(lifecycleRow, "owner_user_id");
+      const customerBindingId = readOptionalString(lifecycleRow, "customer_binding_id");
+      const lifecycleState = readOptionalString(lifecycleRow, "lifecycle_state");
+      if (!lifecycleOwnerUserId || !customerBindingId || !lifecycleState) {
+        throw new Error("Paid billing lifecycle preflight was invalid.");
+      }
+      const isTerminal = readBoolean(lifecycleRow, "is_terminal");
+      const customerRow = await readMaybeTrustedRowById(
+        supabase,
+        "comment_translator_paid_customers",
+        customerBindingId
+      );
+      if (
+        !customerRow
+        || readOptionalString(customerRow, "owner_user_id") !== lifecycleOwnerUserId
+        || readOptionalString(customerRow, "id") !== customerBindingId
+      ) {
+        throw new Error("Paid billing lifecycle Customer binding conflict.");
+      }
+      const stripeCustomerId = readOptionalString(customerRow, "stripe_customer_id");
+      if (!stripeCustomerId) throw new Error("Paid billing lifecycle Customer binding is missing.");
+
+      const holdRow = await readMaybeTrustedRow(
+        supabase,
+        "comment_translator_paid_checkout_holds",
+        "lifecycle_id",
+        lifecycleId
+      );
+      const sessionRow = await readMaybeTrustedRow(
+        supabase,
+        "comment_translator_paid_checkout_session_bindings",
+        "lifecycle_id",
+        lifecycleId
+      );
+      const subscriptionRow = await readMaybeTrustedRow(
+        supabase,
+        "comment_translator_paid_subscription_bindings",
+        "lifecycle_id",
+        lifecycleId
+      );
+      const entitlementRow = await readMaybeTrustedRow(
+        supabase,
+        "comment_translator_paid_entitlements",
+        "lifecycle_id",
+        lifecycleId
+      );
+
+      for (const row of [holdRow, sessionRow, subscriptionRow, entitlementRow]) {
+        if (row && readOptionalString(row, "owner_user_id") !== lifecycleOwnerUserId) {
+          throw new Error("Paid billing lifecycle owner binding conflict.");
+        }
+      }
+      if (sessionRow && readOptionalString(sessionRow, "customer_binding_id") !== customerBindingId) {
+        throw new Error("Paid Checkout Session Customer binding conflict.");
+      }
+      if (subscriptionRow && readOptionalString(subscriptionRow, "customer_binding_id") !== customerBindingId) {
+        throw new Error("Paid Subscription Customer binding conflict.");
+      }
+
+      return {
+        lifecycleId,
+        ownerUserId: lifecycleOwnerUserId,
+        customerBindingId,
+        stripeCustomerId,
+        lifecycleState,
+        isTerminal,
+        holdId: readOptionalString(holdRow, "id"),
+        checkoutExpiresAtTargetIso: readOptionalString(holdRow, "checkout_expires_at_target"),
+        checkoutSessionId: readOptionalString(sessionRow, "stripe_checkout_session_id"),
+        stripeExpiresAtIso: readOptionalString(sessionRow, "stripe_expires_at"),
+        idempotencyKey: readOptionalString(holdRow, "idempotency_key"),
+        subscriptionId: readOptionalString(subscriptionRow, "stripe_subscription_id"),
+        subscriptionBindingId: readOptionalString(subscriptionRow, "id"),
+        productId: readOptionalString(subscriptionRow, "product_id"),
+        priceId: readOptionalString(subscriptionRow, "price_id"),
+        currentPeriodStartIso: readOptionalString(entitlementRow, "current_period_start"),
+        currentPeriodEndIso: readOptionalString(entitlementRow, "current_period_end"),
+        disputeState: readOptionalDisputeState(entitlementRow?.dispute_state),
+        operatorDisposition: readOptionalPaidUnentitledOperatorDisposition(
+          lifecycleRow.paid_unentitled_operator_disposition
+        ),
         paymentFailureStartedAtIso: readOptionalString(lifecycleRow, "payment_failure_started_at"),
         nextReconcileAtIso: readOptionalString(lifecycleRow, "next_reconcile_at")
       };
@@ -727,6 +851,28 @@ export function createCommentTranslatorPaidEntitlementStore({
       });
       return readRpcUuid(result, "Paid entitlement projection failed.");
     },
+    async projectPaidUnentitledDisposition(request) {
+      const result = await supabase.rpc("ct_paid_apply_paid_unentitled_disposition", {
+        p_lifecycle_id: request.lifecycleId,
+        p_owner_user_id: request.ownerUserId,
+        p_customer_binding_id: request.customerBindingId,
+        p_subscription_binding_id: request.subscriptionBindingId,
+        p_product_id: request.productId,
+        p_price_id: request.priceId,
+        p_entitlement_status: request.status,
+        p_current_period_start: request.currentPeriodStartIso,
+        p_current_period_end: request.currentPeriodEndIso,
+        p_cancel_at_period_end: request.cancelAtPeriodEnd,
+        p_dispute_state: request.disputeState,
+        p_projection_lease_token: request.projectionLeaseToken,
+        p_reconcile_lease_token: request.reconcileLeaseToken,
+        p_operator_disposition: request.operatorDisposition,
+        p_now: request.nowIso,
+        p_lifecycle_state: request.lifecycleState ?? null,
+        p_subscription_status: request.subscriptionStatus ?? null
+      });
+      return readRpcUuid(result, "Paid unentitled operator disposition projection failed.");
+    },
     async bindFirstSubscription(request) {
       const result = await supabase.rpc("ct_paid_bind_first_subscription", {
         p_lifecycle_id: request.lifecycleId,
@@ -883,6 +1029,20 @@ function readNullableString(row: Record<string, unknown>, key: string): string |
   const value = row[key];
   if (value === null || value === undefined) return null;
   return readString(row, key);
+}
+
+function readOptionalDisputeState(value: unknown): CommentTranslatorPaidDisputeState {
+  if (value === undefined || value === null) return "none";
+  if (isDisputeState(value)) return value;
+  throw new Error("Trusted Paid entitlement dispute state is invalid.");
+}
+
+function readOptionalPaidUnentitledOperatorDisposition(
+  value: unknown
+): CommentTranslatorPaidUnentitledOperatorDisposition | null {
+  if (value === undefined || value === null) return null;
+  if (value === "refund-cancel" || value === "capacity-correction-approved") return value;
+  throw new Error("Trusted Paid unentitled operator disposition is invalid.");
 }
 
 function readBoolean(row: Record<string, unknown>, key: string): boolean {

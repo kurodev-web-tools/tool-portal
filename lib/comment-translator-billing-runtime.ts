@@ -195,7 +195,7 @@ export type CommentTranslatorBillingCheckoutSafetyAuthorityReader = {
   >;
 };
 
-type CommentTranslatorBillingCheckoutSafetyGate = {
+export type CommentTranslatorBillingCheckoutSafetyGate = {
   uiState: Extract<CommentTranslatorBillingUiState, "ready" | "capacity-full" | "poll-budget-stop">;
   checkoutAvailable: boolean;
   checkoutRetryAtIso: string | null;
@@ -517,11 +517,17 @@ export type CommentTranslatorStripeCurrentObjectReader = {
     eventType: CommentTranslatorStripeWebhookEventType;
     objectId: string;
   }) => Promise<CommentTranslatorStripeCurrentObjectGraph>;
+  retrieveCurrentSubscriptionAdjustmentState: (request: {
+    subscriptionId: string;
+  }) => Promise<CommentTranslatorStripeCurrentObjectGraph>;
 };
 
 export type CommentTranslatorStripeSubscriptionCancelAdapter = {
   cancelSubscription: (request: {
     subscriptionId: string;
+    idempotencyKey?: string;
+    /** Maps the approved no-credit cancellation policy to Stripe's cancel API. */
+    prorationBehavior?: "none";
   }) => Promise<CommentTranslatorStripeSubscriptionSnapshot>;
 };
 
@@ -896,7 +902,7 @@ function readExplicitBooleanEnv(value: string | undefined): boolean | null {
   return null;
 }
 
-async function readCommentTranslatorBillingCheckoutSafetyGate({
+export async function readCommentTranslatorBillingCheckoutSafetyGate({
   checkoutSafetyAuthorityReader,
   ownerUserId,
   nowMs,
@@ -2544,6 +2550,7 @@ export async function readCommentTranslatorStripeWebhookResult({
   }
 
   const projection = await projectCurrentStripeGraph({
+    eventId,
     eventType,
     graph,
     binding: bindingResolution.binding,
@@ -2733,6 +2740,7 @@ type ProjectCurrentStripeGraphResult =
     };
 
 async function projectCurrentStripeGraph({
+  eventId,
   eventType,
   graph,
   binding,
@@ -2744,6 +2752,7 @@ async function projectCurrentStripeGraph({
   subscriptionCancelAdapter,
   receiptLeaseIsActive
 }: {
+  eventId: string;
   eventType: CommentTranslatorStripeWebhookEventType;
   graph: CommentTranslatorStripeCurrentObjectGraph;
   binding: CommentTranslatorPaidStripeBinding;
@@ -3018,7 +3027,11 @@ async function projectCurrentStripeGraph({
       return { status: "retryable", reason: "lease-conflict", errorClass: "lease-conflict" };
     }
     try {
-      currentSubscription = await subscriptionCancelAdapter.cancelSubscription({ subscriptionId: currentSubscription.id });
+      currentSubscription = await subscriptionCancelAdapter.cancelSubscription({
+        subscriptionId: currentSubscription.id,
+        idempotencyKey: createWebhookTerminalCancellationIdempotencyKey({ eventId, lifecycleId: binding.lifecycleId }),
+        prorationBehavior: "none"
+      });
     } catch {
       return { status: "retryable", reason: "object-retrieval-failed", errorClass: "object-retrieval-failed" };
     }
@@ -3078,6 +3091,19 @@ async function projectCurrentStripeGraph({
       ? { status: "retryable", reason: "lease-conflict", errorClass: "lease-conflict" }
       : { status: "retryable", reason: "database-transaction-failed", errorClass: "database-transaction-failed" };
   }
+}
+
+function createWebhookTerminalCancellationIdempotencyKey({
+  eventId,
+  lifecycleId
+}: {
+  eventId: string;
+  lifecycleId: string;
+}): string {
+  return `ct-paid-webhook-terminal-cancel-${createHash("sha256")
+    .update(`${eventId}:${lifecycleId}`, "utf8")
+    .digest("hex")
+    .slice(0, 32)}`;
 }
 
 function resolveProjectionState(
@@ -3379,6 +3405,9 @@ export function createCommentTranslatorStripeCurrentObjectReader(
   env: CommentTranslatorStripeEnv = process.env
 ): CommentTranslatorStripeCurrentObjectReader {
   return {
+    async retrieveCurrentSubscriptionAdjustmentState({ subscriptionId }) {
+      return retrieveCurrentSubscriptionAdjustmentGraph(env, subscriptionId);
+    },
     async retrieveCurrentObjectState({ eventType, objectId }) {
       const secretKey = env.STRIPE_SECRET_KEY?.trim();
       if (!secretKey) throw new Error("Stripe secret key is unavailable.");
@@ -3398,7 +3427,7 @@ export function createCommentTranslatorStripeCurrentObjectReader(
       if (eventType.startsWith("checkout.")) {
         const session = await fetchObject<Record<string, unknown>>(
           `/v1/checkout/sessions/${encodeURIComponent(objectId)}`,
-          "?expand[]=subscription&expand[]=invoice"
+          "?expand[]=subscription&expand[]=invoice.lines.data.price"
         );
         const subscription = await retrieveExpandedSubscription(fetchObject, session.subscription);
         const invoice = await retrieveExpandedInvoice(fetchObject, session.invoice, subscription?.latest_invoice);
@@ -3412,7 +3441,7 @@ export function createCommentTranslatorStripeCurrentObjectReader(
       if (eventType.startsWith("customer.subscription.")) {
         const subscription = await fetchObject<Record<string, unknown>>(
           `/v1/subscriptions/${encodeURIComponent(objectId)}`,
-          "?expand[]=latest_invoice"
+          "?expand[]=latest_invoice.lines.data.price"
         );
         const mappedSubscription = mapSubscription(subscription);
         const invoice = await retrieveExpandedInvoice(fetchObject, subscription.latest_invoice, mappedSubscription.latestInvoiceId);
@@ -3421,7 +3450,8 @@ export function createCommentTranslatorStripeCurrentObjectReader(
 
       if (eventType.startsWith("invoice.")) {
         const invoice = await fetchObject<Record<string, unknown>>(
-          `/v1/invoices/${encodeURIComponent(objectId)}`
+          `/v1/invoices/${encodeURIComponent(objectId)}`,
+          "?expand[]=lines.data.price"
         );
         const subscription = await retrieveExpandedSubscription(fetchObject, readInvoiceSubscriptionReference(invoice));
         return { invoice: mapInvoice(invoice), subscription: subscription ? mapSubscription(subscription) : undefined };
@@ -3450,7 +3480,12 @@ export function createCommentTranslatorStripeCurrentObjectReader(
           readStripeReference(dispute.invoice) ??
           readStripeReference(charge?.invoice) ??
           readStripeReference(paymentIntent?.invoice);
-        const invoice = invoiceId ? await fetchObject<Record<string, unknown>>(`/v1/invoices/${encodeURIComponent(invoiceId)}`) : null;
+        const invoice = invoiceId
+          ? await fetchObject<Record<string, unknown>>(
+              `/v1/invoices/${encodeURIComponent(invoiceId)}`,
+              "?expand[]=lines.data.price"
+            )
+          : null;
         const subscription = await retrieveExpandedSubscription(fetchObject, invoice ? readInvoiceSubscriptionReference(invoice) : null);
         return {
           dispute: mapDispute(dispute, charge, paymentIntent, invoice),
@@ -3483,7 +3518,12 @@ export function createCommentTranslatorStripeCurrentObjectReader(
         readStripeReference(object.invoice) ??
         readStripeReference(charge?.invoice) ??
         readStripeReference(paymentIntent?.invoice);
-      const invoice = invoiceId ? await fetchObject<Record<string, unknown>>(`/v1/invoices/${encodeURIComponent(invoiceId)}`) : null;
+      const invoice = invoiceId
+        ? await fetchObject<Record<string, unknown>>(
+            `/v1/invoices/${encodeURIComponent(invoiceId)}`,
+            "?expand[]=lines.data.price"
+          )
+        : null;
       const subscription = await retrieveExpandedSubscription(fetchObject, invoice ? readInvoiceSubscriptionReference(invoice) : null);
       const mappedInvoice = invoice ? mapInvoice(invoice) : undefined;
       const mappedSubscription = subscription ? mapSubscription(subscription) : undefined;
@@ -3531,19 +3571,196 @@ export function createCommentTranslatorStripeCurrentObjectReader(
   };
 }
 
+async function retrieveCurrentSubscriptionAdjustmentGraph(
+  env: CommentTranslatorStripeEnv,
+  subscriptionId: string
+): Promise<CommentTranslatorStripeCurrentObjectGraph> {
+  const secretKey = env.STRIPE_SECRET_KEY?.trim();
+  if (!secretKey || !subscriptionId.trim()) throw new Error("Stripe current adjustment graph is unavailable.");
+  const fetchObject = async <T>(path: string, query = ""): Promise<T> => {
+    const response = await fetch(`https://api.stripe.com${path}${query}`, {
+      headers: { Authorization: `Bearer ${secretKey}` },
+      cache: "no-store"
+    });
+    if (!response.ok) throw new Error("Stripe current adjustment graph retrieval failed.");
+    const body: unknown = await response.json();
+    if (!body || typeof body !== "object") throw new Error("Stripe current adjustment graph retrieval failed.");
+    return body as T;
+  };
+
+  const subscription = await fetchObject<Record<string, unknown>>(
+    `/v1/subscriptions/${encodeURIComponent(subscriptionId)}`,
+    "?expand[]=latest_invoice.lines.data.price"
+  );
+  const mappedSubscription = mapSubscription(subscription);
+  if (mappedSubscription.id !== subscriptionId || !mappedSubscription.latestInvoiceId) {
+    throw new Error("Stripe current adjustment graph binding failed.");
+  }
+  const invoice = await retrieveExpandedInvoice(fetchObject, subscription.latest_invoice, mappedSubscription.latestInvoiceId);
+  if (!invoice) throw new Error("Stripe current adjustment graph binding failed.");
+  const mappedInvoice = mapInvoice(invoice);
+  if (
+    mappedInvoice.id !== mappedSubscription.latestInvoiceId
+    || mappedInvoice.subscriptionId !== mappedSubscription.id
+    || !mappedInvoice.customerId
+    || mappedInvoice.customerId !== mappedSubscription.customerId
+    || !mappedInvoice.paymentIntentId
+    || !mappedInvoice.productId
+    || !mappedInvoice.priceId
+    || mappedInvoice.productId !== mappedSubscription.productId
+    || mappedInvoice.priceId !== mappedSubscription.priceId
+  ) throw new Error("Stripe current adjustment graph binding failed.");
+
+  const paymentIntent = await fetchObject<Record<string, unknown>>(
+    `/v1/payment_intents/${encodeURIComponent(mappedInvoice.paymentIntentId)}`
+  );
+  const paymentIntentInvoiceId = readStripeReference(paymentIntent.invoice);
+  const chargeId = mappedInvoice.chargeId ?? readStripeReference(paymentIntent.latest_charge);
+  if (
+    readObjectId(paymentIntent) !== mappedInvoice.paymentIntentId
+    || readStripeReference(paymentIntent.customer) !== mappedInvoice.customerId
+    || paymentIntentInvoiceId !== mappedInvoice.id
+    || paymentIntent.status !== "succeeded"
+    || !chargeId
+    || readStripeReference(paymentIntent.latest_charge) !== chargeId
+  ) {
+    throw new Error("Stripe current adjustment graph binding failed.");
+  }
+  const charge = await fetchObject<Record<string, unknown>>(
+    `/v1/charges/${encodeURIComponent(chargeId)}`
+  );
+  if (
+    readObjectId(charge) !== chargeId
+    || readStripeReference(charge.customer) !== mappedInvoice.customerId
+    || readStripeReference(charge.invoice) !== mappedInvoice.id
+    || readStripeReference(charge.payment_intent) !== mappedInvoice.paymentIntentId
+    || charge.status !== "succeeded"
+    || charge.paid !== true
+  ) throw new Error("Stripe current adjustment graph binding failed.");
+  const boundInvoice = { ...mappedInvoice, chargeId };
+
+  const encodedChargeId = encodeURIComponent(chargeId);
+  const encodedInvoiceId = encodeURIComponent(mappedInvoice.id);
+  const [refundList, disputeList, creditNoteList] = await Promise.all([
+    fetchObject<Record<string, unknown>>("/v1/refunds", `?charge=${encodedChargeId}&limit=100`),
+    fetchObject<Record<string, unknown>>("/v1/disputes", `?charge=${encodedChargeId}&limit=100`),
+    fetchObject<Record<string, unknown>>("/v1/credit_notes", `?invoice=${encodedInvoiceId}&limit=100`)
+  ]);
+  if (
+    !Array.isArray(refundList.data)
+    || refundList.has_more !== false
+    || refundList.data.some((value) => !value || typeof value !== "object" || Array.isArray(value))
+    || !Array.isArray(disputeList.data)
+    || disputeList.has_more !== false
+    || disputeList.data.some((value) => !value || typeof value !== "object" || Array.isArray(value))
+    || !Array.isArray(creditNoteList.data)
+    || creditNoteList.has_more !== false
+    || creditNoteList.data.some((value) => !value || typeof value !== "object" || Array.isArray(value))
+  ) throw new Error("Stripe current adjustment graph retrieval failed.");
+  const refunds = refundList.data as Record<string, unknown>[];
+  const disputes = disputeList.data as Record<string, unknown>[];
+  const creditNotes = creditNoteList.data as Record<string, unknown>[];
+  if (refunds.some((refund) =>
+    !readObjectId(refund)
+    || !isCurrentAdjustmentRefundStatus(refund.status)
+    || readStripeReference(refund.charge) !== chargeId
+    || readStripeReference(refund.payment_intent) !== mappedInvoice.paymentIntentId
+  )) {
+    throw new Error("Stripe current adjustment graph binding failed.");
+  }
+  if (disputes.some((candidate) =>
+    !readObjectId(candidate)
+    || !isCurrentAdjustmentDisputeStatus(candidate.status)
+    || readStripeReference(candidate.charge) !== chargeId
+    || readStripeReference(candidate.payment_intent) !== mappedInvoice.paymentIntentId
+  )) throw new Error("Stripe current adjustment graph binding failed.");
+  if (creditNotes.some((creditNote) =>
+    !readObjectId(creditNote)
+    || !isCurrentAdjustmentCreditNoteStatus(creditNote.status)
+    || !isCurrentAdjustmentCreditNoteType(creditNote.type)
+    || readStripeReference(creditNote.invoice) !== mappedInvoice.id
+    || readStripeReference(creditNote.customer) !== mappedInvoice.customerId
+  )) throw new Error("Stripe current adjustment graph binding failed.");
+  const dispute = disputes[0];
+
+  const chargeAmount = readPositiveInteger(charge.amount);
+  const refundedAmount = readNonNegativeInteger(charge.amount_refunded);
+  const invoiceAmountPaid = readPositiveInteger(invoice.amount_paid);
+  const cumulativePostPaymentCreditAmount = readNonNegativeInteger(invoice.post_payment_credit_notes_amount);
+  const successfulRefund = refunds.some((refund) => refund.status === "succeeded");
+  const successfulCreditNote = creditNotes.some((creditNote) =>
+    creditNote.status === "issued"
+    && (creditNote.type === "post_payment" || creditNote.type === "mixed")
+  );
+  const fullRefund = successfulRefund
+    && chargeAmount !== null
+    && refundedAmount !== null
+    && refundedAmount >= chargeAmount;
+  const fullCreditNote = successfulCreditNote
+    && invoiceAmountPaid !== null
+    && cumulativePostPaymentCreditAmount !== null
+    && cumulativePostPaymentCreditAmount >= invoiceAmountPaid;
+  return {
+    subscription: mappedSubscription,
+    invoice: boundInvoice,
+    dispute: dispute ? mapDispute(dispute, charge, paymentIntent, invoice) : undefined,
+    paymentAdjustment: {
+      status: successfulCreditNote ? "issued" : successfulRefund ? "succeeded" : refunds.length > 0 ? "pending" : "unknown",
+      successful: successfulRefund || successfulCreditNote,
+      fullAmount: fullRefund || fullCreditNote,
+      targetsCurrentPeriod: true
+    }
+  };
+}
+
+function isCurrentAdjustmentRefundStatus(value: unknown): boolean {
+  return typeof value === "string" && [
+    "pending",
+    "requires_action",
+    "succeeded",
+    "failed",
+    "canceled"
+  ].includes(value);
+}
+
+function isCurrentAdjustmentDisputeStatus(value: unknown): boolean {
+  return typeof value === "string" && [
+    "warning_needs_response",
+    "warning_under_review",
+    "warning_closed",
+    "needs_response",
+    "under_review",
+    "won",
+    "lost"
+  ].includes(value);
+}
+
+function isCurrentAdjustmentCreditNoteStatus(value: unknown): boolean {
+  return typeof value === "string" && ["issued", "void"].includes(value);
+}
+
+function isCurrentAdjustmentCreditNoteType(value: unknown): boolean {
+  return typeof value === "string" && ["pre_payment", "post_payment", "mixed"].includes(value);
+}
+
 export function createCommentTranslatorStripeSubscriptionCancelAdapter(
   env: CommentTranslatorStripeEnv = process.env
 ): CommentTranslatorStripeSubscriptionCancelAdapter {
   return {
-    async cancelSubscription({ subscriptionId }) {
+    async cancelSubscription({ subscriptionId, idempotencyKey, prorationBehavior }) {
       const secretKey = env.STRIPE_SECRET_KEY?.trim();
       if (!secretKey) throw new Error("Stripe secret key is unavailable.");
       const subscriptionPath = `/v1/subscriptions/${encodeURIComponent(subscriptionId)}`;
+      const params = new URLSearchParams();
+      if (prorationBehavior === "none") params.set("prorate", "false");
       const response = await fetch(`https://api.stripe.com${subscriptionPath}`, {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${secretKey}`
+          Authorization: `Bearer ${secretKey}`,
+          ...(params.size > 0 ? { "Content-Type": "application/x-www-form-urlencoded" } : {}),
+          ...(idempotencyKey ? { "Idempotency-Key": idempotencyKey } : {})
         },
+        ...(params.size > 0 ? { body: params.toString() } : {}),
         cache: "no-store"
       });
       if (!response.ok) throw new Error("Stripe subscription cancellation failed.");
@@ -3590,7 +3807,12 @@ async function retrieveExpandedSubscription(
 ): Promise<Record<string, unknown> | null> {
   if (value && typeof value === "object" && !Array.isArray(value)) return value as Record<string, unknown>;
   const id = readStripeReference(value);
-  return id ? fetchObject<Record<string, unknown>>(`/v1/subscriptions/${encodeURIComponent(id)}`, "?expand[]=latest_invoice") : null;
+  return id
+    ? fetchObject<Record<string, unknown>>(
+        `/v1/subscriptions/${encodeURIComponent(id)}`,
+        "?expand[]=latest_invoice.lines.data.price"
+      )
+    : null;
 }
 
 async function retrieveExpandedInvoice(
@@ -3600,7 +3822,12 @@ async function retrieveExpandedInvoice(
 ): Promise<Record<string, unknown> | null> {
   if (value && typeof value === "object" && !Array.isArray(value)) return value as Record<string, unknown>;
   const id = readStripeReference(value) ?? fallbackId;
-  return id ? fetchObject<Record<string, unknown>>(`/v1/invoices/${encodeURIComponent(id)}`) : null;
+  return id
+    ? fetchObject<Record<string, unknown>>(
+        `/v1/invoices/${encodeURIComponent(id)}`,
+        "?expand[]=lines.data.price"
+      )
+    : null;
 }
 
 function mapCheckoutSession(value: Record<string, unknown>): CommentTranslatorStripeCheckoutSessionSnapshot {
@@ -3636,6 +3863,7 @@ function mapSubscription(value: Record<string, unknown>): CommentTranslatorStrip
 
 function mapInvoice(value: Record<string, unknown>): CommentTranslatorStripeInvoiceSnapshot {
   const status = value.status;
+  const priceProductReferences = readInvoicePriceProductReferences(value.lines);
   return {
     id: readObjectId(value) ?? "",
     customerId: readStripeReference(value.customer),
@@ -3644,9 +3872,30 @@ function mapInvoice(value: Record<string, unknown>): CommentTranslatorStripeInvo
     paid: value.paid === true || status === "paid",
     paymentIntentId: readStripeReference(value.payment_intent),
     chargeId: readStripeReference(value.charge),
-    productId: null,
-    priceId: null
+    productId: priceProductReferences?.productId ?? null,
+    priceId: priceProductReferences?.priceId ?? null
   };
+}
+
+function readInvoicePriceProductReferences(value: unknown): { productId: string; priceId: string } | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const collection = value as Record<string, unknown>;
+  if (collection.has_more !== false) return null;
+  const data = collection.data;
+  if (!Array.isArray(data) || data.length === 0) return null;
+  let candidate: { productId: string; priceId: string } | null = null;
+  for (const line of data) {
+    if (!line || typeof line !== "object" || Array.isArray(line)) return null;
+    const price = (line as Record<string, unknown>).price;
+    const priceId = readStripeReference(price);
+    const productId = price && typeof price === "object" && !Array.isArray(price)
+      ? readStripeReference((price as Record<string, unknown>).product)
+      : null;
+    if (!priceId || !productId) return null;
+    if (candidate && (candidate.priceId !== priceId || candidate.productId !== productId)) return null;
+    candidate = { productId, priceId };
+  }
+  return candidate;
 }
 
 function readInvoiceSubscriptionReference(value: Record<string, unknown>): string | null {

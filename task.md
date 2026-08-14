@@ -547,3 +547,13 @@ Keep this visible so public-launch cleanup does not erase the next roadmap, but 
 - Treat credential status and provider target metadata as sanitized metadata only.
 - Do not overclaim readiness-only or token-resolution-only evidence as live/provider execution.
 - Do not add quota write, billing integration, remote Supabase mutation/migration, browser storage expansion, or handoff payload expansion unless the current roadmap task explicitly scopes it.
+
+## Current Task: Comment Translator Paid Core v1 Task 7（Paid session統合）
+
+- 実装親: `gpt-5.6-luna / max` を開始時に独立確認済み。作業branchは `codex/comment-translator-paid-v1-task7`、worktreeは `D:/V_streamer_tools/.worktrees/comment-translator-paid-v1-task7`。
+- 基準再確認: PR #772はMERGED、headは `234ff95f6ba4de78638011d92663e0d76bfefeba`、merge/Preview先端は `3ac21103219722fcba14a4a91df77cc13cef2df7`。root checkoutとTask 6 worktreeは未変更・未削除。
+- repository-implemented: Paid entitlement/usage/cost/provider authorityの事前読取とfail-closed、OpenAI通常経路とtemporary degraded時だけのAzure fallback、60件/分・3時間・1同時session、720 poll予約、UTC bucket再予約、90/95%停止、Paid feedの単一15秒server boundary、message-rate予約/再実行、Free quota非混入、quota/cost/resetを含むbrowser-safe stop state、Task 7 migration/fixture契約。boundedなtombstone cleanup、expired degraded OpenAIの同一session probe復帰、active pollのdurable feed read-free境界、Freeの既存行保持、partial replayのfresh/stop/exception時のmarker・成功件数保持、Paid heartbeatのDB 1分coalescing/effective clock/read-only status graceも含む。
+- locally-verified: Task 7 focused contract、Paid Core Task 2〜6のschema/store/migration/concurrency/usage-cost/providerを含む7契約、変更対象37件の`.ts/.tsx/.mjs`構文、JSON parse、runtime sourceの高信頼secret/token value privacy scan、`git diff --check`、最終sol-reviewer（read-only）のGOがPASS。Free系4契約は再実行を試行したが、既存の全履歴scope検査（`AGENTS.md`/`.codex/config.toml`）、外部TypeScript loaderでの`@/` alias解決、旧Task 3のLOC上限によりrunner-side blockerとなり、PASSとは扱っていない。reviewer指摘のeffective route、Paid単一feed boundary、停止state伝達、quota/cost reset、partial replay、message-rate replay count、Paid heartbeat/status graceはrootで限定修正済み。
+- setup-blocked: `node_modules`不足により `npm run lint`（`eslint`不在）、`npm run build`（`next`不在）、TypeScript-backed全体検証（外部TypeScript exit 1、4434 diagnostics、React/Next/Supabase/@types/node等不足）。変更対象の関係診断は依存不足とprovider runtimeの既知nullable/httpStatus/ES target診断を含む。依存・manifest・lockfileは変更していない。
+- externally-unverified: 実PostgreSQLでのmigration適用・競合検証、remote Supabase、Provider/OpenAI/Azure/Stripe/Cloudflare、deploy/activation/public公開。
+- approval-gated: commit、push、PR、merge、remote apply、live操作、Task 8以降は未実施。80% Checkout gateはTask 8所有のためTask 7では配線していない。

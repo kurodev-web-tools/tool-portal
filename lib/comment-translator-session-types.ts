@@ -57,6 +57,19 @@ export type CommentTranslatorActiveSessionRecord = {
   readonly startedAtMs: number;
   readonly lastHeartbeatAtMs: number;
   readonly credentialReferenceId?: string;
+  /** Server-only hint used to keep an active Paid session from degrading into Free. */
+  readonly plan?: CommentTranslatorSessionPlan;
+};
+
+export type CommentTranslatorPreAuthorityFailClosedResult = {
+  readonly status: "fail-closed";
+  readonly authority: "unconfirmed";
+  readonly durableStop: "unconfirmed";
+  readonly clientReadableDetail: "sanitized-stop-reason-only";
+  readonly plan?: "paid";
+  readonly rateLimit?: "exceeded";
+  readonly rateLimitReason?: "rate-limit-exceeded";
+  readonly retryAfterSeconds?: number;
 };
 
 export type CommentTranslatorSessionCommandIntent = "status" | "start" | "stop" | "heartbeat";
@@ -100,8 +113,8 @@ export type CommentTranslatorSessionBrowserSafeState =
       readonly stopReason: null;
       readonly reasonUx: null;
       readonly nextAction: "send-heartbeat-or-stop";
-      readonly providerApiUsage: "allowed-after-explicit-start-not-run-in-task-7";
-      readonly aiTranslationUsage: "allowed-after-explicit-start-not-run-in-task-7";
+      readonly providerApiUsage: "allowed-after-explicit-start";
+      readonly aiTranslationUsage: "allowed-after-explicit-start";
     })
   | (CommentTranslatorSessionStateBase & {
       readonly status: "stopped";
@@ -109,6 +122,7 @@ export type CommentTranslatorSessionBrowserSafeState =
       readonly credentialReferenceId: string | null;
       readonly startedAtIso: string | null;
       readonly stoppedAtIso: string;
+      readonly nextResetAtIso?: string | null;
       readonly stopReason: CommentTranslatorSessionStopReason;
       readonly reasonUx: CommentTranslatorStartStopReasonUx;
       readonly nextAction: "session-stopped" | "reconnect-or-sign-in" | "wait-for-limit-reset";
@@ -125,6 +139,7 @@ export type StartCommentTranslatorSessionRequest = {
   readonly activeSession: CommentTranslatorActiveSessionRecord | null;
   readonly usage: CommentTranslatorSessionUsageSnapshot;
   readonly liveChatTargetReadiness?: CommentTranslatorServerOnlyLiveChatTargetLookupResult;
+  readonly nextResetAtIso?: string | null;
   readonly createSessionReferenceId: () => string;
 };
 
@@ -139,6 +154,7 @@ export type EvaluateCommentTranslatorSessionStopRequest = {
   readonly ratePauseResolution: CommentTranslatorPerMinuteRatePauseResolution;
   readonly providerSignal?: CommentTranslatorSessionStopReason | null;
   readonly providerSignalReasonUxCode?: CommentTranslatorStartStopReasonUxCode | null;
+  readonly nextResetAtIso?: string | null;
 };
 
 export type ReadOnlyCommentTranslatorSessionStatusRequest = Omit<
@@ -155,6 +171,7 @@ export type StopCommentTranslatorSessionRequest = {
   readonly usage?: CommentTranslatorSessionUsageSnapshot;
   readonly reason: CommentTranslatorSessionStopReason;
   readonly reasonUxCode?: CommentTranslatorStartStopReasonUxCode | null;
+  readonly nextResetAtIso?: string | null;
 };
 
 export type ReadCommentTranslatorSessionCommandRequest = StartCommentTranslatorSessionRequest & {
@@ -164,4 +181,5 @@ export type ReadCommentTranslatorSessionCommandRequest = StartCommentTranslatorS
   readonly stopReason?: CommentTranslatorSessionStopReason;
   readonly providerSignal?: EvaluateCommentTranslatorSessionStopRequest["providerSignal"];
   readonly providerSignalReasonUxCode?: CommentTranslatorStartStopReasonUxCode | null;
+  readonly nextResetAtIso?: string | null;
 };

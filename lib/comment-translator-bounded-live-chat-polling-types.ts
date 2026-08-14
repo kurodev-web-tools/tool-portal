@@ -58,6 +58,10 @@ export type CommentTranslatorPollingQuotaStopReason = Extract<
   | "global-budget-stop"
   | "ai-budget-stop"
   | "translation-provider-limit"
+  | "paid-authority-unreadable"
+  | "paid-character-quota-stop"
+  | "paid-individual-cost-stop"
+  | "paid-global-cost-stop"
 >;
 
 export type CommentTranslatorPollingTerminalStopReason = Extract<
@@ -99,6 +103,7 @@ export type CommentTranslatorBoundedLiveChatPollingTickResult =
       readonly providerSignal: CommentTranslatorPollingQuotaStopReason;
       readonly stopReason: CommentTranslatorPollingQuotaStopReason;
       readonly reasonUxCode: CommentTranslatorStartStopReasonUxCode;
+      readonly nextResetAtIso?: string;
       readonly publicLaunchAllowed: false;
     }
   | {

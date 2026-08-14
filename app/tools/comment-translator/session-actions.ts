@@ -1,11 +1,14 @@
 "use server";
 
 import { assertCommentTranslatorAbuseRequestAllowed, createCommentTranslatorAbuseRateLimitedSessionState } from "@/lib/comment-translator-abuse-rate-limit-runtime";
-import { readCommentTranslatorBillingEntitlementSnapshot } from "@/lib/comment-translator-billing-runtime";
 import {
   createCommentTranslatorDurableSessionFailClosedState,
+  createCommentTranslatorPreAuthorityFailClosedResult,
+  createCommentTranslatorPreAuthorityRateLimitResult,
   createTrustedCommentTranslatorSessionSupabaseStore,
-  readCommentTranslatorDurableActiveSessionOrFailClosed
+  readCommentTranslatorDurableActiveSessionOrFailClosed,
+  resolveCommentTranslatorPreAuthorityBlockedResult,
+  stopCommentTranslatorActivePaidSessionForUnreadableAuthority
 } from "@/lib/comment-translator-durable-session-store";
 import {
   createTrustedCommentTranslatorUsageCounterSupabaseStore,
@@ -17,7 +20,13 @@ import {
   readCommentTranslatorFreeBetaRuntimeAccess,
   readCommentTranslatorPrivateLaunchAccess
 } from "@/lib/comment-translator-private-launch-access-gate";
-import { resolveCommentTranslatorPublicEntitlementBaseline } from "@/lib/comment-translator-public-entitlement-baseline";
+import {
+  createCommentTranslatorPaidSessionPlanEntitlement,
+  createCommentTranslatorPaidSessionStopPlanEntitlement,
+  readCommentTranslatorPaidSessionAuthority,
+  resolveCommentTranslatorPaidSessionStopBaseline,
+  resolveCommentTranslatorPublicEntitlementBaseline
+} from "@/lib/comment-translator-public-entitlement-baseline";
 import { executeCommentTranslatorSessionCommand } from "@/lib/comment-translator-session-command-execution";
 import type { CommentTranslatorSessionCommandIntent, CommentTranslatorSessionStopReason } from "@/lib/comment-translator-session-runtime";
 import { readCommentTranslatorToolCredentialStatus } from "@/lib/comment-translator-youtube-tool-credential-source";
@@ -65,7 +74,15 @@ async function readCommentTranslatorSessionActionResult({
     nowMs
   });
   if (abuseCheck.status === "blocked") {
-    return createCommentTranslatorAbuseRateLimitedSessionState({ nowMs, plan: "free", check: abuseCheck });
+    return createCommentTranslatorPreAuthorityRateLimitResult({ check: abuseCheck });
+  }
+  const durableSessionStore = createTrustedCommentTranslatorSessionSupabaseStore();
+  const durableActiveSessionRead = await readCommentTranslatorDurableActiveSessionOrFailClosed({
+    callerAuthorization,
+    durableSessionStore
+  });
+  if (durableActiveSessionRead.status === "fail-closed") {
+    return createCommentTranslatorPreAuthorityFailClosedResult({ durableActiveSessionRead });
   }
   const launchAccess = readCommentTranslatorFreeBetaRuntimeAccess({ callerAuthorization });
   if (launchAccess.status === "blocked") {
@@ -76,39 +93,78 @@ async function readCommentTranslatorSessionActionResult({
       nowMs
     });
     if (privateLaunchAbuseCheck.status === "blocked") {
-      return createCommentTranslatorAbuseRateLimitedSessionState({ nowMs, plan: "free", check: privateLaunchAbuseCheck });
+      return resolveCommentTranslatorPreAuthorityBlockedResult({
+        durableActiveSessionRead,
+        blockedResult: createCommentTranslatorAbuseRateLimitedSessionState({ nowMs, plan: "free", check: privateLaunchAbuseCheck })
+      });
     }
-    return createCommentTranslatorPrivateLaunchBlockedSessionState({ nowMs, plan: "free", access: launchAccess });
+    return resolveCommentTranslatorPreAuthorityBlockedResult({
+      durableActiveSessionRead,
+      blockedResult: createCommentTranslatorPrivateLaunchBlockedSessionState({ nowMs, plan: "free", access: launchAccess })
+    });
   }
-  const billingSnapshot = readCommentTranslatorBillingEntitlementSnapshot({ callerAuthorization });
   const previewRateLimitSmokeOverride = resolveCommentTranslatorFreeBetaPreviewRateLimitSmokeOverride({
     privateLaunchAccess: readCommentTranslatorPrivateLaunchAccess({ callerAuthorization })
   });
-  const durableSessionStore = createTrustedCommentTranslatorSessionSupabaseStore();
   const durableUsageCounterStore = createTrustedCommentTranslatorUsageCounterSupabaseStore();
-  const durableActiveSessionRead = await readCommentTranslatorDurableActiveSessionOrFailClosed({
-    callerAuthorization,
-    durableSessionStore
-  });
-  if (durableActiveSessionRead.status === "fail-closed") {
-    return createCommentTranslatorDurableSessionFailClosedState({ nowMs, plan: "free" });
-  }
   const activeSession = durableActiveSessionRead.activeSession;
+  const activePaidSession = activeSession?.plan === "paid";
+  const paidSessionAuthorityRead = intent === "stop" || (activeSession !== null && !activePaidSession)
+    ? { status: "not-entitled" as const, entitlement: null }
+    : await readCommentTranslatorPaidSessionAuthority({ callerAuthorization, nowMs });
+  if (intent !== "stop" && activePaidSession && activeSession && paidSessionAuthorityRead.status !== "ready") {
+    return stopCommentTranslatorActivePaidSessionForUnreadableAuthority({
+      callerAuthorization,
+      durableSessionStore,
+      activeSession,
+      nowMs
+    });
+  }
+  if (intent !== "stop" && paidSessionAuthorityRead.status === "fail-closed") {
+    if (paidSessionAuthorityRead.entitlement) {
+      return createCommentTranslatorDurableSessionFailClosedState({ nowMs, plan: "paid", reason: "paid-authority-unreadable" });
+    }
+    return createCommentTranslatorPreAuthorityFailClosedResult({ durableActiveSessionRead });
+  }
+  const paidSessionAuthority = !activeSession || activePaidSession
+    ? paidSessionAuthorityRead.status === "ready" ? paidSessionAuthorityRead : null
+    : null;
+  const paidPlanEntitlement = paidSessionAuthority
+    ? createCommentTranslatorPaidSessionPlanEntitlement({ costAuthority: paidSessionAuthority.costAuthority })
+    : activePaidSession && intent === "stop"
+      ? createCommentTranslatorPaidSessionStopPlanEntitlement()
+    : undefined;
+  const plan = activePaidSession || (!activeSession && paidSessionAuthority) ? "paid" : "free";
   const durableUsageRead = await readCommentTranslatorDurableUsageSnapshotOrFailClosed({
     callerAuthorization,
     durableUsageCounterStore,
     nowMs,
-    plan: "free",
+    plan,
     activeSession,
-    planEntitlementOverride: previewRateLimitSmokeOverride
+    paidEntitlement: paidPlanEntitlement,
+    planEntitlementOverride: plan === "paid" ? undefined : previewRateLimitSmokeOverride
   });
-  const entitlementBaseline = resolveCommentTranslatorPublicEntitlementBaseline({
-    billingSnapshot,
-    durableUsageRead,
-    previewRateLimitSmokeOverride
-  });
+  const entitlementBaseline = activePaidSession && intent === "stop"
+    ? resolveCommentTranslatorPaidSessionStopBaseline({ durableUsageRead })
+    : resolveCommentTranslatorPublicEntitlementBaseline({
+        durableUsageRead,
+        paidAuthority: paidSessionAuthority ?? undefined,
+        previewRateLimitSmokeOverride
+      });
   if (entitlementBaseline.status === "fail-closed") {
-    return createCommentTranslatorDurableSessionFailClosedState({ nowMs, plan: "free" });
+    if (activePaidSession && activeSession) {
+      return stopCommentTranslatorActivePaidSessionForUnreadableAuthority({
+        callerAuthorization,
+        durableSessionStore,
+        activeSession,
+        nowMs
+      });
+    }
+    return createCommentTranslatorDurableSessionFailClosedState({
+      nowMs,
+      plan,
+      reason: plan === "paid" ? "global-budget-stop" : "session-limit"
+    });
   }
   if (intent === "status") {
     return executeCommentTranslatorSessionCommand({
@@ -125,7 +181,8 @@ async function readCommentTranslatorSessionActionResult({
       browserConnected: true,
       stopReason,
       targetLanguage,
-      sourceLanguages: sourceLanguage ? [sourceLanguage] : undefined
+      sourceLanguages: sourceLanguage ? [sourceLanguage] : undefined,
+      paidSessionAuthority
     });
   }
   const credentialReadiness = await readCommentTranslatorActionCredentialReadiness({
@@ -150,7 +207,8 @@ async function readCommentTranslatorSessionActionResult({
     browserConnected: intent !== "stop",
     stopReason,
     targetLanguage,
-    sourceLanguages: sourceLanguage ? [sourceLanguage] : undefined
+    sourceLanguages: sourceLanguage ? [sourceLanguage] : undefined,
+    paidSessionAuthority
   });
 }
 

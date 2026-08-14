@@ -113,6 +113,11 @@ export type CommentTranslatorUsageLedgerSnapshot = {
   globalBudgetAvailable: boolean;
   aiBudgetAvailable: boolean;
   translationProviderAvailable: boolean;
+  paidAuthorityReadable?: boolean;
+  paidBillingPeriodInputCharacters?: number;
+  paidBillingPeriodCharacterLimit?: number;
+  paidIndividualCostAvailable?: boolean;
+  paidGlobalCostAvailable?: boolean;
   planEntitlement: CommentTranslatorSessionPlanEntitlement;
   providerRequestEstimate: CommentTranslatorUsageLedgerProviderRequestEstimate;
   aiUsageEstimate: CommentTranslatorUsageLedgerAiUsageEstimate;

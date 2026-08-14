@@ -434,8 +434,8 @@ function createStatusBoundaryFixture({
     reasonUx: null,
     usageDisplay: {},
     nextAction: "send-heartbeat-or-stop",
-    providerApiUsage: "allowed-after-explicit-start-not-run-in-task-7",
-    aiTranslationUsage: "allowed-after-explicit-start-not-run-in-task-7",
+    providerApiUsage: "allowed-after-explicit-start",
+    aiTranslationUsage: "allowed-after-explicit-start",
     tokenValue: "never-returned-by-design",
     providerTargetMetadata: "forbidden",
     ...(phaseResolution.status === "ready" ? phaseResolution.projection : {})

@@ -527,7 +527,11 @@ assert.match(policy, /provider-quota-exhausted/, "Azure quota is surfaced as a s
 assert.match(policy, /(?:QuotaExceeded|OutOfQuota|SubscriptionQuotaExceeded|quota_exceeded)/i, "Azure quota parser uses an explicit allowlist");
 assert.doesNotMatch(policy, /JSON\.stringify\([^\n]*error|console\.(?:log|warn|error)/i, "Azure quota handling does not output raw error material");
 assert.match(execution, /providerResult\.code === "provider-quota-exhausted"[\s\S]{0,240}?"quota"/, "Azure quota maps to the Paid quota failure class");
-assert.match(execution, /disableProvider:[\s\S]{0,160}?true/, "Azure quota marker disables the fallback circuit");
+assert.match(
+  execution,
+  /disableProvider:\s*circuitFailureClass\s*===\s*"quota"/,
+  "Azure quota marker disables the fallback circuit"
+);
 
 const fetchAbortError = new Error("fixture abort");
 fetchAbortError.name = "AbortError";

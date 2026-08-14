@@ -30,6 +30,7 @@ export function createCommentTranslatorNotStartedSessionState({
   readonly usage?: CommentTranslatorSessionUsageSnapshot;
 }): CommentTranslatorSessionBrowserSafeState {
   const displayUsage = usage ?? createDefaultCommentTranslatorUsageSnapshot({ plan, dailyUsedMs });
+  const entitlement = resolveCommentTranslatorUsageEntitlement(displayUsage, plan);
   return {
     status: "not-started",
     provider: "youtube",
@@ -37,8 +38,8 @@ export function createCommentTranslatorNotStartedSessionState({
     startedAtIso: null,
     stoppedAtIso: null,
     elapsedSeconds: 0,
-    remainingSessionSeconds: Math.floor(resolveCommentTranslatorUsageEntitlement(undefined, plan).sessionLimitMs / 1_000),
-    remainingDailySeconds: remainingDailySeconds({ dailyUsedMs, elapsedMs: 0, plan }),
+    remainingSessionSeconds: Math.floor(entitlement.sessionLimitMs / 1_000),
+    remainingDailySeconds: remainingDailySeconds({ dailyUsedMs, elapsedMs: 0, plan, entitlement }),
     heartbeat: createHeartbeatState(null),
     stopReason: null,
     reasonUx: null,
@@ -82,8 +83,8 @@ export function createCommentTranslatorActiveSessionState({
     reasonUx: null,
     usageDisplay: createCommentTranslatorFreeBetaUsageDisplay({ usage, elapsedMs: elapsed }),
     nextAction: "send-heartbeat-or-stop",
-    providerApiUsage: "allowed-after-explicit-start-not-run-in-task-7",
-    aiTranslationUsage: "allowed-after-explicit-start-not-run-in-task-7",
+    providerApiUsage: "allowed-after-explicit-start",
+    aiTranslationUsage: "allowed-after-explicit-start",
     tokenValue: "never-returned-by-design",
     providerTargetMetadata: "forbidden",
     ...phase
@@ -98,7 +99,8 @@ export function createCommentTranslatorStoppedSessionState({
   reason,
   reasonUxCode,
   nextAction,
-  credentialReferenceId
+  credentialReferenceId,
+  nextResetAtIso
 }: {
   readonly activeSession: CommentTranslatorActiveSessionRecord | null;
   readonly nowMs: number;
@@ -108,9 +110,11 @@ export function createCommentTranslatorStoppedSessionState({
   readonly reasonUxCode?: CommentTranslatorStartStopReasonUxCode | null;
   readonly nextAction: "session-stopped" | "reconnect-or-sign-in" | "wait-for-limit-reset";
   readonly credentialReferenceId?: string;
+  readonly nextResetAtIso?: string | null;
 }): CommentTranslatorSessionBrowserSafeState {
   const elapsed = activeSession ? chargeableCommentTranslatorSessionElapsedMs(activeSession, nowMs, plan, usage) : 0;
   const entitlement = resolveCommentTranslatorUsageEntitlement(usage, plan);
+  const resetProjection = nextResetAtIso === undefined ? {} : { nextResetAtIso };
   return {
     status: "stopped",
     provider: "youtube",
@@ -131,7 +135,8 @@ export function createCommentTranslatorStoppedSessionState({
     aiTranslationUsage: "stopped",
     tokenValue: "never-returned-by-design",
     providerTargetMetadata: "forbidden",
-    providerErrorBody: "never-returned-by-design"
+    providerErrorBody: "never-returned-by-design",
+    ...resetProjection
   };
 }
 

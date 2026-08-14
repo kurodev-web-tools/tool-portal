@@ -154,6 +154,8 @@ export type ExecuteCommentTranslatorPaidProviderBatchRequest = {
   activeRequestCount?: number;
   duplicateSessionBatch?: boolean;
   maxBatchSize?: number;
+  /** Task 7 enables the durable Paid 60-message/minute reservation seam. */
+  enforceMessageRate?: boolean;
 };
 
 export const commentTranslatorPaidProviderExecutionContract = {
@@ -241,6 +243,10 @@ export type CommentTranslatorProviderExecutionResultBase = {
   handoffPayload: "unchanged";
   providerTargetMetadata: "forbidden";
   rawCommentText: "never-returned-by-design";
+  /** Internal-only signal: durable Paid work already committed, so callers must not rebuild output from empty translations. */
+  paidCommittedReplay?: true;
+  /** Internal-only count of successful items represented only by committed replay receipts. */
+  paidCommittedReplaySuccessfulCount?: number;
   paidProviderStopReason?:
     | "authority-unreadable"
     | "configuration-unreadable"
@@ -249,9 +255,36 @@ export type CommentTranslatorProviderExecutionResultBase = {
     | "paid-character-quota-stop"
     | "paid-individual-cost-stop"
     | "paid-global-cost-stop"
+    | "paid-message-rate-stop"
     | "duplicate-session-batch"
     | "kill-switch";
 };
+
+type CommentTranslatorPaidMessageRateSettlementHandle = {
+  settled: boolean;
+  settle(translatedMessageCount: number): Promise<void>;
+};
+
+const paidMessageRateSettlementByExecution = new WeakMap<
+  CommentTranslatorProviderExecutionResult,
+  CommentTranslatorPaidMessageRateSettlementHandle
+>();
+
+export async function settleCommentTranslatorPaidMessageRateExecution(
+  execution: CommentTranslatorProviderExecutionResult,
+  translatedMessageCount: number
+): Promise<"settled" | "already-settled" | "no-reservation" | "failed"> {
+  const settlement = paidMessageRateSettlementByExecution.get(execution);
+  if (!settlement) return "no-reservation";
+  if (settlement.settled) return "already-settled";
+  try {
+    await settlement.settle(Math.max(0, Math.floor(translatedMessageCount)));
+    settlement.settled = true;
+    return "settled";
+  } catch {
+    return "failed";
+  }
+}
 
 export type CommentTranslatorProviderTerminalErrorCodeCounts = {
   invalidRequest: number;
@@ -547,7 +580,8 @@ export async function executeCommentTranslatorPaidProviderBatch(
   if (!safeSwitches.paid_translation_enabled) {
     return createPaidProviderUnavailableResult(request.comments.length, base, "kill-switch");
   }
-  if (!request.usageStore || !circuitAuthority || !request.serverSecret?.trim()) {
+  const serverSecret = request.serverSecret;
+  if (!request.usageStore || !circuitAuthority || !serverSecret?.trim()) {
     return createPaidProviderUnavailableResult(request.comments.length, base, "configuration-unreadable");
   }
   if (request.duplicateSessionBatch) {
@@ -613,13 +647,136 @@ export async function executeCommentTranslatorPaidProviderBatch(
   let recoverableErrors = 0;
   let terminalErrors = 0;
   let estimatedCostMicros = 0;
+  let paidCommittedReplay = false;
+  let paidCommittedReplaySuccessfulCount = 0;
+  let messageRateReservationKey: string | null = null;
+  let messageRateReservationNeedsFinalize = false;
+  let messageRateSettlementTransferred = false;
+  let durableSuccessfulMessageCount = 0;
 
-  for (const group of itemGroups) {
+  if (request.enforceMessageRate) {
+    if (
+      !request.usageStore?.reserveMessageRate
+      || !request.usageStore.recordMessageRateSuccess
+      || !request.usageStore.finalizeMessageRate
+    ) {
+      return createPaidProviderUnavailableResult(request.comments.length, base, "authority-unreadable");
+    }
+    messageRateReservationKey = createPaidMessageRateReservationKey({
+      serverSecret,
+      keyVersion: request.attemptKeyVersion,
+      ownerUserId: request.ownerUserId,
+      sessionReferenceId: request.sessionReferenceId,
+      comments: eligibleComments,
+      targetLanguage: request.targetLanguage,
+      nowMs: request.occurredAtMs
+    });
+    if (eligibleComments.length > 60) {
+      return createPaidProviderStoppedResult(request.comments.length, base, "paid-message-rate-stop", {
+        batches: [],
+        translations: [],
+        providerCallCount: 0,
+        retryCount: 0,
+        fallbackCount: 0,
+        recoverableErrors: 0,
+        terminalErrors: 0,
+        estimatedCostMicros: 0
+      });
+    }
+    try {
+      const messageRateReservation = await request.usageStore.reserveMessageRate({
+        sessionReferenceId: request.sessionReferenceId,
+        ownerUserId: request.ownerUserId,
+        reservationKey: messageRateReservationKey,
+        messageCount: eligibleComments.length,
+        nowIso: new Date(request.occurredAtMs).toISOString()
+      });
+      if (messageRateReservation.reservationStatus === "rate-limited") {
+        return createPaidProviderStoppedResult(request.comments.length, base, "paid-message-rate-stop", {
+          batches: [],
+          translations: [],
+          providerCallCount: 0,
+          retryCount: 0,
+          fallbackCount: 0,
+          recoverableErrors: 0,
+          terminalErrors: 0,
+          estimatedCostMicros: 0
+        });
+      }
+      if (messageRateReservation.reservationStatus === "committed") {
+        // A deterministic retry after durable settlement must not send the
+        // same comment batch to a Provider a second time.
+        return createPaidProviderCompletedNoopResult(
+          base,
+          messageRateReservation.successfulMessageCount ?? messageRateReservation.committedMessages
+        );
+      }
+      durableSuccessfulMessageCount = messageRateReservation.successfulMessageCount ?? messageRateReservation.committedMessages;
+      messageRateReservationNeedsFinalize = messageRateReservation.reservationStatus === "reserved";
+    } catch {
+      return createPaidProviderUnavailableResult(request.comments.length, base, "authority-unreadable");
+    }
+  }
+
+  const holdMessageRateSettlement = (
+    result: CommentTranslatorProviderExecutionResult
+  ): CommentTranslatorProviderExecutionResult => {
+      const usageStore = request.usageStore;
+      if (
+        !messageRateReservationNeedsFinalize
+        || !messageRateReservationKey
+        || !usageStore?.finalizeMessageRate
+      ) {
+        return result;
+      }
+      const reservationKey = messageRateReservationKey;
+      const finalizeMessageRate = usageStore.finalizeMessageRate.bind(usageStore);
+      const recordMessageRateSuccess = usageStore.recordMessageRateSuccess?.bind(usageStore);
+      paidMessageRateSettlementByExecution.set(result, {
+        settled: false,
+        settle: async (translatedMessageCount) => {
+          const successfulMessageCount = Math.max(translatedMessageCount, durableSuccessfulMessageCount);
+          if (successfulMessageCount > durableSuccessfulMessageCount) {
+            if (!recordMessageRateSuccess) {
+              throw new Error("Paid message-rate success authority is unavailable.");
+            }
+            durableSuccessfulMessageCount = await recordMessageRateSuccess({
+              sessionReferenceId: request.sessionReferenceId,
+              ownerUserId: request.ownerUserId,
+              reservationKey,
+              successfulMessageCount,
+              nowIso: new Date(request.occurredAtMs).toISOString()
+            });
+          }
+          await finalizeMessageRate({
+            sessionReferenceId: request.sessionReferenceId,
+            ownerUserId: request.ownerUserId,
+            reservationKey,
+            translatedMessageCount: Math.max(successfulMessageCount, durableSuccessfulMessageCount),
+            nowIso: new Date(request.occurredAtMs).toISOString()
+          });
+        }
+      });
+      messageRateSettlementTransferred = true;
+      return result;
+  };
+
+  if (messageRateReservationNeedsFinalize && durableSuccessfulMessageCount > 0) {
+    // A prior process durably recorded Provider success but did not finish
+    // settlement. Reuse that receipt without entering any Provider-attempt or
+    // allowance path, and expose only the existing private settlement handle.
+    return holdMessageRateSettlement(createPaidProviderCompletedNoopResult(base, durableSuccessfulMessageCount));
+  }
+
+  try {
+    for (const group of itemGroups) {
     const first = group[0];
     if (!first) continue;
     const readCompletedState = () => ({
       batches: batches.slice(),
       translations: translations.slice(),
+      paidCommittedReplay,
+      paidCommittedReplaySuccessfulCount,
       providerCallCount,
       retryCount,
       fallbackCount,
@@ -629,10 +786,12 @@ export async function executeCommentTranslatorPaidProviderBatch(
     });
     const stopPaidProvider = (
       reason: NonNullable<CommentTranslatorProviderExecutionResultBase["paidProviderStopReason"]>
-    ) => createPaidProviderStoppedResult(request.comments.length, base, reason, readCompletedState());
+    ) => holdMessageRateSettlement(
+      createPaidProviderStoppedResult(request.comments.length, base, reason, readCompletedState())
+    );
     const nowIso = new Date(request.occurredAtMs).toISOString();
     const attemptId = createPaidBatchAttemptId({
-      serverSecret: request.serverSecret,
+      serverSecret,
       keyVersion: request.attemptKeyVersion,
       ownerUserId: request.ownerUserId,
       sessionReferenceId: request.sessionReferenceId,
@@ -765,7 +924,7 @@ export async function executeCommentTranslatorPaidProviderBatch(
       comment,
       item: {
         attemptId: createPaidItemAttemptId({
-          serverSecret: request.serverSecret,
+          serverSecret,
           keyVersion: request.attemptKeyVersion,
           ownerUserId: request.ownerUserId,
           sessionReferenceId: request.sessionReferenceId,
@@ -807,11 +966,15 @@ export async function executeCommentTranslatorPaidProviderBatch(
       allowHalfOpenProbe: groupCircuit.state === "half_open",
       deferRateLimitCircuitFailure: groupCircuit.state !== "half_open"
     });
-    if (firstAttempt.status === "authority-unreadable" || firstAttempt.status === "kill-switch") {
-      return stopPaidProvider(firstAttempt.status);
-    }
     if (firstAttempt.status === "not-reserved") {
       return stopPaidProvider(mapPaidReservationRefusalToStopReason(firstAttempt.refusal));
+    }
+    if (firstAttempt.status !== "executed") {
+      return stopPaidProvider(firstAttempt.status);
+    }
+    if (firstAttempt.committedReplay === true) {
+      paidCommittedReplay = true;
+      paidCommittedReplaySuccessfulCount += firstAttempt.result.successfulAttemptIds?.length ?? 0;
     }
     if (
       firstAttempt.result.status === "failed"
@@ -885,6 +1048,9 @@ export async function executeCommentTranslatorPaidProviderBatch(
           refusal: rateRetryAttempt.refusal
         });
         return stopPaidProvider(stopReason);
+      }
+      if (rateRetryAttempt.status !== "executed") {
+        return stopPaidProvider(rateRetryAttempt.status);
       }
       retryCount += 1;
       result = rateRetryAttempt.result;
@@ -1062,26 +1228,63 @@ export async function executeCommentTranslatorPaidProviderBatch(
     }
   }
 
-  return {
-    ...base,
-    status: "completed",
-    providerRequestCount: eligibleComments.length,
-    providerCallCount,
-    translatedCount: translations.length,
-    skippedCount: Math.max(0, request.comments.length - translations.length),
-    skipsByReason: {
-      languagePolicy: languagePolicySkippedCount,
-      perMinuteCap: 0,
-      providerUnavailable: Math.max(0, eligibleComments.length - translations.length)
-    },
-    retryCount,
-    errorCounts: { recoverable: recoverableErrors, terminal: terminalErrors },
-    fallbackReasonCounts: { recoverablePrimaryError: fallbackCount },
-    estimatedCostMicros,
-    usageRecorded: { providerRequestEstimate: providerCallCount > 0, aiUsageEstimate: translations.length > 0 },
-    batches,
-    translations
-  };
+    return holdMessageRateSettlement({
+      ...base,
+      status: "completed",
+      ...(paidCommittedReplay ? { paidCommittedReplay: true as const } : {}),
+      ...(paidCommittedReplaySuccessfulCount > 0 ? { paidCommittedReplaySuccessfulCount } : {}),
+      providerRequestCount: eligibleComments.length,
+      providerCallCount,
+      translatedCount: translations.length,
+      skippedCount: Math.max(0, request.comments.length - translations.length),
+      skipsByReason: {
+        languagePolicy: languagePolicySkippedCount,
+        perMinuteCap: 0,
+        providerUnavailable: Math.max(0, eligibleComments.length - translations.length)
+      },
+      retryCount,
+      errorCounts: { recoverable: recoverableErrors, terminal: terminalErrors },
+      fallbackReasonCounts: { recoverablePrimaryError: fallbackCount },
+      estimatedCostMicros,
+      usageRecorded: { providerRequestEstimate: providerCallCount > 0, aiUsageEstimate: translations.length > 0 },
+      batches,
+      translations
+    });
+  } finally {
+    if (
+      messageRateReservationNeedsFinalize
+      && !messageRateSettlementTransferred
+      && messageRateReservationKey
+      && request.usageStore?.finalizeMessageRate
+    ) {
+      const successfulMessageCount = Math.max(
+        durableSuccessfulMessageCount,
+        Math.min(
+          eligibleComments.length,
+          translations.length + paidCommittedReplaySuccessfulCount
+        )
+      );
+      if (successfulMessageCount > durableSuccessfulMessageCount) {
+        if (!request.usageStore.recordMessageRateSuccess) {
+          throw new Error("Paid message-rate success authority is unavailable.");
+        }
+        durableSuccessfulMessageCount = await request.usageStore.recordMessageRateSuccess({
+          sessionReferenceId: request.sessionReferenceId,
+          ownerUserId: request.ownerUserId,
+          reservationKey: messageRateReservationKey,
+          successfulMessageCount,
+          nowIso: new Date(request.occurredAtMs).toISOString()
+        });
+      }
+      await request.usageStore.finalizeMessageRate({
+        sessionReferenceId: request.sessionReferenceId,
+        ownerUserId: request.ownerUserId,
+        reservationKey: messageRateReservationKey,
+        translatedMessageCount: Math.max(successfulMessageCount, durableSuccessfulMessageCount),
+        nowIso: new Date(request.occurredAtMs).toISOString()
+      });
+    }
+  }
 }
 
 export async function executeCommentTranslatorProviderPolicyBatch(
@@ -1271,6 +1474,27 @@ function createPaidProviderUnavailableResult(
   };
 }
 
+function createPaidProviderCompletedNoopResult(
+  base: CommentTranslatorProviderExecutionResultBase,
+  successfulMessageCount?: number
+): CommentTranslatorProviderExecutionResult {
+  const sanitizedSuccessfulMessageCount = successfulMessageCount === undefined
+    ? undefined
+    : Number.isFinite(successfulMessageCount)
+      ? Math.max(0, Math.trunc(successfulMessageCount))
+      : 0;
+  return {
+    ...base,
+    status: "completed",
+    paidCommittedReplay: true,
+    ...(sanitizedSuccessfulMessageCount === undefined
+      ? {}
+      : { paidCommittedReplaySuccessfulCount: sanitizedSuccessfulMessageCount }),
+    batches: [],
+    translations: []
+  };
+}
+
 function createPaidProviderStoppedResult(
   requestCount: number,
   base: CommentTranslatorProviderExecutionResultBase,
@@ -1278,6 +1502,8 @@ function createPaidProviderStoppedResult(
   completedState: {
     batches: readonly CommentTranslatorProviderExecutionBatchSummary[];
     translations: readonly CommentTranslatorProviderExecutionTranslation[];
+    paidCommittedReplay?: boolean;
+    paidCommittedReplaySuccessfulCount?: number;
     providerCallCount: number;
     retryCount: number;
     fallbackCount: number;
@@ -1291,6 +1517,10 @@ function createPaidProviderStoppedResult(
   return {
     ...base,
     status: "completed",
+    ...(completedState.paidCommittedReplay ? { paidCommittedReplay: true as const } : {}),
+    ...(completedState.paidCommittedReplaySuccessfulCount
+      ? { paidCommittedReplaySuccessfulCount: completedState.paidCommittedReplaySuccessfulCount }
+      : {}),
     providerRequestCount: completedState.batches.reduce(
       (total, batch) => total + batch.providerRequestCount,
       0
@@ -1334,6 +1564,7 @@ function isPaidProviderStopReason(
     "paid-character-quota-stop",
     "paid-individual-cost-stop",
     "paid-global-cost-stop",
+    "paid-message-rate-stop",
     "duplicate-session-batch",
     "kill-switch"
   ].includes(value as NonNullable<CommentTranslatorProviderExecutionResultBase["paidProviderStopReason"]>);
@@ -1455,6 +1686,41 @@ function createPaidBatchAttemptId({
   });
 }
 
+function createPaidMessageRateReservationKey({
+  serverSecret,
+  keyVersion,
+  ownerUserId,
+  sessionReferenceId,
+  comments,
+  targetLanguage,
+  nowMs
+}: {
+  serverSecret: string;
+  keyVersion: string;
+  ownerUserId: string;
+  sessionReferenceId: string;
+  comments: readonly YouTubeProviderSafeCommentPayload[];
+  targetLanguage: string;
+  nowMs: number;
+}): string {
+  const canonicalCommentIds = comments
+    .map((comment) => comment.commentId.trim())
+    .sort()
+    .join("\u001f");
+  return createCommentTranslatorPaidAttemptId({
+    serverSecret,
+    keyVersion,
+    ownerUserId,
+    sessionReferenceId,
+    // The reservation key identifies the logical bounded batch. The database
+    // assigns it to the authoritative minute, so a Worker clock boundary
+    // cannot create a second reservation for the same retry.
+    providerMessageId: `message-rate:${canonicalCommentIds}`,
+    targetLanguage,
+    nowMs
+  }).attemptId;
+}
+
 function createPaidItemAttemptId({
   serverSecret,
   keyVersion,
@@ -1538,6 +1804,7 @@ type PaidOpenAiAttemptExecution =
       result: CommentTranslatorOpenAiExecutionResult;
       providerAttempt: string;
       circuitFailureRecorded: boolean;
+      committedReplay?: true;
       markerReconciliationFailed?: boolean;
     }
   | { status: "not-reserved"; refusal: CommentTranslatorPaidReservationRefusal | "status"; providerAttempt: string }
@@ -1628,6 +1895,7 @@ async function executePaidOpenAiReservedAttempt({
       return {
         status: "executed",
         providerAttempt,
+        ...(reservation.reservationStatus === "committed" ? { committedReplay: true as const } : {}),
         circuitFailureRecorded: receipt.circuitFailureState !== "deferred",
         result: {
           status: "completed",

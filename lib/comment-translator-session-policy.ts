@@ -13,6 +13,7 @@ import type {
 
 const freeLimitMs = 30 * 60 * 1_000;
 export const commentTranslatorHeartbeatTimeoutMs = 45_000;
+const commentTranslatorPaidHeartbeatCoalescingWindowMs = 60_000;
 const freePlanEntitlementReferenceId = "comment-translator-free-public-v1";
 
 export function createCommentTranslatorSessionPlanEntitlement({
@@ -125,7 +126,7 @@ export function assessCommentTranslatorUsageStopReason(
     if (!usage.paidIndividualCostAvailable) return "paid-individual-cost-stop";
     if (!usage.paidGlobalCostAvailable) return "paid-global-cost-stop";
   }
-  if (usage.dailyUsedMs > 0 && usage.dailyUsedMs + Math.max(0, activeElapsedMs) >= entitlement.dailyLimitMs) {
+  if (plan !== "paid" && usage.dailyUsedMs > 0 && usage.dailyUsedMs + Math.max(0, activeElapsedMs) >= entitlement.dailyLimitMs) {
     return "daily-time-limit";
   }
   if (!usage.providerBudgetAvailable) return "provider-quota-stop";
@@ -155,7 +156,8 @@ export function normalizeCommentTranslatorActiveSession(
     lastHeartbeatAtMs: state.heartbeat.lastHeartbeatAtIso
       ? Date.parse(state.heartbeat.lastHeartbeatAtIso)
       : Date.parse(state.startedAtIso),
-    credentialReferenceId: state.credentialReferenceId ?? undefined
+    credentialReferenceId: state.credentialReferenceId ?? undefined,
+    plan: state.plan
   };
 }
 
@@ -194,6 +196,16 @@ export function isCommentTranslatorHeartbeatMissing(
   nowMs: number
 ): boolean {
   return nowMs - activeSession.lastHeartbeatAtMs > commentTranslatorHeartbeatTimeoutMs;
+}
+
+export function isCommentTranslatorHeartbeatMissingForPlan(
+  activeSession: CommentTranslatorActiveSessionRecord,
+  nowMs: number,
+  plan: CommentTranslatorSessionPlan
+): boolean {
+  const missingHeartbeatTimeoutMs = commentTranslatorHeartbeatTimeoutMs
+    + (plan === "paid" ? commentTranslatorPaidHeartbeatCoalescingWindowMs : 0);
+  return nowMs - activeSession.lastHeartbeatAtMs > missingHeartbeatTimeoutMs;
 }
 
 export function createDefaultCommentTranslatorUsageSnapshot({

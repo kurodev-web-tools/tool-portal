@@ -46,6 +46,42 @@ export type CommentTranslatorPaidReservationRefusal =
   | "individual-cost"
   | "global-cost";
 
+export type CommentTranslatorPaidRuntimeAuthority = {
+  billingPeriodAvailable: boolean;
+  billingPeriodInputCharacters: number;
+  billingPeriodCharacterLimit: number;
+  individualCostAvailable: boolean;
+  globalCostAvailable: boolean;
+  translatedMessagesInCurrentMinute: number;
+  translatedMessageCapacityAvailableAtIso: string | null;
+};
+
+export type CommentTranslatorPaidPollBudgetAuthority = {
+  utcDay: string;
+  dailyBudget: number | null;
+  reservedPolls: number;
+  sessionReservedPolls: number;
+  sessionReservationPresent: boolean;
+  nextResetAtIso: string;
+};
+
+export type CommentTranslatorPaidMessageRateReservation = {
+  reservationStatus: "reserved" | "rate-limited" | "committed";
+  minuteStartIso: string;
+  reservedMessages: number;
+  committedMessages: number;
+  successfulMessageCount: number;
+  capacityRemaining: number;
+};
+
+export type CommentTranslatorPaidMessageRateFinalize = {
+  reservationStatus: "committed" | "released";
+  minuteStartIso: string;
+  reservedMessages: number;
+  committedMessages: number;
+  releasedMessages: number;
+};
+
 export class CommentTranslatorPaidReservationRefusedError extends Error {
   readonly refusal: CommentTranslatorPaidReservationRefusal;
 
@@ -84,6 +120,39 @@ export type CommentTranslatorPaidAzureFinalizeRequest = {
 );
 
 export type CommentTranslatorPaidUsageStore = {
+  readRuntimeAuthority: (request: {
+    ownerUserId: string;
+    periodStartIso: string;
+    periodEndIso: string;
+    utcMonth: string;
+    nowIso: string;
+  }) => Promise<CommentTranslatorPaidRuntimeAuthority>;
+  readPollBudget: (request: {
+    sessionReferenceId: string;
+    ownerUserId: string;
+    nowIso: string;
+  }) => Promise<CommentTranslatorPaidPollBudgetAuthority>;
+  reserveMessageRate: (request: {
+    sessionReferenceId: string;
+    ownerUserId: string;
+    reservationKey: string;
+    messageCount: number;
+    nowIso: string;
+  }) => Promise<CommentTranslatorPaidMessageRateReservation>;
+  recordMessageRateSuccess?: (request: {
+    sessionReferenceId: string;
+    ownerUserId: string;
+    reservationKey: string;
+    successfulMessageCount: number;
+    nowIso: string;
+  }) => Promise<number>;
+  finalizeMessageRate: (request: {
+    sessionReferenceId: string;
+    ownerUserId: string;
+    reservationKey: string;
+    translatedMessageCount: number;
+    nowIso: string;
+  }) => Promise<CommentTranslatorPaidMessageRateFinalize>;
   recordProviderHourlyDetail: (request: {
     attemptId: string;
     providerAttempt: string;
@@ -306,6 +375,10 @@ export const commentTranslatorPaidUsageStoreContract = {
   browserReadableOutput: "never-returned-by-this-server-only-adapter",
   failClosedFallback: "paid-usage-unavailable-until-trusted-rpc-readable",
   trustedRpcNames: [
+    "ct_paid_read_runtime_authority",
+    "ct_paid_read_poll_budget",
+    "ct_paid_reserve_message_rate",
+    "ct_paid_finalize_message_rate",
     "ct_paid_record_provider_hourly_detail",
     "ct_paid_upsert_session_summary",
     "ct_paid_reserve_billing_period_characters",
@@ -372,6 +445,63 @@ export function createCommentTranslatorPaidUsageStore({
   supabase: SupabaseClient;
 }): CommentTranslatorPaidUsageStore {
   return {
+    async readRuntimeAuthority(request) {
+      const result = await supabase.rpc("ct_paid_read_runtime_authority", {
+        p_owner_user_id: request.ownerUserId,
+        p_period_start: request.periodStartIso,
+        p_period_end: request.periodEndIso,
+        p_utc_month: request.utcMonth,
+        p_now: request.nowIso
+      });
+      return readRuntimeAuthority(result);
+    },
+    async readPollBudget(request) {
+      const result = await supabase.rpc("ct_paid_read_poll_budget", {
+        p_session_reference_id: request.sessionReferenceId,
+        p_owner_user_id: request.ownerUserId,
+        p_now: request.nowIso
+      });
+      return readPollBudgetAuthority(result);
+    },
+    async reserveMessageRate(request) {
+      assertBoundedOpaqueReference(request.sessionReferenceId, "Paid message-rate session reference");
+      assertBoundedOpaqueReference(request.reservationKey, "Paid message-rate reservation key");
+      assertPositiveBoundedInteger(request.messageCount, 60, "Paid message-rate reservation count");
+      const result = await supabase.rpc("ct_paid_reserve_message_rate", {
+        p_session_reference_id: request.sessionReferenceId,
+        p_owner_user_id: request.ownerUserId,
+        p_reservation_key: request.reservationKey,
+        p_message_count: request.messageCount,
+        p_now: request.nowIso
+      });
+      return readMessageRateReservation(result);
+    },
+    async recordMessageRateSuccess(request) {
+      assertBoundedOpaqueReference(request.sessionReferenceId, "Paid message-rate session reference");
+      assertBoundedOpaqueReference(request.reservationKey, "Paid message-rate reservation key");
+      assertBoundedNonNegativeInteger(request.successfulMessageCount, 60, "Paid successful message count");
+      const result = await supabase.rpc("ct_paid_record_message_rate_success", {
+        p_session_reference_id: request.sessionReferenceId,
+        p_owner_user_id: request.ownerUserId,
+        p_reservation_key: request.reservationKey,
+        p_successful_message_count: request.successfulMessageCount,
+        p_now: request.nowIso
+      });
+      return readInteger(result, "Paid message-rate success recording failed.");
+    },
+    async finalizeMessageRate(request) {
+      assertBoundedOpaqueReference(request.sessionReferenceId, "Paid message-rate session reference");
+      assertBoundedOpaqueReference(request.reservationKey, "Paid message-rate reservation key");
+      assertBoundedNonNegativeInteger(request.translatedMessageCount, 60, "Paid translated message count");
+      const result = await supabase.rpc("ct_paid_finalize_message_rate", {
+        p_session_reference_id: request.sessionReferenceId,
+        p_owner_user_id: request.ownerUserId,
+        p_reservation_key: request.reservationKey,
+        p_translated_message_count: request.translatedMessageCount,
+        p_now: request.nowIso
+      });
+      return readMessageRateFinalize(result);
+    },
     async recordProviderHourlyDetail(request) {
       assertCommentTranslatorPaidAttemptId(request.attemptId);
       assertBoundedOpaqueReference(request.providerAttempt, "Paid provider attempt");
@@ -868,6 +998,142 @@ function assertBoundedNonNegativeInteger(value: unknown, maximum: number, label:
   if (typeof value !== "number" || !Number.isSafeInteger(value) || value < 0 || value > maximum) {
     throw new Error(label + " is invalid.");
   }
+}
+
+function readRuntimeAuthority(result: SupabaseRpcResult): CommentTranslatorPaidRuntimeAuthority {
+  if (result.error) throw new Error("Paid runtime authority read failed.");
+  const row = firstRpcRow(result.data);
+  const billingPeriodInputCharacters = readSafeIntegerField(row, "billing_period_input_characters");
+  const billingPeriodCharacterLimit = readSafeIntegerField(row, "billing_period_character_limit");
+  const translatedMessagesInCurrentMinute = readSafeIntegerField(row, "translated_messages_in_current_minute");
+  const translatedMessageCapacityAvailableAt = row.translated_message_capacity_available_at;
+  const billingPeriodAvailable = row.billing_period_available;
+  const individualCostAvailable = row.individual_cost_available;
+  const globalCostAvailable = row.global_cost_available;
+  if (
+    typeof billingPeriodAvailable !== "boolean"
+    || typeof individualCostAvailable !== "boolean"
+    || typeof globalCostAvailable !== "boolean"
+  ) {
+    throw new Error("Paid runtime cost authority is unreadable.");
+  }
+  if (billingPeriodCharacterLimit <= 0 || billingPeriodInputCharacters > billingPeriodCharacterLimit) {
+    throw new Error("Paid billing period authority is inconsistent.");
+  }
+  if (
+    translatedMessageCapacityAvailableAt !== null
+    && translatedMessageCapacityAvailableAt !== undefined
+    && (typeof translatedMessageCapacityAvailableAt !== "string" || !Number.isFinite(Date.parse(translatedMessageCapacityAvailableAt)))
+  ) {
+    throw new Error("Paid message-rate authority is unreadable.");
+  }
+  return {
+    billingPeriodAvailable,
+    billingPeriodInputCharacters,
+    billingPeriodCharacterLimit,
+    individualCostAvailable,
+    globalCostAvailable,
+    translatedMessagesInCurrentMinute,
+    translatedMessageCapacityAvailableAtIso: translatedMessageCapacityAvailableAt == null
+      ? null
+      : new Date(translatedMessageCapacityAvailableAt).toISOString()
+  };
+}
+
+function readPollBudgetAuthority(result: SupabaseRpcResult): CommentTranslatorPaidPollBudgetAuthority {
+  if (result.error) throw new Error("Paid poll budget authority read failed.");
+  const row = firstRpcRow(result.data);
+  const utcDay = readString(row, "utc_day");
+  const dailyBudget = row.daily_budget === null || row.daily_budget === undefined
+    ? null
+    : readSafeIntegerField(row, "daily_budget");
+  const reservedPolls = readSafeIntegerField(row, "reserved_polls");
+  const sessionReservedPolls = readSafeIntegerField(row, "session_reserved_polls");
+  const sessionReservationPresent = row.session_reservation_present;
+  const nextResetAt = readString(row, "next_reset_at");
+  if (
+    typeof sessionReservationPresent !== "boolean"
+    || !Number.isFinite(Date.parse(nextResetAt))
+    || (dailyBudget !== null && dailyBudget <= 0)
+    || (dailyBudget !== null && reservedPolls > dailyBudget)
+    || sessionReservedPolls > 720
+    || (!sessionReservationPresent && sessionReservedPolls !== 0)
+  ) {
+    throw new Error("Paid poll budget authority is unreadable.");
+  }
+  return {
+    utcDay,
+    dailyBudget,
+    reservedPolls,
+    sessionReservedPolls,
+    sessionReservationPresent,
+    nextResetAtIso: new Date(nextResetAt).toISOString()
+  };
+}
+
+function readMessageRateReservation(result: SupabaseRpcResult): CommentTranslatorPaidMessageRateReservation {
+  if (result.error) throw new Error("Paid message-rate reservation failed.");
+  const row = firstRpcRow(result.data);
+  const reservationStatus = readString(row, "reservation_status");
+  const minuteStart = readString(row, "minute_start");
+  const reservedMessages = readSafeIntegerField(row, "reserved_messages");
+  const committedMessages = readSafeIntegerField(row, "committed_messages");
+  const successfulMessageCount = readSafeIntegerField(row, "successful_message_count");
+  const capacityRemaining = readSafeIntegerField(row, "capacity_remaining");
+  if (
+    !["reserved", "rate-limited", "committed"].includes(reservationStatus)
+    || !Number.isFinite(Date.parse(minuteStart))
+    || reservedMessages > 60
+    || committedMessages > reservedMessages
+    || successfulMessageCount > reservedMessages
+    || capacityRemaining > 60
+  ) {
+    throw new Error("Paid message-rate reservation response is unreadable.");
+  }
+  return {
+    reservationStatus: reservationStatus as CommentTranslatorPaidMessageRateReservation["reservationStatus"],
+    minuteStartIso: new Date(minuteStart).toISOString(),
+    reservedMessages,
+    committedMessages,
+    successfulMessageCount,
+    capacityRemaining
+  };
+}
+
+function readMessageRateFinalize(result: SupabaseRpcResult): CommentTranslatorPaidMessageRateFinalize {
+  if (result.error) throw new Error("Paid message-rate finalize failed.");
+  const row = firstRpcRow(result.data);
+  const reservationStatus = readString(row, "reservation_status");
+  const minuteStart = readString(row, "minute_start");
+  const reservedMessages = readSafeIntegerField(row, "reserved_messages");
+  const committedMessages = readSafeIntegerField(row, "committed_messages");
+  const releasedMessages = readSafeIntegerField(row, "released_messages");
+  if (
+    !["committed", "released"].includes(reservationStatus)
+    || !Number.isFinite(Date.parse(minuteStart))
+    || reservedMessages > 60
+    || committedMessages > reservedMessages
+    || releasedMessages > reservedMessages
+  ) {
+    throw new Error("Paid message-rate finalize response is unreadable.");
+  }
+  return {
+    reservationStatus: reservationStatus as CommentTranslatorPaidMessageRateFinalize["reservationStatus"],
+    minuteStartIso: new Date(minuteStart).toISOString(),
+    reservedMessages,
+    committedMessages,
+    releasedMessages
+  };
+}
+
+function readSafeIntegerField(row: Record<string, unknown>, key: string): number {
+  const value = row[key];
+  if (typeof value === "number" && Number.isSafeInteger(value) && value >= 0) return value;
+  if (typeof value === "string" && /^\d+$/.test(value)) {
+    const parsed = Number(value);
+    if (Number.isSafeInteger(parsed)) return parsed;
+  }
+  throw new Error("Trusted Paid authority response is invalid.");
 }
 
 function readInteger(result: SupabaseRpcResult, message: string): number {

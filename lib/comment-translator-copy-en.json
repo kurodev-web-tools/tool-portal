@@ -180,6 +180,10 @@
       "ai-budget-stop": "AI budget stop",
       "translation-provider-limit": "Translation provider limit",
       "session-limit": "Session limit",
+      "paid-authority-unreadable": "Paid usage unavailable",
+      "paid-character-quota-stop": "Paid character limit",
+      "paid-individual-cost-stop": "Paid individual budget stop",
+      "paid-global-cost-stop": "Paid global budget stop",
       "terminal-provider-error": "Terminal provider error"
     },
     "reasonGroups": {

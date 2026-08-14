@@ -180,6 +180,10 @@
       "ai-budget-stop": "AI予算停止",
       "translation-provider-limit": "翻訳provider制限",
       "session-limit": "同時セッション上限",
+      "paid-authority-unreadable": "Paid利用情報を確認できません",
+      "paid-character-quota-stop": "Paid文字数上限",
+      "paid-individual-cost-stop": "Paid個別予算停止",
+      "paid-global-cost-stop": "Paid全体予算停止",
       "terminal-provider-error": "provider終端エラー"
     },
     "reasonGroups": {

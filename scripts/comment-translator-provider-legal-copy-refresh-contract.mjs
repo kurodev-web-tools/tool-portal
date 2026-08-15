@@ -19,7 +19,11 @@ function assertIncludes(source, snippets, label) {
 }
 
 const legalContentPath = "lib/legal-content.ts";
-const toolCopyPath = "lib/comment-translator.ts";
+const toolCopyPaths = [
+  "lib/comment-translator.ts",
+  "lib/comment-translator-copy-en.json",
+  "lib/comment-translator-copy-ja.json"
+];
 const integrationsShellPath = "components/account/AccountIntegrationsShell.tsx";
 const billingShellPath = "components/account/AccountBillingShell.tsx";
 const privateLaunchPath = "components/comment-translator/CommentTranslatorPrivateLaunchUnavailable.tsx";
@@ -31,7 +35,7 @@ const taskPath = "task.md";
 
 for (const requiredPath of [
   legalContentPath,
-  toolCopyPath,
+  ...toolCopyPaths,
   integrationsShellPath,
   billingShellPath,
   privateLaunchPath,
@@ -44,7 +48,7 @@ for (const requiredPath of [
 }
 
 const legalContent = read(legalContentPath);
-const toolCopy = read(toolCopyPath);
+const toolCopy = toolCopyPaths.map(read).join("\n");
 const integrationsShell = read(integrationsShellPath);
 const billingShell = read(billingShellPath);
 const privateLaunch = read(privateLaunchPath);
@@ -86,9 +90,12 @@ assertIncludes(
 assertIncludes(
   legalContent,
   [
-    "有料プランは、Comment Translator の利用上限拡張から開始する予定です。",
-    "Free は引き続き利用できます。",
-    "Stripe の Product、Price、Checkout、Customer Portal、webhook 登録、billing setting mutation は承認ゲート付きです。"
+    "月額US$6（税込・USD請求）",
+    "自動更新",
+    "契約更新周期あたり最大50万入力文字（500,000文字）",
+    "保証文字数ではありません",
+    "Freeは引き続き利用できます。",
+    "実際の公開・設定・提供可否、StripeやProviderのlive操作、デプロイ、activationは別の承認ゲートに従います。"
   ],
   "legal paid-plan copy"
 );
@@ -96,9 +103,9 @@ assertIncludes(
 assertIncludes(
   toolCopy,
   [
-    "Free uses Azure Translator. Pro uses an OpenAI mini model first, with Azure fallback only for recoverable provider errors.",
+    "Free uses Azure Translator. Kuro Live Comment Translator Plus uses the OpenAI mini model first, with Azure fallback only for recoverable provider errors.",
     "DeepL, Gemini, and Workers AI are comparison-only for the initial launch.",
-    "FreeはAzure Translator、ProはOpenAI miniを優先し、復帰可能なprovider errorだけAzure fallbackを使います。",
+    "FreeはAzure Translator、Kuro Live Comment Translator PlusはOpenAI miniを優先し、復帰可能なprovider errorだけAzure fallbackを使います。",
     "DeepL、Gemini、Workers AIは初期公開では比較用です。"
   ],
   "translator tool provider copy"
@@ -116,10 +123,11 @@ assertIncludes(
 assertIncludes(
   billingShell,
   [
-    "Free routes to Azure Translator. Pro routes to OpenAI mini with Azure fallback only for recoverable provider errors.",
-    "DeepL, Gemini, and Workers AI remain comparison-only and are not included in current production routing.",
-    "FreeはAzure Translator、ProはOpenAI miniを優先し、復帰可能なprovider errorだけAzure fallbackを使います。",
-    "DeepL、Gemini、Workers AIは比較用で、現行production routingには含めません。"
+    "Free remains available.",
+    "The existing Free translation and session/feed paths remain unchanged.",
+    "Freeは常に利用できます。",
+    "Freeの通常翻訳と既存session/feed経路は従来どおりです。",
+    "Provider-specific processing and retention policies apply."
   ],
   "billing provider and paid-plan copy"
 );

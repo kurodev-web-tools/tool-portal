@@ -19,7 +19,7 @@ export type LegalDocument = {
 
 const sharedDates = {
   effectiveDate: "2026年5月30日",
-  updatedDate: "2026年7月14日"
+  updatedDate: "2026年8月15日"
 };
 
 export const legalDocuments = {
@@ -32,7 +32,7 @@ export const legalDocuments = {
       {
         heading: "第1条（適用）",
         paragraphs: [
-          "本規約は、Kuro Stream Kit（以下「本サービス」といいます）で提供する配信準備、画像編集、予定管理、SNS向け画像分割、アカウント、将来提供される有料プランその他関連機能の利用に適用されます。",
+          "本規約は、Kuro Stream Kit（以下「本サービス」といいます）で提供する配信準備、画像編集、予定管理、SNS向け画像分割、アカウント、有料プランその他関連機能の利用に適用されます。",
           "利用者は、本サービスを利用することで、本規約に同意したものとみなされます。"
         ]
       },
@@ -81,10 +81,11 @@ export const legalDocuments = {
       {
         heading: "第7条（有料プラン、解約、返金）",
         paragraphs: [
-          "現在、有料プランは準備中です。有料プランは、Comment Translator の利用上限拡張から開始する予定です。提供開始時には、購入画面またはプラン画面で価格、支払方法、更新周期、利用できる機能、解約方法を明示します。",
-          "Free は引き続き利用できます。Stripe の Product、Price、Checkout、Customer Portal、webhook 登録、billing setting mutation は承認ゲート付きです。",
-          "将来の有料プランは、デジタルサービスの性質上、提供開始後または利用開始後の返金に応じられない場合があります。ただし、法令上必要な場合、重複決済、当方の責に帰す重大な不具合などは個別に確認します。",
-          "サブスクリプションの解約は、提供開始後に案内するアカウント画面または決済管理画面から行うものとし、解約後の利用可能期間は各プラン条件に従います。"
+          "Kuro Live Comment Translator Plus（Paidプラン）は月額US$6（税込・USD請求）で、自動更新です。カード会社による円換算額や海外利用手数料は変動する場合があります。",
+          "販売対象は日本（JP）および米国（US）です。支払方法はクレジットカード、デビットカード、カードを基盤とする対応手段、Stripe Link等のカード系に限り、振込には対応しません。",
+          "Paidプランは契約更新周期あたり最大50万入力文字（500,000文字）を利用できます。ただし、これは保証文字数ではありません。個人・全体の安全上限や運用上限により、残り文字数があっても先に停止する場合があります。",
+          "解約はCustomer Portalまたは案内されたアカウント画面から行い、次回更新日から有効になります。日割り返金・日割りクレジットは自動提供しません。返金は自動ではなく、二重課金、法令上必要な場合、重大障害等を個別に確認します。",
+          "Freeは引き続き利用できます。Checkout、Customer Portal、Webhookその他の決済設定や運用設定は、別途定める承認手順と安全確認の対象です。"
         ]
       },
       {
@@ -93,12 +94,22 @@ export const legalDocuments = {
           "Kuro Live Comment Translator は、初期公開版では YouTube を優先対象とし、利用者が明示的に翻訳セッションを開始した場合に限り、コメント取得、API利用、AI翻訳処理を行います。YouTube アカウントを接続しただけでは、バックグラウンド監視、ポーリング、翻訳、クォータ消費は開始しません。",
           "Free plan は Azure Translator を主な翻訳 provider として利用します。Paid plan は OpenAI mini model を主な翻訳 provider とし、復帰可能な provider error の場合のみ Azure Translator fallback を使います。",
           "DeepL、Gemini Flash/Lite、Cloudflare Workers AI は初期公開時点の production translation provider ではありません。品質・費用・地域・データ利用条件の比較対象として扱い、production routing には含めません。",
-          "無料利用枠の初期上限は、1日最大30分、1セッション最大30分、同時に1セッション、30翻訳メッセージ/分、月20,000入力文字です。月間上限は翻訳 provider に送る入力/ソース文字を基準に扱います。有料プラン、上限緩和、決済連携は準備中であり、提供開始時に画面上で条件を明示します。",
+          "無料利用枠の初期上限は、1日最大30分、1セッション最大30分、同時に1セッション、30翻訳メッセージ/分、月20,000入力文字です。月間上限は翻訳 provider に送る入力/ソース文字を基準に扱います。",
+          "Paidプランでは、コメント本文は翻訳処理のためOpenAIまたはAzureへ送信されます。Providerとモデルの選択はサーバー側のPaid条件で行い、利用者が任意に変更することはできません。",
+          "当サービスDBでは、画面表示とセッション復元に必要なsanitized feed snapshot（表示用コメント本文、翻訳結果、safe author display name）をセッション終了後最大24時間保存します。Provider request detail、ログ、集計、冪等台帳にはコメント本文を複製しません。OpenAIは標準のabuse monitoringにより最大30日保持される可能性があり、Azure TranslatorはMicrosoftのNo-Trace方針を前提とします。これは当サービスDBの24時間snapshotとは別のProvider側の処理・保持方針です。",
           "外部プラットフォームやAI翻訳サービスの仕様変更、クォータ、通信状態、配信状態、認証状態、利用上限により、セッションを開始できない、または途中で停止する場合があります。"
         ]
       },
       {
-        heading: "第9条（免責）",
+        heading: "第9条（返金、dispute、アカウント削除）",
+        paragraphs: [
+          "現在の請求期間の全額返金またはdispute利用者勝訴を確認した場合は、対象ownerのPaid利用を即時停止し、対象Subscriptionのidempotentなcancelを要求します。Stripeでcanceledを確認した後にcapacityを解放します。cancelまたは再取得に失敗した場合は、Paid停止とcapacity保持を継続し、manual reconciliationで処理します。",
+          "disputeは対象Charge/PaymentIntentから一意に特定できたownerとSubscriptionだけを対象とし、単一のdisputeを理由に全体を停止しません。運営勝訴時は、現在Subscriptionとperiodが有効で、支払い失敗、解約・返金、別dispute、quota/cost/infra停止、reconciliation等の他の停止理由がない場合だけPaidを復元します。",
+          "Paid契約中にアカウント削除を申請した場合、原則としてSubscriptionを期間終了時解約へ変更し、支払済み期間の終了後にアプリ側のアカウントと関連データを削除します。Stripe側の法定・会計情報はStripeの保持方針に従います。法的理由等による即時削除は個別に確認します。"
+        ]
+      },
+      {
+        heading: "第10条（免責）",
         paragraphs: [
           "当方は、本サービスが利用者の特定の目的、環境、外部プラットフォームの仕様に適合することを保証しません。",
           "通信障害、ブラウザやOSの変更、外部サービスの停止、利用者環境、不可抗力により生じた損害について、当方は責任を負いません。",
@@ -106,14 +117,14 @@ export const legalDocuments = {
         ]
       },
       {
-        heading: "第10条（規約変更）",
+        heading: "第11条（規約変更）",
         paragraphs: [
           "当方は、法令変更、サービス内容の変更、セキュリティ上の必要性その他合理的な理由により、本規約を変更することがあります。",
           "重要な変更は、本サービス上での掲示その他適切な方法により告知します。変更後に本サービスを利用した場合、変更後の規約に同意したものとみなされます。"
         ]
       },
       {
-        heading: "第11条（準拠法・管轄）",
+        heading: "第12条（準拠法・管轄）",
         paragraphs: [
           "本規約は日本法に準拠します。本サービスに関して紛争が生じた場合、当方所在地を管轄する日本の裁判所を第一審の専属的合意管轄裁判所とします。"
         ]
@@ -140,15 +151,15 @@ export const legalDocuments = {
           "表示設定など、利用者が選択した設定を反映するため",
           "不具合調査、セキュリティ対策、不正利用防止のため",
           "問い合わせへの回答、重要なお知らせの連絡のため",
-          "将来の有料プラン、請求、領収、利用状況確認に必要な範囲で対応するため"
+          "Paidプランの契約、請求、利用状況確認、dispute、返金、アカウント削除に対応するため"
         ]
       },
       {
         heading: "第3条（ツール内データとブラウザ内保存）",
         paragraphs: [
           "現時点のツール内データは、画像、素材、予定文、下書き、編集設定などを含め、原則として利用者のブラウザ内保存を前提としています。",
-          "本ポリシーの追加により、既存 storage key、IndexedDB、localStorage key、handoff payload の内容や保存先を変更するものではありません。",
-          "アカウント機能で扱うサーバー側データは、メールアドレス、認証状態、表示設定など、サービス提供に必要な範囲に限定します。"
+          "本ポリシーの追加により、既存 storage key、IndexedDB、localStorage key、handoff payload の内容や保存先を変更するものではありません。Billingの権限、地域、契約識別子をブラウザ保存領域へ保存しません。",
+          "アカウント機能で扱うサーバー側データは、メールアドレス、認証状態、表示設定、契約・利用状態など、サービス提供に必要な範囲に限定します。Paidの画面表示とセッション復元には、次条のsanitized feed snapshotが例外として保存されます。"
         ]
       },
       {
@@ -158,8 +169,8 @@ export const legalDocuments = {
           "OAuth access token、refresh token、認可コード、owner user id、provider channel id、liveChatId、service_role key、Authorization header、provider target metadata は、利用者の画面、ブラウザ保存領域、handoff payload、公開文書、PR本文に表示または保存しません。利用者画面に返す情報は、接続状態、再接続要否、利用状況、停止理由などのサニタイズ済みメタデータに限定します。",
           "YouTube API の呼び出しとAI翻訳処理は、利用者が明示的に翻訳セッションを開始した場合に限って行います。アカウント接続のみでバックグラウンド監視、ポーリング、翻訳、クォータ消費は開始しません。",
           "Free plan は Azure Translator を主な翻訳 provider として利用します。Paid plan は OpenAI mini model を主な翻訳 provider とし、復帰可能な provider error の場合のみ Azure Translator fallback を使います。DeepL、Gemini Flash/Lite、Cloudflare Workers AI は初期公開時点の production translation provider ではありません。",
-          "provider policy の説明は処理先とfallback方針の開示に限定し、provider target metadata、liveChatId、owner値、OAuth値、Authorization header、Stripe secret、service-role値は表示しません。",
-          "コメント本文の恒久的なログ保存は初期公開版では標準で無効です。不具合調査に必要な診断情報を扱う場合も、短期間かつサニタイズ済みの範囲に限定します。"
+          "provider policy の説明は処理先とfallback方針の開示に限定し、provider target metadata、liveChatId、owner値、OAuth値、Authorization header、Stripe secret、service-role値は表示しません。利用者画面へ返す情報は、接続状態、再接続要否、利用状況、停止理由などのサニタイズ済みメタデータに限定します。",
+          "当サービスDBでは、画面表示とセッション復元に必要なsanitized feed snapshot（表示用コメント本文、翻訳結果、safe author display name）をセッション終了後最大24時間保存します。これはコメント本文を保存しないという意味ではありません。Provider request detail、ログ、集計、冪等台帳にはコメント本文を複製せず、文字数、Provider、モデル、token数、処理時間、成功・失敗分類などの最小限の集計だけを保持します。"
         ]
       },
       {
@@ -167,7 +178,7 @@ export const legalDocuments = {
         paragraphs: [
           "利用者が本サービス上で使用、アップロード、編集した画像、素材、予定文、下書きその他のツール内データを、当方がAIモデルの学習目的で使用しないものとします。",
           "コメント翻訳など、利用者が明示的にAI機能を利用した場合、機能提供に必要な範囲で入力内容や対象データが外部サービスへ送信される場合があります。その場合も、送信は対象機能の実行中に必要な範囲へ限定し、標準ではAIモデル学習目的に利用しません。",
-          "OpenAI API/business data は標準ではモデル学習に使用されない方針に基づいて扱います。Azure Translator も翻訳 customer data を永続保存しない方針に基づいて利用します。provider の規約、地域、価格、学習・保持条件は公開前またはlive/provider実行前に再確認します。"
+          "OpenAI API/business data は標準ではモデル学習に使用されない方針に基づいて扱いますが、標準のabuse monitoringにより最大30日保持される可能性があります。Azure TranslatorはMicrosoftのNo-Trace方針を前提に扱います。Providerの規約、地域、価格、学習・保持条件は公開前またはlive/provider実行前に再確認し、専門家確認が完了するまで確定事項として扱いません。"
         ]
       },
       {
@@ -176,7 +187,7 @@ export const legalDocuments = {
           "本サービスは、認証基盤として Supabase Auth、ホスティング、配信、セキュリティ保護として Cloudflare を利用します。",
           "Kuro Live Comment Translator の公開運用では、利用者が明示的に開始した翻訳セッションの提供に必要な範囲で、YouTube API、Azure Translator、OpenAI mini model を利用する場合があります。Paid plan の復帰可能な provider error では Azure Translator fallback を使うことがあります。",
           "DeepL、Gemini Flash/Lite、Cloudflare Workers AI は、初期公開時点では比較・検証対象に限定し、production provider として過剰に表示しません。",
-          "将来、有料プランを提供する場合、決済処理のために Stripe を利用する予定です。カード情報は当方のアプリケーションで直接保持せず、決済事業者が取り扱います。Stripe の live-mode action、Customer Portal redirect、webhook 登録、billing setting mutation は承認後にのみ実行します。",
+          "Paidプランの決済処理にはStripeを利用します。カード情報や完全な請求先住所は当方のアプリケーションで直接保持せず、決済事業者が取り扱います。",
           "将来、利用状況の把握や改善のために GA4、Cookie、類似技術、外部送信を利用する場合があります。その場合は、送信先、目的、送信される情報を本ポリシーまたは機能画面で明示します。"
         ]
       },
@@ -197,7 +208,9 @@ export const legalDocuments = {
         heading: "第9条（開示・訂正・削除）",
         paragraphs: [
           "利用者本人から、当方が保有する個人情報の開示、訂正、削除、利用停止等の請求があった場合、本人確認のうえ、法令に従い合理的な範囲で対応します。",
-          "Comment Translator のYouTube連携は、Kuro Stream Kit側のアカウント連携ページで切断できます。この切断はserver-only credential referenceを無効化しますが、Google側で許可したアクセス権は取り消しません。Google側のアクセス権は、Googleアカウントの「サードパーティとの接続」で Kuro Live Comment Translator を選び、アクセス権を削除してください。既に共有されたデータの開示、訂正、削除、利用停止に関する問い合わせは feedback@kuro-lab.com または本サービス内のフィードバック導線からご連絡ください。"
+          "Comment Translator のYouTube連携は、Kuro Stream Kit側のアカウント連携ページで切断できます。この切断はserver-only credential referenceを無効化しますが、Google側で許可したアクセス権は取り消しません。Google側のアクセス権は、Googleアカウントの「サードパーティとの接続」で Kuro Live Comment Translator を選び、アクセス権を削除してください。",
+          "Paid契約中のアカウント削除では、原則としてSubscriptionを期間終了時解約へ変更し、支払済み期間終了後にアプリ側のアカウントと関連データを削除します。Stripe側の法定・会計情報はStripeの保持方針に従います。disputeや返金の確認に必要な契約、同意version、利用集計、ログイン・Provider集計は、必要最小限の期間だけ保持します。",
+          "disputeは対象ownerとSubscriptionを一意に特定できた場合だけその範囲で処理し、利用者勝訴時はPaid即時停止、idempotentなcancel、canceled確認後のcapacity解放を行います。失敗時は停止・保持・manual reconciliationとし、運営勝訴時は現在Subscription/periodが有効で他の停止理由がない場合だけ復元します。問い合わせは feedback@kuro-lab.com または本サービス内のフィードバック導線からご連絡ください。"
         ]
       },
       {
@@ -211,7 +224,7 @@ export const legalDocuments = {
   tokushoho: {
     eyebrow: "Specified Commercial Transactions Act",
     title: "特定商取引法に基づく表記",
-    lead: "Kuro Stream Kit の将来の有料プラン提供に備えた表示です。",
+    lead: "Kuro Live Comment Translator Plus（Paid Core v1）の販売条件を表示します。",
     ...sharedDates,
     sections: [
       {
@@ -227,21 +240,25 @@ export const legalDocuments = {
       {
         heading: "販売条件",
         rows: [
-          { label: "販売価格", value: "各有料プランまたは購入画面に表示します。" },
+          { label: "販売価格", value: "Kuro Live Comment Translator Plusは月額US$6（税込・USD請求）です。自動更新で、カード会社による円換算額や海外利用手数料は変動する場合があります。" },
           { label: "商品代金以外の必要料金", value: "インターネット接続料金、通信料金、決済時に利用者側で発生する手数料等は利用者の負担となります。" },
-          { label: "支払方法", value: "提供開始後、クレジットカード決済その他購入画面に表示する方法に対応します。決済処理には Stripe を利用する予定です。" },
-          { label: "支払時期", value: "単発購入の場合は購入時、サブスクリプションの場合は申込時および各更新時に支払いが発生します。" },
-          { label: "提供時期", value: "決済完了後、対象機能またはプランをアカウント上で利用できる状態にします。システム処理や外部決済の状況により反映に時間を要する場合があります。" },
-          { label: "解約", value: "サブスクリプション提供開始後は、アカウント画面または決済管理画面から解約できます。解約後の利用可能期間は購入画面またはプラン条件に従います。" },
-          { label: "返金", value: "デジタルサービスの性質上、提供開始後の返金には原則として応じられません。ただし、重複決済、当方の責に帰す重大な不具合、法令上必要な場合は個別に確認します。" },
+          { label: "販売地域", value: "初期販売対象は日本（JP）および米国（US）です。現在の接続地域が対象外または確認不能の場合は購入できません。居住国をIP判定だけで断定しません。" },
+          { label: "支払方法", value: "クレジットカード、デビットカード、カードを基盤とする対応手段、Stripe Link等のカード系に限ります。振込には対応しません。決済処理にはStripeを利用します。" },
+          { label: "支払時期", value: "申込時および各契約更新時に支払いが発生します。自動更新の停止は次回更新日前にCustomer Portalまたは案内されたアカウント画面で行ってください。" },
+          { label: "提供時期", value: "決済と署名済みWebhookによるサーバー側の契約反映を確認した後、対象機能を利用できる状態にします。Checkout完了画面だけではPaidを有効にしません。" },
+          { label: "利用上限・送信", value: "契約更新周期あたり最大50万入力文字（500,000文字）ですが、保証文字数ではありません。個人・全体の安全上限や運用上限により先に停止する場合があります。コメント本文は翻訳処理のためOpenAIまたはAzureへ送信されます。" },
+          { label: "解約", value: "Customer Portalまたは案内されたアカウント画面から解約できます。解約は次回更新日から有効で、支払済み期間の終了までは利用できます。" },
+          { label: "返金・dispute", value: "返金は自動ではありません。二重課金、法令上必要な場合、重大障害等を個別に確認します。dispute利用者勝訴時は対象ownerのPaidを即時停止し、idempotentなcancelとcanceled確認後のcapacity解放を行います。失敗時は停止・保持・manual reconciliationとします。dispute運営勝訴時は現在Subscription/periodが有効で、他の停止理由がない場合だけPaidを復元し、それ以外は停止・保持・manual reconciliationとします。" },
+          { label: "アカウント削除", value: "Paid契約中の削除申請は原則として期間終了時解約へ変更し、支払済み期間終了後にアプリ側のアカウントと関連データを削除します。Stripe側の法定・会計情報はStripeの保持方針に従います。" },
+          { label: "データ・Provider", value: "当サービスDBではsanitized feed snapshotをセッション終了後最大24時間保存します。Provider request detail、ログ、集計、冪等台帳にはコメント本文を複製しません。OpenAIは最大30日保持される可能性があり、Azure TranslatorはMicrosoftのNo-Trace方針を前提とします。" },
           { label: "動作環境", value: "最新の主要ブラウザを搭載したPC、タブレット、スマートフォンを推奨します。利用するツールにより画面幅、画像処理性能、ブラウザ保存領域が必要になる場合があります。" }
         ]
       },
       {
         heading: "現在の提供状況",
         paragraphs: [
-          "現在、有料プランは準備中です。提供開始時に購入画面で価格、支払方法、更新周期、解約方法、返金条件、対象機能を明示します。",
-          "Comment Translator の有料プランは、Free より広い利用上限と Paid plan 向けの翻訳 provider routing から開始する予定です。Free は引き続き利用できます。"
+          "本表はPaid Core v1の価格、販売地域、支払方法、更新周期、解約、返金、データ送信、保持境界を示します。税務、特商法、プライバシーに関する最終的な専門家確認が完了するまでは、未確認事項を確定的な法的判断として扱いません。",
+          "Freeは引き続き利用できます。実際の公開・設定・提供可否、StripeやProviderのlive操作、デプロイ、activationは別の承認ゲートに従います。"
         ]
       }
     ]

@@ -634,7 +634,7 @@ export function createCommentTranslatorPaidUsageStore({
         p_utc_month: request.utcMonth,
         p_now: request.nowIso
       });
-      return readBoolean(result, "Paid UTC-month close failed.");
+      return readBooleanOutcome(result, "Paid UTC-month close failed.");
     },
     async openaiAttempt(request) {
       assertCommentTranslatorPaidAttemptId(request.attemptId);
@@ -1164,6 +1164,11 @@ function readInteger(result: SupabaseRpcResult, message: string): number {
 function readBoolean(result: SupabaseRpcResult, message: string): boolean {
   if (result.error || result.data !== true) throw new Error(message);
   return true;
+}
+
+function readBooleanOutcome(result: SupabaseRpcResult, message: string): boolean {
+  if (result.error || typeof result.data !== "boolean") throw new Error(message);
+  return result.data;
 }
 
 function readUuid(result: SupabaseRpcResult, message: string): string {

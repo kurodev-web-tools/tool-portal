@@ -26,6 +26,7 @@ import {
 import { createTrustedCommentTranslatorPaidUsageStore } from "@/lib/comment-translator-paid-usage-store";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 const outputBoundary = "sanitized aggregate and reference-only" as const;
 
 export async function GET(request: Request) {

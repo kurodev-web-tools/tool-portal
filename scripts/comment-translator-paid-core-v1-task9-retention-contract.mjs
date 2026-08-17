@@ -169,6 +169,7 @@ assert.match(sources.reconcilerStore, /ct_paid_mark_reconcile_failure_safe/, "re
 assert.match(sources.reconcilerStore, /p_work_kind/, "failure-safety RPC receives the sanitized work kind");
 assert.match(sources.reconcilerStore, /work_kind/, "reconciler claim preserves the durable work kind");
 assert.equal((sources.schedulerRoute.match(/import \{ timingSafeEqual \} from "node:crypto";/g) ?? []).length, 1, "maintenance route has exactly one timingSafeEqual import");
+assert.match(sources.schedulerRoute, /export const dynamic\s*=\s*["']force-dynamic["'];/, "maintenance route keeps runtime configuration dynamic");
 assert.match(sources.schedulerRoute, /x-comment-translator-paid-scheduler-authority/i, "maintenance route requires an explicit scheduler caller authority");
 assert.doesNotMatch(sources.schedulerRoute, /runUtcMonthRollover/, "UTC rollover is not invoked outside the leased reconciler seam");
 assert.match(sources.billingRuntime, /idempotencyKey:\s*createWebhookTerminalCancellationIdempotencyKey/, "Webhook terminal cancellation uses a stable idempotency key");

@@ -213,7 +213,12 @@ export function createDefaultCommentTranslatorBillingCheckoutSafetyAuthorityRead
       NEXT_PUBLIC_SUPABASE_URL: supabaseUrl,
       SUPABASE_SERVICE_ROLE_KEY: serviceRoleKey
     },
-    ...(dependencies.createSupabaseClient ? { createSupabaseClient: dependencies.createSupabaseClient } : {})
+    ...(dependencies.createSupabaseClient
+      ? {
+          createSupabaseClient: (url, serviceRoleKey) =>
+            dependencies.createSupabaseClient!(url, serviceRoleKey) as never
+        }
+      : {})
   });
   if (usageStoreResult.status !== "ready") return null;
   const supabase = dependencies.createSupabaseClient
@@ -2071,6 +2076,7 @@ async function convergeExistingPaidBillingLifecycle({
           lifecycle.holdId &&
           lifecycle.idempotencyKey &&
           lifecycle.checkoutExpiresAtTargetIso &&
+          lifecycle.stripeExpiresAtIso &&
           session.id === lifecycle.checkoutSessionId &&
           session.customerId === lifecycle.stripeCustomerId &&
           session.expiresAtIso === lifecycle.stripeExpiresAtIso
@@ -2902,7 +2908,7 @@ async function projectCurrentStripeGraph({
   if (
     eventType.startsWith("customer.subscription.") &&
     eventType !== "customer.subscription.deleted" &&
-    (graph.invoice.status !== "paid" || !graph.invoice.paid)
+    (!graph.invoice || graph.invoice.status !== "paid" || !graph.invoice.paid)
   ) {
     return { status: "retryable", reason: "object-retrieval-failed", errorClass: "object-retrieval-failed" };
   }
@@ -3430,7 +3436,7 @@ export function createCommentTranslatorStripeCurrentObjectReader(
           "?expand[]=subscription&expand[]=invoice.lines.data.price"
         );
         const subscription = await retrieveExpandedSubscription(fetchObject, session.subscription);
-        const invoice = await retrieveExpandedInvoice(fetchObject, session.invoice, subscription?.latest_invoice);
+        const invoice = await retrieveExpandedInvoice(fetchObject, session.invoice, readStripeReference(subscription?.latest_invoice));
         return {
           checkoutSession: mapCheckoutSession(session),
           subscription: subscription ? mapSubscription(subscription) : undefined,
@@ -3788,7 +3794,13 @@ function readStripeSignatureTimestamp(signature: string): number | null {
 }
 
 function readStripeSignatureValues(signature: string): string[] {
-  return [...signature.matchAll(/(?:^|,)v1=([a-f0-9]{64})(?:,|$)/gi)].map((match) => match[1].toLowerCase());
+  const values: string[] = [];
+  const pattern = /(?:^|,)v1=([a-f0-9]{64})(?:,|$)/gi;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(signature)) !== null) {
+    values.push(match[1].toLowerCase());
+  }
+  return values;
 }
 
 function safeEqualHex(left: string, right: string): boolean {

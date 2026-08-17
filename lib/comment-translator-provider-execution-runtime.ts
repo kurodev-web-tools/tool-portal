@@ -1150,14 +1150,16 @@ export async function executeCommentTranslatorPaidProviderBatch(
         return stopPaidProvider("authority-unreadable");
       }
       if (fallback.reservationUnavailable) {
+        const refusal = fallback.reservationRefusal;
+        if (refusal === null) return stopPaidProvider("authority-unreadable");
         const stopReason = result.uncertainInflight
-          ? mapPaidReservationRefusalToStopReason(fallback.reservationRefusal)
+          ? mapPaidReservationRefusalToStopReason(refusal)
           : await settleLogicalAttemptAfterReservationRefusal({
               request,
               attemptId,
               releasedProviderAttempt: latestOpenAiProviderAttempt,
               nowIso,
-              refusal: fallback.reservationRefusal
+              refusal
             });
         return stopPaidProvider(stopReason);
       }
@@ -1911,7 +1913,7 @@ async function executePaidOpenAiReservedAttempt({
           providerFailureClass: null,
           fallbackEligible: false,
           uncertainInflight: false,
-          providerReached: false
+          providerReached: true
         }
       };
     }
@@ -1936,7 +1938,7 @@ async function executePaidOpenAiReservedAttempt({
         fallbackEligible: receipt.fallbackEligible,
         uncertainInflight: false,
         providerReached: true,
-        httpStatus: undefined
+          httpStatus: null
       }
     };
   }
@@ -2172,10 +2174,10 @@ function mergeSuccessfulOpenAiAttemptIds(
 function readCurrentOpenAiSuccessfulAttemptIds(
   result: CommentTranslatorOpenAiExecutionResult
 ): string[] {
-  return [...new Set([
+  return Array.from(new Set([
     ...(result.successfulAttemptIds ?? []),
     ...result.items.map((item) => item.attemptId)
-  ])];
+  ]));
 }
 
 function countCurrentOpenAiSuccessfulInputCharacters(
@@ -2474,7 +2476,8 @@ async function executePaidAzureDirectFallback({
   let terminalFailureClass: CommentTranslatorPaidProviderFailureClass | null = null;
   let uncertainFailureClass: CommentTranslatorPaidProviderFailureClass = "network";
   let successfulAzureInputCharacters = 0;
-  for (const [commentIndex, comment] of comments.entries()) {
+  for (let commentIndex = 0; commentIndex < comments.length; commentIndex += 1) {
+    const comment = comments[commentIndex];
     const remainingProviderWindowMs = azureDeadlineMs
       - Date.now()
       - commentTranslatorPaidProviderExecutionContract.maxAdditionalWaitMs;

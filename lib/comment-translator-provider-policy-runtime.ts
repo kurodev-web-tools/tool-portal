@@ -310,7 +310,7 @@ class AzureCommentTranslationProvider implements CommentTranslationProvider {
     }
     const first = Array.isArray(body) ? body[0] : undefined;
     const translatedText = first?.translations?.[0]?.text?.trim();
-    if (!translatedText) {
+    if (!first || !translatedText) {
       return recoverableError({
         code: "response-invalid",
         message: "Azure Translator response did not contain translated text.",

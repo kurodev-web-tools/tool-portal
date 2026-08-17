@@ -718,7 +718,7 @@ export function createCommentTranslatorPaidEntitlementStore({
         directRows.map((row) => readOptionalString(row, "lifecycle_id")).filter((value): value is string => value !== null)
       );
       if (directLifecycleIds.size > 1) return { status: "conflict" };
-      const directLifecycleId = [...directLifecycleIds][0] ?? null;
+      const directLifecycleId = directLifecycleIds.values().next().value ?? null;
       const lifecycleRow = directLifecycleId
         ? await readMaybeTrustedRowById(supabase, "comment_translator_paid_billing_lifecycles", directLifecycleId)
         : await readMaybeTrustedRow(
@@ -1033,7 +1033,7 @@ function readNullableString(row: Record<string, unknown>, key: string): string |
 
 function readOptionalDisputeState(value: unknown): CommentTranslatorPaidDisputeState {
   if (value === undefined || value === null) return "none";
-  if (isDisputeState(value)) return value;
+  if (typeof value === "string" && isDisputeState(value)) return value;
   throw new Error("Trusted Paid entitlement dispute state is invalid.");
 }
 

@@ -42,7 +42,12 @@ export async function POST(request: NextRequest) {
     ...process.env,
     STRIPE_WEBHOOK_SECRET: process.env[stripeWebhookSecretEnvReference]
   };
-  const storeResult = createTrustedCommentTranslatorPaidEntitlementStore({ env });
+  const storeResult = createTrustedCommentTranslatorPaidEntitlementStore({
+    env: {
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY
+    }
+  });
   const result = await readCommentTranslatorStripeWebhookResult({
     payload,
     signature,

@@ -38,6 +38,7 @@ import {
   type CommentTranslatorDurableUsageRead,
   type CommentTranslatorDurableUsageSnapshot
 } from "./comment-translator-durable-usage-counter-store";
+import type { CommentTranslatorFreeBetaUsageDisplayInput } from "./comment-translator-free-beta-usage-display";
 import { type CommentTranslatorFreeBetaPreviewRateLimitSmokeOverride } from "./comment-translator-free-beta-preview-rate-limit-smoke-override";
 import type { YouTubeOAuthCredentialStatusCallerAuthorization } from "./comment-translator-youtube-credential-status-boundary";
 import { commentTranslatorPaidCostLedgerContract } from "./comment-translator-paid-cost-ledger";
@@ -128,11 +129,24 @@ export type CommentTranslatorPaidSessionAuthorityDependencies = {
   providerRuntime: CommentTranslatorPaidProviderRuntime | null;
 };
 
+type CommentTranslatorPublicEntitlementUsageSnapshot = CommentTranslatorDurableUsageSnapshot &
+  Pick<
+    CommentTranslatorFreeBetaUsageDisplayInput,
+    | "paidBillingPeriodNextResetAtIso"
+    | "paidProviderRoute"
+    | "paidProviderFallbackActive"
+    | "paidProviderRecoveryExpected"
+    | "paidSafetyStopReason"
+    | "paidSafetyStopNextResetAtIso"
+    | "paidPollBudgetStatus"
+    | "paidPollBudgetNextResetAtIso"
+  >;
+
 export type CommentTranslatorPublicEntitlementBaselineResult =
   | {
       status: "ready";
       plan: CommentTranslatorSessionPlan;
-      usage: CommentTranslatorDurableUsageSnapshot;
+      usage: CommentTranslatorPublicEntitlementUsageSnapshot;
       planEntitlement: CommentTranslatorSessionPlanEntitlement;
       monthlyProviderInputCharacterLimit: number;
       monthlyProviderInputCharacterEstimate: number;

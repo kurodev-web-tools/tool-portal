@@ -520,10 +520,24 @@ function isDurableFeedSnapshot(value: unknown): value is CommentTranslatorRealCo
     const keys = Object.keys(row).sort();
     const allowedKeys = [...commentTranslatorRealCommentsFeedDurableStoreContract.durableFeedSnapshotRowKeys].sort();
     return keys.length === allowedKeys.length && keys.every((key, index) => key === allowedKeys[index]);
-  }) && isCommentTranslatorPaidFeedSnapshotWithinHardLimit(value as { rows: readonly unknown[] });
+  }) && isCommentTranslatorPaidFeedSnapshotWithinHardLimit(value as unknown as { rows: readonly unknown[] });
 }
 
-function isFeedProtocolEnvelope(value: Record<string, unknown>) {
+function isFeedProtocolEnvelope(
+  value: Record<string, unknown>
+): value is Record<string, unknown> & Pick<
+  CommentTranslatorRealCommentsFeedState,
+  | "status"
+  | "source"
+  | "unavailableReason"
+  | "rawProviderPayload"
+  | "rawComments"
+  | "providerTargetMetadata"
+  | "serverOnlyCursor"
+  | "browserStorage"
+  | "handoffPayload"
+  | "publicLaunchAllowed"
+> {
   return (
     (value.status === "ready" || value.status === "inactive" || value.status === "unavailable")
     && value.source === "server-owned-live-session-state"
@@ -538,7 +552,14 @@ function isFeedProtocolEnvelope(value: Record<string, unknown>) {
   );
 }
 
-function isProjectableFeedRow(row: Record<string, unknown>): boolean {
+function isProjectableFeedRow(
+  row: Record<string, unknown>
+): row is Record<string, unknown> & {
+  originalText: string | null;
+  translatedText: string | null;
+  authorDisplayName: string | null;
+  publishedAtIso?: string | null;
+} {
   return (
     isNullableString(row.originalText)
     && isNullableString(row.translatedText)

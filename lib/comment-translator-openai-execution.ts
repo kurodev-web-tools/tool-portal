@@ -361,6 +361,7 @@ export function parseCommentTranslatorOpenAiBatchResponse(
   expectedItems: readonly CommentTranslatorOpenAiBatchItem[]
 ): CommentTranslatorOpenAiParsedResponse {
   const expectedAttemptIds = new Set(expectedItems.map((item) => item.attemptId));
+  const expectedAttemptIdList = Array.from(expectedAttemptIds);
   const usage = readOpenAiUsage(body);
   if (hasOpenAiPolicyRefusal(body)) {
     return {
@@ -378,7 +379,7 @@ export function parseCommentTranslatorOpenAiBatchResponse(
       status: "subset-retry",
       items: [],
       successfulAttemptIds: [],
-      retryAttemptIds: [...expectedAttemptIds],
+      retryAttemptIds: expectedAttemptIdList,
       inputUsageTokens: usage.inputTokens,
       outputUsageTokens: usage.outputTokens
     };
@@ -392,7 +393,7 @@ export function parseCommentTranslatorOpenAiBatchResponse(
       status: "subset-retry",
       items: [],
       successfulAttemptIds: [],
-      retryAttemptIds: [...expectedAttemptIds],
+      retryAttemptIds: expectedAttemptIdList,
       inputUsageTokens: usage.inputTokens,
       outputUsageTokens: usage.outputTokens
     };
@@ -403,22 +404,23 @@ export function parseCommentTranslatorOpenAiBatchResponse(
       status: "subset-retry",
       items: [],
       successfulAttemptIds: [],
-      retryAttemptIds: [...expectedAttemptIds],
+      retryAttemptIds: expectedAttemptIdList,
       inputUsageTokens: usage.inputTokens,
       outputUsageTokens: usage.outputTokens
     };
   }
 
+  const parsedItems: unknown[] = Array.isArray(parsed.items) ? parsed.items : [];
   let hasInvalidResponseItem = Object.keys(parsed).some((key) => key !== "items");
   const responseAttemptIdCounts = new Map<string, number>();
-  for (const rawItem of parsed.items) {
+  for (const rawItem of parsedItems) {
     if (!isRecord(rawItem) || typeof rawItem.attempt_id !== "string") continue;
     responseAttemptIdCounts.set(rawItem.attempt_id, (responseAttemptIdCounts.get(rawItem.attempt_id) ?? 0) + 1);
   }
 
   const successfulAttemptIds: string[] = [];
   const retryAttemptIds = new Set(expectedAttemptIds);
-  for (const rawItem of parsed.items) {
+  for (const rawItem of parsedItems) {
     if (!isRecord(rawItem)) {
       hasInvalidResponseItem = true;
       continue;
@@ -448,7 +450,7 @@ export function parseCommentTranslatorOpenAiBatchResponse(
   const items = expectedItems
     .filter((item) => successfulAttemptIds.includes(item.attemptId))
     .map((item) => {
-      const rawItem = parsed.items.find(
+      const rawItem = parsedItems.find(
         (candidate): candidate is Record<string, unknown> =>
           isRecord(candidate) && candidate.attempt_id === item.attemptId && candidate.status === "translated"
       );
@@ -463,7 +465,7 @@ export function parseCommentTranslatorOpenAiBatchResponse(
       status: "subset-retry",
       items,
       successfulAttemptIds,
-      retryAttemptIds: [...retryAttemptIds],
+      retryAttemptIds: Array.from(retryAttemptIds),
       inputUsageTokens: usage.inputTokens,
       outputUsageTokens: usage.outputTokens
     };
@@ -684,6 +686,7 @@ export async function executeCommentTranslatorOpenAiBatch({
       httpStatus: null
     });
   }
+  const requestEndpoint = normalizeEndpoint(endpoint ?? defaultEndpoint);
 
   const allItems = [...items];
   let pendingItems = allItems;
@@ -750,7 +753,7 @@ export async function executeCommentTranslatorOpenAiBatch({
       }
       try {
         providerCallCount += 1;
-        response = await fetchImpl(normalizeEndpoint(endpoint), {
+        response = await fetchImpl(requestEndpoint, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${apiKey.trim()}`,
@@ -914,6 +917,22 @@ export async function executeCommentTranslatorOpenAiBatch({
         uncertainInflight: false,
         providerReached: true
       };
+    }
+    if (parsed.status !== "subset-retry") {
+      return createFailedResult({
+        items: completedItems,
+        inputCodePoints: countItemsCodePoints(allItems),
+        inputTokens,
+        outputTokens,
+        providerCallCount,
+        subsetRetryCount,
+        retryAttemptIds: pendingItems.map((item) => item.attemptId),
+        providerFailureClass: "invalid-response",
+        fallbackEligible: false,
+        uncertainInflight: false,
+        providerReached: true,
+        httpStatus: lastHttpStatus
+      });
     }
     completedItems = [...completedItems, ...parsed.items];
     if (subsetRetryCount >= Math.max(0, maxSubsetRetries)) {

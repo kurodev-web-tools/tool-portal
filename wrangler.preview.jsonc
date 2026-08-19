@@ -2,12 +2,25 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "v-streamer-tools-preview",
   "main": "workers/comment-translator-paid-open-next-wrapper.mjs",
+  "build": {
+    "command": "node scripts/comment-translator-open-next-middleware-manifest-preview-build.mjs"
+  },
   "compatibility_date": "2026-05-27",
   "compatibility_flags": ["nodejs_compat"],
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
+  "find_additional_modules": true,
+  "base_dir": ".open-next/server-functions/default",
+  "preserve_file_names": true,
+  "rules": [
+    {
+      "type": "Data",
+      "globs": [".next/server/*.json"],
+      "fallthrough": true
+    }
+  ],
   "observability": {
     "enabled": true
   }

@@ -34,6 +34,20 @@ import type { CommentTranslatorPaidUsageStore } from "./comment-translator-paid-
 
 export type CommentTranslatorPaidControlPlaneWorkKind = CommentTranslatorPaidReconcilerWorkKind;
 
+export const commentTranslatorPaidRecoveryDiagnosticClasses = [
+  "checkout-binding-failed",
+  "checkout-expiry-failed",
+  "checkout-expiry-confirmation-failed"
+] as const;
+
+type CommentTranslatorPaidRecoveryDiagnostic = typeof commentTranslatorPaidRecoveryDiagnosticClasses[number];
+type CommentTranslatorPaidDiagnostic =
+  | CommentTranslatorStripeFailureDiagnostic
+  | CommentTranslatorPaidRecoveryDiagnostic;
+const commentTranslatorPaidRecoveryDiagnosticClassSet = new Set<string>(
+  commentTranslatorPaidRecoveryDiagnosticClasses
+);
+
 export type CommentTranslatorPaidControlPlaneWorkItem = {
   lifecycleId: string;
   workKind: CommentTranslatorPaidControlPlaneWorkKind;
@@ -900,12 +914,12 @@ export function createCommentTranslatorPaidUnboundCheckoutSessionRecovery({
           nowIso
         });
       } catch {
-        throw createControlPlaneError("database-transaction-failed");
+        throw createControlPlaneError("database-transaction-failed", "checkout-binding-failed");
       }
       const expireCheckoutSession = stripeAdapter.expireCheckoutSession;
       const retrieveCheckoutSession = stripeAdapter.retrieveCheckoutSession;
       if (!expireCheckoutSession || !retrieveCheckoutSession) {
-        throw createControlPlaneError("external-action-failed");
+        throw createControlPlaneError("external-action-failed", "checkout-expiry-failed");
       }
       try {
         await expireCheckoutSession({
@@ -936,7 +950,7 @@ export function createCommentTranslatorPaidUnboundCheckoutSessionRecovery({
         throw createControlPlaneError("binding-not-ready", confirmedSessionFailureDiagnostic);
       }
       if (confirmedSession.status !== "expired") {
-        throw createControlPlaneError("external-action-failed");
+        throw createControlPlaneError("external-action-failed", "checkout-expiry-confirmation-failed");
       }
     }
     return true;
@@ -1022,7 +1036,7 @@ export async function runCommentTranslatorPaidControlPlaneReconciler({
     CommentTranslatorPaidReconcilerErrorClass,
     number
   >;
-  const diagnosticClassCounts: Partial<Record<CommentTranslatorStripeFailureDiagnostic, number>> = {};
+  const diagnosticClassCounts: Partial<Record<CommentTranslatorPaidDiagnostic, number>> = {};
   const processedOpaqueLeases = new Set<string>();
   let completedCount = 0;
   let retryCount = 0;
@@ -1163,14 +1177,14 @@ export async function runCommentTranslatorPaidControlPlaneReconciler({
 
 function createControlPlaneError(
   errorClass: CommentTranslatorPaidReconcilerErrorClass,
-  diagnosticClass: CommentTranslatorStripeFailureDiagnostic | null = null
+  diagnosticClass: CommentTranslatorPaidDiagnostic | null = null
 ): Error & {
   reconcileErrorClass: CommentTranslatorPaidReconcilerErrorClass;
-  reconcileDiagnosticClass?: CommentTranslatorStripeFailureDiagnostic;
+  reconcileDiagnosticClass?: CommentTranslatorPaidDiagnostic;
 } {
   const error = new Error("Paid control-plane reconciliation failed.") as Error & {
     reconcileErrorClass: CommentTranslatorPaidReconcilerErrorClass;
-    reconcileDiagnosticClass?: CommentTranslatorStripeFailureDiagnostic;
+    reconcileDiagnosticClass?: CommentTranslatorPaidDiagnostic;
   };
   error.reconcileErrorClass = errorClass;
   if (diagnosticClass) error.reconcileDiagnosticClass = diagnosticClass;
@@ -1179,7 +1193,7 @@ function createControlPlaneError(
 
 function isControlPlaneError(value: unknown): value is Error & {
   reconcileErrorClass: CommentTranslatorPaidReconcilerErrorClass;
-  reconcileDiagnosticClass?: CommentTranslatorStripeFailureDiagnostic;
+  reconcileDiagnosticClass?: CommentTranslatorPaidDiagnostic;
 } {
   return Boolean(
     value
@@ -1191,11 +1205,16 @@ function isControlPlaneError(value: unknown): value is Error & {
 
 function readReconcileDiagnosticClass(
   error: unknown
-): CommentTranslatorStripeFailureDiagnostic | null {
+): CommentTranslatorPaidDiagnostic | null {
   if (!error || typeof error !== "object" || !("reconcileDiagnosticClass" in error)) return null;
-  return readCommentTranslatorStripeFailureDiagnostic({
-    stripeFailureDiagnostic: (error as { reconcileDiagnosticClass?: unknown }).reconcileDiagnosticClass
+  const candidate = (error as { reconcileDiagnosticClass?: unknown }).reconcileDiagnosticClass;
+  const stripeDiagnosticClass = readCommentTranslatorStripeFailureDiagnostic({
+    stripeFailureDiagnostic: candidate
   });
+  if (stripeDiagnosticClass) return stripeDiagnosticClass;
+  return typeof candidate === "string" && commentTranslatorPaidRecoveryDiagnosticClassSet.has(candidate)
+    ? candidate as CommentTranslatorPaidRecoveryDiagnostic
+    : null;
 }
 
 function isClaimWorkKindLifecycleCompatible(

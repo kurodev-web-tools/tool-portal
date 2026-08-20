@@ -2988,7 +2988,13 @@ const maintenanceRun = await retention.runCommentTranslatorPaidTask9ScheduledMai
       claimedCount: 2,
       retryCount: 1,
       staleCount: 0,
-      errorClassCounts: { "binding-not-ready": 1, "private-secret-reference": 9 }
+      errorClassCounts: { "binding-not-ready": 1, "private-secret-reference": 9 },
+      diagnosticClassCounts: {
+        "checkout-binding-failed": 1,
+        "checkout-expiry-failed": 2,
+        "checkout-expiry-confirmation-failed": 3,
+        "private-diagnostic-reference": 9
+      }
     };
   },
   nowIso: "2026-08-14T12:00:00.000Z"
@@ -2999,11 +3005,18 @@ assert.equal(maintenanceRun.claimCount, 2);
 assert.equal(maintenanceRun.retryCount, 1);
 assert.equal(maintenanceRun.staleCount, 0);
 assert.deepEqual(maintenanceRun.errorClassCounts, { "binding-not-ready": 1 });
+assert.deepEqual(maintenanceRun.diagnosticClassCounts, {
+  "checkout-binding-failed": 1,
+  "checkout-expiry-failed": 2,
+  "checkout-expiry-confirmation-failed": 3
+}, "scheduled maintenance preserves only the allowlisted recovery diagnostic aggregates");
 assert.equal(maintenanceCleanupCalls, 1);
 assert.equal(maintenanceReconcileCalls, 1);
 assert.equal(maintenanceRun.deploymentStatus, "repository-invocation-seam-only-not-deployed");
 assert.equal(maintenanceSchedulerRecords[0].status, "retry-scheduled", "retry reconcile status is not recorded as success");
 assert.equal(maintenanceSchedulerRecords[0].lastSuccessAtIso, null, "retry run cannot advance last success");
+assert.equal("diagnosticClassCounts" in maintenanceSchedulerRecords[0], false, "diagnostic aggregates are not persisted in the scheduler DB record");
+assert.doesNotMatch(JSON.stringify(maintenanceRun), /private-diagnostic-reference|private-secret-reference/i, "unknown private classes do not cross the sanitized response boundary");
 
 const staleSchedulerRecords = [];
 const staleMaintenanceRun = await retention.runCommentTranslatorPaidTask9ScheduledMaintenance({

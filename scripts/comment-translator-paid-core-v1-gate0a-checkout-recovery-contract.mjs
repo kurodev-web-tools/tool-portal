@@ -195,6 +195,100 @@ await assert.rejects(
   "post-bind retrieval failure keeps its allowlisted diagnostic class"
 );
 
+const bindingFailureRecovery = controlPlane.createCommentTranslatorPaidUnboundCheckoutSessionRecovery({
+  entitlementStore: {
+    async bindCheckoutSession() {
+      throw new Error("fixture binding failure");
+    },
+    async markCheckoutExpireRequired() {
+      throw new Error("fixture expire-required persistence failure");
+    }
+  },
+  stripeAdapter: successfulStripeAdapter,
+  checkoutSafetyAuthorityReader: authorityReader,
+  env
+});
+await assert.rejects(
+  () => bindingFailureRecovery({ lifecycle, nowIso }),
+  (error) => (
+    error?.reconcileErrorClass === "database-transaction-failed"
+    && error?.reconcileDiagnosticClass === "checkout-binding-failed"
+  ),
+  "a binding failure keeps the database error class and exposes its recovery diagnostic"
+);
+
+const expiryAdapterFailureRecovery = controlPlane.createCommentTranslatorPaidUnboundCheckoutSessionRecovery({
+  entitlementStore: {
+    async bindCheckoutSession() {
+      throw new Error("fixture binding failure");
+    },
+    async markCheckoutExpireRequired() {
+      return true;
+    }
+  },
+  stripeAdapter: successfulStripeAdapter,
+  checkoutSafetyAuthorityReader: authorityReader,
+  env
+});
+await assert.rejects(
+  () => expiryAdapterFailureRecovery({ lifecycle, nowIso }),
+  (error) => (
+    error?.reconcileErrorClass === "external-action-failed"
+    && error?.reconcileDiagnosticClass === "checkout-expiry-failed"
+  ),
+  "missing expiry adapters keep the external-action error class and expose its recovery diagnostic"
+);
+
+const expiryConfirmationFailureRecovery = controlPlane.createCommentTranslatorPaidUnboundCheckoutSessionRecovery({
+  entitlementStore: {
+    async bindCheckoutSession() {
+      throw new Error("fixture binding failure");
+    },
+    async markCheckoutExpireRequired() {
+      return true;
+    }
+  },
+  stripeAdapter: {
+    async createCheckoutSession() {
+      return {
+        id: "cs_fixture_confirmation_failure",
+        customerId: "cus_fixture",
+        url: null,
+        expiresAtIso: lifecycle.checkoutExpiresAtTargetIso,
+        status: "open"
+      };
+    },
+    async expireCheckoutSession() {
+      return {
+        id: "cs_fixture_confirmation_failure",
+        customerId: "cus_fixture",
+        url: null,
+        expiresAtIso: lifecycle.checkoutExpiresAtTargetIso,
+        status: "expired"
+      };
+    },
+    async retrieveCheckoutSession() {
+      return {
+        id: "cs_fixture_confirmation_failure",
+        customerId: "cus_fixture",
+        url: null,
+        expiresAtIso: lifecycle.checkoutExpiresAtTargetIso,
+        status: "open"
+      };
+    }
+  },
+  checkoutSafetyAuthorityReader: authorityReader,
+  env
+});
+await assert.rejects(
+  () => expiryConfirmationFailureRecovery({ lifecycle, nowIso }),
+  (error) => (
+    error?.reconcileErrorClass === "external-action-failed"
+    && error?.reconcileDiagnosticClass === "checkout-expiry-confirmation-failed"
+  ),
+  "an unexpired confirmation keeps the external-action error class and exposes its recovery diagnostic"
+);
+
 const invalidCheckoutResponseRecovery = controlPlane.createCommentTranslatorPaidUnboundCheckoutSessionRecovery({
   entitlementStore,
   stripeAdapter: {
@@ -268,5 +362,78 @@ assert.deepEqual(
   { "stripe-4xx": 1 },
   "the diagnostic class is returned as a separate aggregate"
 );
+
+for (const {
+  diagnosticClass,
+  errorClass,
+  recovery
+} of [
+  {
+    diagnosticClass: "checkout-binding-failed",
+    errorClass: "database-transaction-failed",
+    recovery: bindingFailureRecovery
+  },
+  {
+    diagnosticClass: "checkout-expiry-failed",
+    errorClass: "external-action-failed",
+    recovery: expiryAdapterFailureRecovery
+  },
+  {
+    diagnosticClass: "checkout-expiry-confirmation-failed",
+    errorClass: "external-action-failed",
+    recovery: expiryConfirmationFailureRecovery
+  }
+]) {
+  const claim = {
+    lifecycleId: `lifecycle-${diagnosticClass}`,
+    reconcileLeaseToken: `lease-${diagnosticClass}`,
+    reconcileLeaseUntilIso: "2026-08-19T06:02:00.000Z",
+    workKind: "unbound-checkout-session"
+  };
+  const failureSafeRequests = [];
+  const retryRequests = [];
+  const result = await controlPlane.runCommentTranslatorPaidControlPlaneReconciler({
+    store: {
+      async claimDue() { return [claim]; },
+      async assertLeaseActive() { return true; },
+      async finalize() { return true; },
+      async retry(request) { retryRequests.push(request); return 1; },
+      async markFailureSafe(request) { failureSafeRequests.push(request); return true; }
+    },
+    resolveWorkItem: async () => ({
+      lifecycleId: claim.lifecycleId,
+      workKind: claim.workKind
+    }),
+    actions: {
+      checkoutExpiry: async () => {},
+      unboundCheckoutSession: async () => recovery({ lifecycle, nowIso }),
+      paymentFailureSevenDay: async () => {},
+      cancelPending: async () => {},
+      refundReconciliation: async () => {},
+      disputeReconciliation: async () => {},
+      paidUnentitledReconciliation: async () => {},
+      billingPeriodRollover: async () => {},
+      utcMonthCostRollover: async () => {}
+    },
+    nowIso
+  });
+
+  assert.equal(result.status, "retry-scheduled", `${diagnosticClass} remains retry-scheduled`);
+  assert.deepEqual(result.errorClassCounts, { [errorClass]: 1 }, `${diagnosticClass} keeps its base error class`);
+  assert.deepEqual(result.diagnosticClassCounts, { [diagnosticClass]: 1 }, `${diagnosticClass} reaches the reconciler aggregate`);
+  assert.deepEqual(failureSafeRequests, [{
+    lifecycleId: claim.lifecycleId,
+    reconcileLeaseToken: claim.reconcileLeaseToken,
+    workKind: claim.workKind,
+    errorClass,
+    nowIso
+  }], `${diagnosticClass} preserves the failure-safe request`);
+  assert.deepEqual(retryRequests, [{
+    lifecycleId: claim.lifecycleId,
+    reconcileLeaseToken: claim.reconcileLeaseToken,
+    errorClass,
+    nowIso
+  }], `${diagnosticClass} preserves the retry request`);
+}
 
 console.log("comment translator paid core v1 Gate 0-A checkout recovery contract checks passed");

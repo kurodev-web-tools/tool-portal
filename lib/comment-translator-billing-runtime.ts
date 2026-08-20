@@ -355,7 +355,6 @@ export type CommentTranslatorStripeCheckoutSessionParams = {
   paymentMethodTypes: readonly ["card"];
   promotionCodeReferenceId?: string | null;
   couponReferenceId?: string | null;
-  customerEmail?: string | null;
 };
 
 export type CommentTranslatorStripePortalSessionParams = {
@@ -371,9 +370,48 @@ export type CommentTranslatorStripeCheckoutSessionResult = {
   url: string | null;
   expiresAtIso: string | null;
   status: "open" | "complete" | "expired" | "unknown";
+  failureDiagnostic?: CommentTranslatorStripeFailureDiagnostic;
 };
 
 export type CommentTranslatorStripeCheckoutSessionReadResult = CommentTranslatorStripeCheckoutSessionResult;
+
+export const commentTranslatorStripeFailureDiagnosticClasses = [
+  "stripe-4xx",
+  "stripe-5xx",
+  "stripe-network-failed",
+  "stripe-response-invalid",
+  "stripe-config-invalid"
+] as const;
+
+export type CommentTranslatorStripeFailureDiagnostic =
+  typeof commentTranslatorStripeFailureDiagnosticClasses[number];
+
+export function readCommentTranslatorStripeFailureDiagnostic(
+  value: unknown
+): CommentTranslatorStripeFailureDiagnostic | null {
+  if (!value || typeof value !== "object" || !("stripeFailureDiagnostic" in value)) return null;
+  const candidate = (value as { stripeFailureDiagnostic?: unknown }).stripeFailureDiagnostic;
+  return typeof candidate === "string"
+    && (commentTranslatorStripeFailureDiagnosticClasses as readonly string[]).includes(candidate)
+    ? candidate as CommentTranslatorStripeFailureDiagnostic
+    : null;
+}
+
+function createCommentTranslatorStripeFailure(
+  message: string,
+  diagnostic: CommentTranslatorStripeFailureDiagnostic
+): Error & { stripeFailureDiagnostic: CommentTranslatorStripeFailureDiagnostic } {
+  const error = new Error(message) as Error & {
+    stripeFailureDiagnostic: CommentTranslatorStripeFailureDiagnostic;
+  };
+  Object.defineProperty(error, "stripeFailureDiagnostic", {
+    value: diagnostic,
+    enumerable: false,
+    configurable: false,
+    writable: false
+  });
+  return error;
+}
 
 export type CommentTranslatorStripeAdapter = {
   createCustomer?: (params: {
@@ -1487,8 +1525,7 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
     billingAddressCollection: "required",
     paymentMethodTypes: ["card"],
     promotionCodeReferenceId: checkoutConfig.config.promotionCodeReferenceId,
-    couponReferenceId: checkoutConfig.config.couponReferenceId,
-    customerEmail: customerEmail ?? null
+    couponReferenceId: checkoutConfig.config.couponReferenceId
   };
 
   let checkoutSession: CommentTranslatorStripeCheckoutSessionResult & { observed?: CommentTranslatorStripeCheckoutSessionParams };
@@ -2179,8 +2216,7 @@ async function convergeExistingPaidBillingLifecycle({
         billingAddressCollection: "required",
         paymentMethodTypes: ["card"],
         promotionCodeReferenceId: checkoutConfig.promotionCodeReferenceId,
-        couponReferenceId: checkoutConfig.couponReferenceId,
-        customerEmail
+        couponReferenceId: checkoutConfig.couponReferenceId
       };
       let session: CommentTranslatorStripeCheckoutSessionResult & { observed?: CommentTranslatorStripeCheckoutSessionParams };
       try {
@@ -3215,43 +3251,101 @@ export function createCommentTranslatorStripeAdapter(
   env: CommentTranslatorStripeEnv = process.env
 ): CommentTranslatorStripeAdapter {
   const secretKey = env.STRIPE_SECRET_KEY?.trim();
+  const classifyHttpFailure = (status: number): CommentTranslatorStripeFailureDiagnostic => {
+    if (status >= 500) return "stripe-5xx";
+    if (status >= 400) return "stripe-4xx";
+    return "stripe-response-invalid";
+  };
   const requestStripe = async <T>(
     path: string,
     params: URLSearchParams,
     options: { idempotencyKey?: string } = {}
   ): Promise<T> => {
-    if (!secretKey) throw new Error("Stripe secret key is unavailable.");
-    const response = await fetch(`https://api.stripe.com${path}`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${secretKey}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-        ...(options.idempotencyKey ? { "Idempotency-Key": options.idempotencyKey } : {})
-      },
-      body: params.toString(),
-      cache: "no-store"
-    });
-    if (!response.ok) throw new Error("Stripe billing request failed.");
-    const body: unknown = await response.json();
-    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("Stripe billing response is invalid.");
+    if (!secretKey) throw createCommentTranslatorStripeFailure(
+      "Stripe secret key is unavailable.",
+      "stripe-config-invalid"
+    );
+    let response: Response;
+    try {
+      response = await fetch(`https://api.stripe.com${path}`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${secretKey}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+          ...(options.idempotencyKey ? { "Idempotency-Key": options.idempotencyKey } : {})
+        },
+        body: params.toString(),
+        cache: "no-store"
+      });
+    } catch {
+      throw createCommentTranslatorStripeFailure(
+        "Stripe billing request failed.",
+        "stripe-network-failed"
+      );
+    }
+    if (!response.ok) throw createCommentTranslatorStripeFailure(
+      "Stripe billing request failed.",
+      classifyHttpFailure(response.status)
+    );
+    let body: unknown;
+    try {
+      body = await response.json();
+    } catch {
+      throw createCommentTranslatorStripeFailure(
+        "Stripe billing response is invalid.",
+        "stripe-response-invalid"
+      );
+    }
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw createCommentTranslatorStripeFailure(
+      "Stripe billing response is invalid.",
+      "stripe-response-invalid"
+    );
     return body as T;
   };
 
   const readStripeObject = async <T>(path: string): Promise<T> => {
-    if (!secretKey) throw new Error("Stripe secret key is unavailable.");
-    const response = await fetch(`https://api.stripe.com${path}`, {
-      headers: { Authorization: `Bearer ${secretKey}` },
-      cache: "no-store"
-    });
-    if (!response.ok) throw new Error("Stripe billing read failed.");
-    const body: unknown = await response.json();
-    if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("Stripe billing response is invalid.");
+    if (!secretKey) throw createCommentTranslatorStripeFailure(
+      "Stripe secret key is unavailable.",
+      "stripe-config-invalid"
+    );
+    let response: Response;
+    try {
+      response = await fetch(`https://api.stripe.com${path}`, {
+        headers: { Authorization: `Bearer ${secretKey}` },
+        cache: "no-store"
+      });
+    } catch {
+      throw createCommentTranslatorStripeFailure(
+        "Stripe billing read failed.",
+        "stripe-network-failed"
+      );
+    }
+    if (!response.ok) throw createCommentTranslatorStripeFailure(
+      "Stripe billing read failed.",
+      classifyHttpFailure(response.status)
+    );
+    let body: unknown;
+    try {
+      body = await response.json();
+    } catch {
+      throw createCommentTranslatorStripeFailure(
+        "Stripe billing response is invalid.",
+        "stripe-response-invalid"
+      );
+    }
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw createCommentTranslatorStripeFailure(
+      "Stripe billing response is invalid.",
+      "stripe-response-invalid"
+    );
     return body as T;
   };
 
   const validateCheckoutPrice = async (params: CommentTranslatorStripeCheckoutSessionParams) => {
     if (params.currency !== "usd" || params.recurringInterval !== "month") {
-      throw new Error("Paid Checkout Price policy is invalid.");
+      throw createCommentTranslatorStripeFailure(
+        "Paid Checkout Price policy is invalid.",
+        "stripe-config-invalid"
+      );
     }
     const price = await readStripeObject<Record<string, unknown>>(`/v1/prices/${encodeURIComponent(params.priceReferenceId)}`);
     const product = readStripeReference(price.product);
@@ -3266,7 +3360,10 @@ export function createCommentTranslatorStripeAdapter(
       recurring?.interval !== "month" ||
       product !== params.productReferenceId
     ) {
-      throw new Error("Paid Checkout Price binding conflict.");
+      throw createCommentTranslatorStripeFailure(
+        "Paid Checkout Price binding conflict.",
+        "stripe-config-invalid"
+      );
     }
 
     const discountReference = params.promotionCodeReferenceId ?? params.couponReferenceId;
@@ -3276,7 +3373,10 @@ export function createCommentTranslatorStripeAdapter(
       : `/v1/coupons/${encodeURIComponent(discountReference)}`;
     const discount = await readStripeObject<Record<string, unknown>>(discountPath);
     if (params.promotionCodeReferenceId && discount.active !== true) {
-      throw new Error("Paid Checkout Promotion Code is inactive.");
+      throw createCommentTranslatorStripeFailure(
+        "Paid Checkout Promotion Code is inactive.",
+        "stripe-config-invalid"
+      );
     }
     const coupon = params.promotionCodeReferenceId && discount.coupon && typeof discount.coupon === "object" && !Array.isArray(discount.coupon)
       ? (discount.coupon as Record<string, unknown>)
@@ -3288,7 +3388,10 @@ export function createCommentTranslatorStripeAdapter(
       ? appliesTo.products.filter((value): value is string => typeof value === "string")
       : [];
     if (products.length === 0 || !products.includes(params.productReferenceId)) {
-      throw new Error("Paid Checkout discount is not restricted to the configured Price product.");
+      throw createCommentTranslatorStripeFailure(
+        "Paid Checkout discount is not restricted to the configured Price product.",
+        "stripe-config-invalid"
+      );
     }
   };
 
@@ -3297,9 +3400,16 @@ export function createCommentTranslatorStripeAdapter(
     const customerId = readStripeReference(body.customer);
     const url = readOptionalStripeReference(body.url);
     const expiresAt = typeof body.expires_at === "number" && Number.isFinite(body.expires_at) ? body.expires_at : null;
-    const expiresAtIso = expiresAt === null ? null : new Date(expiresAt * 1000).toISOString();
+    const expiresAtMs = expiresAt === null ? Number.NaN : expiresAt * 1000;
+    const expiresAtIso = Number.isFinite(expiresAtMs) && Number.isFinite(new Date(expiresAtMs).getTime())
+      ? new Date(expiresAtMs).toISOString()
+      : null;
     const status = body.status === "open" || body.status === "complete" || body.status === "expired" ? body.status : "unknown";
-    return { id, customerId, url, expiresAtIso, status };
+    const result: CommentTranslatorStripeCheckoutSessionResult = { id, customerId, url, expiresAtIso, status };
+    if (!id || !customerId || !expiresAtIso || status === "unknown") {
+      result.failureDiagnostic = "stripe-response-invalid";
+    }
+    return result;
   };
 
   return {
@@ -3313,14 +3423,23 @@ export function createCommentTranslatorStripeAdapter(
     },
     async createCheckoutSession(params) {
       if (params.paymentMethodTypes.length !== 1 || params.paymentMethodTypes[0] !== "card") {
-        throw new Error("Paid Checkout payment method policy is invalid.");
+        throw createCommentTranslatorStripeFailure(
+          "Paid Checkout payment method policy is invalid.",
+          "stripe-config-invalid"
+        );
       }
       if (params.mode !== "subscription" || params.automaticTax !== true || params.billingAddressCollection !== "required") {
-        throw new Error("Paid Checkout policy is invalid.");
+        throw createCommentTranslatorStripeFailure(
+          "Paid Checkout policy is invalid.",
+          "stripe-config-invalid"
+        );
       }
       await validateCheckoutPrice(params);
       const expiresAtSeconds = Math.floor(new Date(params.expiresAtIso).getTime() / 1000);
-      if (!Number.isFinite(expiresAtSeconds)) throw new Error("Paid Checkout expiry is invalid.");
+      if (!Number.isFinite(expiresAtSeconds)) throw createCommentTranslatorStripeFailure(
+        "Paid Checkout expiry is invalid.",
+        "stripe-config-invalid"
+      );
       const form = new URLSearchParams();
       form.set("mode", "subscription");
       form.set("customer", params.customerReferenceId);
@@ -3333,9 +3452,11 @@ export function createCommentTranslatorStripeAdapter(
       form.set("automatic_tax[enabled]", "true");
       form.set("billing_address_collection", "required");
       form.set("payment_method_types[0]", "card");
-      if (params.customerEmail?.trim()) form.set("customer_email", params.customerEmail.trim());
       if (params.promotionCodeReferenceId && params.couponReferenceId) {
-        throw new Error("Paid Checkout discount policy is ambiguous.");
+        throw createCommentTranslatorStripeFailure(
+          "Paid Checkout discount policy is ambiguous.",
+          "stripe-config-invalid"
+        );
       }
       if (params.promotionCodeReferenceId) form.set("discounts[0][promotion_code]", params.promotionCodeReferenceId);
       if (params.couponReferenceId) form.set("discounts[0][coupon]", params.couponReferenceId);
@@ -3348,14 +3469,39 @@ export function createCommentTranslatorStripeAdapter(
       };
     },
     async retrieveCheckoutSession(sessionId) {
-      if (!secretKey) throw new Error("Stripe secret key is unavailable.");
-      const response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`, {
-        headers: { Authorization: `Bearer ${secretKey}` },
-        cache: "no-store"
-      });
-      if (!response.ok) throw new Error("Stripe Checkout Session retrieval failed.");
-      const body: unknown = await response.json();
-      if (!body || typeof body !== "object" || Array.isArray(body)) throw new Error("Stripe Checkout Session response is invalid.");
+      if (!secretKey) throw createCommentTranslatorStripeFailure(
+        "Stripe secret key is unavailable.",
+        "stripe-config-invalid"
+      );
+      let response: Response;
+      try {
+        response = await fetch(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`, {
+          headers: { Authorization: `Bearer ${secretKey}` },
+          cache: "no-store"
+        });
+      } catch {
+        throw createCommentTranslatorStripeFailure(
+          "Stripe Checkout Session retrieval failed.",
+          "stripe-network-failed"
+        );
+      }
+      if (!response.ok) throw createCommentTranslatorStripeFailure(
+        "Stripe Checkout Session retrieval failed.",
+        classifyHttpFailure(response.status)
+      );
+      let body: unknown;
+      try {
+        body = await response.json();
+      } catch {
+        throw createCommentTranslatorStripeFailure(
+          "Stripe Checkout Session response is invalid.",
+          "stripe-response-invalid"
+        );
+      }
+      if (!body || typeof body !== "object" || Array.isArray(body)) throw createCommentTranslatorStripeFailure(
+        "Stripe Checkout Session response is invalid.",
+        "stripe-response-invalid"
+      );
       return readCheckoutResponse(body as Record<string, unknown>);
     },
     async expireCheckoutSession({ sessionId, idempotencyKey }) {

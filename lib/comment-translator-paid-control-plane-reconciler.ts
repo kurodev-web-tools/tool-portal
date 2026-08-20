@@ -10,9 +10,13 @@ import type {
   CommentTranslatorStripeSubscriptionCancelAdapter,
   CommentTranslatorStripeSubscriptionSnapshot,
   CommentTranslatorStripeCheckoutSessionParams,
-  CommentTranslatorStripeCheckoutSessionResult
+  CommentTranslatorStripeCheckoutSessionResult,
+  CommentTranslatorStripeFailureDiagnostic
 } from "./comment-translator-billing-runtime";
-import { readCommentTranslatorBillingCheckoutSafetyGate } from "./comment-translator-billing-runtime";
+import {
+  readCommentTranslatorBillingCheckoutSafetyGate,
+  readCommentTranslatorStripeFailureDiagnostic
+} from "./comment-translator-billing-runtime";
 import type {
   CommentTranslatorPaidCheckoutLifecycle,
   CommentTranslatorPaidDisputeState,
@@ -844,23 +848,29 @@ export function createCommentTranslatorPaidUnboundCheckoutSessionRecovery({
       billingAddressCollection: "required",
       paymentMethodTypes: ["card"],
       promotionCodeReferenceId: env.COMMENT_TRANSLATOR_STRIPE_PROMOTION_CODE_ID?.trim() || null,
-      couponReferenceId: env.COMMENT_TRANSLATOR_STRIPE_COUPON_ID?.trim() || null,
-      customerEmail: null
+      couponReferenceId: env.COMMENT_TRANSLATOR_STRIPE_COUPON_ID?.trim() || null
     };
     let session: CommentTranslatorStripeCheckoutSessionResult;
     try {
       session = await stripeAdapter.createCheckoutSession(checkoutParams);
-    } catch {
-      throw createControlPlaneError("external-action-failed");
+    } catch (error) {
+      throw createControlPlaneError(
+        "external-action-failed",
+        readCommentTranslatorStripeFailureDiagnostic(error)
+      );
     }
     const sessionExpiresAtIso = session.expiresAtIso;
+    const sessionFailureDiagnostic = readCommentTranslatorStripeFailureDiagnostic({
+      stripeFailureDiagnostic: session.failureDiagnostic
+    });
     if (
-      !session.id
+      sessionFailureDiagnostic
+      || !session.id
       || !sessionExpiresAtIso
       || (session.customerId && session.customerId !== lifecycle.stripeCustomerId)
       || sessionExpiresAtIso !== lifecycle.checkoutExpiresAtTargetIso
     ) {
-      throw createControlPlaneError("binding-not-ready");
+      throw createControlPlaneError("binding-not-ready", sessionFailureDiagnostic);
     }
     try {
       await entitlementStore.bindCheckoutSession({
@@ -908,15 +918,22 @@ export function createCommentTranslatorPaidUnboundCheckoutSessionRecovery({
       let confirmedSession: CommentTranslatorStripeCheckoutSessionResult;
       try {
         confirmedSession = await retrieveCheckoutSession(session.id);
-      } catch {
-        throw createControlPlaneError("external-action-failed");
+      } catch (error) {
+        throw createControlPlaneError(
+          "external-action-failed",
+          readCommentTranslatorStripeFailureDiagnostic(error)
+        );
       }
+      const confirmedSessionFailureDiagnostic = readCommentTranslatorStripeFailureDiagnostic({
+        stripeFailureDiagnostic: confirmedSession.failureDiagnostic
+      });
       if (
-        confirmedSession.id !== session.id
+        confirmedSessionFailureDiagnostic
+        || confirmedSession.id !== session.id
         || confirmedSession.customerId !== lifecycle.stripeCustomerId
         || confirmedSession.expiresAtIso !== sessionExpiresAtIso
       ) {
-        throw createControlPlaneError("binding-not-ready");
+        throw createControlPlaneError("binding-not-ready", confirmedSessionFailureDiagnostic);
       }
       if (confirmedSession.status !== "expired") {
         throw createControlPlaneError("external-action-failed");
@@ -1005,6 +1022,7 @@ export async function runCommentTranslatorPaidControlPlaneReconciler({
     CommentTranslatorPaidReconcilerErrorClass,
     number
   >;
+  const diagnosticClassCounts: Partial<Record<CommentTranslatorStripeFailureDiagnostic, number>> = {};
   const processedOpaqueLeases = new Set<string>();
   let completedCount = 0;
   let retryCount = 0;
@@ -1093,7 +1111,11 @@ export async function runCommentTranslatorPaidControlPlaneReconciler({
       completedCount += 1;
     } catch (error) {
       const errorClass = readReconcileErrorClass(error);
+      const diagnosticClass = readReconcileDiagnosticClass(error);
       errorClassCounts[errorClass] = (errorClassCounts[errorClass] ?? 0) + 1;
+      if (diagnosticClass) {
+        diagnosticClassCounts[diagnosticClass] = (diagnosticClassCounts[diagnosticClass] ?? 0) + 1;
+      }
       try {
         const failureSafetyApplied = await store.markFailureSafe({
           lifecycleId: claim.lifecycleId,
@@ -1132,6 +1154,7 @@ export async function runCommentTranslatorPaidControlPlaneReconciler({
     retryCount,
     staleCount,
     errorClassCounts,
+    diagnosticClassCounts,
     lastSuccessAtIso: staleCount > 0 || retryCount > 0 ? null : nowIso,
     outputBoundary: commentTranslatorPaidControlPlaneReconcilerContract.browserReadableOutput,
     deploymentStatus: commentTranslatorPaidControlPlaneReconcilerContract.deploymentStatus
@@ -1139,17 +1162,24 @@ export async function runCommentTranslatorPaidControlPlaneReconciler({
 }
 
 function createControlPlaneError(
-  errorClass: CommentTranslatorPaidReconcilerErrorClass
-): Error & { reconcileErrorClass: CommentTranslatorPaidReconcilerErrorClass } {
+  errorClass: CommentTranslatorPaidReconcilerErrorClass,
+  diagnosticClass: CommentTranslatorStripeFailureDiagnostic | null = null
+): Error & {
+  reconcileErrorClass: CommentTranslatorPaidReconcilerErrorClass;
+  reconcileDiagnosticClass?: CommentTranslatorStripeFailureDiagnostic;
+} {
   const error = new Error("Paid control-plane reconciliation failed.") as Error & {
     reconcileErrorClass: CommentTranslatorPaidReconcilerErrorClass;
+    reconcileDiagnosticClass?: CommentTranslatorStripeFailureDiagnostic;
   };
   error.reconcileErrorClass = errorClass;
+  if (diagnosticClass) error.reconcileDiagnosticClass = diagnosticClass;
   return error;
 }
 
 function isControlPlaneError(value: unknown): value is Error & {
   reconcileErrorClass: CommentTranslatorPaidReconcilerErrorClass;
+  reconcileDiagnosticClass?: CommentTranslatorStripeFailureDiagnostic;
 } {
   return Boolean(
     value
@@ -1157,6 +1187,15 @@ function isControlPlaneError(value: unknown): value is Error & {
     && "reconcileErrorClass" in value
     && typeof value.reconcileErrorClass === "string"
   );
+}
+
+function readReconcileDiagnosticClass(
+  error: unknown
+): CommentTranslatorStripeFailureDiagnostic | null {
+  if (!error || typeof error !== "object" || !("reconcileDiagnosticClass" in error)) return null;
+  return readCommentTranslatorStripeFailureDiagnostic({
+    stripeFailureDiagnostic: (error as { reconcileDiagnosticClass?: unknown }).reconcileDiagnosticClass
+  });
 }
 
 function isClaimWorkKindLifecycleCompatible(

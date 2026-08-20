@@ -447,6 +447,7 @@ export type CommentTranslatorPaidScheduledReconcileMetrics = {
   retryCount: number;
   staleCount: number;
   errorClassCounts: Partial<Record<string, number>>;
+  diagnosticClassCounts?: Partial<Record<string, number>>;
 };
 
 export async function runCommentTranslatorPaidTask9ScheduledMaintenance({
@@ -487,6 +488,7 @@ export async function runCommentTranslatorPaidTask9ScheduledMaintenance({
       retryCount: 0,
       staleCount: 0,
       errorClassCounts: {},
+      diagnosticClassCounts: {},
       errorClass: authority.errorClass ?? "scheduler-unavailable",
       lastSuccessAtIso: null
     };
@@ -514,6 +516,7 @@ export async function runCommentTranslatorPaidTask9ScheduledMaintenance({
       retryCount,
       staleCount,
       errorClassCounts: sanitizeErrorClassCounts(reconcile.errorClassCounts),
+      diagnosticClassCounts: sanitizeDiagnosticClassCounts(reconcile.diagnosticClassCounts),
       lastSuccessAtIso: reconcileStatus === "success" ? nowIso : null
     };
     const metricsRecorded = await recordSchedulerRunSafely(cleanupStore, {
@@ -546,6 +549,7 @@ export async function runCommentTranslatorPaidTask9ScheduledMaintenance({
     errorClassCounts: sanitizeErrorClassCounts({
       ...(reconcile?.errorClassCounts ?? {})
     }),
+    diagnosticClassCounts: sanitizeDiagnosticClassCounts(reconcile?.diagnosticClassCounts),
     errorClass: cleanupResult.status === "rejected"
       ? "database-transaction-failed" as const
       : "external-action-failed" as const,
@@ -596,6 +600,22 @@ function sanitizeErrorClassCounts(value: Partial<Record<string, number>>) {
   return Object.fromEntries(
     Object.entries(value ?? {})
       .filter(([key, count]) => allowedErrorClasses.has(key) && normalizeCount(count) > 0)
+      .map(([key, count]) => [key, normalizeCount(count)])
+  );
+}
+
+function sanitizeDiagnosticClassCounts(value: Partial<Record<string, number>> | undefined) {
+  const allowedDiagnosticClasses = new Set([
+    "stripe-4xx",
+    "stripe-5xx",
+    "stripe-network-failed",
+    "stripe-response-invalid",
+    "stripe-config-invalid"
+  ]);
+
+  return Object.fromEntries(
+    Object.entries(value ?? {})
+      .filter(([key, count]) => allowedDiagnosticClasses.has(key) && normalizeCount(count) > 0)
       .map(([key, count]) => [key, normalizeCount(count)])
   );
 }

@@ -124,6 +124,7 @@ export async function GET(request: Request) {
     retryCount: result.retryCount,
     staleCount: result.staleCount,
     errorClassCounts: result.errorClassCounts,
+    diagnosticClassCounts: result.diagnosticClassCounts ?? {},
     errorClass: "errorClass" in result ? result.errorClass : null,
     lastSuccessAtIso: result.lastSuccessAtIso,
     outputBoundary

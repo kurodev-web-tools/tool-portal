@@ -315,6 +315,70 @@ await assert.rejects(
   "a structurally invalid 2xx Checkout response remains fail-closed and exposes only its diagnostic class"
 );
 
+const lifecycleReadFailureResolver = controlPlane.createCommentTranslatorPaidControlPlaneWorkItemResolver({
+  readBillingLifecycle: async () => {
+    throw new Error("fixture lifecycle read failure");
+  }
+});
+await assert.rejects(
+  () => lifecycleReadFailureResolver({
+    lifecycleId: lifecycle.lifecycleId,
+    reconcileLeaseToken: "lease-lifecycle-read-failure",
+    reconcileLeaseUntilIso: "2026-08-19T06:02:00.000Z",
+    workKind: "unbound-checkout-session"
+  }),
+  (error) => (
+    error?.reconcileErrorClass === "external-action-failed"
+    && error?.reconcileDiagnosticClass === "checkout-lifecycle-read-failed"
+  ),
+  "an unbound recovery lifecycle read failure exposes only its sanitized recovery stage"
+);
+
+const unclassifiedRecoveryActions = controlPlane.createCommentTranslatorPaidControlPlaneAuthoritativeActions({
+  readBillingLifecycle: async () => lifecycle,
+  entitlementStore,
+  paidPlanAuthority: {
+    productId: env.COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID,
+    priceId: env.COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID
+  },
+  currentObjectReader: {
+    async retrieveCurrentObjectState() {
+      throw new Error("unclassified recovery must not read a bound Stripe object");
+    },
+    async retrieveCurrentSubscriptionAdjustmentState() {
+      throw new Error("unclassified recovery must not read a Subscription adjustment");
+    }
+  },
+  subscriptionCancelAdapter: {
+    async cancelSubscription() {
+      throw new Error("unclassified recovery must not cancel a Subscription");
+    }
+  },
+  usageStore: {
+    async closeBillingPeriod() { return false; },
+    async closeUtcMonth() { return false; }
+  },
+  recoverUnboundCheckoutSession: async () => {
+    throw new Error("fixture unclassified recovery failure");
+  }
+});
+await assert.rejects(
+  () => unclassifiedRecoveryActions.unboundCheckoutSession({
+    item: { lifecycleId: lifecycle.lifecycleId, workKind: "unbound-checkout-session" },
+    opaqueLeaseContext: {
+      lifecycleId: lifecycle.lifecycleId,
+      reconcileLeaseToken: "lease-unclassified-recovery",
+      reconcileLeaseUntilIso: "2026-08-19T06:02:00.000Z"
+    },
+    nowIso
+  }),
+  (error) => (
+    error?.reconcileErrorClass === "external-action-failed"
+    && error?.reconcileDiagnosticClass === "checkout-recovery-unclassified-failed"
+  ),
+  "an unclassified unbound recovery failure exposes only its sanitized recovery stage"
+);
+
 const diagnosticClaim = {
   lifecycleId: "lifecycle-diagnostic-fixture",
   reconcileLeaseToken: "lease-diagnostic-fixture",
@@ -366,7 +430,10 @@ assert.deepEqual(
 for (const {
   diagnosticClass,
   errorClass,
-  recovery
+  recovery,
+  claimLifecycleId,
+  resolveWorkItem,
+  unboundCheckoutSession
 } of [
   {
     diagnosticClass: "checkout-binding-failed",
@@ -382,10 +449,21 @@ for (const {
     diagnosticClass: "checkout-expiry-confirmation-failed",
     errorClass: "external-action-failed",
     recovery: expiryConfirmationFailureRecovery
+  },
+  {
+    diagnosticClass: "checkout-lifecycle-read-failed",
+    errorClass: "external-action-failed",
+    resolveWorkItem: lifecycleReadFailureResolver
+  },
+  {
+    diagnosticClass: "checkout-recovery-unclassified-failed",
+    errorClass: "external-action-failed",
+    claimLifecycleId: lifecycle.lifecycleId,
+    unboundCheckoutSession: (request) => unclassifiedRecoveryActions.unboundCheckoutSession(request)
   }
 ]) {
   const claim = {
-    lifecycleId: `lifecycle-${diagnosticClass}`,
+    lifecycleId: claimLifecycleId ?? `lifecycle-${diagnosticClass}`,
     reconcileLeaseToken: `lease-${diagnosticClass}`,
     reconcileLeaseUntilIso: "2026-08-19T06:02:00.000Z",
     workKind: "unbound-checkout-session"
@@ -400,13 +478,13 @@ for (const {
       async retry(request) { retryRequests.push(request); return 1; },
       async markFailureSafe(request) { failureSafeRequests.push(request); return true; }
     },
-    resolveWorkItem: async () => ({
+    resolveWorkItem: resolveWorkItem ?? (async () => ({
       lifecycleId: claim.lifecycleId,
       workKind: claim.workKind
-    }),
+    })),
     actions: {
       checkoutExpiry: async () => {},
-      unboundCheckoutSession: async () => recovery({ lifecycle, nowIso }),
+      unboundCheckoutSession: unboundCheckoutSession ?? (async () => recovery({ lifecycle, nowIso })),
       paymentFailureSevenDay: async () => {},
       cancelPending: async () => {},
       refundReconciliation: async () => {},

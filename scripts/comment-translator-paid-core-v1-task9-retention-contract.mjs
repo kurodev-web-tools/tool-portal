@@ -2993,6 +2993,8 @@ const maintenanceRun = await retention.runCommentTranslatorPaidTask9ScheduledMai
         "checkout-binding-failed": 1,
         "checkout-expiry-failed": 2,
         "checkout-expiry-confirmation-failed": 3,
+        "checkout-lifecycle-read-failed": 4,
+        "checkout-recovery-unclassified-failed": 5,
         "private-diagnostic-reference": 9
       }
     };
@@ -3008,7 +3010,9 @@ assert.deepEqual(maintenanceRun.errorClassCounts, { "binding-not-ready": 1 });
 assert.deepEqual(maintenanceRun.diagnosticClassCounts, {
   "checkout-binding-failed": 1,
   "checkout-expiry-failed": 2,
-  "checkout-expiry-confirmation-failed": 3
+  "checkout-expiry-confirmation-failed": 3,
+  "checkout-lifecycle-read-failed": 4,
+  "checkout-recovery-unclassified-failed": 5
 }, "scheduled maintenance preserves only the allowlisted recovery diagnostic aggregates");
 assert.equal(maintenanceCleanupCalls, 1);
 assert.equal(maintenanceReconcileCalls, 1);

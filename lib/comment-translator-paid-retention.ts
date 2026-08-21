@@ -613,7 +613,9 @@ function sanitizeDiagnosticClassCounts(value: Partial<Record<string, number>> | 
     "stripe-config-invalid",
     "checkout-binding-failed",
     "checkout-expiry-failed",
-    "checkout-expiry-confirmation-failed"
+    "checkout-expiry-confirmation-failed",
+    "checkout-lifecycle-read-failed",
+    "checkout-recovery-unclassified-failed"
   ]);
 
   return Object.fromEntries(

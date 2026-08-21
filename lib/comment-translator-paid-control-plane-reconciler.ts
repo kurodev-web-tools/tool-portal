@@ -37,7 +37,9 @@ export type CommentTranslatorPaidControlPlaneWorkKind = CommentTranslatorPaidRec
 export const commentTranslatorPaidRecoveryDiagnosticClasses = [
   "checkout-binding-failed",
   "checkout-expiry-failed",
-  "checkout-expiry-confirmation-failed"
+  "checkout-expiry-confirmation-failed",
+  "checkout-lifecycle-read-failed",
+  "checkout-recovery-unclassified-failed"
 ] as const;
 
 type CommentTranslatorPaidRecoveryDiagnostic = typeof commentTranslatorPaidRecoveryDiagnosticClasses[number];
@@ -143,7 +145,15 @@ export function createCommentTranslatorPaidControlPlaneAuthoritativeActions(
   dependencies: CommentTranslatorPaidControlPlaneAuthoritativeDependencies
 ): CommentTranslatorPaidControlPlaneActions {
   const readLifecycle = async (request: CommentTranslatorPaidControlPlaneActionRequest) => {
-    const lifecycle = await dependencies.readBillingLifecycle({ lifecycleId: request.item.lifecycleId });
+    let lifecycle: CommentTranslatorPaidCheckoutLifecycle | null;
+    try {
+      lifecycle = await dependencies.readBillingLifecycle({ lifecycleId: request.item.lifecycleId });
+    } catch {
+      if (request.item.workKind === "unbound-checkout-session") {
+        throw createControlPlaneError("external-action-failed", "checkout-lifecycle-read-failed");
+      }
+      throw new Error("Paid billing lifecycle read failed.");
+    }
     if (!lifecycle || lifecycle.lifecycleId !== request.item.lifecycleId) {
       throw createControlPlaneError("binding-not-ready");
     }
@@ -399,7 +409,7 @@ export function createCommentTranslatorPaidControlPlaneAuthoritativeActions(
         if (!recovered) throw createControlPlaneError("binding-not-ready");
       } catch (error) {
         if (isControlPlaneError(error)) throw error;
-        throw createControlPlaneError("external-action-failed");
+        throw createControlPlaneError("external-action-failed", "checkout-recovery-unclassified-failed");
       }
       return {
         nextReconcileAtIso: resolveCheckoutExpiryReconcileAtIso(lifecycle, request.nowIso)
@@ -793,7 +803,15 @@ export function createCommentTranslatorPaidControlPlaneWorkItemResolver({
       return { lifecycleId: claim.lifecycleId, workKind: claim.workKind };
     }
     if (!claim.workKind || !isControlPlaneWorkKind(claim.workKind)) return null;
-    const lifecycle = await readBillingLifecycle({ lifecycleId: claim.lifecycleId });
+    let lifecycle: CommentTranslatorPaidCheckoutLifecycle | null;
+    try {
+      lifecycle = await readBillingLifecycle({ lifecycleId: claim.lifecycleId });
+    } catch {
+      if (claim.workKind === "unbound-checkout-session") {
+        throw createControlPlaneError("external-action-failed", "checkout-lifecycle-read-failed");
+      }
+      throw new Error("Paid billing lifecycle read failed.");
+    }
     if (!lifecycle || !isClaimWorkKindLifecycleCompatible(claim.workKind, lifecycle)) return null;
     return { lifecycleId: claim.lifecycleId, workKind: claim.workKind };
   };

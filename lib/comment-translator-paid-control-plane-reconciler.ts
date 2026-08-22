@@ -853,6 +853,11 @@ export function createCommentTranslatorPaidUnboundCheckoutSessionRecovery({
     }
     const nowMs = Date.parse(nowIso);
     if (!Number.isFinite(nowMs)) throw createControlPlaneError("binding-not-ready");
+    const checkoutExpiresAtTargetMs = Date.parse(lifecycle.checkoutExpiresAtTargetIso);
+    if (
+      !Number.isFinite(checkoutExpiresAtTargetMs)
+      || checkoutExpiresAtTargetMs <= nowMs + 30 * 60 * 1000
+    ) return false;
     const checkoutSafetyGate = await readCommentTranslatorBillingCheckoutSafetyGate({
       checkoutSafetyAuthorityReader,
       ownerUserId: lifecycle.ownerUserId,

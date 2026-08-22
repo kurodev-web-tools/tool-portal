@@ -128,6 +128,35 @@ assert.equal(boundSessions.length, 1, "recovery binds the created Checkout Sessi
 assert.equal("customerEmail" in successfulCheckoutParams[0], false, "recovery does not pass customerEmail");
 assert.equal(successfulCheckoutParams[0].customerReferenceId, "cus_fixture", "recovery keeps the bound Customer ID");
 
+let expiredCheckoutCreateCalls = 0;
+const expiredCheckoutRecovery = controlPlane.createCommentTranslatorPaidUnboundCheckoutSessionRecovery({
+  entitlementStore,
+  stripeAdapter: {
+    async createCheckoutSession() {
+      expiredCheckoutCreateCalls += 1;
+      return {
+        id: "cs_expired_fixture",
+        customerId: "cus_fixture",
+        url: null,
+        expiresAtIso: expiredLifecycle.checkoutExpiresAtTargetIso,
+        status: "open"
+      };
+    }
+  },
+  checkoutSafetyAuthorityReader: authorityReader,
+  env
+});
+const expiredLifecycle = {
+  ...lifecycle,
+  checkoutExpiresAtTargetIso: "2026-08-19T05:59:00.000Z"
+};
+assert.equal(
+  await expiredCheckoutRecovery({ lifecycle: expiredLifecycle, nowIso }),
+  false,
+  "expired unbound Checkout recovery fails closed without reusing the expired target"
+);
+assert.equal(expiredCheckoutCreateCalls, 0, "expired unbound Checkout recovery does not call Stripe");
+
 const failingRecovery = controlPlane.createCommentTranslatorPaidUnboundCheckoutSessionRecovery({
   entitlementStore,
   stripeAdapter: {

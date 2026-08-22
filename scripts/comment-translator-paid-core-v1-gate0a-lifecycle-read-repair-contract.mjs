@@ -30,6 +30,26 @@ const checkoutLifecycleStart = store.indexOf("async readCheckoutLifecycle({ owne
 assert.ok(checkoutLifecycleStart >= 0, "the trusted store exposes checkout lifecycle read");
 const checkoutLifecycleSource = store.slice(checkoutLifecycleStart, checkoutLifecycleStart + 3200);
 
+const billingLifecycleStart = store.indexOf("async readBillingLifecycle({ lifecycleId })");
+assert.ok(billingLifecycleStart >= 0, "the trusted store exposes billing lifecycle read");
+const billingLifecycleSource = store.slice(billingLifecycleStart, billingLifecycleStart + 5000);
+
+assert.match(
+  billingLifecycleSource,
+  /const entitlement = await readEntitlement\(\{\s*ownerUserId:\s*lifecycleOwnerUserId,\s*lifecycleId\s*\}\)/,
+  "billing lifecycle read resolves entitlement through the owner-scoped RPC-backed helper"
+);
+assert.doesNotMatch(
+  billingLifecycleSource,
+  /readMaybeTrustedRow\(\s*supabase,\s*[\"']comment_translator_paid_entitlements[\"']/,
+  "billing lifecycle read does not directly select the entitlement table"
+);
+assert.match(
+  billingLifecycleSource,
+  /currentPeriodStartIso:\s*entitlement\?\.currentPeriodStartIso[\s\S]+currentPeriodEndIso:\s*entitlement\?\.currentPeriodEndIso[\s\S]+disputeState:\s*entitlement\?\.disputeState/,
+  "billing lifecycle read maps entitlement period and dispute fields from the RPC result"
+);
+
 for (const table of directLifecycleReadTables) {
   assert.match(
     checkoutLifecycleSource,

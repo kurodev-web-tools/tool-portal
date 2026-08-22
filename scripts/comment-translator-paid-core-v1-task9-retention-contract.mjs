@@ -2039,7 +2039,7 @@ const incompleteRecovery = reconciler.createCommentTranslatorPaidUnboundCheckout
         id: "cs_fixture_incomplete_recovery",
         customerId: "cus_fixture",
         url: "https://fixture.invalid/checkout",
-        expiresAtIso: "2026-08-14T12:01:00.000Z",
+        expiresAtIso: "2026-08-14T12:31:00.000Z",
         status: "open"
       };
     }
@@ -2064,7 +2064,7 @@ assert.equal(
       lifecycleState: "incomplete",
       checkoutSessionId: null,
       stripeExpiresAtIso: null,
-      checkoutExpiresAtTargetIso: "2026-08-14T12:01:00.000Z",
+      checkoutExpiresAtTargetIso: "2026-08-14T12:31:00.000Z",
       subscriptionId: null,
       subscriptionBindingId: null
     },
@@ -2076,7 +2076,7 @@ assert.equal(
 assert.equal(incompleteRecoveryCheckoutRequests.length, 1, "incomplete recovery creates one Checkout Session");
 assert.equal(incompleteRecoveryCheckoutRequests[0].customerReferenceId, "cus_fixture");
 assert.equal(incompleteRecoveryCheckoutRequests[0].idempotencyKey, "ct-paid-checkout-fixture");
-assert.equal(incompleteRecoveryCheckoutRequests[0].expiresAtIso, "2026-08-14T12:01:00.000Z");
+assert.equal(incompleteRecoveryCheckoutRequests[0].expiresAtIso, "2026-08-14T12:31:00.000Z");
 assert.match(incompleteRecoveryCheckoutRequests[0].clientReferenceId, /^ctbill_[a-f0-9]{48}$/);
 assert.equal(incompleteRecoveryBindingRequests.length, 1, "incomplete recovery binds the created Checkout Session once");
 assert.deepEqual(incompleteRecoverySafetyReads, [{
@@ -2091,7 +2091,7 @@ assert.deepEqual(incompleteRecoveryBindingRequests[0], {
   customerBindingId: "fixture-customer",
   stripeCheckoutSessionId: "cs_fixture_incomplete_recovery",
   stripeCustomerId: "cus_fixture",
-  stripeExpiresAtIso: "2026-08-14T12:01:00.000Z",
+  stripeExpiresAtIso: "2026-08-14T12:31:00.000Z",
   isRecoveryBinding: true,
   idempotencyKey: "ct-paid-checkout-fixture",
   nowIso: "2026-08-14T12:00:00.000Z"
@@ -2116,17 +2116,17 @@ const bindFailureRecovery = reconciler.createCommentTranslatorPaidUnboundCheckou
         id: "cs_fixture_bind_failure",
         customerId: "cus_fixture",
         url: "https://fixture.invalid/must-not-return",
-        expiresAtIso: "2026-08-14T12:01:00.000Z",
+        expiresAtIso: "2026-08-14T12:31:00.000Z",
         status: "open"
       };
     },
     async expireCheckoutSession(request) {
       bindFailureExpires.push(request);
-      return { id: "cs_fixture_bind_failure", customerId: "cus_fixture", url: null, expiresAtIso: "2026-08-14T12:01:00.000Z", status: "expired" };
+      return { id: "cs_fixture_bind_failure", customerId: "cus_fixture", url: null, expiresAtIso: "2026-08-14T12:31:00.000Z", status: "expired" };
     },
     async retrieveCheckoutSession(sessionId) {
       bindFailureRetrievals.push(sessionId);
-      return { id: sessionId, customerId: "cus_fixture", url: null, expiresAtIso: "2026-08-14T12:01:00.000Z", status: "expired" };
+      return { id: sessionId, customerId: "cus_fixture", url: null, expiresAtIso: "2026-08-14T12:31:00.000Z", status: "expired" };
     }
   },
   checkoutSafetyAuthorityReader: {
@@ -2147,7 +2147,7 @@ const bindFailureResult = await bindFailureRecovery({
     lifecycleState: "incomplete",
     checkoutSessionId: null,
     stripeExpiresAtIso: null,
-    checkoutExpiresAtTargetIso: "2026-08-14T12:01:00.000Z",
+    checkoutExpiresAtTargetIso: "2026-08-14T12:31:00.000Z",
     subscriptionId: null,
     subscriptionBindingId: null
   },
@@ -2161,9 +2161,9 @@ assert.deepEqual(bindFailureMarks, [{
   customerBindingId: "fixture-customer",
   stripeCheckoutSessionId: "cs_fixture_bind_failure",
   stripeCustomerId: "cus_fixture",
-  stripeExpiresAtIso: "2026-08-14T12:01:00.000Z",
+  stripeExpiresAtIso: "2026-08-14T12:31:00.000Z",
   idempotencyKey: "ct-paid-checkout-fixture",
-  checkoutExpiresAtTargetIso: "2026-08-14T12:01:00.000Z",
+  checkoutExpiresAtTargetIso: "2026-08-14T12:31:00.000Z",
   nowIso: "2026-08-14T12:00:00.000Z"
 }], "binding failure durably records only immutable Checkout identity and target fields");
 assert.deepEqual(bindFailureExpires, [{
@@ -2181,7 +2181,7 @@ const markFailureRecovery = reconciler.createCommentTranslatorPaidUnboundCheckou
   },
   stripeAdapter: {
     async createCheckoutSession() {
-      return { id: "cs_fixture_mark_failure", customerId: "cus_fixture", url: null, expiresAtIso: "2026-08-14T12:01:00.000Z", status: "open" };
+      return { id: "cs_fixture_mark_failure", customerId: "cus_fixture", url: null, expiresAtIso: "2026-08-14T12:31:00.000Z", status: "open" };
     },
     async expireCheckoutSession() { markFailureExternalCallCount += 1; throw new Error("must not expire before mark"); },
     async retrieveCheckoutSession() { markFailureExternalCallCount += 1; throw new Error("must not retrieve before mark"); }
@@ -2191,7 +2191,7 @@ const markFailureRecovery = reconciler.createCommentTranslatorPaidUnboundCheckou
 });
 await assert.rejects(
   markFailureRecovery({
-    lifecycle: { ...authoritativeLifecycle, lifecycleState: "incomplete", checkoutSessionId: null, stripeExpiresAtIso: null, checkoutExpiresAtTargetIso: "2026-08-14T12:01:00.000Z", subscriptionId: null, subscriptionBindingId: null },
+    lifecycle: { ...authoritativeLifecycle, lifecycleState: "incomplete", checkoutSessionId: null, stripeExpiresAtIso: null, checkoutExpiresAtTargetIso: "2026-08-14T12:31:00.000Z", subscriptionId: null, subscriptionBindingId: null },
     nowIso: "2026-08-14T12:00:00.000Z"
   }),
   (error) => {
@@ -2210,11 +2210,11 @@ const expireFailureRecovery = reconciler.createCommentTranslatorPaidUnboundCheck
   },
   stripeAdapter: {
     async createCheckoutSession() {
-      return { id: "cs_fixture_expire_failure", customerId: "cus_fixture", url: null, expiresAtIso: "2026-08-14T12:01:00.000Z", status: "open" };
+      return { id: "cs_fixture_expire_failure", customerId: "cus_fixture", url: null, expiresAtIso: "2026-08-14T12:31:00.000Z", status: "open" };
     },
     async expireCheckoutSession() { assert.equal(durableMarkBeforeExpireFailure, true); throw new Error("synthetic expiry failure"); },
     async retrieveCheckoutSession(sessionId) {
-      return { id: sessionId, customerId: "cus_fixture", url: null, expiresAtIso: "2026-08-14T12:01:00.000Z", status: "open" };
+      return { id: sessionId, customerId: "cus_fixture", url: null, expiresAtIso: "2026-08-14T12:31:00.000Z", status: "open" };
     }
   },
   checkoutSafetyAuthorityReader: { async readCheckoutSafetyAuthority() { return { status: "ready", capacityAvailable: true, dailyPollBudget: 10_000, reservedPolls: 0 }; } },
@@ -2222,7 +2222,7 @@ const expireFailureRecovery = reconciler.createCommentTranslatorPaidUnboundCheck
 });
 await assert.rejects(
   expireFailureRecovery({
-    lifecycle: { ...authoritativeLifecycle, lifecycleState: "incomplete", checkoutSessionId: null, stripeExpiresAtIso: null, checkoutExpiresAtTargetIso: "2026-08-14T12:01:00.000Z", subscriptionId: null, subscriptionBindingId: null },
+    lifecycle: { ...authoritativeLifecycle, lifecycleState: "incomplete", checkoutSessionId: null, stripeExpiresAtIso: null, checkoutExpiresAtTargetIso: "2026-08-14T12:31:00.000Z", subscriptionId: null, subscriptionBindingId: null },
     nowIso: "2026-08-14T12:00:00.000Z"
   }),
   /Paid control-plane reconciliation failed/,
@@ -2246,7 +2246,7 @@ const responseUnknownRecovery = reconciler.createCommentTranslatorPaidUnboundChe
   env: { STRIPE_SECRET_KEY: "fixture-key", COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_fixture", COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID: "prod_fixture", NEXT_PUBLIC_SITE_URL: "https://fixture.invalid" }
 });
 const responseUnknownRequest = {
-  lifecycle: { ...authoritativeLifecycle, lifecycleState: "incomplete", checkoutSessionId: null, stripeExpiresAtIso: null, checkoutExpiresAtTargetIso: "2026-08-14T12:01:00.000Z", subscriptionId: null, subscriptionBindingId: null },
+  lifecycle: { ...authoritativeLifecycle, lifecycleState: "incomplete", checkoutSessionId: null, stripeExpiresAtIso: null, checkoutExpiresAtTargetIso: "2026-08-14T12:31:00.000Z", subscriptionId: null, subscriptionBindingId: null },
   nowIso: "2026-08-14T12:00:00.000Z"
 };
 await assert.rejects(responseUnknownRecovery(responseUnknownRequest), /Paid control-plane reconciliation failed/);
@@ -2355,7 +2355,7 @@ await assert.rejects(
       lifecycleState: "incomplete",
       checkoutSessionId: null,
       stripeExpiresAtIso: null,
-      checkoutExpiresAtTargetIso: "2026-08-14T12:01:00.000Z",
+      checkoutExpiresAtTargetIso: "2026-08-14T12:31:00.000Z",
       subscriptionId: null,
       subscriptionBindingId: null
     },

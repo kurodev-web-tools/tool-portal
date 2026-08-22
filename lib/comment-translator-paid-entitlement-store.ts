@@ -375,6 +375,24 @@ export function createCommentTranslatorPaidEntitlementStore({
 }: {
   supabase: SupabaseClient;
 }): CommentTranslatorPaidEntitlementStore {
+  const readEntitlement = async ({
+    ownerUserId,
+    lifecycleId
+  }: {
+    ownerUserId: string;
+    lifecycleId?: string;
+  }): Promise<CommentTranslatorPaidEntitlement | null> => {
+    const result = await supabase.rpc("ct_paid_read_entitlement", {
+      p_owner_user_id: ownerUserId,
+      p_lifecycle_id: lifecycleId ?? null
+    });
+    if (result.error) throw new Error("Paid entitlement read failed.");
+    const rows = Array.isArray(result.data) ? result.data : result.data ? [result.data] : [];
+    if (rows.length === 0) return null;
+    if (rows.length !== 1) throw new Error("Paid entitlement read was ambiguous.");
+    return mapEntitlementRow(rows[0]);
+  };
+
   return {
     async readCustomerBinding({ ownerUserId }) {
       const row = await readMaybeTrustedRow(
@@ -526,17 +544,25 @@ export function createCommentTranslatorPaidEntitlementStore({
         "lifecycle_id",
         lifecycleId
       );
-      const entitlementRow = await readMaybeTrustedRow(
-        supabase,
-        "comment_translator_paid_entitlements",
-        "lifecycle_id",
+      const entitlement = await readEntitlement({
+        ownerUserId: lifecycleOwnerUserId,
         lifecycleId
-      );
+      });
 
-      for (const row of [holdRow, sessionRow, subscriptionRow, entitlementRow]) {
+      for (const row of [holdRow, sessionRow, subscriptionRow]) {
         if (row && readOptionalString(row, "owner_user_id") !== lifecycleOwnerUserId) {
           throw new Error("Paid billing lifecycle owner binding conflict.");
         }
+      }
+      if (
+        entitlement
+        && (
+          entitlement.ownerUserId !== lifecycleOwnerUserId
+          || entitlement.lifecycleId !== lifecycleId
+          || entitlement.customerBindingId !== customerBindingId
+        )
+      ) {
+        throw new Error("Paid billing lifecycle entitlement binding conflict.");
       }
       if (sessionRow && readOptionalString(sessionRow, "customer_binding_id") !== customerBindingId) {
         throw new Error("Paid Checkout Session Customer binding conflict.");
@@ -561,9 +587,9 @@ export function createCommentTranslatorPaidEntitlementStore({
         subscriptionBindingId: readOptionalString(subscriptionRow, "id"),
         productId: readOptionalString(subscriptionRow, "product_id"),
         priceId: readOptionalString(subscriptionRow, "price_id"),
-        currentPeriodStartIso: readOptionalString(entitlementRow, "current_period_start"),
-        currentPeriodEndIso: readOptionalString(entitlementRow, "current_period_end"),
-        disputeState: readOptionalDisputeState(entitlementRow?.dispute_state),
+        currentPeriodStartIso: entitlement?.currentPeriodStartIso ?? null,
+        currentPeriodEndIso: entitlement?.currentPeriodEndIso ?? null,
+        disputeState: entitlement?.disputeState ?? "none",
         operatorDisposition: readOptionalPaidUnentitledOperatorDisposition(
           lifecycleRow.paid_unentitled_operator_disposition
         ),
@@ -647,15 +673,7 @@ export function createCommentTranslatorPaidEntitlementStore({
       return true;
     },
     async readEntitlement({ ownerUserId, lifecycleId }) {
-      const result = await supabase.rpc("ct_paid_read_entitlement", {
-        p_owner_user_id: ownerUserId,
-        p_lifecycle_id: lifecycleId ?? null
-      });
-      if (result.error) throw new Error("Paid entitlement read failed.");
-      const rows = Array.isArray(result.data) ? result.data : result.data ? [result.data] : [];
-      if (rows.length === 0) return null;
-      if (rows.length !== 1) throw new Error("Paid entitlement read was ambiguous.");
-      return mapEntitlementRow(rows[0]);
+      return readEntitlement({ ownerUserId, lifecycleId });
     },
     async resolveStripeBinding(request) {
       if (!supabase.from) throw new Error("Paid Stripe binding lookup is unavailable.");

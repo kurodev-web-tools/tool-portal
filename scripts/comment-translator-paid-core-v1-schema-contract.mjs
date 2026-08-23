@@ -4,6 +4,7 @@ import path from "node:path";
 
 const root = process.cwd();
 const migrationPath = "supabase/migrations/20260812120000_comment_translator_paid_core_v1.sql";
+const gate0aUnboundHoldRecoveryMigrationPath = "supabase/migrations/20260823120000_comment_translator_paid_gate0a_unbound_hold_recovery.sql";
 
 function read(relativePath) {
   return fs.readFileSync(path.join(root, relativePath), "utf8");
@@ -11,6 +12,8 @@ function read(relativePath) {
 
 assert.ok(fs.existsSync(path.join(root, migrationPath)), `Paid Core migration exists: ${migrationPath}`);
 const sql = read(migrationPath);
+assert.ok(fs.existsSync(path.join(root, gate0aUnboundHoldRecoveryMigrationPath)), `Gate 0-A recovery migration exists: ${gate0aUnboundHoldRecoveryMigrationPath}`);
+const gate0aUnboundHoldRecoverySql = read(gate0aUnboundHoldRecoveryMigrationPath);
 
 const requiredTables = [
   "comment_translator_paid_customers",
@@ -669,5 +672,10 @@ const sourceReceiptTable = sql.slice(
   sql.indexOf("create table if not exists public.comment_translator_paid_consents")
 );
 assert.doesNotMatch(sourceReceiptTable, /\b(?:owner_user_id|provider|message|body|hash|payload|jsonb)\b/i, "provider detail source receipts contain only short-lived source identity and timestamps");
+assert.match(gate0aUnboundHoldRecoverySql, /ct_paid_schedule_unbound_checkout_recovery[\s\S]+?after insert or update/i, "Gate 0-A recovery migration schedules unbound lifecycle work at insert/update");
+assert.match(gate0aUnboundHoldRecoverySql, /ct_paid_terminalize_unbound_checkout_hold[\s\S]+?comment_translator_paid_entitlements[\s\S]+?for update/i, "Gate 0-A terminalization locks entitlement authority before release");
+assert.match(gate0aUnboundHoldRecoverySql, /hold_state\s*=\s*'released'[\s\S]+?lifecycle_state\s*=\s*'incomplete_expired'[\s\S]+?reservation_state\s*=\s*'released'/i, "Gate 0-A terminalization closes lifecycle, hold, and capacity atomically");
+assert.match(gate0aUnboundHoldRecoverySql, /revoke all on function public\.ct_paid_terminalize_unbound_checkout_hold[\s\S]+?grant execute on function public\.ct_paid_terminalize_unbound_checkout_hold[\s\S]+?to service_role/i, "Gate 0-A terminalization keeps the RPC service-role-only");
+assert.doesNotMatch(gate0aUnboundHoldRecoverySql, /grant\s+select\s+on\s+table\s+public\.comment_translator_paid_entitlements\s+to\s+service_role/i, "Gate 0-A schema does not add a direct entitlement SELECT grant");
 
 console.log("comment translator Paid Core v1 schema contract checks passed");

@@ -1453,6 +1453,10 @@ const authoritativeLifecycle = {
   nextReconcileAtIso: "2026-08-14T12:00:00.000Z"
 };
 const authoritativeEntitlementStore = {
+  async terminalizeUnboundCheckoutHold(request) {
+    authoritativeCalls.push({ name: "terminalizeUnboundCheckoutHold", request });
+    return false;
+  },
   async expireCheckoutHold(request) {
     authoritativeCalls.push({ name: "expireCheckoutHold", request });
     return true;

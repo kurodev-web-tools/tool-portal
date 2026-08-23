@@ -117,7 +117,7 @@ export function createCommentTranslatorPaidControlPlaneActionImplementation(
 
 type CommentTranslatorPaidControlPlaneProjectionStore = Pick<
   CommentTranslatorPaidEntitlementStore,
-  "expireCheckoutHold" | "resolveStripeBinding" | "claimEntitlementProjection" | "bindFirstSubscription" | "projectEntitlement"
+  "expireCheckoutHold" | "terminalizeUnboundCheckoutHold" | "resolveStripeBinding" | "claimEntitlementProjection" | "bindFirstSubscription" | "projectEntitlement"
   | "projectPaidUnentitledDisposition"
 >;
 
@@ -403,6 +403,19 @@ export function createCommentTranslatorPaidControlPlaneAuthoritativeActions(
         await reconcileSubscription({ request, lifecycle, subscription });
         return;
       }
+      if (!lifecycle.holdId) throw createControlPlaneError("binding-not-ready");
+      let terminalizedUnboundHold: boolean;
+      try {
+        terminalizedUnboundHold = await dependencies.entitlementStore.terminalizeUnboundCheckoutHold({
+          lifecycleId: lifecycle.lifecycleId,
+          ownerUserId: lifecycle.ownerUserId,
+          holdId: lifecycle.holdId,
+          reconcileLeaseToken: request.opaqueLeaseContext.reconcileLeaseToken
+        });
+      } catch {
+        throw createControlPlaneError("database-transaction-failed");
+      }
+      if (terminalizedUnboundHold) return;
       if (!dependencies.recoverUnboundCheckoutSession) throw createControlPlaneError("binding-not-ready");
       try {
         const recovered = await dependencies.recoverUnboundCheckoutSession({ lifecycle, nowIso: request.nowIso });
@@ -854,6 +867,8 @@ export function createCommentTranslatorPaidUnboundCheckoutSessionRecovery({
     const nowMs = Date.parse(nowIso);
     if (!Number.isFinite(nowMs)) throw createControlPlaneError("binding-not-ready");
     const checkoutExpiresAtTargetMs = Date.parse(lifecycle.checkoutExpiresAtTargetIso);
+    // Preserve Stripe's existing 30-minute minimum; the additive DB schedule
+    // moves unbound work early without changing the immutable expiry target.
     if (
       !Number.isFinite(checkoutExpiresAtTargetMs)
       || checkoutExpiresAtTargetMs <= nowMs + 30 * 60 * 1000

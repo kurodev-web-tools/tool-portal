@@ -18,6 +18,9 @@ assert.equal(fs.existsSync(path.join(root, dispatchAndAzurePartialMigrationPath)
 const dispatchAndAzurePartialSql = fs.existsSync(path.join(root, dispatchAndAzurePartialMigrationPath))
   ? fs.readFileSync(path.join(root, dispatchAndAzurePartialMigrationPath), "utf8")
   : "";
+const gate0aUnboundHoldRecoveryMigrationPath = "supabase/migrations/20260823120000_comment_translator_paid_gate0a_unbound_hold_recovery.sql";
+assert.equal(fs.existsSync(path.join(root, gate0aUnboundHoldRecoveryMigrationPath)), true, "Gate 0-A unbound hold recovery migration exists");
+const gate0aUnboundHoldRecoverySql = fs.readFileSync(path.join(root, gate0aUnboundHoldRecoveryMigrationPath), "utf8");
 
 const requiredTables = [
   "comment_translator_paid_customers",
@@ -138,6 +141,18 @@ assert.match(dispatchAndAzurePartialSql, /primary key \(attempt_id, provider_att
 assert.match(dispatchAndAzurePartialSql, /for update/i, "dispatch and settlement lock durable authority rows");
 assert.match(dispatchAndAzurePartialSql, /grant execute on function[\s\S]+?service_role/i, "dispatch/partial RPCs are service-role-only");
 assert.doesNotMatch(dispatchAndAzurePartialSql, /\b(?:drop\s+table|truncate\s+table|delete\s+from)\b/i, "dispatch/partial migration is additive and non-destructive");
+const gate0aUnboundHoldRecoveryScan = scanSql(gate0aUnboundHoldRecoverySql);
+assert.equal(gate0aUnboundHoldRecoveryScan.parenthesesDepth, 0, "Gate 0-A unbound hold recovery migration parentheses are balanced");
+assert.equal(gate0aUnboundHoldRecoveryScan.unterminatedDollarQuote, null, "Gate 0-A unbound hold recovery migration dollar quotes are terminated");
+assert.equal(gate0aUnboundHoldRecoveryScan.unterminatedString, false, "Gate 0-A unbound hold recovery migration strings are terminated");
+assert.match(gate0aUnboundHoldRecoverySql, /create or replace function public\.ct_paid_schedule_unbound_checkout_recovery\(\)[\s\S]+?statement_timestamp\(\)[\s\S]+?next_reconcile_at[\s\S]+?v_now/i, "Gate 0-A scheduling uses the DB clock and pulls unbound work to the claim boundary");
+assert.match(gate0aUnboundHoldRecoverySql, /create trigger comment_translator_paid_unbound_checkout_recovery_schedule\s+after insert or update/i, "Gate 0-A scheduling is attached as an additive lifecycle trigger");
+assert.match(gate0aUnboundHoldRecoverySql, /create or replace function public\.ct_paid_terminalize_unbound_checkout_hold\(\s*p_lifecycle_id uuid,\s*p_owner_user_id uuid,\s*p_hold_id uuid,\s*p_reconcile_lease_token uuid/i, "Gate 0-A terminalization has an exact lease-bound RPC signature");
+assert.match(gate0aUnboundHoldRecoverySql, /security definer\s+set search_path = pg_catalog, public\s+as \$\$/i, "Gate 0-A terminalization uses a fixed-search-path SECURITY DEFINER boundary");
+assert.match(gate0aUnboundHoldRecoverySql, /for update[\s\S]+?comment_translator_paid_checkout_holds[\s\S]+?for update[\s\S]+?comment_translator_paid_capacity_reservations[\s\S]+?for update/i, "Gate 0-A terminalization locks lifecycle, hold, and capacity authority");
+assert.match(gate0aUnboundHoldRecoverySql, /revoke all on function public\.ct_paid_terminalize_unbound_checkout_hold[\s\S]+?grant execute on function public\.ct_paid_terminalize_unbound_checkout_hold[\s\S]+?to service_role/i, "Gate 0-A terminalization is service-role-only");
+assert.doesNotMatch(gate0aUnboundHoldRecoverySql, /grant\s+select\s+on\s+table\s+public\.comment_translator_paid_entitlements\s+to\s+service_role/i, "Gate 0-A does not widen direct entitlement SELECT privilege");
+assert.doesNotMatch(gate0aUnboundHoldRecoverySql, /\b(?:drop\s+table|truncate\s+table|delete\s+from)\b/i, "Gate 0-A unbound hold recovery migration is additive and non-destructive");
 assert.doesNotMatch(sql, /\b(?:drop\s+table|truncate\s+table)\b/i, "migration is additive and does not remove tables or truncate data");
 const deleteTargets = [...sql.matchAll(/delete\s+from\s+public\.([a-z0-9_]+)/gi)].map((match) => match[1]);
 assert.deepEqual(deleteTargets, ["comment_translator_paid_attempt_receipts", "comment_translator_paid_logical_attempts", "comment_translator_paid_provider_detail_source_receipts"], "only bounded terminal attempt ledgers and expired source receipts are deleted");

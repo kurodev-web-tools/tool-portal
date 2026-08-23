@@ -34,6 +34,7 @@ for (const required of [
   "bindCheckoutSession",
   "markCheckoutExpireRequired",
   "expireCheckoutHold",
+  "terminalizeUnboundCheckoutHold",
   "readEntitlement",
   "claimEntitlementProjection",
   "projectEntitlement",
@@ -47,7 +48,8 @@ for (const required of [
   "ct_paid_begin_checkout",
   "ct_paid_bind_checkout_session",
   "ct_paid_mark_checkout_expire_required",
-  "ct_paid_expire_checkout_hold"
+  "ct_paid_expire_checkout_hold",
+  "ct_paid_terminalize_unbound_checkout_hold"
 ]) {
   assert.match(entitlement, new RegExp(required), `entitlement adapter supports ${required}`);
 }
@@ -68,6 +70,8 @@ assert.match(entitlement, /expireCheckoutHold:[\s\S]+?stripeSessionStatus:\s*"ex
 assert.match(entitlement, /p_stripe_session_status:\s*request\.stripeSessionStatus[\s\S]+?p_stripe_session_checked_at:\s*request\.stripeSessionCheckedAtIso/, "Checkout expiry forwards sanitized Session confirmation");
 assert.match(entitlement, /expireCheckoutHold:[\s\S]+?reconcileLeaseToken:\s*string\s*\|\s*null/, "Checkout expiry accepts nullable reconciler lease authority");
 assert.match(entitlement, /p_reconcile_lease_token:\s*request\.reconcileLeaseToken/, "Checkout expiry forwards nullable reconciler lease authority");
+assert.match(entitlement, /terminalizeUnboundCheckoutHold:[\s\S]+?reconcileLeaseToken:\s*string/, "unbound terminalization requires a non-null reconciler lease authority");
+assert.match(entitlement, /terminalizeUnboundCheckoutHold:[\s\S]+?supabase\.rpc\("ct_paid_terminalize_unbound_checkout_hold"[\s\S]+?p_reconcile_lease_token:\s*request\.reconcileLeaseToken/, "unbound terminalization forwards only the opaque lease to the additive RPC");
 assert.match(entitlement, /ct_paid_read_entitlement/, "entitlement reads use the trusted lifecycle-aware RPC");
 assert.doesNotMatch(entitlement, /\.order\("updated_at"[\s\S]+?\.limit\(1\)/, "entitlement owner reads do not select an ambiguous latest terminal row");
 assert.match(entitlement, /claimStatus === "processing"[\s\S]+?leaseToken === null/, "duplicate processing claims require a null lease token");

@@ -6,6 +6,9 @@ const root = process.cwd();
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const migrationPath = "supabase/migrations/20260823120000_comment_translator_paid_gate0a_unbound_hold_recovery.sql";
 const migration = read(migrationPath);
+const schedulePrivilegeRepairMigration = read("supabase/migrations/20260823130000_comment_translator_paid_gate0a_schedule_function_privilege_repair.sql");
+const scheduleFunctionGrants = schedulePrivilegeRepairMigration.match(/grant\s+(?:all(?:\s+privileges)?|execute)\s+on\s+(?:function|routine)\s+public\.ct_paid_schedule_unbound_checkout_recovery\(\)[\s\S]*?;/gi) ?? [];
+const scheduleSchemaGrants = schedulePrivilegeRepairMigration.match(/grant\s+(?:all(?:\s+privileges)?|execute)\s+on\s+all\s+(?:functions|routines)\s+in\s+schema\s+public[\s\S]*?;/gi) ?? [];
 const reconciler = read("lib/comment-translator-paid-control-plane-reconciler.ts");
 const entitlementStore = read("lib/comment-translator-paid-entitlement-store.ts");
 const retention = read("lib/comment-translator-paid-retention.ts");
@@ -76,6 +79,15 @@ assert.match(terminalizeSource, /v_capacity\.lifecycle_stage\s*<>\s*'checkout_ho
 assert.doesNotMatch(terminalizeSource, /reconcile_lease_(?:until|token)\s*=\s*null/i, "terminalization leaves the claimed lease for the existing atomic reconciler finalizer");
 assert.match(migration, /revoke all on function public\.ct_paid_terminalize_unbound_checkout_hold[\s\S]+?grant execute on function public\.ct_paid_terminalize_unbound_checkout_hold[\s\S]+?to service_role/i, "new RPC keeps the service-role-only execute boundary");
 assert.doesNotMatch(migration, /grant\s+select\s+on\s+table\s+public\.comment_translator_paid_entitlements\s+to\s+service_role/i, "new migration does not add a direct entitlement SELECT grant");
+assert.match(schedulePrivilegeRepairMigration, /revoke all on function public\.ct_paid_schedule_unbound_checkout_recovery\(\)[\s\S]+?from public, anon, authenticated/i, "schedule trigger function revokes default public execute privilege");
+assert.match(schedulePrivilegeRepairMigration, /grant execute on function public\.ct_paid_schedule_unbound_checkout_recovery\(\)[\s\S]+?to service_role/i, "schedule trigger function keeps a service-role-only execute boundary");
+assert.deepEqual(
+  scheduleFunctionGrants.map((statement) => statement.replace(/\s+/g, " ").trim()),
+  ["grant execute on function public.ct_paid_schedule_unbound_checkout_recovery() to service_role;"],
+  "schedule trigger function has exactly one service_role-only EXECUTE grant"
+);
+assert.deepEqual(scheduleSchemaGrants, [], "schedule privilege repair does not use a broad public-schema function grant");
+assert.doesNotMatch(schedulePrivilegeRepairMigration, /grant\s+select\s+on\s+table\s+public\.comment_translator_paid_entitlements\s+to\s+service_role/i, "privilege repair does not add a direct entitlement SELECT grant");
 
 assert.match(entitlementStore, /terminalizeUnboundCheckoutHold:/i, "trusted store exposes the unbound terminalization operation");
 assert.match(entitlementStore, /ct_paid_terminalize_unbound_checkout_hold/i, "trusted store calls only the additive terminalization RPC");

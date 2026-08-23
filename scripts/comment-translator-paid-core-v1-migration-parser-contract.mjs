@@ -21,6 +21,11 @@ const dispatchAndAzurePartialSql = fs.existsSync(path.join(root, dispatchAndAzur
 const gate0aUnboundHoldRecoveryMigrationPath = "supabase/migrations/20260823120000_comment_translator_paid_gate0a_unbound_hold_recovery.sql";
 assert.equal(fs.existsSync(path.join(root, gate0aUnboundHoldRecoveryMigrationPath)), true, "Gate 0-A unbound hold recovery migration exists");
 const gate0aUnboundHoldRecoverySql = fs.readFileSync(path.join(root, gate0aUnboundHoldRecoveryMigrationPath), "utf8");
+const gate0aSchedulePrivilegeRepairMigrationPath = "supabase/migrations/20260823130000_comment_translator_paid_gate0a_schedule_function_privilege_repair.sql";
+assert.equal(fs.existsSync(path.join(root, gate0aSchedulePrivilegeRepairMigrationPath)), true, "Gate 0-A schedule privilege repair migration exists");
+const gate0aSchedulePrivilegeRepairSql = fs.readFileSync(path.join(root, gate0aSchedulePrivilegeRepairMigrationPath), "utf8");
+const gate0aScheduleFunctionGrants = gate0aSchedulePrivilegeRepairSql.match(/grant\s+(?:all(?:\s+privileges)?|execute)\s+on\s+(?:function|routine)\s+public\.ct_paid_schedule_unbound_checkout_recovery\(\)[\s\S]*?;/gi) ?? [];
+const gate0aScheduleSchemaGrants = gate0aSchedulePrivilegeRepairSql.match(/grant\s+(?:all(?:\s+privileges)?|execute)\s+on\s+all\s+(?:functions|routines)\s+in\s+schema\s+public[\s\S]*?;/gi) ?? [];
 
 const requiredTables = [
   "comment_translator_paid_customers",
@@ -153,6 +158,20 @@ assert.match(gate0aUnboundHoldRecoverySql, /for update[\s\S]+?comment_translator
 assert.match(gate0aUnboundHoldRecoverySql, /revoke all on function public\.ct_paid_terminalize_unbound_checkout_hold[\s\S]+?grant execute on function public\.ct_paid_terminalize_unbound_checkout_hold[\s\S]+?to service_role/i, "Gate 0-A terminalization is service-role-only");
 assert.doesNotMatch(gate0aUnboundHoldRecoverySql, /grant\s+select\s+on\s+table\s+public\.comment_translator_paid_entitlements\s+to\s+service_role/i, "Gate 0-A does not widen direct entitlement SELECT privilege");
 assert.doesNotMatch(gate0aUnboundHoldRecoverySql, /\b(?:drop\s+table|truncate\s+table|delete\s+from)\b/i, "Gate 0-A unbound hold recovery migration is additive and non-destructive");
+const gate0aSchedulePrivilegeRepairScan = scanSql(gate0aSchedulePrivilegeRepairSql);
+assert.equal(gate0aSchedulePrivilegeRepairScan.parenthesesDepth, 0, "Gate 0-A schedule privilege repair migration parentheses are balanced");
+assert.equal(gate0aSchedulePrivilegeRepairScan.unterminatedDollarQuote, null, "Gate 0-A schedule privilege repair migration dollar quotes are terminated");
+assert.equal(gate0aSchedulePrivilegeRepairScan.unterminatedString, false, "Gate 0-A schedule privilege repair migration strings are terminated");
+assert.match(gate0aSchedulePrivilegeRepairSql, /revoke all on function public\.ct_paid_schedule_unbound_checkout_recovery\(\)[\s\S]+?from public, anon, authenticated/i, "Gate 0-A schedule trigger function revokes default public execute privilege");
+assert.match(gate0aSchedulePrivilegeRepairSql, /grant execute on function public\.ct_paid_schedule_unbound_checkout_recovery\(\)[\s\S]+?to service_role/i, "Gate 0-A schedule trigger function is service-role-only");
+assert.deepEqual(
+  gate0aScheduleFunctionGrants.map((statement) => statement.replace(/\s+/g, " ").trim()),
+  ["grant execute on function public.ct_paid_schedule_unbound_checkout_recovery() to service_role;"],
+  "Gate 0-A schedule trigger function has exactly one service_role-only EXECUTE grant"
+);
+assert.deepEqual(gate0aScheduleSchemaGrants, [], "Gate 0-A schedule privilege repair does not use a broad public-schema function grant");
+assert.doesNotMatch(gate0aSchedulePrivilegeRepairSql, /grant\s+select\s+on\s+table\s+public\.comment_translator_paid_entitlements\s+to\s+service_role/i, "Gate 0-A privilege repair does not widen direct entitlement SELECT privilege");
+assert.doesNotMatch(gate0aSchedulePrivilegeRepairSql, /\b(?:drop\s+table|truncate\s+table|delete\s+from)\b/i, "Gate 0-A schedule privilege repair migration is additive and non-destructive");
 assert.doesNotMatch(sql, /\b(?:drop\s+table|truncate\s+table)\b/i, "migration is additive and does not remove tables or truncate data");
 const deleteTargets = [...sql.matchAll(/delete\s+from\s+public\.([a-z0-9_]+)/gi)].map((match) => match[1]);
 assert.deepEqual(deleteTargets, ["comment_translator_paid_attempt_receipts", "comment_translator_paid_logical_attempts", "comment_translator_paid_provider_detail_source_receipts"], "only bounded terminal attempt ledgers and expired source receipts are deleted");

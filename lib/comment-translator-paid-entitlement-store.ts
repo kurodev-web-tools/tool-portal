@@ -182,6 +182,12 @@ export type CommentTranslatorPaidEntitlementStore = {
     reconcileLeaseToken: string | null;
     nowIso: string;
   }) => Promise<boolean>;
+  terminalizeUnboundCheckoutHold: (request: {
+    lifecycleId: string;
+    ownerUserId: string;
+    holdId: string;
+    reconcileLeaseToken: string;
+  }) => Promise<boolean>;
   readEntitlement: (request: { ownerUserId: string; lifecycleId?: string }) => Promise<CommentTranslatorPaidEntitlement | null>;
   resolveStripeBinding: (request: {
     stripeCustomerId?: string | null;
@@ -327,6 +333,7 @@ export const commentTranslatorPaidEntitlementStoreContract = {
     "ct_paid_commit_checkout_redirect",
     "ct_paid_mark_checkout_expire_required",
     "ct_paid_expire_checkout_hold",
+    "ct_paid_terminalize_unbound_checkout_hold",
     "ct_paid_claim_entitlement_projection",
     "ct_paid_project_entitlement",
     "ct_paid_bind_first_subscription",
@@ -671,6 +678,18 @@ export function createCommentTranslatorPaidEntitlementStore({
       });
       if (result.error || result.data !== true) throw new Error("Paid Checkout hold expiry failed.");
       return true;
+    },
+    async terminalizeUnboundCheckoutHold(request) {
+      const result = await supabase.rpc("ct_paid_terminalize_unbound_checkout_hold", {
+        p_lifecycle_id: request.lifecycleId,
+        p_owner_user_id: request.ownerUserId,
+        p_hold_id: request.holdId,
+        p_reconcile_lease_token: request.reconcileLeaseToken
+      });
+      if (result.error || typeof result.data !== "boolean") {
+        throw new Error("Paid unbound Checkout hold terminalization failed.");
+      }
+      return result.data;
     },
     async readEntitlement({ ownerUserId, lifecycleId }) {
       return readEntitlement({ ownerUserId, lifecycleId });

@@ -1,65 +1,51 @@
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import Module from "node:module";
+import { registerHooks, stripTypeScriptTypes } from "node:module";
 import path from "node:path";
-import ts from "typescript";
+import { pathToFileURL } from "node:url";
 
 const root = process.cwd();
-
-function loadTsModule(relativePath) {
-  const moduleCache = new Map();
-  const originalLoad = Module._load;
-
-  function resolveRelative(request, parentFilename) {
-    if (request.startsWith("@/")) {
+registerHooks({
+  resolve(specifier, context, nextResolve) {
+    if (specifier === "server-only") {
+      return { shortCircuit: true, url: "data:text/javascript,export default {};#server-only" };
+    }
+    if (specifier === "@supabase/supabase-js") {
+      return {
+        shortCircuit: true,
+        url: "data:text/javascript,export const createClient=()=>({rpc:async()=>({data:null,error:null})});export default {};#supabase"
+      };
+    }
+    if (specifier.startsWith("@/")) {
       for (const extension of [".ts", ".tsx"]) {
-        const candidate = path.join(root, `${request.slice(2)}${extension}`);
-        if (fs.existsSync(candidate)) return candidate;
+        const candidate = path.join(root, `${specifier.slice(2)}${extension}`);
+        if (fs.existsSync(candidate)) return { shortCircuit: true, url: pathToFileURL(candidate).href };
       }
-      return null;
     }
-    if (!request.startsWith(".") || !parentFilename) return null;
-    for (const extension of [".ts", ".tsx"]) {
-      const candidate = path.resolve(path.dirname(parentFilename), `${request}${extension}`);
-      if (fs.existsSync(candidate)) return candidate;
-    }
-    return null;
-  }
-
-  function compileTsModule(modulePath) {
-    const normalizedModulePath = path.normalize(modulePath);
-    if (moduleCache.has(normalizedModulePath)) return moduleCache.get(normalizedModulePath).exports;
-
-    const source = fs.readFileSync(normalizedModulePath, "utf8");
-    const compiled = ts.transpileModule(source, {
-      compilerOptions: {
-        module: ts.ModuleKind.CommonJS,
-        target: ts.ScriptTarget.ES2022
+    if (specifier.startsWith(".") && context.parentURL?.startsWith("file:")) {
+      for (const extension of [".ts", ".tsx"]) {
+        const candidate = new URL(`${specifier}${extension}`, context.parentURL);
+        if (fs.existsSync(candidate)) return { shortCircuit: true, url: candidate.href };
       }
-    }).outputText;
-    const testModule = new Module(normalizedModulePath);
-    moduleCache.set(normalizedModulePath, testModule);
-    testModule.filename = normalizedModulePath;
-    testModule.paths = Module._nodeModulePaths(path.dirname(normalizedModulePath));
-    testModule._compile(compiled, normalizedModulePath);
-    return testModule.exports;
+    }
+    return nextResolve(specifier, context);
+  },
+  load(url, context, nextLoad) {
+    if (url.endsWith(".ts") || url.endsWith(".tsx")) {
+      const source = fs.readFileSync(new URL(url), "utf8");
+      return {
+        format: "module",
+        shortCircuit: true,
+        source: stripTypeScriptTypes(source, { mode: "transform", sourceMap: false })
+      };
+    }
+    return nextLoad(url, context);
   }
+});
 
-  Module._load = function patchedLoad(request, parent, isMain) {
-    if (request === "server-only") return {};
-    const relativePath = resolveRelative(request, parent?.filename);
-    if (relativePath) return compileTsModule(relativePath);
-    return originalLoad.call(this, request, parent, isMain);
-  };
-
-  try {
-    return compileTsModule(path.join(root, relativePath));
-  } finally {
-    Module._load = originalLoad;
-  }
-}
-
-const controlPlane = loadTsModule("lib/comment-translator-paid-control-plane-reconciler.ts");
+const controlPlane = await import(pathToFileURL(
+  path.join(root, "lib/comment-translator-paid-control-plane-reconciler.ts")
+).href);
 const nowIso = "2026-08-19T06:00:00.000Z";
 const lifecycle = {
   lifecycleId: "lifecycle-fixture",
@@ -95,6 +81,9 @@ const authorityReader = {
 const boundSessions = [];
 const successfulCheckoutParams = [];
 const entitlementStore = {
+  async terminalizeUnboundCheckoutHold() {
+    return false;
+  },
   async bindCheckoutSession(request) {
     boundSessions.push(request);
   },
@@ -407,6 +396,131 @@ await assert.rejects(
   ),
   "an unclassified unbound recovery failure exposes only its sanitized recovery stage"
 );
+
+const expiredUnboundTerminalizationRequests = [];
+let expiredUnboundRecoveryCalls = 0;
+const expiredUnboundActions = controlPlane.createCommentTranslatorPaidControlPlaneAuthoritativeActions({
+  readBillingLifecycle: async () => ({
+    ...lifecycle,
+    checkoutExpiresAtTargetIso: "2026-08-19T05:59:00.000Z",
+    nextReconcileAtIso: nowIso
+  }),
+  entitlementStore: {
+    async terminalizeUnboundCheckoutHold(request) {
+      expiredUnboundTerminalizationRequests.push(request);
+      return true;
+    },
+    async expireCheckoutHold() {
+      throw new Error("expired unbound hold must use the unbound terminalization RPC");
+    }
+  },
+  paidPlanAuthority: {
+    productId: env.COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID,
+    priceId: env.COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID
+  },
+  currentObjectReader: {
+    async retrieveCurrentObjectState() {
+      throw new Error("expired unbound terminalization must not read Stripe");
+    },
+    async retrieveCurrentSubscriptionAdjustmentState() {
+      throw new Error("expired unbound terminalization must not read a Subscription");
+    }
+  },
+  subscriptionCancelAdapter: {
+    async cancelSubscription() {
+      throw new Error("expired unbound terminalization must not cancel a Subscription");
+    }
+  },
+  usageStore: {
+    async closeBillingPeriod() { return false; },
+    async closeUtcMonth() { return false; }
+  },
+  async recoverUnboundCheckoutSession() {
+    expiredUnboundRecoveryCalls += 1;
+    throw new Error("expired unbound terminalization must finish before recovery");
+  }
+});
+await expiredUnboundActions.unboundCheckoutSession({
+  item: { lifecycleId: lifecycle.lifecycleId, workKind: "unbound-checkout-session" },
+  opaqueLeaseContext: {
+    lifecycleId: lifecycle.lifecycleId,
+    reconcileLeaseToken: "lease-expired-unbound-terminalization",
+    reconcileLeaseUntilIso: "2026-08-19T06:02:00.000Z"
+  },
+  nowIso
+});
+assert.deepEqual(expiredUnboundTerminalizationRequests, [{
+  lifecycleId: lifecycle.lifecycleId,
+  ownerUserId: lifecycle.ownerUserId,
+  holdId: lifecycle.holdId,
+  reconcileLeaseToken: "lease-expired-unbound-terminalization"
+}], "expired unbound holds use the lease-bound terminalization RPC");
+assert.equal(expiredUnboundRecoveryCalls, 0, "expired unbound holds do not enter the Checkout recovery loop");
+
+const futureRecoveryCreates = [];
+const futureRecovery = controlPlane.createCommentTranslatorPaidUnboundCheckoutSessionRecovery({
+  entitlementStore,
+  stripeAdapter: {
+    async createCheckoutSession(params) {
+      futureRecoveryCreates.push(params);
+      return {
+        id: "cs_fixture_future_recovery",
+        customerId: "cus_fixture",
+        url: null,
+        expiresAtIso: params.expiresAtIso,
+        status: "open"
+      };
+    }
+  },
+  checkoutSafetyAuthorityReader: authorityReader,
+  env
+});
+assert.equal(
+  await futureRecovery({
+    lifecycle: { ...lifecycle, checkoutExpiresAtTargetIso: "2026-08-19T06:31:00.000Z" },
+    nowIso
+  }),
+  true,
+  "a future target with the Stripe sixty-second margin remains recoverable"
+);
+assert.equal(futureRecoveryCreates.length, 1, "recoverable future target creates one Checkout Session");
+assert.equal(
+  await futureRecovery({
+    lifecycle: { ...lifecycle, checkoutExpiresAtTargetIso: "2026-08-19T06:29:00.000Z" },
+    nowIso
+  }),
+  false,
+  "a target below the Stripe thirty-minute minimum is not sent to Stripe"
+);
+assert.equal(futureRecoveryCreates.length, 1, "near-expiry recovery does not create a second Checkout Session");
+
+const expiredUnboundFinalizes = [];
+const expiredUnboundRun = await controlPlane.runCommentTranslatorPaidControlPlaneReconciler({
+  store: {
+    async claimDue() {
+      return [{
+        lifecycleId: lifecycle.lifecycleId,
+        reconcileLeaseToken: "lease-expired-unbound-terminalization",
+        reconcileLeaseUntilIso: "2026-08-19T06:02:00.000Z",
+        workKind: "unbound-checkout-session"
+      }];
+    },
+    async assertLeaseActive() { return true; },
+    async finalize(request) {
+      expiredUnboundFinalizes.push(request);
+      return true;
+    },
+    async retry() { throw new Error("terminalized unbound hold must not retry"); },
+    async markFailureSafe() { throw new Error("terminalized unbound hold must not enter failure safety"); }
+  },
+  resolveWorkItem: async () => ({ lifecycleId: lifecycle.lifecycleId, workKind: "unbound-checkout-session" }),
+  actions: { unboundCheckoutSession: expiredUnboundActions.unboundCheckoutSession },
+  clock: () => nowIso,
+  nowIso
+});
+assert.equal(expiredUnboundRun.status, "success", "terminalized unbound work finalizes through the existing lease finalizer");
+assert.equal(expiredUnboundRun.completedCount, 1, "terminalized unbound work completes one claimed item");
+assert.equal(expiredUnboundFinalizes.length, 1, "terminalized unbound work invokes the existing reconciler finalizer");
 
 const diagnosticClaim = {
   lifecycleId: "lifecycle-diagnostic-fixture",

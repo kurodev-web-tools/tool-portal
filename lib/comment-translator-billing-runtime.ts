@@ -351,7 +351,8 @@ export type CommentTranslatorStripeCheckoutSessionParams = {
   expiresAtIso: string;
   idempotencyKey: string;
   automaticTax: true;
-  billingAddressCollection: "required";
+  billingAddressCollection: "auto";
+  customerUpdateAddress: "auto";
   paymentMethodTypes: readonly ["card"];
   promotionCodeReferenceId?: string | null;
   couponReferenceId?: string | null;
@@ -1522,7 +1523,8 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
     expiresAtIso: checkoutExpiresAtTargetIso,
     idempotencyKey: initialization.idempotencyKey,
     automaticTax: true,
-    billingAddressCollection: "required",
+    billingAddressCollection: "auto",
+    customerUpdateAddress: "auto",
     paymentMethodTypes: ["card"],
     promotionCodeReferenceId: checkoutConfig.config.promotionCodeReferenceId,
     couponReferenceId: checkoutConfig.config.couponReferenceId
@@ -2213,7 +2215,8 @@ async function convergeExistingPaidBillingLifecycle({
         expiresAtIso: lifecycle.checkoutExpiresAtTargetIso,
         idempotencyKey: lifecycle.idempotencyKey,
         automaticTax: true,
-        billingAddressCollection: "required",
+        billingAddressCollection: "auto",
+        customerUpdateAddress: "auto",
         paymentMethodTypes: ["card"],
         promotionCodeReferenceId: checkoutConfig.promotionCodeReferenceId,
         couponReferenceId: checkoutConfig.couponReferenceId
@@ -3428,7 +3431,12 @@ export function createCommentTranslatorStripeAdapter(
           "stripe-config-invalid"
         );
       }
-      if (params.mode !== "subscription" || params.automaticTax !== true || params.billingAddressCollection !== "required") {
+      if (
+        params.mode !== "subscription"
+        || params.automaticTax !== true
+        || params.billingAddressCollection !== "auto"
+        || params.customerUpdateAddress !== "auto"
+      ) {
         throw createCommentTranslatorStripeFailure(
           "Paid Checkout policy is invalid.",
           "stripe-config-invalid"
@@ -3450,7 +3458,8 @@ export function createCommentTranslatorStripeAdapter(
       form.set("cancel_url", params.cancelUrl);
       form.set("expires_at", String(expiresAtSeconds));
       form.set("automatic_tax[enabled]", "true");
-      form.set("billing_address_collection", "required");
+      form.set("billing_address_collection", "auto");
+      form.set("customer_update[address]", "auto");
       form.set("payment_method_types[0]", "card");
       if (params.promotionCodeReferenceId && params.couponReferenceId) {
         throw createCommentTranslatorStripeFailure(

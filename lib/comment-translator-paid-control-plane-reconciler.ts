@@ -897,7 +897,8 @@ export function createCommentTranslatorPaidUnboundCheckoutSessionRecovery({
       expiresAtIso: lifecycle.checkoutExpiresAtTargetIso,
       idempotencyKey: lifecycle.idempotencyKey,
       automaticTax: true,
-      billingAddressCollection: "required",
+      billingAddressCollection: "auto",
+      customerUpdateAddress: "auto",
       paymentMethodTypes: ["card"],
       promotionCodeReferenceId: env.COMMENT_TRANSLATOR_STRIPE_PROMOTION_CODE_ID?.trim() || null,
       couponReferenceId: env.COMMENT_TRANSLATOR_STRIPE_COUPON_ID?.trim() || null

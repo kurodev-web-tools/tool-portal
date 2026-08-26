@@ -833,7 +833,7 @@ for (const lifecycleState of ["past_due", "unpaid"]) {
     mode: "subscription", customerReferenceId: "cus_test", productReferenceId: "prod_paid", priceReferenceId: "price_paid_usd_600",
     currency: "usd", recurringInterval: "month", clientReferenceId: "ctbill_test", successUrl: "https://example.test/success",
     cancelUrl: "https://example.test/cancel", expiresAtIso: "2026-08-13T00:31:00.000Z", idempotencyKey: "ct-paid-checkout-test",
-    automaticTax: true, billingAddressCollection: "required", paymentMethodTypes: ["card"]
+    automaticTax: true, billingAddressCollection: "auto", customerUpdateAddress: "auto", paymentMethodTypes: ["card"]
   };
   try {
     for (const price of [

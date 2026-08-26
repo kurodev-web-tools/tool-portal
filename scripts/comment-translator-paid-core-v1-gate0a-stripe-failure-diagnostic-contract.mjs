@@ -73,7 +73,8 @@ const validCheckoutParams = {
   expiresAtIso: "2027-01-15T00:00:00.000Z",
   idempotencyKey: "ct-paid-idempotency-fixture",
   automaticTax: true,
-  billingAddressCollection: "required",
+  billingAddressCollection: "auto",
+  customerUpdateAddress: "auto",
   paymentMethodTypes: ["card"]
 };
 

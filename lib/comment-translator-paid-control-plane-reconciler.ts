@@ -1336,11 +1336,19 @@ function hasMatchingCheckoutExpiry({
   const sessionExpiryMs = Date.parse(session.expiresAtIso ?? "");
   const stripeBindingExpiryMs = Date.parse(lifecycle.stripeExpiresAtIso ?? "");
   const checkoutTargetExpiryMs = Date.parse(lifecycle.checkoutExpiresAtTargetIso ?? "");
-  return Number.isFinite(sessionExpiryMs)
+  const hasStrictSessionBindingMatch = Number.isFinite(sessionExpiryMs)
     && Number.isFinite(stripeBindingExpiryMs)
-    && Number.isFinite(checkoutTargetExpiryMs)
-    && sessionExpiryMs === stripeBindingExpiryMs
-    && sessionExpiryMs === checkoutTargetExpiryMs;
+    && sessionExpiryMs === stripeBindingExpiryMs;
+  if (!hasStrictSessionBindingMatch || !Number.isFinite(checkoutTargetExpiryMs)) {
+    return false;
+  }
+  if (checkoutTargetExpiryMs === sessionExpiryMs) {
+    return true;
+  }
+  const targetDeltaMs = checkoutTargetExpiryMs - sessionExpiryMs;
+  return targetDeltaMs > 0
+    && targetDeltaMs < 1000
+    && Math.floor(checkoutTargetExpiryMs / 1000) === Math.floor(sessionExpiryMs / 1000);
 }
 
 function isCurrentSubscriptionPeriod(

@@ -30,7 +30,7 @@ function loadTsModule(relativePath) {
       compilerOptions: {
         module: ts.ModuleKind.CommonJS,
         target: ts.ScriptTarget.ES2022,
-        jsx: ts.JsxEmit.ReactJSX
+        jsx: normalized.endsWith(".tsx") ? ts.JsxEmit.ReactJSX : undefined
       }
     }).outputText;
     const testModule = new Module(normalized);
@@ -737,7 +737,7 @@ const oldActive = await run(orderFixture, event("customer.subscription.updated")
   subscription: subscription("canceled"),
   invoice: invoice({ status: "void", paid: false })
 }, { suffix: "old-active-after-cancel" });
-assert.equal(oldActive.status, "complete");
+assert.equal(oldActive.status, "complete", `old active convergence reason=${oldActive.reason ?? "none"}`);
 assert.equal(orderFixture.projections.at(-1).status, "canceled", "current Stripe object wins over an old active event");
 
 const disputeFixture = createFixture();
@@ -987,8 +987,26 @@ const oldWonAfterSeparateDispute = await run(
   },
   { suffix: "old-won-dispute-a" }
 );
-assert.equal(oldWonAfterSeparateDispute.status, "complete");
-assert.equal(oldWonAfterSeparateDispute.projection, "ignored");
+assert.equal(oldWonAfterSeparateDispute.status, "retryable");
+assert.equal(oldWonAfterSeparateDispute.reason, "lease-conflict", "a separate ignored dispute keeps the bounded projection lease");
+const oldWonAfterLeaseExpiry = await run(
+  oldWonAfterSeparateDisputeFixture,
+  event("charge.dispute.closed", "dispute-a", {}, { id: "event-old-won-dispute-a" }),
+  {
+    dispute: {
+      id: "dispute-a",
+      status: "won",
+      customerId: "customer-reference",
+      subscriptionId: "subscription-reference",
+      invoiceId: "invoice-reference"
+    },
+    subscription: subscription("active"),
+    invoice: invoice()
+  },
+  { suffix: "old-won-dispute-a-retry", nowIso: "2026-08-13T00:02:01.000Z" }
+);
+assert.equal(oldWonAfterLeaseExpiry.status, "complete");
+assert.equal(oldWonAfterLeaseExpiry.projection, "ignored");
 assert.deepEqual(
   oldWonAfterSeparateDisputeFixture.projections.map((projection) => projection.status),
   ["dispute"],

@@ -36,7 +36,7 @@ const billingCopy = {
       },
       paid: {
         label: "Plus",
-        body: "US$6／月（税込・USD請求）。自動更新で、解約は次回更新時に反映します。"
+        body: "US$6/月（支払総額・USD請求）。自動更新で、解約は次回更新時に反映します。"
       },
       safety: {
         label: "最大値と安全停止",
@@ -52,7 +52,7 @@ const billingCopy = {
     portalUnavailable: "Customer Portalは現在利用できません",
     billingControlsTitle: "Billing操作",
     billingControlsBody: "Checkout前に必須同意とdocument versionをサーバー側へ保存します。Portalは同意未完了でも、既存契約の支払い方法・請求履歴・期間終了時解約を確認する導線です。",
-    checkoutDisclosure: "Checkout直前: US$6／月（税込・USD請求・自動更新）。契約更新周期あたり最大500,000入力文字ですが保証値ではなく、解約は次回更新日に反映します。コメント本文は翻訳処理のためOpenAIまたはAzureへ送信されます。",
+    checkoutDisclosure: "Checkout直前: US$6/月（支払総額・USD請求）。自動更新です。適用される税がある場合はStripe Checkoutで表示されます。契約更新周期あたり最大500,000入力文字ですが保証値ではなく、解約は次回更新日に反映します。コメント本文は翻訳処理のためOpenAIまたはAzureへ送信されます。",
     stripeBillingDisclosure: "Stripeは支払いと税計算のため、国・郵便番号などの請求情報を収集します。入力項目は国・地域・決済方法により異なり、データはStripe Customerで管理されます。当サービスは完全な請求先住所を保持しません。",
     privacyDataBoundary: "当サービスDBでは、画面表示とセッション復元に必要なsanitized feed snapshot（表示用コメント本文、翻訳結果、safe author display name）をセッション終了後最大24時間保存します。Provider request detail、ログ、集計、冪等台帳にはコメント本文を複製しません。Provider側では各社の処理・保持方針が適用されます。",
     salesAndPayment: "販売対象は日本（JP）および米国（US）です。クレジットカード、デビットカード等のカード系決済に限り、振込には対応しません。",
@@ -70,6 +70,8 @@ const billingCopy = {
       "unsupported-region": "現在の接続地域では購入できません",
       "capacity-full": "現在、新規受付を停止しています",
       "settings-stopped": "設定により購入を停止しています",
+      "us-checkout-stopped": "米国からの新規購入を一時停止しています",
+      "tax-settings-stopped": "税設定を確認するまで購入を停止しています",
       "payment-stopped": "支払い状態の確認が必要です",
       "lifecycle-processing": "既存の契約処理を確認中です",
       "poll-budget-stop": "運用上限により購入を停止しています",
@@ -83,6 +85,8 @@ const billingCopy = {
       "unsupported-region": "現在の接続地域では購入できません。居住国の判定や保存は行いません。",
       "capacity-full": "20枠のcapacity authorityが満員です。空きが確認されるまで新規Checkoutを作成しません。",
       "settings-stopped": "運用設定または支払い設定が停止状態です。Freeの利用には影響しません。",
+      "us-checkout-stopped": "税務登録の確認中は、米国からの新規Checkoutだけを保守的に停止します。既存契約の管理には影響しません。",
+      "tax-settings-stopped": "automatic taxと税務登録準備の設定を安全に確認できないため、新規Checkoutをfail closedにしています。",
       "payment-stopped": "past_due / unpaid / disputeまたは支払い停止状態です。既存契約はCustomer Portalで確認してください。",
       "lifecycle-processing": "既存の非終端billing lifecycleまたはreconciliationを確認中です。新規Subscriptionは作成しません。",
       "poll-budget-stop": "poll budgetの80%停止判定を含むserver-derivedな運用上限です。次のUTC reset後に再確認します。",
@@ -107,6 +111,8 @@ const billingCopy = {
       "existing-checkout-session": "既存Checkoutを確認中です。新しいCheckoutは作成しません。",
       "billing-state-conflict": "既存のbilling状態を確認中です。",
       "settings-stopped": "設定によりCheckoutを停止しています。",
+      "us-checkout-stopped": "米国からの新規Checkoutを一時停止しています。",
+      "tax-settings-stopped": "税設定を安全に確認できないためCheckoutを停止しています。",
       "paid-core-v1-unavailable": "安全なサーバー状態を確認できないため、Plusの購入を停止しています。",
       "rate-limit-exceeded": "操作が短時間に集中しています。少し待ってから再試行してください。"
     } as Record<string, string>,
@@ -139,7 +145,7 @@ const billingCopy = {
       },
       paid: {
         label: "Plus",
-        body: "US$6/month (tax inclusive, billed in USD), automatic renewal, with cancellation at the next renewal."
+        body: "US$6/month (total price, billed in USD), automatic renewal, with cancellation at the next renewal."
       },
       safety: {
         label: "Maximum and safety stops",
@@ -155,7 +161,7 @@ const billingCopy = {
     portalUnavailable: "Customer Portal is currently unavailable",
     billingControlsTitle: "Billing actions",
     billingControlsBody: "Required consent and document versions are stored server-side before Checkout. Portal remains a separate path for payment method, invoice history, and cancel-at-period-end management even when consent is incomplete.",
-    checkoutDisclosure: "Immediately before Checkout: US$6/month (tax inclusive, billed in USD, automatic renewal). Up to 500,000 input characters per contract renewal period is not guaranteed, and cancellation takes effect at the next renewal. Comment text is sent to OpenAI or Azure for translation processing.",
+    checkoutDisclosure: "Immediately before Checkout: US$6/month (total price, billed in USD). Automatic renewal applies. Any applicable tax is shown in Stripe Checkout. Up to 500,000 input characters per contract renewal period is not guaranteed, and cancellation takes effect at the next renewal. Comment text is sent to OpenAI or Azure for translation processing.",
     stripeBillingDisclosure: "Stripe collects billing information such as country and postal code for payment and tax. Fields vary by country, region, and payment method, and the data is managed on the Stripe Customer. The app does not retain the complete billing address.",
     privacyDataBoundary: "Our DB stores a sanitized feed snapshot needed for display and session restoration (displayed comment text, translation result, and safe author display name) for up to 24 hours after session end. Comment text is not copied into Provider request detail, logs, aggregates, or idempotency ledgers. Provider-specific processing and retention policies apply.",
     salesAndPayment: "Sales are limited to Japan (JP) and the United States (US). Only credit cards and debit cards, plus supported card-based methods such as Stripe Link, are supported; Bank transfer is not supported.",
@@ -173,6 +179,8 @@ const billingCopy = {
       "unsupported-region": "Purchase unavailable in the current connection region",
       "capacity-full": "New intake is currently paused",
       "settings-stopped": "Purchase stopped by settings",
+      "us-checkout-stopped": "New US purchases are temporarily paused",
+      "tax-settings-stopped": "Purchase stopped while tax settings are checked",
       "payment-stopped": "Payment state needs attention",
       "lifecycle-processing": "Existing billing is processing",
       "poll-budget-stop": "Purchase stopped by an operational limit",
@@ -186,6 +194,8 @@ const billingCopy = {
       "unsupported-region": "Purchase is unavailable in the current connection region. Residence is not determined or stored.",
       "capacity-full": "The 20-slot capacity authority is full. No new Checkout is created until capacity is available.",
       "settings-stopped": "Operational or billing settings are stopped. Free remains unaffected.",
+      "us-checkout-stopped": "Only new US Checkout is paused conservatively during tax-registration review. Existing contract management remains available.",
+      "tax-settings-stopped": "New Checkout fails closed because automatic-tax and registration-readiness settings could not be confirmed safely.",
       "payment-stopped": "past_due / unpaid / dispute or another payment stop is active. Manage the existing contract in Customer Portal.",
       "lifecycle-processing": "An existing non-terminal billing lifecycle or reconciliation is being checked. No new Subscription is created.",
       "poll-budget-stop": "A server-derived operational gate, including the 80% poll-budget Checkout stop, is active. Recheck after the next UTC reset.",
@@ -210,6 +220,8 @@ const billingCopy = {
       "existing-checkout-session": "An existing Checkout is being checked; no new Checkout is created.",
       "billing-state-conflict": "Existing billing state is being checked.",
       "settings-stopped": "Checkout is stopped by server settings.",
+      "us-checkout-stopped": "New US Checkout is temporarily paused.",
+      "tax-settings-stopped": "Checkout is stopped because tax settings could not be confirmed safely.",
       "paid-core-v1-unavailable": "Purchase is stopped because a safe server state could not be confirmed.",
       "rate-limit-exceeded": "Too many billing actions arrived together. Wait briefly and retry."
     } as Record<string, string>,
@@ -230,7 +242,7 @@ function formatMinutes(ms: number, locale: "ja" | "en") {
 
 function formatPrice(option: PlanOption, locale: "ja" | "en") {
   if (option.displayPrice.monthlyAmount === 0) return locale === "ja" ? "無料" : "Free";
-  return locale === "ja" ? "US$6／月（税込・USD請求）" : "US$6/month (tax inclusive, billed in USD)";
+  return locale === "ja" ? "US$6/月（支払総額・USD請求）" : "US$6/month (total price, billed in USD)";
 }
 
 function StatusPill({ children }: { children: string }) {

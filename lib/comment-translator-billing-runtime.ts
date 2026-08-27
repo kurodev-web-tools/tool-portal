@@ -46,7 +46,7 @@ export const commentTranslatorPaidV1Task8BillingUiContract = {
     currency: "USD",
     monthlyAmount: 6,
     yearlyAmount: null,
-    taxInclusive: true,
+    totalPrice: true,
     automaticRenewal: true
   },
   paidBillingPeriod: {
@@ -67,6 +67,8 @@ export const commentTranslatorPaidV1Task8BillingUiContract = {
     "unsupported-region",
     "capacity-full",
     "settings-stopped",
+    "us-checkout-stopped",
+    "tax-settings-stopped",
     "payment-stopped",
     "lifecycle-processing",
     "poll-budget",
@@ -85,6 +87,8 @@ export type CommentTranslatorBillingUiState =
   | "unsupported-region"
   | "capacity-full"
   | "settings-stopped"
+  | "us-checkout-stopped"
+  | "tax-settings-stopped"
   | "payment-stopped"
   | "lifecycle-processing"
   | "poll-budget-stop"
@@ -309,7 +313,7 @@ export type CommentTranslatorPlanOptionViewModel = {
     currency: "USD";
     monthlyAmount: number;
     yearlyAmount: number | null;
-    taxInclusive: true;
+    totalPrice: true;
     automaticRenewal: boolean;
   };
   entitlement: CommentTranslatorBillingPlanEntitlementBrowserSafe;
@@ -350,7 +354,7 @@ export type CommentTranslatorStripeCheckoutSessionParams = {
   cancelUrl: string;
   expiresAtIso: string;
   idempotencyKey: string;
-  automaticTax: true;
+  automaticTax: boolean;
   billingAddressCollection: "auto";
   customerUpdateAddress: "auto";
   paymentMethodTypes: readonly ["card"];
@@ -726,6 +730,9 @@ export async function createCommentTranslatorBillingPageBrowserSafeViewModel({
   }
 
   const portalAvailable = isCommentTranslatorBillingPortalAvailable({ lifecycle, env });
+  const newCheckoutSettings = regionGate.status === "allowed" && lifecycle === null
+    ? resolveCommentTranslatorPaidNewCheckoutSettings({ regionGate, env })
+    : null;
   if (checkoutConfig.status === "missing") {
     return createCommentTranslatorBillingBrowserSafeViewModelFromSnapshot({
       snapshot: createCommentTranslatorBillingSnapshotFromDurableState({
@@ -735,7 +742,11 @@ export async function createCommentTranslatorBillingPageBrowserSafeViewModel({
         nowMs
       }),
       env,
-      uiState: regionGate.status === "denied" ? regionGate.reason : "infra",
+      uiState: regionGate.status === "denied"
+        ? regionGate.reason
+        : newCheckoutSettings?.status === "stopped"
+          ? newCheckoutSettings.reason
+          : "infra",
       checkoutAvailable: false,
       portalAvailable,
       consentVersions
@@ -763,12 +774,16 @@ export async function createCommentTranslatorBillingPageBrowserSafeViewModel({
   if (checkoutAvailable && regionGate.status === "denied") {
     uiState = regionGate.reason;
     checkoutAvailable = false;
-  } else if (checkoutAvailable && !consentReady) {
-    uiState = "infra";
-    checkoutAvailable = false;
-  } else if (checkoutAvailable && readExplicitBooleanEnv(env.COMMENT_TRANSLATOR_PAID_CHECKOUT_ENABLED) !== true) {
-    uiState = "settings-stopped";
-    checkoutAvailable = false;
+  } else if (checkoutAvailable && regionGate.status === "allowed") {
+    const checkoutSettings = newCheckoutSettings
+      ?? resolveCommentTranslatorPaidNewCheckoutSettings({ regionGate, env });
+    if (checkoutSettings.status === "stopped") {
+      uiState = checkoutSettings.reason;
+      checkoutAvailable = false;
+    } else if (!consentReady) {
+      uiState = "infra";
+      checkoutAvailable = false;
+    }
   }
   return createCommentTranslatorBillingBrowserSafeViewModelFromSnapshot({
     snapshot: projection.snapshot,
@@ -811,7 +826,7 @@ export function createCommentTranslatorPlanComparisonViewModel({
           currency: "USD",
           monthlyAmount: 0,
           yearlyAmount: null,
-          taxInclusive: true,
+          totalPrice: true,
           automaticRenewal: false
         },
         entitlement: createCommentTranslatorBillingPlanEntitlementBrowserSafe(freeEntitlement),
@@ -837,7 +852,7 @@ export function createCommentTranslatorPlanComparisonViewModel({
           currency: "USD",
           monthlyAmount: 6,
           yearlyAmount: null,
-          taxInclusive: true,
+          totalPrice: true,
           automaticRenewal: true
         },
         entitlement: createCommentTranslatorBillingPlanEntitlementBrowserSafe(paidEntitlement),
@@ -940,10 +955,55 @@ function readCommentTranslatorPaidConsentVersions(env: CommentTranslatorStripeEn
 }
 
 function readExplicitBooleanEnv(value: string | undefined): boolean | null {
-  const normalized = value?.trim().toLowerCase();
-  if (normalized === "true") return true;
-  if (normalized === "false") return false;
+  if (value === "true") return true;
+  if (value === "false") return false;
   return null;
+}
+
+export type CommentTranslatorPaidTaxConfiguration =
+  | { status: "ready"; mode: "monitoring-only"; automaticTax: false }
+  | { status: "ready"; mode: "registered-ready"; automaticTax: true }
+  | { status: "invalid"; reason: "tax-settings-stopped" };
+
+export function resolveCommentTranslatorPaidTaxConfiguration(
+  env: CommentTranslatorStripeEnv
+): CommentTranslatorPaidTaxConfiguration {
+  const automaticTax = readExplicitBooleanEnv(env.COMMENT_TRANSLATOR_PAID_AUTOMATIC_TAX_ENABLED);
+  const registrationReady = readExplicitBooleanEnv(env.COMMENT_TRANSLATOR_PAID_TAX_REGISTRATION_READY);
+  if (automaticTax === false && registrationReady === false) {
+    return { status: "ready", mode: "monitoring-only", automaticTax: false };
+  }
+  if (automaticTax === true && registrationReady === true) {
+    return { status: "ready", mode: "registered-ready", automaticTax: true };
+  }
+  return { status: "invalid", reason: "tax-settings-stopped" };
+}
+
+export type CommentTranslatorPaidNewCheckoutSettings =
+  | { status: "ready"; automaticTax: boolean }
+  | { status: "stopped"; reason: "settings-stopped" | "us-checkout-stopped" | "tax-settings-stopped" };
+
+export function resolveCommentTranslatorPaidNewCheckoutSettings({
+  regionGate,
+  env
+}: {
+  regionGate: Extract<CommentTranslatorPaidRegionDecision, { status: "allowed" }>;
+  env: CommentTranslatorStripeEnv;
+}): CommentTranslatorPaidNewCheckoutSettings {
+  if (readExplicitBooleanEnv(env.COMMENT_TRANSLATOR_PAID_CHECKOUT_ENABLED) !== true) {
+    return { status: "stopped", reason: "settings-stopped" };
+  }
+  if (
+    regionGate.country === "US"
+    && readExplicitBooleanEnv(env.COMMENT_TRANSLATOR_PAID_US_CHECKOUT_ENABLED) !== true
+  ) {
+    return { status: "stopped", reason: "us-checkout-stopped" };
+  }
+  const taxConfiguration = resolveCommentTranslatorPaidTaxConfiguration(env);
+  if (taxConfiguration.status === "invalid") {
+    return { status: "stopped", reason: taxConfiguration.reason };
+  }
+  return { status: "ready", automaticTax: taxConfiguration.automaticTax };
 }
 
 export async function readCommentTranslatorBillingCheckoutSafetyGate({
@@ -1270,6 +1330,8 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
         | "stripe-session-url-missing"
         | "rate-limit-exceeded"
         | "settings-stopped"
+        | "us-checkout-stopped"
+        | "tax-settings-stopped"
         | "poll-budget-stop"
         | "paid-core-v1-unavailable";
       missingEnvReferences: CommentTranslatorStripeEnvName[];
@@ -1316,14 +1378,6 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
     };
   }
 
-  if (readExplicitBooleanEnv(env.COMMENT_TRANSLATOR_PAID_CHECKOUT_ENABLED) !== true) {
-    return {
-      status: "unavailable",
-      reason: "settings-stopped",
-      missingEnvReferences: []
-    };
-  }
-
   const checkoutConfig = readCommentTranslatorPaidCheckoutConfig(env);
   if (checkoutConfig.status === "missing") {
     return {
@@ -1355,6 +1409,23 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
     existingLifecycleNeedsCheckoutConsent
     && existingLifecycle?.holdId !== null
     && existingLifecycle?.holdId !== undefined;
+  let automaticTaxForNewSession: boolean | null = null;
+  if (!existingLifecycle) {
+    const checkoutSettings = resolveCommentTranslatorPaidNewCheckoutSettings({ regionGate, env });
+    if (checkoutSettings.status === "stopped") {
+      return { status: "unavailable", reason: checkoutSettings.reason, missingEnvReferences: [] };
+    }
+    automaticTaxForNewSession = checkoutSettings.automaticTax;
+  } else if (existingLifecycle.lifecycleState === "checkout_hold" && existingLifecycle.checkoutSessionId === null) {
+    if (readExplicitBooleanEnv(env.COMMENT_TRANSLATOR_PAID_CHECKOUT_ENABLED) !== true) {
+      return { status: "unavailable", reason: "settings-stopped", missingEnvReferences: [] };
+    }
+    const taxConfiguration = resolveCommentTranslatorPaidTaxConfiguration(env);
+    if (taxConfiguration.status === "invalid") {
+      return { status: "unavailable", reason: taxConfiguration.reason, missingEnvReferences: [] };
+    }
+    automaticTaxForNewSession = taxConfiguration.automaticTax;
+  }
   if (existingLifecycle && !existingLifecycleNeedsCheckoutConsent) {
     return convergeExistingPaidBillingLifecycle({
       lifecycle: existingLifecycle,
@@ -1367,7 +1438,8 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
       env,
       nowIso,
       checkoutSafetyAuthorityReader: resolvedCheckoutSafetyAuthorityReader,
-      nowMs
+      nowMs,
+      automaticTax: automaticTaxForNewSession
     });
   }
 
@@ -1439,7 +1511,8 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
       env,
       nowIso,
       checkoutSafetyAuthorityReader: resolvedCheckoutSafetyAuthorityReader,
-      nowMs
+      nowMs,
+      automaticTax: automaticTaxForNewSession
     });
   }
   if (existingLifecycle) {
@@ -1454,8 +1527,12 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
       env,
       nowIso,
       checkoutSafetyAuthorityReader: resolvedCheckoutSafetyAuthorityReader,
-      nowMs
+      nowMs,
+      automaticTax: automaticTaxForNewSession
     });
+  }
+  if (automaticTaxForNewSession === null) {
+    return { status: "unavailable", reason: "tax-settings-stopped", missingEnvReferences: [] };
   }
 
   let stripeCustomerId: string;
@@ -1522,7 +1599,7 @@ export async function createCommentTranslatorStripeCheckoutSessionResult({
     cancelUrl: new URL("/account/billing?billing=checkout-canceled", checkoutConfig.siteOrigin).toString(),
     expiresAtIso: checkoutExpiresAtTargetIso,
     idempotencyKey: initialization.idempotencyKey,
-    automaticTax: true,
+    automaticTax: automaticTaxForNewSession,
     billingAddressCollection: "auto",
     customerUpdateAddress: "auto",
     paymentMethodTypes: ["card"],
@@ -2062,7 +2139,8 @@ async function convergeExistingPaidBillingLifecycle({
   env,
   nowIso,
   checkoutSafetyAuthorityReader,
-  nowMs
+  nowMs,
+  automaticTax
 }: {
   lifecycle: CommentTranslatorPaidCheckoutLifecycle;
   stripeAdapter: Pick<
@@ -2078,6 +2156,7 @@ async function convergeExistingPaidBillingLifecycle({
   nowIso: string;
   checkoutSafetyAuthorityReader?: CommentTranslatorBillingCheckoutSafetyAuthorityReader | null;
   nowMs: number;
+  automaticTax: boolean | null;
 }) {
   if (
     lifecycle.lifecycleState === "expire_required" &&
@@ -2179,6 +2258,9 @@ async function convergeExistingPaidBillingLifecycle({
       lifecycle.checkoutExpiresAtTargetIso &&
       !lifecycle.subscriptionId
     ) {
+      if (automaticTax === null) {
+        return { status: "unavailable" as const, reason: "tax-settings-stopped" as const, missingEnvReferences: [] };
+      }
       const initialization: CommentTranslatorPaidCheckoutInitialization = {
         lifecycleId: lifecycle.lifecycleId,
         holdId: lifecycle.holdId,
@@ -2214,7 +2296,7 @@ async function convergeExistingPaidBillingLifecycle({
         cancelUrl: new URL("/account/billing?billing=checkout-canceled", siteOrigin).toString(),
         expiresAtIso: lifecycle.checkoutExpiresAtTargetIso,
         idempotencyKey: lifecycle.idempotencyKey,
-        automaticTax: true,
+        automaticTax,
         billingAddressCollection: "auto",
         customerUpdateAddress: "auto",
         paymentMethodTypes: ["card"],
@@ -2947,6 +3029,7 @@ async function projectCurrentStripeGraph({
   if (
     eventType.startsWith("customer.subscription.") &&
     eventType !== "customer.subscription.deleted" &&
+    subscription.status !== "canceled" &&
     (!graph.invoice || graph.invoice.status !== "paid" || !graph.invoice.paid)
   ) {
     return { status: "retryable", reason: "object-retrieval-failed", errorClass: "object-retrieval-failed" };
@@ -3433,7 +3516,7 @@ export function createCommentTranslatorStripeAdapter(
       }
       if (
         params.mode !== "subscription"
-        || params.automaticTax !== true
+        || typeof params.automaticTax !== "boolean"
         || params.billingAddressCollection !== "auto"
         || params.customerUpdateAddress !== "auto"
       ) {
@@ -3457,7 +3540,7 @@ export function createCommentTranslatorStripeAdapter(
       form.set("success_url", params.successUrl);
       form.set("cancel_url", params.cancelUrl);
       form.set("expires_at", String(expiresAtSeconds));
-      form.set("automatic_tax[enabled]", "true");
+      form.set("automatic_tax[enabled]", String(params.automaticTax));
       form.set("billing_address_collection", "auto");
       form.set("customer_update[address]", "auto");
       form.set("payment_method_types[0]", "card");

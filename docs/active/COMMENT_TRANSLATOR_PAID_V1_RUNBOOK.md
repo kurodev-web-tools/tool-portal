@@ -19,7 +19,7 @@
 
 | 項目 | Canonical wording / boundary |
 | --- | --- |
-| 価格 | 月額US$6（税込・USD請求）、自動更新。カード会社の換算額・手数料は変動し得る。 |
+| 価格 | JA: `US$6/月（支払総額・USD請求）`、EN: `US$6/month (total price, billed in USD)`、自動更新。適用される税がある場合はStripe Checkoutで表示する。カード会社の換算額・手数料は変動し得る。 |
 | 利用枠 | 契約更新周期あたり最大50万入力文字（500,000文字）。保証文字数ではなく、個人・全体・運用上限で先に停止し得る。 |
 | 販売 | 日本（JP）および米国（US）。クレジットカード、デビットカード等のカード系のみ。振込には対応しない。 |
 | 解約・返金 | 解約は次回更新日から有効。日割り返金は自動提供せず、返金は二重課金、法令上必要な場合、重大障害等を個別確認する。 |
@@ -71,14 +71,27 @@
 
 ## 5. kill switch と安全停止
 
-独立した設定を次の4つとして扱う。設定値はrunbookやログへ出さず、statusだけを確認する。
+独立した設定を次の7つとして扱う。設定値はrunbookやログへ出さず、statusだけを確認する。
 
 - `checkout_enabled`: 新規Checkoutの作成可否
+- `us_checkout_enabled`: USからの新規Checkoutだけの作成可否
+- `automatic_tax_enabled`: Stripe Checkout automatic taxの有効化
+- `tax_registration_ready`: 必要な公的登録とStripe registrationの準備確認
 - `paid_translation_enabled`: Paid翻訳全体の可否
 - `openai_enabled`: OpenAI通常経路の可否
 - `azure_fallback_enabled`: PaidのAzure fallback可否
 
 欠損・不正・読み取り不能は安全側へ倒す。Full kill switchではPaid翻訳とfallbackを停止する。OpenAI障害だけで`paid_translation_enabled`を無条件に切り替えず、Provider failure class、circuit state、Azureの安全余白と台帳読取可否を確認する。
+
+`automatic_tax_enabled=false`かつ`tax_registration_ready=false`はmonitoring-only modeとして新規Checkoutを許可でき、Stripeへ`automatic_tax[enabled]=false`を送る。両方trueはregistered-ready modeとして同`true`を送る。片方だけtrue、欠損、空白付き、大文字、alias値は`tax-settings-stopped`としてJP/US双方の新規Customer、hold、Session作成前に停止する。unbound recoveryも新しいSessionを作らずretryableへ収束する。
+
+US switchは新規購入のadmission gateだけであり、既存Subscription、entitlement、translation、Webhook projection、Customer Portal、支払い方法、請求履歴、cancel-at-period-end、解約reconciliationへ適用しない。US停止で自動解約・返金・capacity releaseを行わない。US switchを落とす前に発行済みのCheckout URLと、すでにadmit済みの同一idempotency holdは既存in-flight residualである。国を永続化しないためUSだけを遡及判定せず、緊急時の発行済みSession expiryはglobal Checkoutの別承認運用とする。
+
+### 5.1 Stripe Tax MonitoringとUS activation
+
+Monitoringは法的判断authorityではなく、内部分類を`normal`、`approaching`、`needs-attention`、`legal-review-required`、`monitoring-unavailable-or-stale`に限定する。反映は最大7日遅れ得るため、threshold exceededを待たない。US新規Checkoutを許可できるのは、税務専門家が開始時点のregistration duty、physical/economic nexus、商品課税区分を確認して開始可と判断し、分類が`normal`、US switchが明示trueのときだけである。`approaching`以降またはunavailable/staleではUS全体の新規Checkoutを停止する。
+
+登録義務が確認された場合は、(1) US新規Checkout停止、(2) 専門家が対象州と商品分類を確定、(3) 州当局へ登録、(4) Stripe active registration追加、(5) test/PreviewでTax計算・Checkout/invoice表示・inclusive totalを検証、(6) tax設定2値をtrueにする個別承認、(7) US switch再開の別承認、の順とする。Stripe registrationは州当局登録の代替ではなく、架空・便宜的registrationは禁止する。
 
 ## 6. Provider障害
 
@@ -138,7 +151,7 @@ Supabase、Cloudflare、Azure、OpenAIの設定・使用量が読めない場合
 公開前に、次を専門家または公的情報で確認する。Task 10では未確認事項を断定しない。
 
 - 税務: JP/USの販売対象、税務登録、申告・納付、Stripe Taxの設定だけで足りるか。
-- 特商法: 販売価格、税込表示、自動更新、解約、返金、提供時期、事業者情報、カード系のみ・振込非対応の表示。
+- 特商法: 販売価格、支払総額、適用税のCheckout表示、自動更新、解約、返金、提供時期、事業者情報、カード系のみ・振込非対応の表示。
 - Privacy: sanitized feed snapshotのsession終了+24時間、OpenAI最大30日保持可能性、Azure No-Trace、Stripe・Supabase・Cloudflareの委託/越境/保持説明。
 - Terms: 50万文字が保証値ではなく安全上限で先行停止し得ること、disputeのowner限定処理、account deletion、返金の個別判断。
 - Provider/Stripe: 実環境のデータ利用、保持、ZDR資格、税・決済手数料、支払方法、Webhook/Portalの最終条件。

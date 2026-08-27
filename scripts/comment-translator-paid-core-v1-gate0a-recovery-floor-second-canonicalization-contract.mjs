@@ -16,13 +16,13 @@ const originalFloorMigration = read(originalFloorMigrationPath);
 const billingRuntime = read("lib/comment-translator-billing-runtime.ts");
 const originalFloorMigrationSha256 = crypto
   .createHash("sha256")
-  .update(originalFloorMigration)
+  .update(originalFloorMigration.replace(/\r\n/g, "\n"))
   .digest("hex");
 
 assert.equal(
   originalFloorMigrationSha256,
   "53b073fcb8229ac5c674d9bc247a946a9a36ed1c81965503dc0ca279a4f28944",
-  "the original floor migration remains byte-for-byte unchanged"
+  "the original floor migration content remains unchanged across platform checkout line endings"
 );
 assert.ok(
   canonicalFloorMigrationPath > originalFloorMigrationPath,

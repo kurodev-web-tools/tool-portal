@@ -44,12 +44,15 @@ const baseEnv = {
   COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_paid_usd_600",
   COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID: "prod_paid",
   COMMENT_TRANSLATOR_PAID_CHECKOUT_ENABLED: "true",
+  COMMENT_TRANSLATOR_PAID_US_CHECKOUT_ENABLED: "true",
+  COMMENT_TRANSLATOR_PAID_AUTOMATIC_TAX_ENABLED: "false",
+  COMMENT_TRANSLATOR_PAID_TAX_REGISTRATION_READY: "false",
   NEXT_PUBLIC_SITE_URL: "https://example.test",
   COMMENT_TRANSLATOR_TERMS_VERSION: "terms-v1",
   COMMENT_TRANSLATOR_PRIVACY_VERSION: "privacy-v1",
   COMMENT_TRANSLATOR_PAID_CONDITIONS_VERSION: "paid-v1"
 };
-const allowedRegion = { status: "allowed", countryCode: "JP" };
+const allowedRegion = { status: "allowed", country: "JP" };
 const caller = (ownerUserId) => ({ status: "authorized", ownerUserId });
 const availableCheckoutSafetyAuthorityReader = {
   async readCheckoutSafetyAuthority() {
@@ -235,6 +238,7 @@ class EntitlementStore {
 
 class StripeFixture {
   constructor() {
+    this.customerCalls = 0;
     this.createCalls = 0;
     this.retrieveCalls = 0;
     this.expireCalls = 0;
@@ -245,6 +249,7 @@ class StripeFixture {
     this.throwExpireAfterPersist = false;
   }
   async createCustomer({ idempotencyKey }) {
+    this.customerCalls += 1;
     return { id: `cus_${idempotencyKey.slice(-12)}` };
   }
   async createCheckoutSession(params) {
@@ -641,10 +646,18 @@ assert.equal(durablePastDueViewWithMissingConfig.portalAvailable, true, "missing
     ownerUserId: "existing-open-at-capacity-owner",
     store,
     stripe,
+    env: {
+      ...baseEnv,
+      COMMENT_TRANSLATOR_PAID_US_CHECKOUT_ENABLED: "false",
+      COMMENT_TRANSLATOR_PAID_AUTOMATIC_TAX_ENABLED: "true",
+      COMMENT_TRANSLATOR_PAID_TAX_REGISTRATION_READY: "false"
+    },
+    regionGate: { status: "allowed", country: "US" },
     checkoutSafetyAuthorityReader: capacityAwareCheckoutSafetyAuthorityReader(20)
   });
-  assert.equal(result.status, "redirect-ready", "an existing open Checkout Session converges at the 20-slot boundary");
-  assert.equal(stripe.createCalls, 0, "existing open Session recovery does not create another Checkout Session");
+  assert.equal(result.status, "redirect-ready", "an existing open Checkout Session remains recoverable despite stopped US and invalid tax settings");
+  assert.equal(result.url, "https://checkout.example.test/existing-open-at-capacity");
+  assert.equal(stripe.createCalls, 0, "existing open Session recovery preserves the in-flight residual without creating another Checkout Session");
 }
 
 {
@@ -671,10 +684,16 @@ assert.equal(durablePastDueViewWithMissingConfig.portalAvailable, true, "missing
     ownerUserId: "existing-hold-at-capacity-owner",
     store,
     stripe,
+    env: {
+      ...baseEnv,
+      COMMENT_TRANSLATOR_PAID_AUTOMATIC_TAX_ENABLED: "true",
+      COMMENT_TRANSLATOR_PAID_TAX_REGISTRATION_READY: "true"
+    },
     checkoutSafetyAuthorityReader: capacityAwareCheckoutSafetyAuthorityReader(20)
   });
   assert.equal(result.status, "redirect-ready", "a session-less existing Checkout hold converges at the 20-slot boundary");
   assert.equal(stripe.createCalls, 1, "a session-less existing hold creates exactly one recovery Checkout Session");
+  assert.equal(result.observed.automaticTax, true, "registered-ready existing hold recovery sends automaticTax=true");
   assert.equal(store.lifecycles.get("existing-hold-at-capacity-owner").checkoutSessionId, "cs_1");
 }
 
@@ -690,6 +709,51 @@ for (const checkoutEnabled of [undefined, "invalid", "1", "on"]) {
   });
   assert.equal(result.status, "unavailable");
   assert.equal(result.reason, "settings-stopped", "missing or invalid kill switch stops Checkout");
+}
+
+for (const usCheckoutEnabled of [undefined, "false", "true ", "1", "on", "TRUE", ""]) {
+  const env = { ...baseEnv, COMMENT_TRANSLATOR_PAID_US_CHECKOUT_ENABLED: usCheckoutEnabled };
+  if (usCheckoutEnabled === undefined) delete env.COMMENT_TRANSLATOR_PAID_US_CHECKOUT_ENABLED;
+  const store = new EntitlementStore();
+  const stripe = new StripeFixture();
+  const result = await checkout({
+    ownerUserId: `us-checkout-stopped-${usCheckoutEnabled ?? "missing"}`,
+    store,
+    stripe,
+    env,
+    regionGate: { status: "allowed", country: "US" }
+  });
+  assert.equal(result.reason, "us-checkout-stopped");
+  assert.equal(stripe.customerCalls, 0, "US stop runs before Stripe Customer creation");
+  assert.equal(store.lifecycles.size, 0, "US stop runs before hold creation");
+
+  const jpResult = await checkout({
+    ownerUserId: `jp-not-stopped-${usCheckoutEnabled ?? "missing"}`,
+    store: new EntitlementStore(),
+    stripe: new StripeFixture(),
+    env,
+    regionGate: { status: "allowed", country: "JP" }
+  });
+  assert.equal(jpResult.status, "redirect-ready", "JP is independent from the US switch");
+}
+
+for (const [automaticTax, registrationReady] of [
+  ["true", "false"], ["false", "true"], [undefined, "false"], ["false", undefined],
+  [" true", "true"], ["true ", "true"], ["TRUE", "true"], ["1", "false"]
+]) {
+  const env = {
+    ...baseEnv,
+    COMMENT_TRANSLATOR_PAID_AUTOMATIC_TAX_ENABLED: automaticTax,
+    COMMENT_TRANSLATOR_PAID_TAX_REGISTRATION_READY: registrationReady
+  };
+  if (automaticTax === undefined) delete env.COMMENT_TRANSLATOR_PAID_AUTOMATIC_TAX_ENABLED;
+  if (registrationReady === undefined) delete env.COMMENT_TRANSLATOR_PAID_TAX_REGISTRATION_READY;
+  const store = new EntitlementStore();
+  const stripe = new StripeFixture();
+  const result = await checkout({ ownerUserId: `tax-stopped-${String(automaticTax)}-${String(registrationReady)}`, store, stripe, env });
+  assert.equal(result.reason, "tax-settings-stopped");
+  assert.equal(stripe.customerCalls, 0, "invalid tax settings stop before Stripe Customer creation");
+  assert.equal(store.lifecycles.size, 0, "invalid tax settings stop before hold creation");
 }
 
 for (const [regionGate, expectedReason] of [
@@ -725,6 +789,20 @@ for (const consent of [
   assert.equal(stripe.createCalls, 2);
   assert.equal(stripe.sessions.size, 1, "response-loss recovery reuses one idempotency key");
   assert.equal(result.observed.expiresAtIso, "2026-08-13T00:31:00.000Z", "DB and Stripe round-trip the same UTC second");
+  assert.equal(result.observed.automaticTax, false, "monitoring-only Checkout sends automaticTax=false");
+
+  const registered = await checkout({
+    ownerUserId: "registered-tax-owner",
+    store: new EntitlementStore(),
+    stripe: new StripeFixture(),
+    env: {
+      ...baseEnv,
+      COMMENT_TRANSLATOR_PAID_AUTOMATIC_TAX_ENABLED: "true",
+      COMMENT_TRANSLATOR_PAID_TAX_REGISTRATION_READY: "true"
+    }
+  });
+  assert.equal(registered.status, "redirect-ready");
+  assert.equal(registered.observed.automaticTax, true, "registered-ready Checkout sends automaticTax=true");
 
   const rotatedEnv = { ...baseEnv, COMMENT_TRANSLATOR_TERMS_VERSION: "terms-v2" };
   const retrieveCallsBeforeRotation = stripe.retrieveCalls;
@@ -820,10 +898,16 @@ for (const lifecycleState of ["past_due", "unpaid"]) {
     store,
     stripe: new StripeFixture(),
     consent: exactConsent({}),
+    env: {
+      ...baseEnv,
+      COMMENT_TRANSLATOR_PAID_US_CHECKOUT_ENABLED: "false",
+      COMMENT_TRANSLATOR_PAID_AUTOMATIC_TAX_ENABLED: "true",
+      COMMENT_TRANSLATOR_PAID_TAX_REGISTRATION_READY: "false"
+    },
     checkoutSafetyAuthorityReader: null
   });
   assert.equal(result.status, "redirect-ready");
-  assert.match(result.url, /payment-method-update/, `${lifecycleState} converges only to payment-method Portal`);
+  assert.match(result.url, /payment-method-update/, `${lifecycleState} converges only to payment-method Portal despite stopped new-Checkout settings`);
 }
 
 {
@@ -874,6 +958,9 @@ for (const lifecycleState of ["past_due", "unpaid"]) {
     const valid = await adapter.createCheckoutSession(params);
     assert.equal(valid.expiresAtIso, params.expiresAtIso);
     assert.equal(checkoutForm.get("expires_at"), String(Date.parse(params.expiresAtIso) / 1000), "Stripe receives the canonical DB UTC second");
+    assert.equal(checkoutForm.get("automatic_tax[enabled]"), "true", "registered-ready mode forwards automatic tax true");
+    await adapter.createCheckoutSession({ ...params, automaticTax: false });
+    assert.equal(checkoutForm.get("automatic_tax[enabled]"), "false", "monitoring-only mode forwards automatic tax false");
   } finally {
     globalThis.fetch = originalFetch;
   }

@@ -50,7 +50,8 @@ assert.match(
 assert.match(source.billingRuntime, /Kuro Live Comment Translator Plus/, "the only Paid product name is canonical");
 assert.match(source.billingRuntime, /monthlyAmount:\s*6/, "the Paid price is six USD per month");
 assert.match(source.billingRuntime, /yearlyAmount:\s*null/, "the browser model has no yearly Paid price");
-assert.match(source.billingRuntime, /taxInclusive|inclusiveTax|tax-inclusive/, "the model records tax-inclusive billing");
+assert.match(source.billingRuntime, /totalPrice:\s*true/, "the model records total price without a tax claim");
+assert.doesNotMatch(source.billingRuntime, /taxInclusive:\s*true/, "the browser-safe model does not make a tax-inclusive claim");
 assert.match(source.billingRuntime, /automaticRenewal|auto-renew|automatic renewal/, "the model records automatic renewal");
 assert.match(source.billingRuntime, /server-derived|serverDerived|server-owned/, "billing gates are server-derived");
 for (const marker of [
@@ -80,7 +81,7 @@ assert.match(
   /readExplicitBooleanEnv\(env\.COMMENT_TRANSLATOR_PAID_CHECKOUT_ENABLED\)\s*!==\s*true/,
   "Checkout proceeds only when its kill switch is explicitly true"
 );
-assert.match(source.billingRuntime, /normalized\s*===\s*"true"/, "Checkout kill switch accepts only the explicit true value");
+assert.match(source.billingRuntime, /value\s*===\s*"true"/, "Checkout kill switch accepts only the exact explicit true value");
 assert.doesNotMatch(source.billingRuntime, /\["true",\s*"1",\s*"on"\]/, "Checkout kill switch does not treat aliases as enabled");
 assert.match(source.billingRuntime, /resolveCommentTranslatorPaidPollBudgetGate/, "Checkout reuses the Paid poll-budget gate");
 assert.match(source.pollBudgetGate, /ratio\s*>=\s*0\.8/, "the shared gate stops Checkout at the 80 percent threshold");
@@ -154,7 +155,7 @@ assert.match(source.accountShell, /status:\s*billingStatusLabel/, "the account s
 for (const marker of [
   "Kuro Live Comment Translator Plus",
   "US$6",
-  "税込",
+  "支払総額",
   "USD",
   "自動更新",
   "500,000",
@@ -175,7 +176,7 @@ for (const marker of [
 ]) {
   assert.ok(source.billingShell.includes(marker), `billing UI includes ${marker}`);
 }
-for (const marker of ["capacity-full", "region-unavailable", "settings-stopped", "payment-stopped", "lifecycle-processing", "poll-budget"]) {
+for (const marker of ["capacity-full", "region-unavailable", "settings-stopped", "us-checkout-stopped", "tax-settings-stopped", "payment-stopped", "lifecycle-processing", "poll-budget"]) {
   assert.ok(source.billingShell.includes(marker), `billing UI distinguishes ${marker}`);
 }
 assert.match(source.billingRuntime, /finalCheckoutSafetyGate/, "Checkout has a final server-side safety recheck before Stripe");

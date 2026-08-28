@@ -148,7 +148,7 @@ for (const route of [source.privacyRoute, source.termsRoute]) {
 assert.match(routeSurface, /legalDocuments\.privacy/);
 assert.match(routeSurface, /legalDocuments\.terms/);
 assert.match(source.tokushohoRoute, /LocalizedTokushohoDocumentPage/);
-assert.match(source.tokushohoRoute, /canonical:\s*["']\/legal\/tokushoho["']/u);
+assert.match(source.tokushohoRoute, /canonical:\s*["']\/legal\/tokushoho\/["']/u);
 assert.match(source.localizedTokushoho, /tokushohoDocuments\[locale\]/u);
 assert.match(source.localizedTokushoho, /@\/lib\/legal-content/u);
 

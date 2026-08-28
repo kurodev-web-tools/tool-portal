@@ -2,7 +2,7 @@
 
 > **For agentic workers:** 実装は仕様承認後、`gpt-5.6-luna` / `max`の新しいトップレベル実装タスクへ引き渡す。必要な場合だけ、Luna Max親から`luna-implementer`へ非重複範囲を委譲する。実装完了後は`sol-reviewer` (`gpt-5.6-sol` / `medium`)がread-onlyレビューする。
 
-**状態:** 人間再承認待ち / 実装未承認
+**状態:** 承認済み。2026-08-27のJP免税表示・US Checkout・Stripe Tax安全仕様をTask 11 local implementation authorityとして反映。remote mutation、deploy、commit/push/PRは別承認。
 
 **作成日:** 2026-08-12
 
@@ -384,7 +384,7 @@ interface先行で並行準備しても、依存先の最終受入前に後続Ta
 - Modify: `lib/comment-translator-copy-en.json`
 - Test: UI contract、width QA
 
-- [ ] 旧JPY/年額/旧plan nameを削除し、US$6税込・USD・月額だけを表示する。
+- [ ] 旧JPY/年額/旧plan nameと税務主張を削除し、JA `US$6/月（支払総額・USD請求）`、EN `US$6/month (total price, billed in USD)`を表示する。
 - [ ] 必須同意とversion保存後だけCheckout actionを呼ぶ。
 - [ ] 満員、対象地域外、設定停止、支払い停止を区別して表示する。
 - [ ] 地域文言を「現在の接続地域では購入できません」とし、居住国を断定しない。
@@ -439,7 +439,7 @@ interface先行で並行準備しても、依存先の最終受入前に後続Ta
 - Create: Paid運用runbook（`docs/active`）
 - Test: legal/security/privacy contracts
 
-- [ ] USD・税込US$6・自動更新・「最大50万文字」・安全上限による先行停止可能性・保証文字数ではないこと・解約・返金・Provider送信を表示する。
+- [ ] USD・支払総額US$6・Checkoutでの適用税表示・自動更新・「最大50万文字」・安全上限による先行停止可能性・保証文字数ではないこと・解約・返金・Provider送信を表示する。
 - [ ] 当サービスDBがsanitized feed snapshotをsession終了+24時間保存し、Provider detail/ログ/集計/冪等台帳へ本文を複製しないことをLegal/Privacy/Paid条件で統一する。
 - [ ] 「コメント本文を一切保存しない」「当サービスDBに保存しない」「自サービス非保存」を公開文言とcontractから除外する。
 - [ ] OpenAI最大30日保持可能性、Azure方針、当サービスの24時間snapshot保持を区別する。
@@ -471,6 +471,13 @@ T11より前に、次を一括承認とみなさず、対象、値を出力し�
 ### Task 11: Local/Preview統合QA
 
 **Ownership:** Gate 0で承認済みのtest mode/Previewとfixtureだけ。live/productionは対象外。
+
+**Entry:** `Gate 0 overall -> Task 11`を維持する。JP免税表示・US Checkout・Stripe Tax安全仕様の実装、Preview反映、再検証が完了するまでは`entry=false`であり、Gate 0-A単独完了からTask 11 entryを推定しない。
+
+- [ ] 新規focused tax/Checkout policy contractでcanonical JA/EN copy、US-only kill switch、dual tax attestation、boolean adapter、Portal/既存Subscription非影響、Monitoring運用、in-flight residual、州/住所非永続化をRED→GREENで確認する。
+- [ ] `COMMENT_TRANSLATOR_PAID_US_CHECKOUT_ENABLED`、`COMMENT_TRANSLATOR_PAID_AUTOMATIC_TAX_ENABLED`、`COMMENT_TRANSLATOR_PAID_TAX_REGISTRATION_READY`をstrict literalとして確認し、tax false/ready falseと両方true以外をCustomer/hold/Session前にfail closedする。
+- [ ] US switchのfalse/missing/invalidがUS新規Checkoutだけを停止し、JPと既存Subscription/entitlement/Portal/cancel pathへ影響しないことを確認する。
+- [ ] Stripe Tax Monitoringの5分類、最大7日遅延、threshold exceeded待ち禁止、`approaching`以降でUS全体の新規Checkout停止をrunbook/operator contractで確認する。
 
 - [ ] 全focused contractを実行する。
 - [ ] `npm run lint`、`npx tsc --noEmit --pretty false`、`npm run build`を実行する。
@@ -584,7 +591,7 @@ PR mergeとPreview/production deployを同一承認にしない。
 
 ## 6. Solレビューで重点確認してほしい点
 
-1. 税込US$6・USD・JP/US限定とStripe Taxの矛盾がないか。
+1. 支払総額US$6・USD・JP免税表示・US新規Checkout停止・Stripe Taxの境界に矛盾がないか。
 2. 20枠のactive/7日hold/30分holdがrace-freeか。
 3. Webhook順序逆転・重複・Checkout redirectの権限境界が十分か。
 4. billing period quotaとUTC calendar cost/fallback bucketの混同がないか。

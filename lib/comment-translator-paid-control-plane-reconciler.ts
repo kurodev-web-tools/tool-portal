@@ -15,7 +15,8 @@ import type {
 } from "./comment-translator-billing-runtime";
 import {
   readCommentTranslatorBillingCheckoutSafetyGate,
-  readCommentTranslatorStripeFailureDiagnostic
+  readCommentTranslatorStripeFailureDiagnostic,
+  resolveCommentTranslatorPaidTaxConfiguration
 } from "./comment-translator-billing-runtime";
 import type {
   CommentTranslatorPaidCheckoutLifecycle,
@@ -873,6 +874,10 @@ export function createCommentTranslatorPaidUnboundCheckoutSessionRecovery({
       !Number.isFinite(checkoutExpiresAtTargetMs)
       || checkoutExpiresAtTargetMs <= nowMs + 30 * 60 * 1000
     ) return false;
+    const taxConfiguration = resolveCommentTranslatorPaidTaxConfiguration(env);
+    if (taxConfiguration.status === "invalid") {
+      throw createControlPlaneError("binding-not-ready");
+    }
     const checkoutSafetyGate = await readCommentTranslatorBillingCheckoutSafetyGate({
       checkoutSafetyAuthorityReader,
       ownerUserId: lifecycle.ownerUserId,
@@ -896,7 +901,7 @@ export function createCommentTranslatorPaidUnboundCheckoutSessionRecovery({
       cancelUrl: new URL("/account/billing?billing=checkout-canceled", siteOrigin).toString(),
       expiresAtIso: lifecycle.checkoutExpiresAtTargetIso,
       idempotencyKey: lifecycle.idempotencyKey,
-      automaticTax: true,
+      automaticTax: taxConfiguration.automaticTax,
       billingAddressCollection: "auto",
       customerUpdateAddress: "auto",
       paymentMethodTypes: ["card"],

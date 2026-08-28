@@ -70,8 +70,8 @@ function sourceSection(source, startMarker, endMarker) {
   return source.slice(start, end);
 }
 
-function assertMinimizedCheckoutPolicy(source, label) {
-  assert.match(source, /automaticTax:\s*true/, `${label} keeps Stripe Tax automatic tax enabled`);
+function assertMinimizedCheckoutPolicy(source, label, automaticTaxPattern) {
+  assert.match(source, automaticTaxPattern, `${label} forwards the resolved automatic-tax boolean`);
   assert.match(source, /billingAddressCollection:\s*"auto"/, `${label} minimizes billing address collection`);
   assert.match(source, /customerUpdateAddress:\s*"auto"/, `${label} lets Checkout update the existing Customer address`);
 }
@@ -92,7 +92,8 @@ assertMinimizedCheckoutPolicy(
     "export async function createCommentTranslatorStripeCheckoutSessionResult",
     "function readCommentTranslatorPaidCheckoutConfig"
   ),
-  "initial Checkout"
+  "initial Checkout",
+  /automaticTax:\s*automaticTaxForNewSession/
 );
 assertMinimizedCheckoutPolicy(
   sourceSection(
@@ -100,7 +101,8 @@ assertMinimizedCheckoutPolicy(
     "async function convergeExistingPaidBillingLifecycle",
     "export type CommentTranslatorStripeWebhookProjectionResult"
   ),
-  "browser existing-hold recovery"
+  "browser existing-hold recovery",
+  /\n\s*automaticTax,\r?\n/
 );
 assertMinimizedCheckoutPolicy(
   sourceSection(
@@ -108,7 +110,8 @@ assertMinimizedCheckoutPolicy(
     "export function createCommentTranslatorPaidUnboundCheckoutSessionRecovery",
     "export function createCommentTranslatorPaidControlPlaneInvocation"
   ),
-  "maintenance unbound recovery"
+  "maintenance unbound recovery",
+  /automaticTax:\s*taxConfiguration\.automaticTax/
 );
 
 const runtime = loadTsModule(runtimePath);
@@ -173,12 +176,14 @@ globalThis.fetch = async (input, init = {}) => {
 
 try {
   await adapter.createCheckoutSession(validCheckoutParams);
+  assert.equal(checkoutForm.get("automatic_tax[enabled]"), "true");
+  await adapter.createCheckoutSession({ ...validCheckoutParams, automaticTax: false });
+  assert.equal(checkoutForm.get("automatic_tax[enabled]"), "false");
 } finally {
   globalThis.fetch = originalFetch;
 }
 
 assert.ok(checkoutForm, "Stripe Checkout form is captured");
-assert.equal(checkoutForm.get("automatic_tax[enabled]"), "true");
 assert.equal(checkoutForm.get("billing_address_collection"), "auto");
 assert.equal(checkoutForm.get("customer_update[address]"), "auto");
 for (const forbiddenPrefix of ["shipping_address_collection", "phone_number_collection", "tax_id_collection"]) {

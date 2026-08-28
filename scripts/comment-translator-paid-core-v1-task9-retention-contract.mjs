@@ -2029,6 +2029,10 @@ for (const invalidSession of [
 const incompleteRecoveryCheckoutRequests = [];
 const incompleteRecoveryBindingRequests = [];
 const incompleteRecoverySafetyReads = [];
+const monitoringOnlyTaxEnv = {
+  COMMENT_TRANSLATOR_PAID_AUTOMATIC_TAX_ENABLED: "false",
+  COMMENT_TRANSLATOR_PAID_TAX_REGISTRATION_READY: "false"
+};
 const incompleteRecovery = reconciler.createCommentTranslatorPaidUnboundCheckoutSessionRecovery({
   entitlementStore: {
     async bindCheckoutSession(request) {
@@ -2055,6 +2059,7 @@ const incompleteRecovery = reconciler.createCommentTranslatorPaidUnboundCheckout
     }
   },
   env: {
+    ...monitoringOnlyTaxEnv,
     STRIPE_SECRET_KEY: "fixture-key",
     COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_fixture",
     COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID: "prod_fixture",
@@ -2081,6 +2086,7 @@ assert.equal(incompleteRecoveryCheckoutRequests.length, 1, "incomplete recovery 
 assert.equal(incompleteRecoveryCheckoutRequests[0].customerReferenceId, "cus_fixture");
 assert.equal(incompleteRecoveryCheckoutRequests[0].idempotencyKey, "ct-paid-checkout-fixture");
 assert.equal(incompleteRecoveryCheckoutRequests[0].expiresAtIso, "2026-08-14T12:31:00.000Z");
+assert.equal(incompleteRecoveryCheckoutRequests[0].automaticTax, false, "unbound recovery uses monitoring-only automatic tax false");
 assert.match(incompleteRecoveryCheckoutRequests[0].clientReferenceId, /^ctbill_[a-f0-9]{48}$/);
 assert.equal(incompleteRecoveryBindingRequests.length, 1, "incomplete recovery binds the created Checkout Session once");
 assert.deepEqual(incompleteRecoverySafetyReads, [{
@@ -2100,6 +2106,90 @@ assert.deepEqual(incompleteRecoveryBindingRequests[0], {
   idempotencyKey: "ct-paid-checkout-fixture",
   nowIso: "2026-08-14T12:00:00.000Z"
 });
+
+const registeredReadyRecoveryCheckoutRequests = [];
+const registeredReadyRecovery = reconciler.createCommentTranslatorPaidUnboundCheckoutSessionRecovery({
+  entitlementStore: { async bindCheckoutSession() { return "fixture-registered-ready-binding"; } },
+  stripeAdapter: {
+    async createCheckoutSession(request) {
+      registeredReadyRecoveryCheckoutRequests.push(request);
+      return {
+        id: "cs_fixture_registered_ready_recovery",
+        customerId: "cus_fixture",
+        url: "https://fixture.invalid/checkout",
+        expiresAtIso: "2026-08-14T12:31:00.000Z",
+        status: "open"
+      };
+    }
+  },
+  checkoutSafetyAuthorityReader: {
+    async readCheckoutSafetyAuthority() {
+      return { status: "ready", capacityAvailable: true, dailyPollBudget: 10_000, reservedPolls: 0 };
+    }
+  },
+  env: {
+    STRIPE_SECRET_KEY: "fixture-key",
+    COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_fixture",
+    COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID: "prod_fixture",
+    NEXT_PUBLIC_SITE_URL: "https://fixture.invalid",
+    COMMENT_TRANSLATOR_PAID_AUTOMATIC_TAX_ENABLED: "true",
+    COMMENT_TRANSLATOR_PAID_TAX_REGISTRATION_READY: "true"
+  }
+});
+assert.equal(
+  await registeredReadyRecovery({
+    lifecycle: {
+      ...authoritativeLifecycle,
+      lifecycleState: "incomplete",
+      checkoutSessionId: null,
+      stripeExpiresAtIso: null,
+      checkoutExpiresAtTargetIso: "2026-08-14T12:31:00.000Z",
+      subscriptionId: null,
+      subscriptionBindingId: null
+    },
+    nowIso: "2026-08-14T12:00:00.000Z"
+  }),
+  true,
+  "registered-ready unbound recovery binds the recovered Checkout Session"
+);
+assert.equal(registeredReadyRecoveryCheckoutRequests.length, 1, "registered-ready unbound recovery creates exactly one Checkout Session");
+assert.equal(registeredReadyRecoveryCheckoutRequests[0].automaticTax, true, "registered-ready unbound recovery propagates automaticTax=true");
+
+let invalidTaxRecoveryCreates = 0;
+const invalidTaxRecovery = reconciler.createCommentTranslatorPaidUnboundCheckoutSessionRecovery({
+  entitlementStore: { async bindCheckoutSession() { throw new Error("must not bind"); } },
+  stripeAdapter: { async createCheckoutSession() { invalidTaxRecoveryCreates += 1; throw new Error("must not create"); } },
+  checkoutSafetyAuthorityReader: {
+    async readCheckoutSafetyAuthority() {
+      return { status: "ready", capacityAvailable: true, dailyPollBudget: 10_000, reservedPolls: 0 };
+    }
+  },
+  env: {
+    STRIPE_SECRET_KEY: "fixture-key",
+    COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_fixture",
+    COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID: "prod_fixture",
+    NEXT_PUBLIC_SITE_URL: "https://fixture.invalid",
+    COMMENT_TRANSLATOR_PAID_AUTOMATIC_TAX_ENABLED: "true",
+    COMMENT_TRANSLATOR_PAID_TAX_REGISTRATION_READY: "false"
+  }
+});
+await assert.rejects(
+  invalidTaxRecovery({
+    lifecycle: {
+      ...authoritativeLifecycle,
+      lifecycleState: "incomplete",
+      checkoutSessionId: null,
+      stripeExpiresAtIso: null,
+      checkoutExpiresAtTargetIso: "2026-08-14T12:31:00.000Z",
+      subscriptionId: null,
+      subscriptionBindingId: null
+    },
+    nowIso: "2026-08-14T12:00:00.000Z"
+  }),
+  (error) => error.reconcileErrorClass === "binding-not-ready",
+  "invalid tax settings keep unbound recovery retryable and fail closed"
+);
+assert.equal(invalidTaxRecoveryCreates, 0, "invalid tax settings never create an unbound Checkout Session");
 
 const bindFailureMarks = [];
 const bindFailureExpires = [];
@@ -2139,6 +2229,7 @@ const bindFailureRecovery = reconciler.createCommentTranslatorPaidUnboundCheckou
     }
   },
   env: {
+    ...monitoringOnlyTaxEnv,
     STRIPE_SECRET_KEY: "fixture-key",
     COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_fixture",
     COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID: "prod_fixture",
@@ -2191,7 +2282,7 @@ const markFailureRecovery = reconciler.createCommentTranslatorPaidUnboundCheckou
     async retrieveCheckoutSession() { markFailureExternalCallCount += 1; throw new Error("must not retrieve before mark"); }
   },
   checkoutSafetyAuthorityReader: { async readCheckoutSafetyAuthority() { return { status: "ready", capacityAvailable: true, dailyPollBudget: 10_000, reservedPolls: 0 }; } },
-  env: { STRIPE_SECRET_KEY: "fixture-key", COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_fixture", COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID: "prod_fixture", NEXT_PUBLIC_SITE_URL: "https://fixture.invalid" }
+  env: { ...monitoringOnlyTaxEnv, STRIPE_SECRET_KEY: "fixture-key", COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_fixture", COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID: "prod_fixture", NEXT_PUBLIC_SITE_URL: "https://fixture.invalid" }
 });
 await assert.rejects(
   markFailureRecovery({
@@ -2222,7 +2313,7 @@ const expireFailureRecovery = reconciler.createCommentTranslatorPaidUnboundCheck
     }
   },
   checkoutSafetyAuthorityReader: { async readCheckoutSafetyAuthority() { return { status: "ready", capacityAvailable: true, dailyPollBudget: 10_000, reservedPolls: 0 }; } },
-  env: { STRIPE_SECRET_KEY: "fixture-key", COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_fixture", COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID: "prod_fixture", NEXT_PUBLIC_SITE_URL: "https://fixture.invalid" }
+  env: { ...monitoringOnlyTaxEnv, STRIPE_SECRET_KEY: "fixture-key", COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_fixture", COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID: "prod_fixture", NEXT_PUBLIC_SITE_URL: "https://fixture.invalid" }
 });
 await assert.rejects(
   expireFailureRecovery({
@@ -2247,7 +2338,7 @@ const responseUnknownRecovery = reconciler.createCommentTranslatorPaidUnboundChe
     async retrieveCheckoutSession() { responseUnknownMutationCount += 1; throw new Error("must not retrieve unknown identity"); }
   },
   checkoutSafetyAuthorityReader: { async readCheckoutSafetyAuthority() { return { status: "ready", capacityAvailable: true, dailyPollBudget: 10_000, reservedPolls: 0 }; } },
-  env: { STRIPE_SECRET_KEY: "fixture-key", COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_fixture", COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID: "prod_fixture", NEXT_PUBLIC_SITE_URL: "https://fixture.invalid" }
+  env: { ...monitoringOnlyTaxEnv, STRIPE_SECRET_KEY: "fixture-key", COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_fixture", COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID: "prod_fixture", NEXT_PUBLIC_SITE_URL: "https://fixture.invalid" }
 });
 const responseUnknownRequest = {
   lifecycle: { ...authoritativeLifecycle, lifecycleState: "incomplete", checkoutSessionId: null, stripeExpiresAtIso: null, checkoutExpiresAtTargetIso: "2026-08-14T12:31:00.000Z", subscriptionId: null, subscriptionBindingId: null },
@@ -2276,6 +2367,7 @@ const subscriptionBoundRecovery = reconciler.createCommentTranslatorPaidUnboundC
     }
   },
   env: {
+    ...monitoringOnlyTaxEnv,
     STRIPE_SECRET_KEY: "fixture-key",
     COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_fixture",
     COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID: "prod_fixture",
@@ -2346,6 +2438,7 @@ const safetyDeniedRecovery = reconciler.createCommentTranslatorPaidUnboundChecko
     }
   },
   env: {
+    ...monitoringOnlyTaxEnv,
     STRIPE_SECRET_KEY: "fixture-key",
     COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_fixture",
     COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID: "prod_fixture",

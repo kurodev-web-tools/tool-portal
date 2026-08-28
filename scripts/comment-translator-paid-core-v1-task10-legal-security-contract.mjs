@@ -47,7 +47,8 @@ const routeSurface = `${source.privacyRoute}\n${source.termsRoute}\n${source.tok
 assertIncludes(
   publicLegalSurface,
   [
-    "US$6／月（税込・USD請求）",
+    "US$6/月（支払総額・USD請求）",
+    "適用される税がある場合はStripe Checkoutで表示されます。",
     "自動更新",
     "契約更新周期あたり最大50万入力文字（500,000文字）",
     "保証文字数ではありません",
@@ -65,7 +66,8 @@ assertIncludes(
 assertIncludes(
   publicLegalSurface,
   [
-    "US$6/month (tax inclusive, billed in USD), automatic renewal",
+    "US$6/month (total price, billed in USD), automatic renewal",
+    "Any applicable tax is shown in Stripe Checkout.",
     "Up to 500,000 input characters per contract renewal period",
     "is not a guaranteed character allowance",
     "Individual, global, or operational safety caps may stop earlier",

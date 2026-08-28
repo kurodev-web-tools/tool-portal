@@ -67,7 +67,9 @@ const env = {
   STRIPE_SECRET_KEY: "fixture-secret",
   NEXT_PUBLIC_SITE_URL: "https://example.test",
   COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID: "price_fixture",
-  COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID: "prod_fixture"
+  COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID: "prod_fixture",
+  COMMENT_TRANSLATOR_PAID_AUTOMATIC_TAX_ENABLED: "false",
+  COMMENT_TRANSLATOR_PAID_TAX_REGISTRATION_READY: "false"
 };
 const authorityReader = {
   readCheckoutSafetyAuthority: async () => ({
@@ -116,6 +118,7 @@ assert.equal(successfulCheckoutParams.length, 1, "recovery creates one Checkout 
 assert.equal(boundSessions.length, 1, "recovery binds the created Checkout Session once");
 assert.equal("customerEmail" in successfulCheckoutParams[0], false, "recovery does not pass customerEmail");
 assert.equal(successfulCheckoutParams[0].customerReferenceId, "cus_fixture", "recovery keeps the bound Customer ID");
+assert.equal(successfulCheckoutParams[0].automaticTax, false, "monitoring-only recovery sends automaticTax=false");
 
 let expiredCheckoutCreateCalls = 0;
 const expiredCheckoutRecovery = controlPlane.createCommentTranslatorPaidUnboundCheckoutSessionRecovery({

@@ -1,6 +1,6 @@
 # Comment Translator Paid Core v1 新規仕様設計
 
-**状態:** 人間再承認待ち / 実装未承認
+**状態:** Paid Core v1承認済み。2026-08-27のJP免税表示・US Checkout・Stripe Tax安全仕様はTask 11 local implementation authority。remote mutation、deploy、commit/push/PRは別承認。
 
 **作成日:** 2026-08-12
 
@@ -87,16 +87,18 @@ FreeとPaidの利用台帳は論理的に分離し、PaidのAzure fallbackによ
 | プラン数 | 1 |
 | 価格 | 月額US$6 |
 | 請求通貨 | USDのみ |
-| 税 | 内税。利用者の支払総額は原則US$6 |
+| 価格表示 | 支払総額US$6。日本の消費税を徴収しているとは表示しない |
 | Stripe Price | 月額、`tax_behavior=inclusive` |
 | 自動更新 | あり |
 | 年額 | なし |
 | Trial | なし |
 | 追加課金 | なし |
 
-日本向け表示は「US$6／月（税込・USD請求）」とする。カード会社による円換算額や海外利用手数料は変動し得ることを補足する。
+Canonical表示は日本語「US$6/月（支払総額・USD請求）」、英語「US$6/month (total price, billed in USD)」とする。Checkout前に「適用される税がある場合はStripe Checkoutで表示されます。」「Any applicable tax is shown in Stripe Checkout.」を表示する。カード会社による円換算額や海外利用手数料は変動し得ることを補足する。
 
-Stripe Taxを利用し、Checkoutで請求先住所を取得して税額内訳を計算する。ただし、税務登録、申告、納付がStripe Taxの有効化だけで完了するとは扱わない。公開前に事業者の税務状態とJP/USで必要な登録を専門家または公的情報で確認する。
+既存Priceの`tax_behavior=inclusive`検証は、適用税がある場合も最終支払総額をUS$6に固定するStripe上の価格挙動として維持する。これは日本の消費税を徴収している、日本側の税務上の資格を示す、または税額を区分表示するという主張ではない。本変更では新規Priceを作成せず、Product/Price/Tax Code/registrationをremote変更しない。
+
+現在の日本の免税事業者モードは`automatic tax=false`かつ`registration ready=false`とする。税務登録、申告、納付がStripe Taxの有効化だけで完了するとは扱わない。将来の日本側税務状態変更は別の法務確認・仕様・remote設定承認を必要とする。
 
 ### 5.2 割引
 
@@ -138,6 +140,10 @@ Cloudflare Workerの`request.cf.country`をCheckout作成時の販売地域ゲ�
 - 国判定結果をSupabaseへ永続保存しない
 - 外部GeoIP API、KV、D1を追加しない
 - VPNやIP誤判定は残余リスクとして受容する
+
+US新規Checkoutにはglobal switchに加えて独立したUS switchの明示`true`を要求する。false、欠損、不正値ではUSの新規Customer、hold、Checkout Sessionを作成せず、JPには影響させない。US switchは既存Subscription、entitlement、translation、Webhook projection、Portal、支払い方法変更、請求履歴、cancel-at-period-end、解約reconciliationへ適用しない。州や完全なbilling addressをアプリDB、browser storage、logへ追加せず、Stripe Checkout/Customer側で扱う。
+
+US switchを落とす前に発行済みのCheckout URLと、すでにadmit済みの同一idempotency holdは既存in-flightとし、国を永続化しない設計上USだけを遡及判定しない。緊急時に発行済みSessionまで止める操作はglobal Checkout/Session expiryの別運用とし、自動解約・返金・capacity releaseを行わない。
 
 対象国外のアクセスには「現在の接続地域では購入できません」と表示する。IP由来の接続地域判定であり、居住国を断定しない。決済後に自動返金して地域不一致を処理する方式は、Stripe手数料が戻らないため採用しない。
 
@@ -504,11 +510,14 @@ API呼出前にbatch最大入力と`batch件数 × 128 + envelope`による保�
 最低限、独立して次を制御する。
 
 - `checkout_enabled`
+- `us_checkout_enabled`
 - `paid_translation_enabled`
 - `openai_enabled`
 - `azure_fallback_enabled`
 
 full kill switchではfallbackも含むPaid翻訳を停止する。設定値が欠損・不正な場合は安全側へ停止する。
+
+Checkout tax設定は`COMMENT_TRANSLATOR_PAID_AUTOMATIC_TAX_ENABLED`と`COMMENT_TRANSLATOR_PAID_TAX_REGISTRATION_READY`を既存strict literal boolean parserで読む。空白付き、大文字、alias、欠損は不正とする。有効な組合せは両方falseのmonitoring-only mode（Stripe `automatic_tax[enabled]=false`）と、両方trueのregistered-ready mode（同`true`）だけである。片方だけtrue、欠損、不正値ではJP/US双方の新規CheckoutをCustomer/hold/Session作成前に`tax-settings-stopped`でfail closedする。unbound recoveryも同じtax resolverを使い、新しいSessionを作らない。
 
 ### 12.5 公式根拠
 
@@ -530,13 +539,18 @@ full kill switchではfallbackも含むPaid翻訳を停止する。設定値が�
 
 Checkout直前に次を表示する。
 
-- US$6/月、税込、USD請求、自動更新
+- US$6/月（支払総額・USD請求）、自動更新
+- 適用される税がある場合はStripe Checkoutで表示されること
 - 50万入力文字 / 契約更新周期
 - 解約は次回更新日から有効
 - コメント本文を翻訳処理のためOpenAIまたはAzureへ送信すること
 - 利用規約、プライバシーポリシー、Paid利用条件へのリンク
 
 Supabaseにはowner、同意日時、文書種別、文書versionを保存する。ブラウザのチェック状態だけを根拠にCheckoutを作成しない。重要な規約変更時は次回Paid翻訳開始前に再同意を要求するが、同意未完了でも解約・請求履歴確認を妨げない。
+
+Stripe Tax Monitoringは監視補助であり法的判断authorityではない。内部分類は`normal`、`approaching`、`needs-attention`、`legal-review-required`、`monitoring-unavailable-or-stale`に固定する。US新規Checkoutを許可できるのは、税務専門家が開始時点のUS sales-tax registration duty、physical/economic nexus、商品課税区分を確認して開始可と判断し、分類が`normal`のときだけである。Monitoringは新規transactionの反映が最大7日遅れ得るため、threshold exceededを待たず、`approaching`以降またはunavailable/staleでUS switchをfalseにする。本sliceではMonitoring状態をruntimeへ自動取込しない。
+
+登録義務が確認された場合は、US新規Checkout停止、専門家による対象州・商品分類確定、州当局登録、Stripe active registration追加、test/Preview Tax表示検証、tax設定2値の個別承認、US switch再開の別承認、の順とする。Stripe registration追加は州当局登録の代替ではなく、架空・便宜的registrationは禁止する。
 
 ### 13.2 Customer Portal
 

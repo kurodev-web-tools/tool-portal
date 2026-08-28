@@ -8,7 +8,10 @@ const homeMetadata = portalMetadata.en.home;
 
 export const metadata: Metadata = {
   title: homeMetadata.title,
-  description: homeMetadata.description
+  description: homeMetadata.description,
+  alternates: {
+    canonical: "/"
+  }
 };
 
 export const dynamic = "force-dynamic";

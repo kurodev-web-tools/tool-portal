@@ -40,12 +40,26 @@ const regionSource = read("lib/comment-translator-paid-region-gate.ts");
 const billingShell = read("components/account/AccountBillingShell.tsx");
 const billingActions = read("app/account/billing/actions.ts");
 const legalContent = read("lib/legal-content.ts");
+const canonicalMetadataSources = [
+  [read("app/page.tsx"), "/"],
+  [read("app/tools/page.tsx"), "/tools"],
+  [read("app/account/billing/page.tsx"), "/account/billing"],
+  [read("app/legal/tokushoho/page.tsx"), "/legal/tokushoho"]
+];
 const spec = read("docs/active/COMMENT_TRANSLATOR_PAID_V1_REDESIGN_SPEC.md");
 const breakdown = read("docs/active/COMMENT_TRANSLATOR_PAID_V1_REDESIGN_TASK_BREAKDOWN.md");
 const runbook = read("docs/active/COMMENT_TRANSLATOR_PAID_V1_RUNBOOK.md");
 const task = read("task.md");
 const publicSurface = `${billingShell}\n${legalContent}`;
 const authoritySurface = `${spec}\n${breakdown}\n${runbook}\n${task}`;
+
+for (const [source, canonicalPath] of canonicalMetadataSources) {
+  assert.match(
+    source,
+    new RegExp(`alternates:\\s*{\\s*canonical:\\s*"${canonicalPath}"`),
+    `${canonicalPath} publishes an environment-relative canonical URL`
+  );
+}
 
 for (const marker of [
   "US$6/月（支払総額・USD請求）",

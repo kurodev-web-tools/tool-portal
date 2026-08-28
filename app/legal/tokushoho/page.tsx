@@ -5,7 +5,10 @@ import { legalDocuments } from "@/lib/legal-content";
 
 export const metadata: Metadata = {
   title: "Legal Information",
-  description: "Kuro Stream Kit の特定商取引法に基づく表記。"
+  description: "Kuro Stream Kit の特定商取引法に基づく表記。",
+  alternates: {
+    canonical: "/legal/tokushoho"
+  }
 };
 
 export const dynamic = "force-dynamic";

@@ -9,7 +9,10 @@ const toolsMetadata = portalMetadata.en.tools;
 
 export const metadata: Metadata = {
   title: toolsMetadata.title,
-  description: toolsMetadata.description
+  description: toolsMetadata.description,
+  alternates: {
+    canonical: "/tools"
+  }
 };
 
 export const dynamic = "force-dynamic";

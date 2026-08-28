@@ -18,7 +18,10 @@ import { createBrowserSafeAccountSessionViewModel, getAccountSessionState } from
 
 export const metadata: Metadata = {
   title: "Comment Translator billing",
-  description: "Manage Free and Paid plan status for Kuro Live Comment Translator."
+  description: "Manage Free and Paid plan status for Kuro Live Comment Translator.",
+  alternates: {
+    canonical: "/account/billing"
+  }
 };
 
 export const dynamic = "force-dynamic";

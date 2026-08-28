@@ -44,7 +44,7 @@ const canonicalMetadataSources = [
   [read("app/page.tsx"), "/"],
   [read("app/tools/page.tsx"), "/tools"],
   [read("app/account/billing/page.tsx"), "/account/billing"],
-  [read("app/legal/tokushoho/page.tsx"), "/legal/tokushoho"]
+  [read("app/legal/tokushoho/page.tsx"), "/legal/tokushoho/"]
 ];
 const spec = read("docs/active/COMMENT_TRANSLATOR_PAID_V1_REDESIGN_SPEC.md");
 const breakdown = read("docs/active/COMMENT_TRANSLATOR_PAID_V1_REDESIGN_TASK_BREAKDOWN.md");

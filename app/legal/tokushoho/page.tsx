@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { LegalDocumentPage } from "@/components/legal/LegalDocumentPage";
+import { LocalizedTokushohoDocumentPage } from "@/components/legal/LocalizedTokushohoDocumentPage";
 import { PortalShell } from "@/components/portal/PortalShell";
-import { legalDocuments } from "@/lib/legal-content";
 
 export const metadata: Metadata = {
   title: "Legal Information",
@@ -16,7 +15,7 @@ export const dynamic = "force-dynamic";
 export default function TokushohoPage() {
   return (
     <PortalShell>
-      <LegalDocumentPage document={legalDocuments.tokushoho} />
+      <LocalizedTokushohoDocumentPage />
     </PortalShell>
   );
 }

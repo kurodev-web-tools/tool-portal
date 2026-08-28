@@ -1,3 +1,5 @@
+import type { Locale } from "@/lib/locale";
+
 export type LegalSection = {
   heading: string;
   paragraphs?: string[];
@@ -20,6 +22,94 @@ export type LegalDocument = {
 const sharedDates = {
   effectiveDate: "2026年5月30日",
   updatedDate: "2026年8月15日"
+};
+
+export const tokushohoDocuments: Record<Locale, LegalDocument> = {
+  ja: {
+    eyebrow: "Specified Commercial Transactions Act",
+    title: "特定商取引法に基づく表記",
+    lead: "Kuro Live Comment Translator Plus（Paid Core v1）の販売条件を表示します。",
+    ...sharedDates,
+    sections: [
+      {
+        heading: "事業者情報",
+        rows: [
+          { label: "販売業者", value: "KuroDev" },
+          { label: "運営責任者", value: "請求があった場合には遅滞なく開示いたします。" },
+          { label: "所在地", value: "請求があった場合には遅滞なく開示いたします。" },
+          { label: "電話番号", value: "請求があった場合には遅滞なく開示いたします。" },
+          { label: "メールアドレス", value: "feedback@kuro-lab.com" }
+        ]
+      },
+      {
+        heading: "販売条件",
+        rows: [
+          { label: "販売価格", value: "Kuro Live Comment Translator PlusはUS$6/月（支払総額・USD請求）です。適用される税がある場合はStripe Checkoutで表示されます。自動更新で、カード会社による円換算額や海外利用手数料は変動する場合があります。" },
+          { label: "商品代金以外の必要料金", value: "インターネット接続料金、通信料金、決済時に利用者側で発生する手数料等は利用者の負担となります。" },
+          { label: "販売地域", value: "初期販売対象は日本（JP）および米国（US）です。現在の接続地域が対象外または確認不能の場合は購入できません。居住国をIP判定だけで断定しません。" },
+          { label: "支払方法", value: "クレジットカード、デビットカード、カードを基盤とする対応手段、Stripe Link等のカード系に限ります。振込には対応しません。決済処理にはStripeを利用します。" },
+          { label: "支払時期", value: "申込時および各契約更新時に支払いが発生します。自動更新の停止は次回更新日前にCustomer Portalまたは案内されたアカウント画面で行ってください。" },
+          { label: "提供時期", value: "決済と署名済みWebhookによるサーバー側の契約反映を確認した後、対象機能を利用できる状態にします。Checkout完了画面だけではPaidを有効にしません。" },
+          { label: "利用上限・送信", value: "契約更新周期あたり最大50万入力文字（500,000文字）ですが、保証文字数ではありません。個人・全体の安全上限や運用上限により先に停止する場合があります。コメント本文は翻訳処理のためOpenAIまたはAzureへ送信されます。" },
+          { label: "解約", value: "Customer Portalまたは案内されたアカウント画面から解約できます。解約は次回更新日から有効で、支払済み期間の終了までは利用できます。" },
+          { label: "返金・dispute", value: "返金は自動ではありません。二重課金、法令上必要な場合、重大障害等を個別に確認します。dispute利用者勝訴時は対象ownerのPaidを即時停止し、idempotentなcancelとcanceled確認後のcapacity解放を行います。失敗時は停止・保持・manual reconciliationとします。dispute運営勝訴時は現在Subscription/periodが有効で、他の停止理由がない場合だけPaidを復元し、それ以外は停止・保持・manual reconciliationとします。" },
+          { label: "アカウント削除", value: "Paid契約中の削除申請は原則として期間終了時解約へ変更し、支払済み期間終了後にアプリ側のアカウントと関連データを削除します。Stripe側の法定・会計情報はStripeの保持方針に従います。" },
+          { label: "データ・Provider", value: "当サービスDBではsanitized feed snapshotをセッション終了後最大24時間保存します。Provider request detail、ログ、集計、冪等台帳にはコメント本文を複製しません。OpenAIは最大30日保持される可能性があり、Azure TranslatorはMicrosoftのNo-Trace方針を前提とします。" },
+          { label: "動作環境", value: "最新の主要ブラウザを搭載したPC、タブレット、スマートフォンを推奨します。利用するツールにより画面幅、画像処理性能、ブラウザ保存領域が必要になる場合があります。" }
+        ]
+      },
+      {
+        heading: "現在の提供状況",
+        paragraphs: [
+          "本表はPaid Core v1の価格、販売地域、支払方法、更新周期、解約、返金、データ送信、保持境界を示します。税務、特商法、プライバシーに関する最終的な専門家確認が完了するまでは、未確認事項を確定的な法的判断として扱いません。",
+          "Freeは引き続き利用できます。実際の公開・設定・提供可否、StripeやProviderのlive操作、デプロイ、activationは別の承認ゲートに従います。"
+        ]
+      }
+    ]
+  },
+  en: {
+    eyebrow: "Specified Commercial Transactions Act",
+    title: "Disclosure under the Specified Commercial Transactions Act",
+    lead: "This page sets out the sales conditions for Kuro Live Comment Translator Plus (Paid Core v1).",
+    effectiveDate: "May 30, 2026",
+    updatedDate: "August 15, 2026",
+    sections: [
+      {
+        heading: "Business Information",
+        rows: [
+          { label: "Seller", value: "KuroDev" },
+          { label: "Operator", value: "Will be disclosed without delay upon request." },
+          { label: "Address", value: "Will be disclosed without delay upon request." },
+          { label: "Phone number", value: "Will be disclosed without delay upon request." },
+          { label: "Email address", value: "feedback@kuro-lab.com" }
+        ]
+      },
+      {
+        heading: "Sales Conditions",
+        rows: [
+          { label: "Sales price", value: "Kuro Live Comment Translator Plus is US$6/month (total price, billed in USD). Any applicable tax is shown in Stripe Checkout. Automatic renewal applies, and the amount converted to yen by the card issuer and overseas transaction fees may vary." },
+          { label: "Additional costs", value: "Internet connection and telecommunications charges, and any fees incurred by the user during payment, are the user's responsibility." },
+          { label: "Sales regions", value: "The initial sales regions are Japan (JP) and the United States (US). Purchase is unavailable if the current connection region is outside the supported regions or cannot be verified. The country of residence is not determined solely from an IP address." },
+          { label: "Payment methods", value: "Payment is limited to credit cards, debit cards, other supported card-based methods, and card-based methods such as Stripe Link. Bank transfer is not supported. Stripe processes the payment." },
+          { label: "Payment timing", value: "Payment is due at application and at each contract renewal. To stop automatic renewal, use Customer Portal or the designated account screen before the next renewal date." },
+          { label: "Availability timing", value: "The feature becomes available only after payment and server-side confirmation that the contract has been reflected from a signed Webhook. The Checkout completion screen alone does not activate Paid access." },
+          { label: "Usage limit and transmission", value: "Up to 500,000 input characters per contract renewal period are available, but this is not a guaranteed character allowance. Individual or global safety caps and operational limits may stop service earlier. Comment text is sent to OpenAI or Azure for translation processing." },
+          { label: "Cancellation", value: "Cancellation is available through Customer Portal or the designated account screen. Cancellation takes effect at the next renewal date, and the service remains available through the paid period." },
+          { label: "Refunds and disputes", value: "Refunds are not automatic. We review duplicate charges, legally required cases, and serious service failures individually. If the user wins a dispute, we immediately stop Paid access for the identified owner, request an idempotent cancellation, and release capacity after cancellation is confirmed in the canceled state. If this fails, we keep access stopped and capacity held and use manual reconciliation. If the operator wins a dispute, Paid access is restored only when the current Subscription and period are valid and no other stop reason exists; otherwise, access remains stopped, capacity held, and manual reconciliation is used." },
+          { label: "Account deletion", value: "If account deletion is requested during a Paid contract, the Subscription is generally changed to cancel at the end of the period, and the app account and related data are deleted after the paid period ends. Statutory and accounting information held by Stripe follows Stripe's retention policy." },
+          { label: "Data and Providers", value: "The service database stores a sanitized feed snapshot for up to 24 hours after the session ends. Comment text is not duplicated into Provider request details, logs, aggregates, or the idempotency ledger. OpenAI may retain data for up to 30 days. Comment text submitted to Azure Translator is handled under Microsoft's No-Trace policy." },
+          { label: "Supported environment", value: "The latest major browsers on PCs, tablets, and smartphones are recommended. Depending on the tool, screen width, image-processing performance, and browser storage may be required." }
+        ]
+      },
+      {
+        heading: "Current Availability",
+        paragraphs: [
+          "This table sets out the Paid Core v1 price, sales regions, payment methods, renewal period, cancellation, refunds, data transmission, and retention boundaries. Until final expert review of tax, the Specified Commercial Transactions Act, and privacy matters is complete, unconfirmed items are not treated as definitive legal judgments.",
+          "Free remains available. Actual publication, configuration, and availability, live Stripe or Provider operations, deployment, and activation follow separate approval gates."
+        ]
+      }
+    ]
+  }
 };
 
 export const legalDocuments = {
@@ -221,46 +311,5 @@ export const legalDocuments = {
       }
     ]
   },
-  tokushoho: {
-    eyebrow: "Specified Commercial Transactions Act",
-    title: "特定商取引法に基づく表記",
-    lead: "Kuro Live Comment Translator Plus（Paid Core v1）の販売条件を表示します。",
-    ...sharedDates,
-    sections: [
-      {
-        heading: "事業者情報",
-        rows: [
-          { label: "販売業者", value: "KuroDev" },
-          { label: "運営責任者", value: "請求があった場合には遅滞なく開示いたします。" },
-          { label: "所在地", value: "請求があった場合には遅滞なく開示いたします。" },
-          { label: "電話番号", value: "請求があった場合には遅滞なく開示いたします。" },
-          { label: "メールアドレス", value: "feedback@kuro-lab.com" }
-        ]
-      },
-      {
-        heading: "販売条件",
-        rows: [
-          { label: "販売価格", value: "Kuro Live Comment Translator PlusはUS$6/月（支払総額・USD請求）です。適用される税がある場合はStripe Checkoutで表示されます。自動更新で、カード会社による円換算額や海外利用手数料は変動する場合があります。" },
-          { label: "商品代金以外の必要料金", value: "インターネット接続料金、通信料金、決済時に利用者側で発生する手数料等は利用者の負担となります。" },
-          { label: "販売地域", value: "初期販売対象は日本（JP）および米国（US）です。現在の接続地域が対象外または確認不能の場合は購入できません。居住国をIP判定だけで断定しません。" },
-          { label: "支払方法", value: "クレジットカード、デビットカード、カードを基盤とする対応手段、Stripe Link等のカード系に限ります。振込には対応しません。決済処理にはStripeを利用します。" },
-          { label: "支払時期", value: "申込時および各契約更新時に支払いが発生します。自動更新の停止は次回更新日前にCustomer Portalまたは案内されたアカウント画面で行ってください。" },
-          { label: "提供時期", value: "決済と署名済みWebhookによるサーバー側の契約反映を確認した後、対象機能を利用できる状態にします。Checkout完了画面だけではPaidを有効にしません。" },
-          { label: "利用上限・送信", value: "契約更新周期あたり最大50万入力文字（500,000文字）ですが、保証文字数ではありません。個人・全体の安全上限や運用上限により先に停止する場合があります。コメント本文は翻訳処理のためOpenAIまたはAzureへ送信されます。" },
-          { label: "解約", value: "Customer Portalまたは案内されたアカウント画面から解約できます。解約は次回更新日から有効で、支払済み期間の終了までは利用できます。" },
-          { label: "返金・dispute", value: "返金は自動ではありません。二重課金、法令上必要な場合、重大障害等を個別に確認します。dispute利用者勝訴時は対象ownerのPaidを即時停止し、idempotentなcancelとcanceled確認後のcapacity解放を行います。失敗時は停止・保持・manual reconciliationとします。dispute運営勝訴時は現在Subscription/periodが有効で、他の停止理由がない場合だけPaidを復元し、それ以外は停止・保持・manual reconciliationとします。" },
-          { label: "アカウント削除", value: "Paid契約中の削除申請は原則として期間終了時解約へ変更し、支払済み期間終了後にアプリ側のアカウントと関連データを削除します。Stripe側の法定・会計情報はStripeの保持方針に従います。" },
-          { label: "データ・Provider", value: "当サービスDBではsanitized feed snapshotをセッション終了後最大24時間保存します。Provider request detail、ログ、集計、冪等台帳にはコメント本文を複製しません。OpenAIは最大30日保持される可能性があり、Azure TranslatorはMicrosoftのNo-Trace方針を前提とします。" },
-          { label: "動作環境", value: "最新の主要ブラウザを搭載したPC、タブレット、スマートフォンを推奨します。利用するツールにより画面幅、画像処理性能、ブラウザ保存領域が必要になる場合があります。" }
-        ]
-      },
-      {
-        heading: "現在の提供状況",
-        paragraphs: [
-          "本表はPaid Core v1の価格、販売地域、支払方法、更新周期、解約、返金、データ送信、保持境界を示します。税務、特商法、プライバシーに関する最終的な専門家確認が完了するまでは、未確認事項を確定的な法的判断として扱いません。",
-          "Freeは引き続き利用できます。実際の公開・設定・提供可否、StripeやProviderのlive操作、デプロイ、activationは別の承認ゲートに従います。"
-        ]
-      }
-    ]
-  }
+  tokushoho: tokushohoDocuments.ja
 } as const satisfies Record<"terms" | "privacy" | "tokushoho", LegalDocument>;

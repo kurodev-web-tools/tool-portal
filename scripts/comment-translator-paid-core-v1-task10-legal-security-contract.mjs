@@ -20,6 +20,7 @@ function assertIncludes(source, snippets, label) {
 
 const paths = {
   legalContent: "lib/legal-content.ts",
+  localizedTokushoho: "components/legal/LocalizedTokushohoDocumentPage.tsx",
   billingShell: "components/account/AccountBillingShell.tsx",
   privacyRoute: "app/privacy/page.tsx",
   termsRoute: "app/terms/page.tsx",
@@ -140,13 +141,16 @@ for (const forbidden of [
   assert.doesNotMatch(publicLegalSurface, forbidden, "public legal copy has no stale or false no-storage claim");
 }
 
-for (const route of [source.privacyRoute, source.termsRoute, source.tokushohoRoute]) {
+for (const route of [source.privacyRoute, source.termsRoute]) {
   assert.match(route, /LegalDocumentPage/);
   assert.match(route, /legalDocuments/);
 }
 assert.match(routeSurface, /legalDocuments\.privacy/);
 assert.match(routeSurface, /legalDocuments\.terms/);
-assert.match(routeSurface, /legalDocuments\.tokushoho/);
+assert.match(source.tokushohoRoute, /LocalizedTokushohoDocumentPage/);
+assert.match(source.tokushohoRoute, /canonical:\s*["']\/legal\/tokushoho["']/u);
+assert.match(source.localizedTokushoho, /tokushohoDocuments\[locale\]/u);
+assert.match(source.localizedTokushoho, /@\/lib\/legal-content/u);
 
 assertIncludes(
   source.runbook,

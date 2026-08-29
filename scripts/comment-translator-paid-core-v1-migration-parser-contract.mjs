@@ -18,6 +18,16 @@ assert.equal(fs.existsSync(path.join(root, dispatchAndAzurePartialMigrationPath)
 const dispatchAndAzurePartialSql = fs.existsSync(path.join(root, dispatchAndAzurePartialMigrationPath))
   ? fs.readFileSync(path.join(root, dispatchAndAzurePartialMigrationPath), "utf8")
   : "";
+const azureGuardCompatibilityMigrationPath = "supabase/migrations/20260813135500_comment_translator_paid_task6_azure_uncertain_retry_compatibility.sql";
+assert.equal(fs.existsSync(path.join(root, azureGuardCompatibilityMigrationPath)), true, "pre-historical Azure guard compatibility migration exists");
+const azureGuardCompatibilitySql = fs.existsSync(path.join(root, azureGuardCompatibilityMigrationPath))
+  ? fs.readFileSync(path.join(root, azureGuardCompatibilityMigrationPath), "utf8")
+  : "";
+const azureGuardRepairMigrationPath = "supabase/migrations/20260829100000_comment_translator_paid_task6_azure_uncertain_retry_guard_repair.sql";
+assert.equal(fs.existsSync(path.join(root, azureGuardRepairMigrationPath)), true, "Azure guard repair migration exists");
+const azureGuardRepairSql = fs.existsSync(path.join(root, azureGuardRepairMigrationPath))
+  ? fs.readFileSync(path.join(root, azureGuardRepairMigrationPath), "utf8")
+  : "";
 const gate0aUnboundHoldRecoveryMigrationPath = "supabase/migrations/20260823120000_comment_translator_paid_gate0a_unbound_hold_recovery.sql";
 assert.equal(fs.existsSync(path.join(root, gate0aUnboundHoldRecoveryMigrationPath)), true, "Gate 0-A unbound hold recovery migration exists");
 const gate0aUnboundHoldRecoverySql = fs.readFileSync(path.join(root, gate0aUnboundHoldRecoveryMigrationPath), "utf8");
@@ -146,6 +156,19 @@ assert.match(dispatchAndAzurePartialSql, /primary key \(attempt_id, provider_att
 assert.match(dispatchAndAzurePartialSql, /for update/i, "dispatch and settlement lock durable authority rows");
 assert.match(dispatchAndAzurePartialSql, /grant execute on function[\s\S]+?service_role/i, "dispatch/partial RPCs are service-role-only");
 assert.doesNotMatch(dispatchAndAzurePartialSql, /\b(?:drop\s+table|truncate\s+table|delete\s+from)\b/i, "dispatch/partial migration is additive and non-destructive");
+for (const [label, migrationSql, blockName] of [
+  ["pre-historical Azure guard compatibility", azureGuardCompatibilitySql, "task6_azure_uncertain_retry_compatibility"],
+  ["Azure guard repair", azureGuardRepairSql, "task6_azure_uncertain_retry_guard_repair"]
+]) {
+  const migrationScan = scanSql(migrationSql);
+  assert.equal(migrationScan.parenthesesDepth, 0, `${label} migration parentheses are balanced`);
+  assert.equal(migrationScan.unterminatedDollarQuote, null, `${label} migration dollar quote is terminated`);
+  assert.equal(migrationScan.unterminatedString, false, `${label} migration strings are terminated`);
+  assert.match(migrationSql, new RegExp(`do \\$${blockName}\\$`, "i"), `${label} migration has a bounded migration block`);
+  assert.match(migrationSql, /execute v_definition/i, `${label} executes only the reconstructed existing function definition`);
+  assert.match(migrationSql, /v_is_hardened[\s\S]+?v_is_legacy/i, `${label} explicitly classifies hardened and canonical legacy shapes`);
+  assert.doesNotMatch(migrationSql, /\b(?:drop\s+table|truncate\s+table|delete\s+from|grant\s+|revoke\s+)\b/i, `${label} migration changes no data or privileges`);
+}
 const gate0aUnboundHoldRecoveryScan = scanSql(gate0aUnboundHoldRecoverySql);
 assert.equal(gate0aUnboundHoldRecoveryScan.parenthesesDepth, 0, "Gate 0-A unbound hold recovery migration parentheses are balanced");
 assert.equal(gate0aUnboundHoldRecoveryScan.unterminatedDollarQuote, null, "Gate 0-A unbound hold recovery migration dollar quotes are terminated");
@@ -241,7 +264,7 @@ assert.match(expireCheckoutSource, /p_reconcile_lease_token is null[\s\S]+?recon
 const hourlyDetailSource = functionSource(sql, "ct_paid_record_provider_hourly_detail", "ct_paid_upsert_session_summary");
 assert.match(hourlyDetailSource, /insert into public\.comment_translator_paid_provider_detail_source_receipts[\s\S]+?on conflict \(attempt_id, provider_attempt\) do nothing[\s\S]+?if not found then[\s\S]+?return false[\s\S]+?on conflict \(owner_user_id, provider, utc_hour\) do update/i, "hourly provider detail parses source-idempotency before aggregate mutation");
 assert.match(hourlyDetailSource, /from public\.comment_translator_paid_logical_attempts[\s\S]+?for update[\s\S]+?from public\.comment_translator_paid_attempt_receipts[\s\S]+?for update[\s\S]+?from public\.comment_translator_paid_provider_detail_source_receipts[\s\S]+?expires_at > p_now[\s\S]+?return false[\s\S]+?p_source_expires_at is distinct from v_provider_receipt\.expires_at[\s\S]+?v_provider_receipt\.expires_at <= p_now[\s\S]+?v_provider_receipt\.expires_at > p_now \+ interval '120 seconds'[\s\S]+?v_logical\.expires_at/i, "hourly detail locks DB authority, no-ops delayed duplicates, and retains dedupe to logical expiry");
-assert.match(hourlyDetailSource, /v_provider_receipt\.provider_kind\s+is distinct from\s+\(case[\s\S]+?end\)\s+then/i, "provider hourly authority parenthesizes its CASE expression for PL/pgSQL parsing");
+assert.match(hourlyDetailSource, /v_provider_receipt\.provider_kind\s+is distinct from\s+case[\s\S]+?end\s+then/i, "provider hourly authority keeps the valid CASE expression syntax");
 const sessionSummarySource = functionSource(sql, "ct_paid_upsert_session_summary", "ct_paid_record_consent");
 assert.match(sessionSummarySource, /greatest\(comment_translator_paid_session_summaries\.translated_message_count, excluded\.translated_message_count\)[\s\S]+?owner_user_id = excluded\.owner_user_id[\s\S]+?started_at = excluded\.started_at/i, "session summary replay keeps identity exact and cumulative counters monotonic");
 assert.match(sessionSummarySource, /length\(p_stop_reason\) > 64[\s\S]+?p_stop_reason !~ '\^\[a-z0-9\]\[a-z0-9_-\]\*\$'/i, "session summary persists only a bounded sanitized stop reason");

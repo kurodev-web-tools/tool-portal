@@ -36,11 +36,11 @@ begin
     'if v_openai_receipt_count = 2 and v_shared_attempt.attempt_state <> ''uncertain'' then'
   );
 
-  v_original := $original$if v_openai_receipt_count <> 1 then[[:space:]]+raise exception 'uncertain OpenAI fallback permits one OpenAI receipt';[[:space:]]+end if;$original$;
-  if v_definition !~ v_original then
+  v_original := 'if v_openai_receipt_count <> 1 then';
+  if position(v_original in v_definition) = 0 then
     raise exception 'Task 6 Azure uncertain receipt guard is unreadable';
   end if;
-  v_definition := regexp_replace(
+  v_definition := replace(
     v_definition,
     v_original,
     $replacement$if v_openai_receipt_count not in (1, 2) then

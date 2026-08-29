@@ -176,7 +176,9 @@ assert.match(azureUncertainRetryCompatibilityMigration, /task6_azure_guard_histo
 for (const authorityFragment of ["owner_user_id", "session_reference_id", "period_start", "period_end", "utc_month", "reserved_cost_micros", "committed_cost_micros", "slot_state", "reservation_state", "attempt_state", "provider_failure_class"]) {
   assert.match(azureUncertainRetryCompatibilityMigration, new RegExp(authorityFragment, "i"), `pre-historical hardened block includes ${authorityFragment} authority`);
 }
-assert.match(azureUncertainRetryCompatibilityMigration, /replace\(v_semantic_definition, v_hardened_uncertain, ''\)[\s\S]+?length\(v_hardened_uncertain\) = 1/i, "pre-historical no-op requires exactly one complete hardened uncertain block");
+assert.match(azureUncertainRetryCompatibilityMigration, /v_normalized_semantic_definition\s*:=\s*regexp_replace\(v_semantic_definition, '\[\[:space:\]\]\+', ' ', 'g'\)/i, "pre-historical migration whitespace-normalizes the semantic definition");
+assert.match(azureUncertainRetryCompatibilityMigration, /v_normalized_hardened_uncertain\s*:=\s*regexp_replace\(v_hardened_uncertain, '\[\[:space:\]\]\+', ' ', 'g'\)/i, "pre-historical migration whitespace-normalizes the canonical hardened block");
+assert.match(azureUncertainRetryCompatibilityMigration, /replace\(v_normalized_semantic_definition, v_normalized_hardened_uncertain, ''\)[\s\S]+?length\(v_normalized_hardened_uncertain\) = 1/i, "pre-historical no-op requires exactly one whitespace-normalized hardened uncertain block");
 assert.match(azureUncertainRetryCompatibilityMigration, /v_is_legacy[\s\S]+?if not v_is_legacy then[\s\S]+?raise exception/i, "pre-historical migration repairs only canonical legacy and fails closed otherwise");
 assert.doesNotMatch(azureUncertainRetryCompatibilityMigration, /\b(?:drop\s+table|truncate\s+table|delete\s+from|grant\s+|revoke\s+)\b/i, "pre-historical compatibility migration changes no data or privileges");
 assert.match(azureUncertainRetryMigration, /ct_paid_azure_direct_fallback/i, "Task 6 adds the narrow Azure uncertain-retry override");
@@ -195,7 +197,9 @@ assert.match(azureUncertainRetryGuardRepairMigration, /v_openai_receipt_count no
 for (const authorityFragment of ["owner_user_id", "session_reference_id", "period_start", "period_end", "utc_month", "reserved_cost_micros", "committed_cost_micros", "slot_state", "reservation_state", "attempt_state", "provider_failure_class"]) {
   assert.match(azureUncertainRetryGuardRepairMigration, new RegExp(authorityFragment, "i"), `late hardened block includes ${authorityFragment} authority`);
 }
-assert.match(azureUncertainRetryGuardRepairMigration, /replace\(v_semantic_definition, v_hardened_uncertain, ''\)[\s\S]+?length\(v_hardened_uncertain\) = 1/i, "late no-op requires exactly one complete hardened uncertain block");
+assert.match(azureUncertainRetryGuardRepairMigration, /v_normalized_semantic_definition\s*:=\s*regexp_replace\(v_semantic_definition, '\[\[:space:\]\]\+', ' ', 'g'\)/i, "late repair whitespace-normalizes the semantic definition");
+assert.match(azureUncertainRetryGuardRepairMigration, /v_normalized_hardened_uncertain\s*:=\s*regexp_replace\(v_hardened_uncertain, '\[\[:space:\]\]\+', ' ', 'g'\)/i, "late repair whitespace-normalizes the canonical hardened block");
+assert.match(azureUncertainRetryGuardRepairMigration, /replace\(v_normalized_semantic_definition, v_normalized_hardened_uncertain, ''\)[\s\S]+?length\(v_normalized_hardened_uncertain\) = 1/i, "late no-op requires exactly one whitespace-normalized hardened uncertain block");
 assert.match(azureUncertainRetryGuardRepairMigration, /if v_is_hardened then[\s\S]+?return;/i, "already-hardened complete definition is an idempotent no-op");
 assert.match(azureUncertainRetryGuardRepairMigration, /v_is_legacy[\s\S]+?if not v_is_legacy then[\s\S]+?raise exception/i, "late repair accepts canonical legacy and fails closed on partial or malformed definitions");
 assert.match(azureUncertainRetryGuardRepairMigration, /v_legacy_uncertain_pattern[\s\S]+?regexp_replace\([\s\S]+?v_hardened_uncertain/i, "late repair replaces the complete original uncertain guard");
@@ -225,7 +229,10 @@ for (const [label, migration] of [
   assert.match(migration, /v_semantic_hardened_first_count\s*=\s*1[\s\S]+?regexp_replace\(v_definition, v_semantic_hardened_first_pattern, v_hardened_first\)/i, `${label} canonicalizes exactly one semantic-equivalent hardened first guard`);
   assert.match(migration, /v_valid_marker_count\s*=\s*0[\s\S]+?v_marker_begin_count\s*=\s*0[\s\S]+?v_marker_end_count\s*=\s*0[\s\S]+?v_valid_marker_count\s*=\s*1[\s\S]+?v_marker_begin_count\s*=\s*1[\s\S]+?v_marker_end_count\s*=\s*1/i, `${label} permits zero or one complete compatibility marker only`);
   assert.match(migration, /v_hardened_first_opening[\s\S]+?v_bounded_uncertain_opening_stem[\s\S]+?v_legacy_raise/i, `${label} declares strict partial-opening and legacy-raise needles`);
-  assert.match(migration, /replace\(v_semantic_definition, v_legacy_first, ''\)[\s\S]+?= 0[\s\S]+?replace\(v_semantic_definition, v_legacy_uncertain_opening, ''\)[\s\S]+?= 0[\s\S]+?replace\(v_semantic_definition, v_legacy_raise, ''\)[\s\S]+?= 0/i, `${label} rejects all executable legacy guard needles in hardened state`);
+  for (const normalizedNeedle of ["bounded_uncertain_opening", "bounded_uncertain_opening_stem", "legacy_first", "legacy_uncertain_opening", "legacy_raise"]) {
+    assert.match(migration, new RegExp(`v_normalized_${normalizedNeedle}\\s*:=\\s*regexp_replace\\(v_${normalizedNeedle}, '\\[\\[:space:\\]\\]\\+', ' ', 'g'\\)`, "i"), `${label} whitespace-normalizes ${normalizedNeedle} before classification`);
+  }
+  assert.match(migration, /replace\(v_normalized_semantic_definition, v_normalized_legacy_first, ''\)[\s\S]+?= 0[\s\S]+?replace\(v_normalized_semantic_definition, v_normalized_legacy_uncertain_opening, ''\)[\s\S]+?= 0[\s\S]+?replace\(v_normalized_semantic_definition, v_normalized_legacy_raise, ''\)[\s\S]+?= 0/i, `${label} rejects whitespace-equivalent executable legacy guard needles in hardened state`);
 }
 
 const extractTaggedBody = (source, tag) => {
@@ -234,6 +241,7 @@ const extractTaggedBody = (source, tag) => {
   return match[1];
 };
 const countLiteral = (source, needle) => source.split(needle).length - 1;
+const normalizeWhitespace = (source) => source.replace(/\s+/g, " ").trim();
 const sha256 = (source) => createHash("sha256").update(source).digest("hex");
 const expectedObservedSemanticDefinitionMd5 = "67b6b5732907c2486ec50bf535bc4f55";
 const expectedCanonicalSemanticDefinitionSha256 = "5a8b759532ebba939a8c2d5331d24782b9ece7647adcbb71b588cd7985c3ca5f";
@@ -290,45 +298,51 @@ const hardenedFragments = [
 const isHardenedFixture = (definition) => {
   const semanticDefinition = semanticDefinitionFixture(definition);
   if (semanticDefinition === null) return false;
+  const normalizedSemanticDefinition = normalizeWhitespace(semanticDefinition);
+  const normalizedHardenedUncertainGuard = normalizeWhitespace(hardenedUncertainGuard);
   return countLiteral(semanticDefinition, hardenedFirstGuard) === 1
     && countLiteral(semanticDefinition, hardenedFirstOpening) === 1
-    && countLiteral(semanticDefinition, hardenedUncertainGuard) === 1
-    && countLiteral(semanticDefinition, boundedUncertainOpening) === 1
-    && countLiteral(semanticDefinition, boundedUncertainOpeningStem) === 1
-    && countLiteral(semanticDefinition, legacyFirstGuard) === 0
-    && countLiteral(semanticDefinition, legacyUncertainOpening) === 0
-    && countLiteral(semanticDefinition, legacyRaiseText) === 0
-    && hardenedFragments.every((fragment) => semanticDefinition.includes(fragment));
+    && countLiteral(normalizedSemanticDefinition, normalizedHardenedUncertainGuard) === 1
+    && countLiteral(normalizedSemanticDefinition, normalizeWhitespace(boundedUncertainOpening)) === 1
+    && countLiteral(normalizedSemanticDefinition, normalizeWhitespace(boundedUncertainOpeningStem)) === 1
+    && countLiteral(normalizedSemanticDefinition, normalizeWhitespace(legacyFirstGuard)) === 0
+    && countLiteral(normalizedSemanticDefinition, normalizeWhitespace(legacyUncertainOpening)) === 0
+    && countLiteral(normalizedSemanticDefinition, normalizeWhitespace(legacyRaiseText)) === 0
+    && hardenedFragments.slice(1).every((fragment) => normalizedSemanticDefinition.includes(normalizeWhitespace(fragment)));
 };
 const isCanonicalLegacyFixture = (definition) => {
   const semanticDefinition = semanticDefinitionFixture(definition);
   if (semanticDefinition === null) return false;
+  const normalizedSemanticDefinition = normalizeWhitespace(semanticDefinition);
+  const normalizedHardenedUncertainGuard = normalizeWhitespace(hardenedUncertainGuard);
   return countLiteral(semanticDefinition, legacyFirstGuard) === 1
     && (semanticDefinition.match(legacyUncertainGuardPattern) ?? []).length === 1
     && countLiteral(semanticDefinition, legacyUncertainOpening) === 1
     && countLiteral(semanticDefinition, legacyRaiseText) === 1
     && countLiteral(semanticDefinition, hardenedFirstGuard) === 0
     && countLiteral(semanticDefinition, hardenedFirstOpening) === 0
-    && countLiteral(semanticDefinition, hardenedUncertainGuard) === 0
-    && countLiteral(semanticDefinition, boundedUncertainOpening) === 0
-    && countLiteral(semanticDefinition, boundedUncertainOpeningStem) === 0;
+    && countLiteral(normalizedSemanticDefinition, normalizedHardenedUncertainGuard) === 0
+    && countLiteral(normalizedSemanticDefinition, normalizeWhitespace(boundedUncertainOpening)) === 0
+    && countLiteral(normalizedSemanticDefinition, normalizeWhitespace(boundedUncertainOpeningStem)) === 0;
 };
 const isSemanticEquivalentHardenedFixture = (definition, observedDefinitionMd5) => {
   const semanticDefinition = semanticDefinitionFixture(definition);
   if (semanticDefinition === null) return false;
+  const normalizedSemanticDefinition = normalizeWhitespace(semanticDefinition);
+  const normalizedHardenedUncertainGuard = normalizeWhitespace(hardenedUncertainGuard);
   const hasCompatibilityMarker = validCompatibilityMarkers.some((marker) => countLiteral(definition, marker) !== 0);
   return observedDefinitionMd5 === expectedObservedSemanticDefinitionMd5
     && !hasCompatibilityMarker
     && (semanticDefinition.match(semanticHardenedFirstGuardPattern) ?? []).length === 1
     && countLiteral(semanticDefinition, hardenedFirstGuard) === 0
     && countLiteral(semanticDefinition, hardenedFirstOpening) === 0
-    && countLiteral(semanticDefinition, hardenedUncertainGuard) === 1
-    && countLiteral(semanticDefinition, boundedUncertainOpening) === 1
-    && countLiteral(semanticDefinition, boundedUncertainOpeningStem) === 1
-    && countLiteral(semanticDefinition, legacyFirstGuard) === 0
-    && countLiteral(semanticDefinition, legacyUncertainOpening) === 0
-    && countLiteral(semanticDefinition, legacyRaiseText) === 0
-    && hardenedFragments.slice(1).every((fragment) => semanticDefinition.includes(fragment));
+    && countLiteral(normalizedSemanticDefinition, normalizedHardenedUncertainGuard) === 1
+    && countLiteral(normalizedSemanticDefinition, normalizeWhitespace(boundedUncertainOpening)) === 1
+    && countLiteral(normalizedSemanticDefinition, normalizeWhitespace(boundedUncertainOpeningStem)) === 1
+    && countLiteral(normalizedSemanticDefinition, normalizeWhitespace(legacyFirstGuard)) === 0
+    && countLiteral(normalizedSemanticDefinition, normalizeWhitespace(legacyUncertainOpening)) === 0
+    && countLiteral(normalizedSemanticDefinition, normalizeWhitespace(legacyRaiseText)) === 0
+    && hardenedFragments.slice(1).every((fragment) => normalizedSemanticDefinition.includes(normalizeWhitespace(fragment)));
 };
 const simulateRepair = (definition, { addCompatibilityMarker = false, observedDefinitionMd5 = null } = {}) => {
   let transformed = definition;
@@ -374,6 +388,24 @@ assert.notEqual(baseAzureFunctionFixture, "", "full Task 5 Azure fallback functi
 const semanticEquivalentHardenedFixture = baseAzureFunctionFixture
   .replace(legacyFirstGuard, semanticEquivalentFirstGuard)
   .replace(legacyUncertainGuardPattern, hardenedUncertainGuard.trim());
+const whitespaceReflowedHardenedGuard = hardenedUncertainGuard.replace(/\n[ \t]*/g, "\n    ");
+assert.notEqual(whitespaceReflowedHardenedGuard, hardenedUncertainGuard, "whitespace-reflow fixture differs byte-for-byte from the canonical hardened block");
+assert.equal(normalizeWhitespace(whitespaceReflowedHardenedGuard), normalizeWhitespace(hardenedUncertainGuard), "whitespace-reflow fixture preserves hardened block semantics");
+  const whitespaceReflowedSemanticEquivalentFixture = semanticEquivalentHardenedFixture.replace(
+  hardenedUncertainGuard.trim(),
+  whitespaceReflowedHardenedGuard.trim()
+);
+const tokenReflowedSemanticEquivalentFixture = whitespaceReflowedSemanticEquivalentFixture.replace(
+  boundedUncertainOpening,
+  "if v_openai_receipt_count\n         not in (1, 2) then"
+);
+const whitespaceReflowedMixedLegacyFixture = `${whitespaceReflowedSemanticEquivalentFixture}
+if
+  v_openai_receipt_count = 2 then
+if v_openai_receipt_count
+  <> 1 then
+raise
+  exception 'uncertain OpenAI fallback permits one OpenAI receipt';`;
 const normalizedSemanticEquivalentFunction = semanticEquivalentHardenedFixture
   .replace(/--[^\n]*/g, " ")
   .replace(/\s+/g, " ")
@@ -418,6 +450,10 @@ assert.throws(() => simulateCleanReplay(malformedFixture), /partial or malformed
 assert.throws(() => simulateCleanReplay(duplicateHardenedFixture), /partial or malformed/, "clean replay fails closed on a duplicate hardened block");
 assert.equal(simulateRepair(hardenedFixture), hardenedFixture, "already-applied complete hardened definition is an idempotent no-op");
 assert.equal(isHardenedFixture(simulateRepair(semanticEquivalentHardenedFixture, { observedDefinitionMd5: expectedObservedSemanticDefinitionMd5 })), true, "observed full semantic-equivalent function canonicalizes safely under the fixed identity gate");
+assert.equal(isHardenedFixture(simulateRepair(whitespaceReflowedSemanticEquivalentFixture, { observedDefinitionMd5: expectedObservedSemanticDefinitionMd5 })), true, "observed semantic-equivalent function accepts exactly one whitespace-reflowed hardened block");
+assert.equal(isHardenedFixture(simulateRepair(tokenReflowedSemanticEquivalentFixture, { observedDefinitionMd5: expectedObservedSemanticDefinitionMd5 })), true, "observed semantic-equivalent function accepts token-line-wrap inside exactly one hardened block");
+assert.throws(() => simulateRepair(`${whitespaceReflowedSemanticEquivalentFixture}\n${hardenedUncertainGuard}`, { observedDefinitionMd5: expectedObservedSemanticDefinitionMd5 }), /partial or malformed/, "whitespace-normalized hardened classification rejects a duplicate block");
+assert.throws(() => simulateRepair(whitespaceReflowedMixedLegacyFixture, { observedDefinitionMd5: expectedObservedSemanticDefinitionMd5 }), /partial or malformed/, "whitespace-normalized hardened classification rejects reflowed legacy guard fragments");
 assert.throws(() => simulateRepair(semanticEquivalentWithPostHistoryMarkerFixture, { observedDefinitionMd5: expectedObservedSemanticDefinitionMd5 }), /partial or malformed/, "semantic-equivalent repair rejects definitions that already carry a compatibility marker");
 assert.throws(() => simulateRepair(semanticCommentDecoyFixture, { observedDefinitionMd5: "00000000000000000000000000000000" }), /partial or malformed/, "semantic-equivalent repair rejects an unknown executable guard with a nonmatching identity and comment decoy");
 assert.equal(isHardenedFixture(simulateRepair(canonicalLegacyFixture)), true, "already-applied canonical legacy definition is repaired");

@@ -10,6 +10,13 @@ do $task6_azure_uncertain_retry_guard_repair$
 declare
   v_definition text;
   v_semantic_definition text;
+  v_normalized_semantic_definition text;
+  v_normalized_hardened_uncertain text;
+  v_normalized_bounded_uncertain_opening_stem text;
+  v_normalized_bounded_uncertain_opening text;
+  v_normalized_legacy_first text;
+  v_normalized_legacy_uncertain_opening text;
+  v_normalized_legacy_raise text;
   v_legacy_first text := 'if v_openai_receipt_count = 2 then';
   v_legacy_uncertain_opening text := 'if v_openai_receipt_count <> 1 then';
   v_legacy_raise text := 'raise exception ''uncertain OpenAI fallback permits one OpenAI receipt'';';
@@ -121,6 +128,12 @@ begin
     v_legacy_uncertain_opening,
     v_hardened_uncertain
   );
+  v_normalized_hardened_uncertain := regexp_replace(v_hardened_uncertain, '[[:space:]]+', ' ', 'g');
+  v_normalized_bounded_uncertain_opening_stem := regexp_replace(v_bounded_uncertain_opening_stem, '[[:space:]]+', ' ', 'g');
+  v_normalized_bounded_uncertain_opening := regexp_replace(v_bounded_uncertain_opening, '[[:space:]]+', ' ', 'g');
+  v_normalized_legacy_first := regexp_replace(v_legacy_first, '[[:space:]]+', ' ', 'g');
+  v_normalized_legacy_uncertain_opening := regexp_replace(v_legacy_uncertain_opening, '[[:space:]]+', ' ', 'g');
+  v_normalized_legacy_raise := regexp_replace(v_legacy_raise, '[[:space:]]+', ' ', 'g');
   v_pre_history_marker_count := (length(v_definition) - length(replace(v_definition, v_compatibility_marker, ''))) / length(v_compatibility_marker);
   v_post_history_marker_count := (length(v_definition) - length(replace(v_definition, v_compatibility_marker_after_history, ''))) / length(v_compatibility_marker_after_history);
   v_valid_marker_count := v_pre_history_marker_count + v_post_history_marker_count;
@@ -139,15 +152,16 @@ begin
   else
     v_semantic_definition := v_definition;
   end if;
+  v_normalized_semantic_definition := regexp_replace(v_semantic_definition, '[[:space:]]+', ' ', 'g');
   v_is_hardened :=
     (length(v_semantic_definition) - length(replace(v_semantic_definition, v_hardened_first, ''))) / length(v_hardened_first) = 1
     and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_hardened_first_opening, ''))) / length(v_hardened_first_opening) = 1
-    and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_hardened_uncertain, ''))) / length(v_hardened_uncertain) = 1
-    and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_bounded_uncertain_opening, ''))) / length(v_bounded_uncertain_opening) = 1
-    and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_bounded_uncertain_opening_stem, ''))) / length(v_bounded_uncertain_opening_stem) = 1
-    and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_legacy_first, ''))) / length(v_legacy_first) = 0
-    and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_legacy_uncertain_opening, ''))) / length(v_legacy_uncertain_opening) = 0
-    and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_legacy_raise, ''))) / length(v_legacy_raise) = 0;
+    and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_hardened_uncertain, ''))) / length(v_normalized_hardened_uncertain) = 1
+    and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_bounded_uncertain_opening, ''))) / length(v_normalized_bounded_uncertain_opening) = 1
+    and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_bounded_uncertain_opening_stem, ''))) / length(v_normalized_bounded_uncertain_opening_stem) = 1
+    and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_legacy_first, ''))) / length(v_normalized_legacy_first) = 0
+    and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_legacy_uncertain_opening, ''))) / length(v_normalized_legacy_uncertain_opening) = 0
+    and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_legacy_raise, ''))) / length(v_normalized_legacy_raise) = 0;
 
   if v_is_hardened then
     return;
@@ -162,12 +176,12 @@ begin
     and v_semantic_hardened_first_count = 1
     and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_hardened_first, ''))) / length(v_hardened_first) = 0
     and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_hardened_first_opening, ''))) / length(v_hardened_first_opening) = 0
-    and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_hardened_uncertain, ''))) / length(v_hardened_uncertain) = 1
-    and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_bounded_uncertain_opening, ''))) / length(v_bounded_uncertain_opening) = 1
-    and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_bounded_uncertain_opening_stem, ''))) / length(v_bounded_uncertain_opening_stem) = 1
-    and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_legacy_first, ''))) / length(v_legacy_first) = 0
-    and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_legacy_uncertain_opening, ''))) / length(v_legacy_uncertain_opening) = 0
-    and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_legacy_raise, ''))) / length(v_legacy_raise) = 0;
+    and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_hardened_uncertain, ''))) / length(v_normalized_hardened_uncertain) = 1
+    and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_bounded_uncertain_opening, ''))) / length(v_normalized_bounded_uncertain_opening) = 1
+    and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_bounded_uncertain_opening_stem, ''))) / length(v_normalized_bounded_uncertain_opening_stem) = 1
+    and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_legacy_first, ''))) / length(v_normalized_legacy_first) = 0
+    and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_legacy_uncertain_opening, ''))) / length(v_normalized_legacy_uncertain_opening) = 0
+    and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_legacy_raise, ''))) / length(v_normalized_legacy_raise) = 0;
   if v_is_semantic_hardened then
     v_definition := regexp_replace(v_definition, v_semantic_hardened_first_pattern, v_hardened_first);
     if v_pre_history_marker_count = 1 then
@@ -177,15 +191,16 @@ begin
     else
       v_semantic_definition := v_definition;
     end if;
+    v_normalized_semantic_definition := regexp_replace(v_semantic_definition, '[[:space:]]+', ' ', 'g');
     v_is_hardened :=
       (length(v_semantic_definition) - length(replace(v_semantic_definition, v_hardened_first, ''))) / length(v_hardened_first) = 1
       and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_hardened_first_opening, ''))) / length(v_hardened_first_opening) = 1
-      and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_hardened_uncertain, ''))) / length(v_hardened_uncertain) = 1
-      and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_bounded_uncertain_opening, ''))) / length(v_bounded_uncertain_opening) = 1
-      and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_bounded_uncertain_opening_stem, ''))) / length(v_bounded_uncertain_opening_stem) = 1
-      and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_legacy_first, ''))) / length(v_legacy_first) = 0
-      and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_legacy_uncertain_opening, ''))) / length(v_legacy_uncertain_opening) = 0
-      and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_legacy_raise, ''))) / length(v_legacy_raise) = 0;
+      and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_hardened_uncertain, ''))) / length(v_normalized_hardened_uncertain) = 1
+      and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_bounded_uncertain_opening, ''))) / length(v_normalized_bounded_uncertain_opening) = 1
+      and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_bounded_uncertain_opening_stem, ''))) / length(v_normalized_bounded_uncertain_opening_stem) = 1
+      and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_legacy_first, ''))) / length(v_normalized_legacy_first) = 0
+      and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_legacy_uncertain_opening, ''))) / length(v_normalized_legacy_uncertain_opening) = 0
+      and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_legacy_raise, ''))) / length(v_normalized_legacy_raise) = 0;
     if not v_is_hardened then
       raise exception 'Task 6 Azure semantic guard canonicalization did not converge';
     end if;
@@ -200,9 +215,9 @@ begin
     and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_legacy_raise, ''))) / length(v_legacy_raise) = 1
     and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_hardened_first, ''))) / length(v_hardened_first) = 0
     and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_hardened_first_opening, ''))) / length(v_hardened_first_opening) = 0
-    and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_hardened_uncertain, ''))) / length(v_hardened_uncertain) = 0
-    and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_bounded_uncertain_opening, ''))) / length(v_bounded_uncertain_opening) = 0
-    and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_bounded_uncertain_opening_stem, ''))) / length(v_bounded_uncertain_opening_stem) = 0
+    and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_hardened_uncertain, ''))) / length(v_normalized_hardened_uncertain) = 0
+    and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_bounded_uncertain_opening, ''))) / length(v_normalized_bounded_uncertain_opening) = 0
+    and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_bounded_uncertain_opening_stem, ''))) / length(v_normalized_bounded_uncertain_opening_stem) = 0
     and position('elsif v_shared_attempt.attempt_state = ''uncertain'' then' in v_semantic_definition) > 0
     and position('uncertain OpenAI resources are not retained' in v_semantic_definition) > 0;
   if not v_is_legacy then
@@ -230,15 +245,16 @@ begin
   else
     v_semantic_definition := v_definition;
   end if;
+  v_normalized_semantic_definition := regexp_replace(v_semantic_definition, '[[:space:]]+', ' ', 'g');
   v_is_hardened :=
     (length(v_semantic_definition) - length(replace(v_semantic_definition, v_hardened_first, ''))) / length(v_hardened_first) = 1
     and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_hardened_first_opening, ''))) / length(v_hardened_first_opening) = 1
-    and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_hardened_uncertain, ''))) / length(v_hardened_uncertain) = 1
-    and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_bounded_uncertain_opening, ''))) / length(v_bounded_uncertain_opening) = 1
-    and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_bounded_uncertain_opening_stem, ''))) / length(v_bounded_uncertain_opening_stem) = 1
-    and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_legacy_first, ''))) / length(v_legacy_first) = 0
-    and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_legacy_uncertain_opening, ''))) / length(v_legacy_uncertain_opening) = 0
-    and (length(v_semantic_definition) - length(replace(v_semantic_definition, v_legacy_raise, ''))) / length(v_legacy_raise) = 0;
+    and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_hardened_uncertain, ''))) / length(v_normalized_hardened_uncertain) = 1
+    and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_bounded_uncertain_opening, ''))) / length(v_normalized_bounded_uncertain_opening) = 1
+    and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_bounded_uncertain_opening_stem, ''))) / length(v_normalized_bounded_uncertain_opening_stem) = 1
+    and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_legacy_first, ''))) / length(v_normalized_legacy_first) = 0
+    and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_legacy_uncertain_opening, ''))) / length(v_normalized_legacy_uncertain_opening) = 0
+    and (length(v_normalized_semantic_definition) - length(replace(v_normalized_semantic_definition, v_normalized_legacy_raise, ''))) / length(v_normalized_legacy_raise) = 0;
   if not v_is_hardened then
     raise exception 'Task 6 Azure guard repair did not converge';
   end if;

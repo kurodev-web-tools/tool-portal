@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import { registerHooks, stripTypeScriptTypes } from "node:module";
 import path from "node:path";
@@ -205,13 +206,23 @@ const strictClassifierAssignments = [
   ...normalizedAssignments(azureUncertainRetryCompatibilityMigration, "v_is_hardened"),
   ...normalizedAssignments(azureUncertainRetryGuardRepairMigration, "v_is_hardened")
 ];
-assert.equal(strictClassifierAssignments.length, 4, "both additive migrations validate the strict hardened classifier before execution");
+assert.equal(strictClassifierAssignments.length, 6, "both additive migrations validate the strict hardened classifier before every execution path");
 assert.equal(new Set(strictClassifierAssignments).size, 1, "both additive migrations and post-repair validation use one strict hardened classifier");
+const semanticClassifierAssignments = [
+  ...normalizedAssignments(azureUncertainRetryCompatibilityMigration, "v_is_semantic_hardened"),
+  ...normalizedAssignments(azureUncertainRetryGuardRepairMigration, "v_is_semantic_hardened")
+];
+assert.equal(semanticClassifierAssignments.length, 2, "both additive migrations declare the semantic-equivalent hardened classifier once");
+assert.equal(new Set(semanticClassifierAssignments).size, 1, "both additive migrations use one semantic-equivalent hardened classifier");
 for (const [label, migration] of [
   ["pre-historical compatibility", azureUncertainRetryCompatibilityMigration],
   ["late repair", azureUncertainRetryGuardRepairMigration]
 ]) {
   assert.match(migration, /v_compatibility_marker_after_history/i, `${label} recognizes the one complete post-history marker shape`);
+  assert.match(migration, /v_expected_semantic_hardened_definition_md5\s+text\s*:=\s*'67b6b5732907c2486ec50bf535bc4f55'/i, `${label} pins the externally observed pre-apply generated-definition identity`);
+  assert.match(migration, /v_valid_marker_count\s*=\s*0[\s\S]+?md5\(v_definition\)\s*=\s*v_expected_semantic_hardened_definition_md5[\s\S]+?v_semantic_hardened_first_count\s*=\s*1/i, `${label} permits the semantic-equivalent path only for the marker-free observed definition`);
+  assert.match(migration, /v_semantic_hardened_first_pattern[\s\S]+?regexp_matches\(v_semantic_definition, v_semantic_hardened_first_pattern, 'g'\)/i, `${label} counts the semantic-equivalent hardened first guard without reading remote values`);
+  assert.match(migration, /v_semantic_hardened_first_count\s*=\s*1[\s\S]+?regexp_replace\(v_definition, v_semantic_hardened_first_pattern, v_hardened_first\)/i, `${label} canonicalizes exactly one semantic-equivalent hardened first guard`);
   assert.match(migration, /v_valid_marker_count\s*=\s*0[\s\S]+?v_marker_begin_count\s*=\s*0[\s\S]+?v_marker_end_count\s*=\s*0[\s\S]+?v_valid_marker_count\s*=\s*1[\s\S]+?v_marker_begin_count\s*=\s*1[\s\S]+?v_marker_end_count\s*=\s*1/i, `${label} permits zero or one complete compatibility marker only`);
   assert.match(migration, /v_hardened_first_opening[\s\S]+?v_bounded_uncertain_opening_stem[\s\S]+?v_legacy_raise/i, `${label} declares strict partial-opening and legacy-raise needles`);
   assert.match(migration, /replace\(v_semantic_definition, v_legacy_first, ''\)[\s\S]+?= 0[\s\S]+?replace\(v_semantic_definition, v_legacy_uncertain_opening, ''\)[\s\S]+?= 0[\s\S]+?replace\(v_semantic_definition, v_legacy_raise, ''\)[\s\S]+?= 0/i, `${label} rejects all executable legacy guard needles in hardened state`);
@@ -223,6 +234,9 @@ const extractTaggedBody = (source, tag) => {
   return match[1];
 };
 const countLiteral = (source, needle) => source.split(needle).length - 1;
+const sha256 = (source) => createHash("sha256").update(source).digest("hex");
+const expectedObservedSemanticDefinitionMd5 = "67b6b5732907c2486ec50bf535bc4f55";
+const expectedCanonicalSemanticDefinitionSha256 = "5a8b759532ebba939a8c2d5331d24782b9ece7647adcbb71b588cd7985c3ca5f";
 const legacyFirstGuard = "if v_openai_receipt_count = 2 then";
 const hardenedFirstGuard = "if v_openai_receipt_count = 2 and v_shared_attempt.attempt_state <> 'uncertain' then";
 const legacyUncertainGuardPattern = /if v_openai_receipt_count <> 1 then\s+raise exception 'uncertain OpenAI fallback permits one OpenAI receipt';\s+end if;/;
@@ -232,6 +246,7 @@ const historicalUncertainReplacement = extractTaggedBody(azureUncertainRetryMigr
 const legacyUncertainOpening = "if v_openai_receipt_count <> 1 then";
 const legacyRaiseText = "raise exception 'uncertain OpenAI fallback permits one OpenAI receipt';";
 const hardenedFirstOpening = "if v_openai_receipt_count = 2 and v_shared_attempt.attempt_state <> 'uncertain'";
+const semanticHardenedFirstGuardPattern = /if\s+v_openai_receipt_count\s*=\s*2\s+and\s+v_shared_attempt\.attempt_state\s*<>\s*'uncertain'\s+then/g;
 const boundedUncertainOpening = "if v_openai_receipt_count not in (1, 2) then";
 const boundedUncertainOpeningStem = "if v_openai_receipt_count not in (1, 2)";
 const compatibilityMarkerAfterHistory = compatibilityMarker.trim()
@@ -298,12 +313,33 @@ const isCanonicalLegacyFixture = (definition) => {
     && countLiteral(semanticDefinition, boundedUncertainOpening) === 0
     && countLiteral(semanticDefinition, boundedUncertainOpeningStem) === 0;
 };
-const simulateRepair = (definition, { addCompatibilityMarker = false } = {}) => {
+const isSemanticEquivalentHardenedFixture = (definition, observedDefinitionMd5) => {
+  const semanticDefinition = semanticDefinitionFixture(definition);
+  if (semanticDefinition === null) return false;
+  const hasCompatibilityMarker = validCompatibilityMarkers.some((marker) => countLiteral(definition, marker) !== 0);
+  return observedDefinitionMd5 === expectedObservedSemanticDefinitionMd5
+    && !hasCompatibilityMarker
+    && (semanticDefinition.match(semanticHardenedFirstGuardPattern) ?? []).length === 1
+    && countLiteral(semanticDefinition, hardenedFirstGuard) === 0
+    && countLiteral(semanticDefinition, hardenedFirstOpening) === 0
+    && countLiteral(semanticDefinition, hardenedUncertainGuard) === 1
+    && countLiteral(semanticDefinition, boundedUncertainOpening) === 1
+    && countLiteral(semanticDefinition, boundedUncertainOpeningStem) === 1
+    && countLiteral(semanticDefinition, legacyFirstGuard) === 0
+    && countLiteral(semanticDefinition, legacyUncertainOpening) === 0
+    && countLiteral(semanticDefinition, legacyRaiseText) === 0
+    && hardenedFragments.slice(1).every((fragment) => semanticDefinition.includes(fragment));
+};
+const simulateRepair = (definition, { addCompatibilityMarker = false, observedDefinitionMd5 = null } = {}) => {
   let transformed = definition;
   if (!isHardenedFixture(transformed)) {
-    if (!isCanonicalLegacyFixture(transformed)) throw new Error("Azure guard definition is partial or malformed");
-    transformed = transformed.replace(legacyFirstGuard, hardenedFirstGuard);
-    transformed = transformed.replace(legacyUncertainGuardPattern, hardenedUncertainGuard.trim());
+    if (isSemanticEquivalentHardenedFixture(transformed, observedDefinitionMd5)) {
+      transformed = transformed.replace(semanticHardenedFirstGuardPattern, hardenedFirstGuard);
+    } else {
+      if (!isCanonicalLegacyFixture(transformed)) throw new Error("Azure guard definition is partial or malformed");
+      transformed = transformed.replace(legacyFirstGuard, hardenedFirstGuard);
+      transformed = transformed.replace(legacyUncertainGuardPattern, hardenedUncertainGuard.trim());
+    }
   }
   if (addCompatibilityMarker && countLiteral(transformed, compatibilityMarkerBegin) === 0) {
     transformed = `${transformed}\n${compatibilityMarker.trim()}`;
@@ -330,6 +366,25 @@ const canonicalLegacyFixture = `begin
   end if;
 end;`;
 const hardenedFixture = simulateRepair(canonicalLegacyFixture);
+const semanticEquivalentFirstGuard = `if v_openai_receipt_count = 2
+      and v_shared_attempt.attempt_state <> 'uncertain'
+    then`;
+const baseAzureFunctionFixture = paidCoreMigration.match(/create or replace function public\.ct_paid_azure_direct_fallback\([\s\S]*?\n\$\$;/i)?.[0] ?? "";
+assert.notEqual(baseAzureFunctionFixture, "", "full Task 5 Azure fallback function fixture is extractable");
+const semanticEquivalentHardenedFixture = baseAzureFunctionFixture
+  .replace(legacyFirstGuard, semanticEquivalentFirstGuard)
+  .replace(legacyUncertainGuardPattern, hardenedUncertainGuard.trim());
+const normalizedSemanticEquivalentFunction = semanticEquivalentHardenedFixture
+  .replace(/--[^\n]*/g, " ")
+  .replace(/\s+/g, " ")
+  .trim()
+  .toLowerCase();
+assert.equal(sha256(normalizedSemanticEquivalentFunction), expectedCanonicalSemanticDefinitionSha256, "full semantic-equivalent function fixture matches the canonical final semantic SHA-256");
+const semanticEquivalentWithPostHistoryMarkerFixture = `${compatibilityMarkerAfterHistory}\n${semanticEquivalentHardenedFixture}`;
+const semanticCommentDecoyFixture = `${hardenedFixture.replace(
+  hardenedFirstGuard,
+  "if v_openai_receipt_count = 2 and v_shared_attempt.attempt_state <> 'unexpected' then"
+)}\n/* ${semanticEquivalentFirstGuard} */`;
 const partialFixture = canonicalLegacyFixture.replace(legacyFirstGuard, hardenedFirstGuard);
 const malformedFixture = canonicalLegacyFixture.replace("raise exception 'uncertain OpenAI fallback permits one OpenAI receipt';", "perform synthetic_unknown_guard();");
 const duplicateHardenedFixture = `${hardenedFixture}\n${hardenedUncertainGuard}`;
@@ -338,6 +393,7 @@ const strictClassifierCounterexamples = [
   ["mixed legacy uncertain opening and hardened", `${hardenedFixture}\nif v_openai_receipt_count <> 1 then`],
   ["mixed legacy raise and hardened", `${hardenedFixture}\nraise exception 'uncertain OpenAI fallback permits one OpenAI receipt';`],
   ["duplicate hardened first guard", `${hardenedFixture}\n${hardenedFirstGuard}`],
+  ["duplicate semantic-equivalent hardened first guard", `${semanticEquivalentHardenedFixture}\n${semanticEquivalentFirstGuard}`],
   ["partial duplicate hardened first opening", `${hardenedFixture}\nif v_openai_receipt_count = 2 and v_shared_attempt.attempt_state <> 'uncertain'`],
   ["partial duplicate bounded uncertain opening", `${hardenedFixture}\nif v_openai_receipt_count not in (1, 2)`],
   ["malformed compatibility marker", `${hardenedFixture}\n${compatibilityMarker.trim().replace("task6_azure_guard_history_compat_end", "task6_azure_guard_history_compat_broken_end")}`],
@@ -345,8 +401,8 @@ const strictClassifierCounterexamples = [
   ["duplicate compatibility marker", `${hardenedFixture}\n${compatibilityMarker.trim()}\n${compatibilityMarker.trim()}`],
   ["mixed pre-history and post-history markers", `${hardenedFixture}\n${compatibilityMarker.trim()}\n${compatibilityMarkerAfterHistory}`]
 ];
-const simulateCleanReplay = (definition) => {
-  const afterCompatibility = simulateRepair(definition, { addCompatibilityMarker: true });
+const simulateCleanReplay = (definition, { observedDefinitionMd5 = null } = {}) => {
+  const afterCompatibility = simulateRepair(definition, { addCompatibilityMarker: true, observedDefinitionMd5 });
   const afterHistorical = simulateImmutableHistoricalMigration(afterCompatibility);
   return simulateRepair(afterHistorical);
 };
@@ -354,12 +410,16 @@ const cleanReplayAfterCompatibility = simulateRepair(canonicalLegacyFixture, { a
 const cleanReplayFinal = simulateCleanReplay(canonicalLegacyFixture);
 
 assert.equal(isHardenedFixture(cleanReplayFinal), true, "clean replay converges to the complete hardened definition before and after the immutable historical migration");
+assert.equal(isHardenedFixture(simulateCleanReplay(semanticEquivalentHardenedFixture, { observedDefinitionMd5: expectedObservedSemanticDefinitionMd5 })), true, "clean replay canonicalizes the observed full semantic-equivalent function before immutable history");
 assert.equal(stripCompatibilityMarker(cleanReplayFinal), stripCompatibilityMarker(cleanReplayAfterCompatibility), "immutable historical replay changes only the compatibility marker, not executable guard behavior");
 assert.equal(isHardenedFixture(simulateCleanReplay(hardenedFixture)), true, "clean replay preserves an already-hardened executable definition through immutable history");
 assert.throws(() => simulateCleanReplay(partialFixture), /partial or malformed/, "clean replay fails closed on a partial definition before immutable history");
 assert.throws(() => simulateCleanReplay(malformedFixture), /partial or malformed/, "clean replay fails closed on a malformed definition before immutable history");
 assert.throws(() => simulateCleanReplay(duplicateHardenedFixture), /partial or malformed/, "clean replay fails closed on a duplicate hardened block");
 assert.equal(simulateRepair(hardenedFixture), hardenedFixture, "already-applied complete hardened definition is an idempotent no-op");
+assert.equal(isHardenedFixture(simulateRepair(semanticEquivalentHardenedFixture, { observedDefinitionMd5: expectedObservedSemanticDefinitionMd5 })), true, "observed full semantic-equivalent function canonicalizes safely under the fixed identity gate");
+assert.throws(() => simulateRepair(semanticEquivalentWithPostHistoryMarkerFixture, { observedDefinitionMd5: expectedObservedSemanticDefinitionMd5 }), /partial or malformed/, "semantic-equivalent repair rejects definitions that already carry a compatibility marker");
+assert.throws(() => simulateRepair(semanticCommentDecoyFixture, { observedDefinitionMd5: "00000000000000000000000000000000" }), /partial or malformed/, "semantic-equivalent repair rejects an unknown executable guard with a nonmatching identity and comment decoy");
 assert.equal(isHardenedFixture(simulateRepair(canonicalLegacyFixture)), true, "already-applied canonical legacy definition is repaired");
 assert.throws(() => simulateRepair(partialFixture), /partial or malformed/, "already-applied partial guard definition fails closed");
 assert.throws(() => simulateRepair(malformedFixture), /partial or malformed/, "already-applied malformed guard definition fails closed");

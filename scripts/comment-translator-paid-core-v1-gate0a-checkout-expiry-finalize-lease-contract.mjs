@@ -9,6 +9,10 @@ const root = process.cwd();
 const migrationsDir = path.join(root, "supabase", "migrations");
 const repairSuffix = "_comment_translator_paid_checkout_expiry_finalize_lease.sql";
 const repairMigrations = fs.readdirSync(migrationsDir).filter((name) => name.endsWith(repairSuffix));
+const azureGuardCompatibilitySuffix = "_comment_translator_paid_task6_azure_uncertain_retry_compatibility.sql";
+const azureGuardCompatibilityMigrations = fs.readdirSync(migrationsDir).filter((name) => name.endsWith(azureGuardCompatibilitySuffix));
+const azureGuardRepairSuffix = "_comment_translator_paid_task6_azure_uncertain_retry_guard_repair.sql";
+const azureGuardRepairMigrations = fs.readdirSync(migrationsDir).filter((name) => name.endsWith(azureGuardRepairSuffix));
 
 assert.equal(repairMigrations.length, 1, "exactly one additive Checkout expiry finalize-lease migration exists");
 
@@ -46,20 +50,43 @@ assert.match(repairMigration, /revoke all on function public\.ct_paid_expire_che
 assert.match(repairMigration, /grant execute on function public\.ct_paid_expire_checkout_hold\([\s\S]+?to service_role/i, "repair grants execute only to service_role");
 assert.doesNotMatch(repairMigration, /grant\s+select\s+on\s+table/i, "repair adds no direct table grants");
 
-for (const [historicalPath, expectedBlob] of [
+const historicalMigrations = [
   ["supabase/migrations/20260812120000_comment_translator_paid_core_v1.sql", "c9b1e7b93b858a2ad941893dfadc080000345ba8"],
+  ["supabase/migrations/20260813140000_comment_translator_paid_task6_azure_uncertain_retry.sql", "c32eb1efc8d82734db33c8f56e953f4e5ceae5d4"],
   ["supabase/migrations/20260814110000_comment_translator_paid_task9_retention_observability.sql", "7a8adddcb2f2f007169ee9699e0c04c69dcc5947"]
-]) {
-  const committedBlob = execFileSync("git", ["rev-parse", `HEAD:${historicalPath}`], { cwd: root, encoding: "utf8" }).trim();
-  assert.equal(committedBlob, expectedBlob, `${historicalPath} committed blob remains unchanged`);
-  let dirty = false;
-  try {
-    execFileSync("git", ["diff", "--quiet", "--", historicalPath], { cwd: root, stdio: "ignore" });
-  } catch {
-    dirty = true;
+];
+const sourceHistoricalBlobs = historicalMigrations.map(([historicalPath]) => execFileSync("git", ["hash-object", "--", historicalPath], { cwd: root, encoding: "utf8" }).trim());
+assert.deepEqual(
+  sourceHistoricalBlobs,
+  historicalMigrations.map(([, expectedBlob]) => expectedBlob),
+  "all historical migration source blobs are restored exactly"
+);
+
+assert.equal(azureGuardCompatibilityMigrations.length, 1, "exactly one additive pre-historical Task 6 Azure compatibility migration exists");
+assert.equal(azureGuardRepairMigrations.length, 1, "exactly one additive Task 6 Azure guard repair migration exists");
+const azureGuardCompatibilityMigrationName = azureGuardCompatibilityMigrations[0];
+const immutableAzureMigrationName = "20260813140000_comment_translator_paid_task6_azure_uncertain_retry.sql";
+assert.ok(
+  "20260812120000_comment_translator_paid_core_v1.sql" < azureGuardCompatibilityMigrationName
+    && azureGuardCompatibilityMigrationName < immutableAzureMigrationName
+    && immutableAzureMigrationName < azureGuardRepairMigrations[0],
+  "clean replay orders core, compatibility, immutable historical, and late repair migrations safely"
+);
+const azureGuardCompatibilityMigration = fs.readFileSync(path.join(migrationsDir, azureGuardCompatibilityMigrationName), "utf8");
+const azureGuardRepairMigration = fs.readFileSync(path.join(migrationsDir, azureGuardRepairMigrations[0]), "utf8");
+for (const [label, migration] of [["compatibility", azureGuardCompatibilityMigration], ["late repair", azureGuardRepairMigration]]) {
+  assert.match(migration, /p\.proname\s*=\s*'ct_paid_azure_direct_fallback'[\s\S]+?p\.pronargs\s*=\s*9/i, `${label} targets only the existing nine-argument RPC`);
+  assert.match(migration, /v_is_hardened[\s\S]+?if (?:not )?v_is_hardened then/i, `${label} classifies the complete hardened definition`);
+  assert.match(migration, /v_is_legacy[\s\S]+?if not v_is_legacy then[\s\S]+?raise exception/i, `${label} fails closed outside canonical legacy`);
+  assert.match(migration, /replace\(v_semantic_definition, v_hardened_uncertain, ''\)[\s\S]+?length\(v_hardened_uncertain\) = 1/i, `${label} accepts exactly one complete hardened uncertain block`);
+  for (const boundary of ["owner_user_id", "session_reference_id", "period_start", "period_end", "utc_month", "reserved_cost_micros", "committed_cost_micros", "slot_state", "reservation_state", "attempt_state", "provider_failure_class"]) {
+    assert.match(migration, new RegExp(boundary, "i"), `${label} complete hardened block includes ${boundary}`);
   }
-  assert.equal(dirty, false, `${historicalPath} working-tree bytes remain unchanged`);
+  assert.doesNotMatch(migration, /provider_kind\s+is\s+distinct\s+from\s+\(case/i, `${label} does not reintroduce lexical-only provider_kind parenthesization`);
+  assert.doesNotMatch(migration, /\b(?:drop\s+table|truncate\s+table|delete\s+from|grant\s+|revoke\s+)\b/i, `${label} changes no data or privileges`);
 }
+assert.match(azureGuardCompatibilityMigration, /task6_azure_guard_history_compat_begin[\s\S]+?if v_openai_receipt_count = 2 then[\s\S]+?if v_openai_receipt_count <> 1 then[\s\S]+?task6_azure_guard_history_compat_end/i, "pre-historical compatibility contains both immutable text needles in a comment marker");
+assert.match(azureGuardRepairMigration, /if v_is_hardened then[\s\S]+?return;/i, "already-applied complete hardened definition is an idempotent no-op");
 
 registerHooks({
   resolve(specifier, context, nextResolve) {

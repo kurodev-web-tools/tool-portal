@@ -56,7 +56,9 @@ const circuitMigrationPath = "supabase/migrations/20260813130000_comment_transla
 const rateRetryMigrationPath = "supabase/migrations/20260813131500_comment_translator_paid_task6_openai_rate_retry.sql";
 const ownedCircuitFailureMigrationPath = "supabase/migrations/20260813133000_comment_translator_paid_task6_owned_circuit_failure.sql";
 const billingSplitMigrationPath = "supabase/migrations/20260813134500_comment_translator_paid_task6_azure_billing_split.sql";
+const azureUncertainRetryCompatibilityMigrationPath = "supabase/migrations/20260813135500_comment_translator_paid_task6_azure_uncertain_retry_compatibility.sql";
 const azureUncertainRetryMigrationPath = "supabase/migrations/20260813140000_comment_translator_paid_task6_azure_uncertain_retry.sql";
+const azureUncertainRetryGuardRepairMigrationPath = "supabase/migrations/20260829100000_comment_translator_paid_task6_azure_uncertain_retry_guard_repair.sql";
 const circuitSuccessWindowMigrationPath = "supabase/migrations/20260813141500_comment_translator_paid_task6_circuit_success_window.sql";
 const openAiResumeStatusMigrationPath = "supabase/migrations/20260813143000_comment_translator_paid_task6_openai_resume_status.sql";
 const terminalOpenAiPartialMigrationPath = "supabase/migrations/20260813144500_comment_translator_paid_task6_terminal_openai_partial.sql";
@@ -82,7 +84,11 @@ const circuitMigration = read(circuitMigrationPath);
 const rateRetryMigration = read(rateRetryMigrationPath);
 const ownedCircuitFailureMigration = read(ownedCircuitFailureMigrationPath);
 const billingSplitMigration = read(billingSplitMigrationPath);
+assert.ok(exists(azureUncertainRetryCompatibilityMigrationPath), "Task 6 adds the pre-historical Azure guard compatibility migration");
+const azureUncertainRetryCompatibilityMigration = read(azureUncertainRetryCompatibilityMigrationPath);
 const azureUncertainRetryMigration = read(azureUncertainRetryMigrationPath);
+assert.ok(exists(azureUncertainRetryGuardRepairMigrationPath), "Task 6 adds the historical Azure guard repair migration");
+const azureUncertainRetryGuardRepairMigration = read(azureUncertainRetryGuardRepairMigrationPath);
 const circuitSuccessWindowMigration = read(circuitSuccessWindowMigrationPath);
 const openAiResumeStatusMigration = read(openAiResumeStatusMigrationPath);
 const terminalOpenAiPartialMigration = read(terminalOpenAiPartialMigrationPath);
@@ -164,16 +170,254 @@ assert.match(billingSplitMigration, /committed_paid_characters = committed_paid_
 assert.match(billingSplitMigration, /ct_paid_commit_billing_period_characters\([\s\S]{0,220}p_actual_billing_input_characters/i, "logical billing commits the combined successful character count");
 assert.match(billingSplitMigration, /grant execute on function[\s\S]{0,180}service_role/i, "combined-billing RPC is service-role-only");
 assert.doesNotMatch(billingSplitMigration, /\b(?:drop\s+table|truncate\s+table)\b/i, "Task 6 billing split migration is additive");
+assert.ok(azureUncertainRetryCompatibilityMigrationPath < azureUncertainRetryMigrationPath, "Azure compatibility migration sorts before the immutable historical migration");
+assert.match(azureUncertainRetryCompatibilityMigration, /task6_azure_guard_history_compat_begin[\s\S]+?if v_openai_receipt_count = 2 then[\s\S]+?if v_openai_receipt_count <> 1 then[\s\S]+?task6_azure_guard_history_compat_end/i, "pre-historical migration carries both immutable replacement needles inside one explicit compatibility marker");
+for (const authorityFragment of ["owner_user_id", "session_reference_id", "period_start", "period_end", "utc_month", "reserved_cost_micros", "committed_cost_micros", "slot_state", "reservation_state", "attempt_state", "provider_failure_class"]) {
+  assert.match(azureUncertainRetryCompatibilityMigration, new RegExp(authorityFragment, "i"), `pre-historical hardened block includes ${authorityFragment} authority`);
+}
+assert.match(azureUncertainRetryCompatibilityMigration, /replace\(v_semantic_definition, v_hardened_uncertain, ''\)[\s\S]+?length\(v_hardened_uncertain\) = 1/i, "pre-historical no-op requires exactly one complete hardened uncertain block");
+assert.match(azureUncertainRetryCompatibilityMigration, /v_is_legacy[\s\S]+?if not v_is_legacy then[\s\S]+?raise exception/i, "pre-historical migration repairs only canonical legacy and fails closed otherwise");
+assert.doesNotMatch(azureUncertainRetryCompatibilityMigration, /\b(?:drop\s+table|truncate\s+table|delete\s+from|grant\s+|revoke\s+)\b/i, "pre-historical compatibility migration changes no data or privileges");
 assert.match(azureUncertainRetryMigration, /ct_paid_azure_direct_fallback/i, "Task 6 adds the narrow Azure uncertain-retry override");
 assert.match(azureUncertainRetryMigration, /p\.proname = 'ct_paid_azure_direct_fallback'[\s\S]{0,120}p\.pronargs = 9/i, "Azure retry override targets the nine-argument Task 5 RPC");
 assert.match(azureUncertainRetryMigration, /v_openai_receipt_count = 2 and v_shared_attempt\.attempt_state <> ''uncertain''/i, "Azure retry override preserves the terminal two-receipt path");
-assert.match(azureUncertainRetryMigration, /v_openai_receipt_count not in \(1, 2\)/i, "Azure retry override permits one retained uncertain receipt after a safe predecessor");
-assert.match(azureUncertainRetryMigration, /v_original := \$original\$if v_openai_receipt_count <> 1 then\[\[:space:\]\]\+raise exception 'uncertain OpenAI fallback permits one OpenAI receipt';\[\[:space:\]\]\+end if;\$original\$;[\s\S]+?if v_definition !~ v_original[\s\S]+?v_definition := regexp_replace\(\s*v_definition,\s*v_original,/i, "Azure retry override replaces the complete original receipt guard across pg_get_functiondef whitespace");
+assert.match(azureUncertainRetryMigration, /v_original := 'if v_openai_receipt_count <> 1 then';[\s\S]+?position\(v_original in v_definition\)[\s\S]+?v_definition := replace\(/i, "historical Azure retry migration retains its immutable original guard");
+assert.doesNotMatch(azureUncertainRetryMigration, /regexp_replace\(/i, "historical Azure retry migration is not edited in place");
 assert.match(azureUncertainRetryMigration, /provider_failure_class not in \('invalid-response', 'rate-limit'\)/i, "Azure retry override limits the older receipt to a bounded-retry predecessor");
 assert.match(azureUncertainRetryMigration, /OpenAI retry predecessor is not safely terminal/i, "Azure retry override fails closed on an unsafe older receipt");
 assert.match(azureUncertainRetryMigration, /slot_row\.slot_state = 'released'/i, "Azure retry override proves the older OpenAI slot was released");
 assert.match(azureUncertainRetryMigration, /rate_row\.reservation_state = 'completed'/i, "Azure retry override proves the older OpenAI rate reservation was completed");
 assert.doesNotMatch(azureUncertainRetryMigration, /\b(?:drop\s+table|truncate\s+table)\b/i, "Task 6 Azure uncertain-retry migration is additive");
+assert.match(azureUncertainRetryGuardRepairMigration, /ct_paid_azure_direct_fallback/i, "Task 6 Azure guard repair targets the existing RPC");
+assert.match(azureUncertainRetryGuardRepairMigration, /p\.proname = 'ct_paid_azure_direct_fallback'[\s\S]{0,120}p\.pronargs = 9/i, "Azure guard repair targets the nine-argument Task 5 RPC");
+assert.match(azureUncertainRetryGuardRepairMigration, /v_openai_receipt_count not in \(1, 2\)/i, "Azure guard repair preserves the bounded two-receipt rule");
+for (const authorityFragment of ["owner_user_id", "session_reference_id", "period_start", "period_end", "utc_month", "reserved_cost_micros", "committed_cost_micros", "slot_state", "reservation_state", "attempt_state", "provider_failure_class"]) {
+  assert.match(azureUncertainRetryGuardRepairMigration, new RegExp(authorityFragment, "i"), `late hardened block includes ${authorityFragment} authority`);
+}
+assert.match(azureUncertainRetryGuardRepairMigration, /replace\(v_semantic_definition, v_hardened_uncertain, ''\)[\s\S]+?length\(v_hardened_uncertain\) = 1/i, "late no-op requires exactly one complete hardened uncertain block");
+assert.match(azureUncertainRetryGuardRepairMigration, /if v_is_hardened then[\s\S]+?return;/i, "already-hardened complete definition is an idempotent no-op");
+assert.match(azureUncertainRetryGuardRepairMigration, /v_is_legacy[\s\S]+?if not v_is_legacy then[\s\S]+?raise exception/i, "late repair accepts canonical legacy and fails closed on partial or malformed definitions");
+assert.match(azureUncertainRetryGuardRepairMigration, /v_legacy_uncertain_pattern[\s\S]+?regexp_replace\([\s\S]+?v_hardened_uncertain/i, "late repair replaces the complete original uncertain guard");
+assert.doesNotMatch(azureUncertainRetryGuardRepairMigration, /\b(?:drop\s+table|truncate\s+table|delete\s+from)\b/i, "Task 6 Azure guard repair is additive and non-destructive");
+const normalizedAssignments = (source, variable) => [...source.matchAll(new RegExp(`${variable}\\s*:=([\\s\\S]*?);`, "gi"))]
+  .map((match) => match[1].replace(/\s+/g, " ").trim());
+const strictClassifierAssignments = [
+  ...normalizedAssignments(azureUncertainRetryCompatibilityMigration, "v_is_hardened"),
+  ...normalizedAssignments(azureUncertainRetryGuardRepairMigration, "v_is_hardened")
+];
+assert.equal(strictClassifierAssignments.length, 4, "both additive migrations validate the strict hardened classifier before execution");
+assert.equal(new Set(strictClassifierAssignments).size, 1, "both additive migrations and post-repair validation use one strict hardened classifier");
+for (const [label, migration] of [
+  ["pre-historical compatibility", azureUncertainRetryCompatibilityMigration],
+  ["late repair", azureUncertainRetryGuardRepairMigration]
+]) {
+  assert.match(migration, /v_compatibility_marker_after_history/i, `${label} recognizes the one complete post-history marker shape`);
+  assert.match(migration, /v_valid_marker_count\s*=\s*0[\s\S]+?v_marker_begin_count\s*=\s*0[\s\S]+?v_marker_end_count\s*=\s*0[\s\S]+?v_valid_marker_count\s*=\s*1[\s\S]+?v_marker_begin_count\s*=\s*1[\s\S]+?v_marker_end_count\s*=\s*1/i, `${label} permits zero or one complete compatibility marker only`);
+  assert.match(migration, /v_hardened_first_opening[\s\S]+?v_bounded_uncertain_opening_stem[\s\S]+?v_legacy_raise/i, `${label} declares strict partial-opening and legacy-raise needles`);
+  assert.match(migration, /replace\(v_semantic_definition, v_legacy_first, ''\)[\s\S]+?= 0[\s\S]+?replace\(v_semantic_definition, v_legacy_uncertain_opening, ''\)[\s\S]+?= 0[\s\S]+?replace\(v_semantic_definition, v_legacy_raise, ''\)[\s\S]+?= 0/i, `${label} rejects all executable legacy guard needles in hardened state`);
+}
+
+const extractTaggedBody = (source, tag) => {
+  const match = source.match(new RegExp(`\\$${tag}\\$([\\s\\S]+?)\\$${tag}\\$`, "i"));
+  assert.ok(match, `${tag} fixture body is present`);
+  return match[1];
+};
+const countLiteral = (source, needle) => source.split(needle).length - 1;
+const legacyFirstGuard = "if v_openai_receipt_count = 2 then";
+const hardenedFirstGuard = "if v_openai_receipt_count = 2 and v_shared_attempt.attempt_state <> 'uncertain' then";
+const legacyUncertainGuardPattern = /if v_openai_receipt_count <> 1 then\s+raise exception 'uncertain OpenAI fallback permits one OpenAI receipt';\s+end if;/;
+const hardenedUncertainGuard = extractTaggedBody(azureUncertainRetryCompatibilityMigration, "hardened");
+const compatibilityMarker = extractTaggedBody(azureUncertainRetryCompatibilityMigration, "compat");
+const historicalUncertainReplacement = extractTaggedBody(azureUncertainRetryMigration, "replacement");
+const legacyUncertainOpening = "if v_openai_receipt_count <> 1 then";
+const legacyRaiseText = "raise exception 'uncertain OpenAI fallback permits one OpenAI receipt';";
+const hardenedFirstOpening = "if v_openai_receipt_count = 2 and v_shared_attempt.attempt_state <> 'uncertain'";
+const boundedUncertainOpening = "if v_openai_receipt_count not in (1, 2) then";
+const boundedUncertainOpeningStem = "if v_openai_receipt_count not in (1, 2)";
+const compatibilityMarkerAfterHistory = compatibilityMarker.trim()
+  .replace(legacyFirstGuard, hardenedFirstGuard)
+  .replace(legacyUncertainOpening, historicalUncertainReplacement.trim());
+const validCompatibilityMarkers = [compatibilityMarker.trim(), compatibilityMarkerAfterHistory];
+const compatibilityMarkerBegin = "task6_azure_guard_history_compat_begin";
+const compatibilityMarkerEnd = "task6_azure_guard_history_compat_end";
+const semanticDefinitionFixture = (definition) => {
+  const validMarkerCount = validCompatibilityMarkers.reduce((count, marker) => count + countLiteral(definition, marker), 0);
+  const beginCount = countLiteral(definition, compatibilityMarkerBegin);
+  const endCount = countLiteral(definition, compatibilityMarkerEnd);
+  if (!((validMarkerCount === 0 && beginCount === 0 && endCount === 0)
+    || (validMarkerCount === 1 && beginCount === 1 && endCount === 1))) return null;
+  return validMarkerCount === 1
+    ? validCompatibilityMarkers.reduce((semantic, marker) => semantic.replace(marker, ""), definition)
+    : definition;
+};
+const stripCompatibilityMarker = (definition) => {
+  const semanticDefinition = semanticDefinitionFixture(definition);
+  if (semanticDefinition === null) throw new Error("Azure guard definition is partial or malformed");
+  return semanticDefinition;
+};
+const hardenedFragments = [
+  hardenedFirstGuard,
+  "if v_openai_receipt_count not in (1, 2) then",
+  "receipt.owner_user_id <> p_owner_user_id",
+  "receipt.session_reference_id <> p_session_reference_id",
+  "receipt.period_start is distinct from p_period_start",
+  "receipt.period_end is distinct from p_period_end",
+  "receipt.utc_month <> p_utc_month",
+  "receipt.attempt_state not in ('committed', 'released')",
+  "receipt.provider_failure_class not in ('invalid-response', 'rate-limit')",
+  "receipt.committed_input_characters <> 0",
+  "receipt.reserved_cost_micros <> 0",
+  "receipt.committed_cost_micros <= 0",
+  "slot_row.slot_state = 'released'",
+  "rate_row.reservation_state = 'completed'",
+  "rate_row.reservation_state = 'released'"
+];
+const isHardenedFixture = (definition) => {
+  const semanticDefinition = semanticDefinitionFixture(definition);
+  if (semanticDefinition === null) return false;
+  return countLiteral(semanticDefinition, hardenedFirstGuard) === 1
+    && countLiteral(semanticDefinition, hardenedFirstOpening) === 1
+    && countLiteral(semanticDefinition, hardenedUncertainGuard) === 1
+    && countLiteral(semanticDefinition, boundedUncertainOpening) === 1
+    && countLiteral(semanticDefinition, boundedUncertainOpeningStem) === 1
+    && countLiteral(semanticDefinition, legacyFirstGuard) === 0
+    && countLiteral(semanticDefinition, legacyUncertainOpening) === 0
+    && countLiteral(semanticDefinition, legacyRaiseText) === 0
+    && hardenedFragments.every((fragment) => semanticDefinition.includes(fragment));
+};
+const isCanonicalLegacyFixture = (definition) => {
+  const semanticDefinition = semanticDefinitionFixture(definition);
+  if (semanticDefinition === null) return false;
+  return countLiteral(semanticDefinition, legacyFirstGuard) === 1
+    && (semanticDefinition.match(legacyUncertainGuardPattern) ?? []).length === 1
+    && countLiteral(semanticDefinition, legacyUncertainOpening) === 1
+    && countLiteral(semanticDefinition, legacyRaiseText) === 1
+    && countLiteral(semanticDefinition, hardenedFirstGuard) === 0
+    && countLiteral(semanticDefinition, hardenedFirstOpening) === 0
+    && countLiteral(semanticDefinition, hardenedUncertainGuard) === 0
+    && countLiteral(semanticDefinition, boundedUncertainOpening) === 0
+    && countLiteral(semanticDefinition, boundedUncertainOpeningStem) === 0;
+};
+const simulateRepair = (definition, { addCompatibilityMarker = false } = {}) => {
+  let transformed = definition;
+  if (!isHardenedFixture(transformed)) {
+    if (!isCanonicalLegacyFixture(transformed)) throw new Error("Azure guard definition is partial or malformed");
+    transformed = transformed.replace(legacyFirstGuard, hardenedFirstGuard);
+    transformed = transformed.replace(legacyUncertainGuardPattern, hardenedUncertainGuard.trim());
+  }
+  if (addCompatibilityMarker && countLiteral(transformed, compatibilityMarkerBegin) === 0) {
+    transformed = `${transformed}\n${compatibilityMarker.trim()}`;
+  }
+  if (!isHardenedFixture(transformed)) throw new Error("Azure guard definition is partial or malformed");
+  return transformed;
+};
+const simulateImmutableHistoricalMigration = (definition) => {
+  if (countLiteral(definition, legacyFirstGuard) !== 1) throw new Error("historical first guard is unreadable");
+  let transformed = definition.replace(legacyFirstGuard, hardenedFirstGuard);
+  if (countLiteral(transformed, legacyUncertainOpening) !== 1) throw new Error("historical uncertain guard is unreadable");
+  transformed = transformed.replace(legacyUncertainOpening, historicalUncertainReplacement.trim());
+  return transformed;
+};
+
+const canonicalLegacyFixture = `begin
+  if v_openai_receipt_count = 2 then
+    perform synthetic_terminal_chain_check();
+  elsif v_shared_attempt.attempt_state = 'uncertain' then
+    if v_openai_receipt_count <> 1 then
+      raise exception 'uncertain OpenAI fallback permits one OpenAI receipt';
+    end if;
+    perform synthetic_retained_resource_check();
+  end if;
+end;`;
+const hardenedFixture = simulateRepair(canonicalLegacyFixture);
+const partialFixture = canonicalLegacyFixture.replace(legacyFirstGuard, hardenedFirstGuard);
+const malformedFixture = canonicalLegacyFixture.replace("raise exception 'uncertain OpenAI fallback permits one OpenAI receipt';", "perform synthetic_unknown_guard();");
+const duplicateHardenedFixture = `${hardenedFixture}\n${hardenedUncertainGuard}`;
+const strictClassifierCounterexamples = [
+  ["mixed legacy first and hardened", `${hardenedFixture}\n${legacyFirstGuard}`],
+  ["mixed legacy uncertain opening and hardened", `${hardenedFixture}\nif v_openai_receipt_count <> 1 then`],
+  ["mixed legacy raise and hardened", `${hardenedFixture}\nraise exception 'uncertain OpenAI fallback permits one OpenAI receipt';`],
+  ["duplicate hardened first guard", `${hardenedFixture}\n${hardenedFirstGuard}`],
+  ["partial duplicate hardened first opening", `${hardenedFixture}\nif v_openai_receipt_count = 2 and v_shared_attempt.attempt_state <> 'uncertain'`],
+  ["partial duplicate bounded uncertain opening", `${hardenedFixture}\nif v_openai_receipt_count not in (1, 2)`],
+  ["malformed compatibility marker", `${hardenedFixture}\n${compatibilityMarker.trim().replace("task6_azure_guard_history_compat_end", "task6_azure_guard_history_compat_broken_end")}`],
+  ["malformed post-history compatibility marker", `${hardenedFixture}\n${compatibilityMarkerAfterHistory.replace("task6_azure_guard_history_compat_end", "task6_azure_guard_history_compat_broken_end")}`],
+  ["duplicate compatibility marker", `${hardenedFixture}\n${compatibilityMarker.trim()}\n${compatibilityMarker.trim()}`],
+  ["mixed pre-history and post-history markers", `${hardenedFixture}\n${compatibilityMarker.trim()}\n${compatibilityMarkerAfterHistory}`]
+];
+const simulateCleanReplay = (definition) => {
+  const afterCompatibility = simulateRepair(definition, { addCompatibilityMarker: true });
+  const afterHistorical = simulateImmutableHistoricalMigration(afterCompatibility);
+  return simulateRepair(afterHistorical);
+};
+const cleanReplayAfterCompatibility = simulateRepair(canonicalLegacyFixture, { addCompatibilityMarker: true });
+const cleanReplayFinal = simulateCleanReplay(canonicalLegacyFixture);
+
+assert.equal(isHardenedFixture(cleanReplayFinal), true, "clean replay converges to the complete hardened definition before and after the immutable historical migration");
+assert.equal(stripCompatibilityMarker(cleanReplayFinal), stripCompatibilityMarker(cleanReplayAfterCompatibility), "immutable historical replay changes only the compatibility marker, not executable guard behavior");
+assert.equal(isHardenedFixture(simulateCleanReplay(hardenedFixture)), true, "clean replay preserves an already-hardened executable definition through immutable history");
+assert.throws(() => simulateCleanReplay(partialFixture), /partial or malformed/, "clean replay fails closed on a partial definition before immutable history");
+assert.throws(() => simulateCleanReplay(malformedFixture), /partial or malformed/, "clean replay fails closed on a malformed definition before immutable history");
+assert.throws(() => simulateCleanReplay(duplicateHardenedFixture), /partial or malformed/, "clean replay fails closed on a duplicate hardened block");
+assert.equal(simulateRepair(hardenedFixture), hardenedFixture, "already-applied complete hardened definition is an idempotent no-op");
+assert.equal(isHardenedFixture(simulateRepair(canonicalLegacyFixture)), true, "already-applied canonical legacy definition is repaired");
+assert.throws(() => simulateRepair(partialFixture), /partial or malformed/, "already-applied partial guard definition fails closed");
+assert.throws(() => simulateRepair(malformedFixture), /partial or malformed/, "already-applied malformed guard definition fails closed");
+assert.throws(() => simulateRepair(duplicateHardenedFixture), /partial or malformed/, "already-applied duplicate hardened block fails closed");
+for (const [label, definition] of strictClassifierCounterexamples) {
+  assert.throws(() => simulateCleanReplay(definition), /partial or malformed/, `clean replay fails closed on ${label}`);
+  assert.throws(() => simulateRepair(definition), /partial or malformed/, `already-applied path fails closed on ${label}`);
+}
+
+const controlFlowSource = hardenedUncertainGuard.replace(/'(?:''|[^'])*'/g, "''");
+assert.equal((controlFlowSource.match(/^\s*if\b/gim) ?? []).length, (controlFlowSource.match(/^\s*end if;/gim) ?? []).length, "hardened uncertain guard has balanced IF control flow");
+
+const safePredecessor = {
+  ownerUserId: "00000000-0000-4000-8000-000000000001",
+  sessionReferenceId: "session_fixture_01",
+  periodStart: "2026-08-01T00:00:00.000Z",
+  periodEnd: "2026-09-01T00:00:00.000Z",
+  utcMonth: "2026-08-01",
+  attemptState: "committed",
+  providerFailureClass: "invalid-response",
+  committedInputCharacters: 0,
+  reservedCostMicros: 0,
+  committedCostMicros: 1,
+  slotState: "released",
+  rateState: "completed"
+};
+const isSafePredecessor = (receipt) => receipt.ownerUserId === safePredecessor.ownerUserId
+  && receipt.sessionReferenceId === safePredecessor.sessionReferenceId
+  && receipt.periodStart === safePredecessor.periodStart
+  && receipt.periodEnd === safePredecessor.periodEnd
+  && receipt.utcMonth === safePredecessor.utcMonth
+  && ["committed", "released"].includes(receipt.attemptState)
+  && ["invalid-response", "rate-limit"].includes(receipt.providerFailureClass)
+  && receipt.committedInputCharacters === 0
+  && receipt.reservedCostMicros === 0
+  && receipt.slotState === "released"
+  && (receipt.attemptState === "committed"
+    ? receipt.committedCostMicros > 0 && receipt.rateState === "completed"
+    : receipt.committedCostMicros === 0 && receipt.rateState === "released");
+
+assert.equal(isSafePredecessor(safePredecessor), true, "synthetic committed bounded predecessor is accepted");
+assert.equal(isSafePredecessor({ ...safePredecessor, attemptState: "released", committedCostMicros: 0, rateState: "released" }), true, "synthetic released bounded predecessor is accepted");
+for (const [field, unsafeValue] of [
+  ["ownerUserId", "00000000-0000-4000-8000-000000000002"],
+  ["sessionReferenceId", "session_fixture_02"],
+  ["periodStart", "2026-07-01T00:00:00.000Z"],
+  ["periodEnd", "2026-10-01T00:00:00.000Z"],
+  ["utcMonth", "2026-07-01"],
+  ["attemptState", "uncertain"],
+  ["providerFailureClass", "timeout"],
+  ["committedInputCharacters", 1],
+  ["reservedCostMicros", 1],
+  ["committedCostMicros", 0],
+  ["slotState", "uncertain"],
+  ["rateState", "released"]
+]) {
+  assert.equal(isSafePredecessor({ ...safePredecessor, [field]: unsafeValue }), false, `synthetic predecessor fails closed for unsafe ${field}`);
+}
 assert.match(circuitSuccessWindowMigration, /ct_paid_record_provider_circuit_success/i, "Task 6 overrides durable circuit success semantics");
 assert.match(circuitSuccessWindowMigration, /circuit_state = 'closed' then[\s\S]{0,80}return true/i, "closed-circuit success preserves the active failure window");
 assert.match(circuitSuccessWindowMigration, /circuit_state <> 'half_open'[\s\S]{0,1500}failure_count = 0/i, "half-open probe success clears the failure window");

@@ -147,7 +147,7 @@ comment on function private.ct_paid_invoke_maintenance_from_vault() is
 - [x] Run the focused RED/GREEN evidence, all 29 Paid Core contracts with a count assertion, provider legal copy, Node/migration syntax, TypeScript, lint, Next build, OpenNext Cloudflare build, secret/private-identifier scan, type-suppression scan, and `git diff --check`. Focused/Node/legal/29-contract/scan/diff checks pass; TypeScript, lint, Next, and OpenNext are setup-blocked because dependencies are absent, with no installation performed.
 - [x] Treat absent dependencies/tools as setup-blocked without installing anything or changing manifests/lockfiles.
 - [x] Ask `sol-reviewer / medium` for read-only spec review and then code-quality review. Both final reviews are GO after bounded `sol-repairer / medium` corrections; the implementation writer remains `luna-implementer / max` under this verified Luna Max parent.
-- [ ] Confirm the final diff is A2-only, commit the feature branch, push it, and create a PR without merging or performing remote Supabase/Cloudflare/Stripe/Provider/browser operations.
+- [x] Confirm the final diff is A2-only, commit the feature branch, push it, and create PR #799 without merging or performing remote Supabase/Cloudflare/Stripe/Provider/browser operations.
 
 ### Verification record (current)
 
@@ -156,4 +156,4 @@ comment on function private.ct_paid_invoke_maintenance_from_vault() is
 - Scheduler post-check contract: Preview preserves the observed one-job inactive baseline with all scheduler operation deltas at zero; isolated-empty clean-install expects zero inactive jobs with the same zero-operation deltas.
 - Existing Paid Core bundle: 29 files were counted; 24/29 runnable contracts passed and 5/29 were setup-blocked because `node_modules/typescript` is absent. No dependency installation was performed.
 - Provider legal copy contract passed. The scoped secret/private-identifier scan covered the four new files plus task.md additions only and found zero hits; changed TypeScript files were zero with zero type-suppression hits; staged `git diff --cached --check` passed. The TypeScript command was blocked before process start by the host approval policy, and the npm lint/Next/OpenNext scripts were attempted and reported missing local executables; `node_modules` and all required tool packages are absent.
-- Final spec review: GO after bounded receipt-boundary repair. Final code-quality review: GO with no Critical/Important/Minor findings. Full toolchain checks are setup-blocked as recorded above; commit, push, and PR creation remain pending at this point.
+- Final spec review: GO after bounded receipt-boundary repair. Final code-quality review: GO with no Critical/Important/Minor findings. Full toolchain checks are setup-blocked as recorded above; the A2 feature branch is committed and pushed, and PR #799 is open and unmerged.

@@ -1,18 +1,37 @@
 # Comment Translator Paid Core v1 Gate 0-A2 Migration History Reconciliation
 
-Status: repository source-only reconciliation contract. This document does not authorize Supabase history repair, migration apply, SQL writes, scheduler/Vault changes, deploy, activation, or live provider/payment operations.
+Status: Preview post-apply evidence closeout. The approved history reconciliation and the two additive Task 6 migrations are complete for the currently linked Preview target. This document does not authorize another history repair, migration apply, SQL write, scheduler/Vault change, deploy, activation, or live provider/payment operation.
 
 ## Evidence state
 
-- `repository-implemented`: the already-applied remote-only transport migration is now represented by `supabase/migrations/20260815090000_comment_translator_paid_cron_vault_transport.sql`; the focused contract is `scripts/comment-translator-paid-core-v1-gate0a2-migration-history-contract.mjs`.
-- `locally-verified` (focused evidence only): the focused source/contract check proves the independent seven-statement fixture, source safety, observed history inventory, exact mapping table, and both operator state machines. The existing Paid Core bundle was counted at 29 contracts: 24/29 runnable contracts passed, while 5/29 are setup-blocked because `node_modules/typescript` is absent; dependency installation was not performed. The final spec and code-quality reviews were both GO. TypeScript, lint, Next, and OpenNext checks remain setup-blocked; no 29/29 claim is made.
-- `externally-unverified`: this PR does not perform remote history repair or migration apply. Preview read-only evidence below is the previously obtained sanitized observation and is not a post-PR runtime claim.
+- `repository-merged`: PR #799 introduced the Gate 0-A2 canonical source and reconciliation contract; PR #800 repaired the Task 6 guard shape; PR #801 completed the approved whitespace-normalized exactly-one correction. The current authority is the merged Preview branch described below.
+- `locally-verified` (focused evidence only): the provider contract and migration parser pass at the current authority. The Gate 0-A2 contract's source-byte SHA assertion is checkout-line-ending-sensitive in this Windows worktree: the Git blob and LF-normalized worktree file both match the expected SHA-256, while the CRLF checkout bytes do not. No migration or contract was changed to mask that pre-existing environment constraint.
+- `externally-read-only-verified`: after the approved history-only reconciliation and ordered two-migration apply, a fresh sanitized Preview readback proved 29 total / 29 unique history entries with the exact expected inventory, both Task 6 entries exactly once, and no extra, missing, duplicate, or unknown entry. The post-apply semantic, privilege, ownership, lease, scheduler, and Vault-name-count checks described below passed without invoking an RPC/function or performing another mutation.
+- `deployed Preview`: the database migrations are externally verified as applied to the known linked Preview target. This is not evidence that a separately deployed application/Worker artifact corresponds to the repository authority.
 - Deterministic contract fixtures are source-contract evidence only, are explicitly `not-live`, and must never be accepted or described as fresh Preview runtime evidence. The operator path requires a separately supplied sanitized external read-only observation with an explicit successful result and current-preflight freshness provenance.
 - `ARTIFACT_IDENTITY=UNKNOWN`: no comparable deployed source/build digest was available. Scheduler remains outside this source-only change and is not activated here.
 - TDD record: before the canonical source existed, the focused contract exited 1 at the canonical-source existence assertion (`false !== true`); after adding the source, `node --check` and the focused contract exited 0 with PASS. The current bundle result is 24/29 runnable PASS and 5/29 setup-blocked because `node_modules/typescript` is absent; no dependency installation was performed. Final spec and code-quality reviews are GO. Remaining full toolchain checks are setup-blocked, and setup-blocked checks are not represented as passes.
 - Scheduler baseline contract: the previously observed Preview state has exactly one existing job with `active=false`; post-apply checks require that baseline to remain unchanged while every create/alter/activate/deactivate/delete operation delta is zero. An isolated-empty clean-install target expects zero jobs and `active=false`, with the same zero-operation deltas. No scheduler action is performed by this PR.
 
-Authority is `origin/codex/comment-translator-paid-v1-preview` at `53a044c02472f96b6a2c79cb067fa203838fb460`, tree `8720aea7ef1d6b533cb04326d176162ad6caf550`. PR #798 is merged at that exact commit/tree. This A2 branch adds only the canonical source, its contract, this operator document, the implementation plan, and the concise task entry.
+Authority is `origin/codex/comment-translator-paid-v1-preview` at `b1cba3c5fe5191907a512fa2f8d5e975a714a9d8`, tree `2e1274c7cc796f9575425d47b5fa4f2ed298767e`. PR #799, PR #800, and PR #801 are merged into that authority; PR #801 is the latest merge.
+
+## Post-apply execution closeout
+
+The approved Preview operation completed in strict order. The history-only reconciliation retained the same-version `20260815090000_comment_translator_paid_cron_vault_transport` entry as matched and did not repair or rerun it. A dry-run then selected exactly the two approved Task 6 files and no unrelated local-only migration. The first apply produced an exact 28 total / 28 unique readback with only `20260813135500_comment_translator_paid_task6_azure_uncertain_retry_compatibility` newly present; the second produced the final exact 29 total / 29 unique inventory with `20260829100000_comment_translator_paid_task6_azure_uncertain_retry_guard_repair` also present exactly once. The final dry-run proposed zero migrations.
+
+Sanitized post-apply evidence:
+
+- the eight fixed remote-to-canonical mapping pairs were 8/8 for semantic, privilege, owner, and lease evidence;
+- the canonical Azure fallback semantic source SHA-256 was `5a8b759532ebba939a8c2d5331d24782b9ece7647adcbb71b588cd7985c3ca5f`, and the generated remote function-definition MD5 was `db0a213efd8c48f30fb0353fc27eb723`;
+- the hardened uncertain-retry guard, compatibility marker, provider idempotency and provider authority boundaries, function ownership, `SECURITY DEFINER`, fixed search path, and ACL restrictions matched the contract;
+- the transport helper remained unchanged: normalized body semantic MD5 `ee28c4f97fb47ab70e0ae48248e56693`, generated function-definition MD5 `3c83f5957755dd833bd077c83163e1ea`, and canonical LF source SHA-256 `df6fea22e6be4be7563b272088b26813f99394fcb7ddcbd76125e69663b1b9ca`;
+- the existing lifecycle/capacity SELECT boundaries, maintenance wrapper, owner/lease behavior, Azure uncertain-retry/provider boundary, and Stripe/Supabase separation were not weakened;
+- remote statements were verified through sanitized booleans/hashes to contain no environment-specific value, HTTPS literal, token value/header, job name, Vault write, or scheduler mutation;
+- scheduler state remained exactly one existing job with the expected schedule and `active=false`; create/alter/activate/deactivate/delete deltas were all zero;
+- relevant Vault names count was 2; Vault values were never selected, displayed, or stored;
+- RPC/function invocation count was zero, and no Cloudflare, Stripe, provider, browser, deploy, Production, or activation operation was performed.
+
+The isolated operator directory is retained as ignored local evidence and was not cleaned up. It is not part of this repository closeout patch. `ARTIFACT_IDENTITY=UNKNOWN` remains unchanged because no comparable deployed application artifact digest was available.
 
 ## Observed history baseline
 
@@ -61,9 +80,9 @@ Read-only catalog evidence for the already-applied function was:
 - `SECURITY DEFINER` and the exact sanitized comment were present;
 - no Vault values were read or stored, and the observed remote migration contained no HTTPS literal, token header/value, job name, or environment-specific value.
 
-## Operator convergence plan
+## Historical operator convergence plan
 
-Every item below is a future operator procedure and requires separate approval for remote history repair or migration apply. No item was executed by this PR.
+The procedure below is retained as the fail-closed execution record. It was completed for the currently linked Preview target under separate approvals; it does not authorize repeating any operation. The clean-install path was not used.
 
 ### Common read-only preflight
 
@@ -98,4 +117,4 @@ Rollback for this source-only PR is a normal source/branch revert followed by re
 
 ## Approval boundary
 
-Approved here: new isolated worktree source/contract/docs, local verification, commit, feature-branch push, and PR creation. Not performed or authorized by this document: remote migration apply, migration history repair, SQL writes, Cron/Vault/project changes, scheduler activation, Cloudflare/Stripe/Provider operations, deploy, browser QA, merge, dependency installation, or worktree cleanup.
+Approved for this closeout: sanitized documentation update, local verification, commit, feature-branch push, and PR creation. The completed remote history repair and two additive applies are evidence recorded from separately approved operations; they are not performed by this closeout change. Not authorized here: another remote migration/history operation, SQL write, Cron/Vault/project change, scheduler activation, Cloudflare/Stripe/provider operation, deploy, browser QA, merge, dependency installation, or worktree cleanup.

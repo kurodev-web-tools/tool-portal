@@ -5,7 +5,7 @@ Status: Preview post-apply evidence closeout. The approved history reconciliatio
 ## Evidence state
 
 - `repository-merged`: PR #799 introduced the Gate 0-A2 canonical source and reconciliation contract; PR #800 repaired the Task 6 guard shape; PR #801 completed the approved whitespace-normalized exactly-one correction. The current authority is the merged Preview branch described below.
-- `locally-verified` (focused evidence only): the provider contract and migration parser pass at the current authority. The Gate 0-A2 contract's source-byte SHA assertion is checkout-line-ending-sensitive in this Windows worktree: the Git blob and LF-normalized worktree file both match the expected SHA-256, while the CRLF checkout bytes do not. No migration or contract was changed to mask that pre-existing environment constraint.
+- `locally-verified` (focused evidence only): the provider contract and migration parser pass at the current authority. The Gate 0-A2 contract uses an LF-canonicalized source SHA assertion: CRLF and standalone CR line endings are normalized to LF before hashing, while non-EOL content changes still change the SHA-256.
 - `externally-read-only-verified`: after the approved history-only reconciliation and ordered two-migration apply, a fresh sanitized Preview readback proved 29 total / 29 unique history entries with the exact expected inventory, both Task 6 entries exactly once, and no extra, missing, duplicate, or unknown entry. The post-apply semantic, privilege, ownership, lease, scheduler, and Vault-name-count checks described below passed without invoking an RPC/function or performing another mutation.
 - `deployed Preview`: the database migrations are externally verified as applied to the known linked Preview target. This is not evidence that a separately deployed application/Worker artifact corresponds to the repository authority.
 - Deterministic contract fixtures are source-contract evidence only, are explicitly `not-live`, and must never be accepted or described as fresh Preview runtime evidence. The operator path requires a separately supplied sanitized external read-only observation with an explicit successful result and current-preflight freshness provenance.
@@ -24,7 +24,7 @@ Sanitized post-apply evidence:
 - the eight fixed remote-to-canonical mapping pairs were 8/8 for semantic, privilege, owner, and lease evidence;
 - the canonical Azure fallback semantic source SHA-256 was `5a8b759532ebba939a8c2d5331d24782b9ece7647adcbb71b588cd7985c3ca5f`, and the generated remote function-definition MD5 was `db0a213efd8c48f30fb0353fc27eb723`;
 - the hardened uncertain-retry guard, compatibility marker, provider idempotency and provider authority boundaries, function ownership, `SECURITY DEFINER`, fixed search path, and ACL restrictions matched the contract;
-- the transport helper remained unchanged: normalized body semantic MD5 `ee28c4f97fb47ab70e0ae48248e56693`, generated function-definition MD5 `3c83f5957755dd833bd077c83163e1ea`, and canonical LF source SHA-256 `df6fea22e6be4be7563b272088b26813f99394fcb7ddcbd76125e69663b1b9ca`;
+- the transport helper remained unchanged: normalized body semantic MD5 `ee28c4f97fb47ab70e0ae48248e56693`, generated function-definition MD5 `3c83f5957755dd833bd077c83163e1ea`, and LF-canonicalized source SHA-256 `df6fea22e6be4be7563b272088b26813f99394fcb7ddcbd76125e69663b1b9ca`;
 - the existing lifecycle/capacity SELECT boundaries, maintenance wrapper, owner/lease behavior, Azure uncertain-retry/provider boundary, and Stripe/Supabase separation were not weakened;
 - remote statements were verified through sanitized booleans/hashes to contain no environment-specific value, HTTPS literal, token value/header, job name, Vault write, or scheduler mutation;
 - scheduler state remained exactly one existing job with the expected schedule and `active=false`; create/alter/activate/deactivate/delete deltas were all zero;
@@ -74,7 +74,7 @@ Read-only catalog evidence for the already-applied function was:
 
 - function body semantic MD5 after lower-case/whitespace normalization: `ee28c4f97fb47ab70e0ae48248e56693`;
 - generated PostgreSQL function-definition MD5: `3c83f5957755dd833bd077c83163e1ea` (formatting-sensitive catalog output, not a byte-equality claim);
-- source file SHA-256 in this worktree: `df6fea22e6be4be7563b272088b26813f99394fcb7ddcbd76125e69663b1b9ca`;
+- LF-canonicalized source file SHA-256 in this worktree: `df6fea22e6be4be7563b272088b26813f99394fcb7ddcbd76125e69663b1b9ca`;
 - `private` schema ACL: only database owner and `service_role` usage;
 - function ACL: only database owner and `service_role` execute;
 - `SECURITY DEFINER` and the exact sanitized comment were present;

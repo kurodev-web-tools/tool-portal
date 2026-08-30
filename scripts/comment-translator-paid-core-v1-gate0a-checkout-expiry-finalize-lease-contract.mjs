@@ -78,7 +78,7 @@ for (const [label, migration] of [["compatibility", azureGuardCompatibilityMigra
   assert.match(migration, /p\.proname\s*=\s*'ct_paid_azure_direct_fallback'[\s\S]+?p\.pronargs\s*=\s*9/i, `${label} targets only the existing nine-argument RPC`);
   assert.match(migration, /v_is_hardened[\s\S]+?if (?:not )?v_is_hardened then/i, `${label} classifies the complete hardened definition`);
   assert.match(migration, /v_is_legacy[\s\S]+?if not v_is_legacy then[\s\S]+?raise exception/i, `${label} fails closed outside canonical legacy`);
-  assert.match(migration, /replace\(v_semantic_definition, v_hardened_uncertain, ''\)[\s\S]+?length\(v_hardened_uncertain\) = 1/i, `${label} accepts exactly one complete hardened uncertain block`);
+  assert.match(migration, /replace\(v_normalized_semantic_definition, v_normalized_hardened_uncertain, ''\)[\s\S]+?length\(v_normalized_hardened_uncertain\) = 1/i, `${label} accepts exactly one whitespace-normalized complete hardened uncertain block`);
   for (const boundary of ["owner_user_id", "session_reference_id", "period_start", "period_end", "utc_month", "reserved_cost_micros", "committed_cost_micros", "slot_state", "reservation_state", "attempt_state", "provider_failure_class"]) {
     assert.match(migration, new RegExp(boundary, "i"), `${label} complete hardened block includes ${boundary}`);
   }

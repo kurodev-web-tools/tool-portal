@@ -358,6 +358,10 @@ function sha256(value) {
   return crypto.createHash("sha256").update(value, "utf8").digest("hex");
 }
 
+function sourceSha256(source) {
+  return sha256(source.replace(/\r\n?/g, "\n"));
+}
+
 function canonicalTask6AzureFallbackSemanticDefinition() {
   const baseSource = fs.readFileSync(path.join(root, "supabase", "migrations", "20260812120000_comment_translator_paid_core_v1.sql"), "utf8");
   const compatibilitySource = fs.readFileSync(path.join(root, "supabase", "migrations", "20260813135500_comment_translator_paid_task6_azure_uncertain_retry_compatibility.sql"), "utf8");
@@ -3661,7 +3665,14 @@ assert.equal(additiveAllowlist[1], "20260829100000_comment_translator_paid_task6
 assert.ok(previewOrder.includes("post-apply-read-only-check"), "post-apply checks are read-only");
 assert.ok(stopConditions.includes("partial-state"), "partial state stops the next phase");
 
-const migrationSha256 = crypto.createHash("sha256").update(migrationSql, "utf8").digest("hex");
+const crlfCanonicalMigration = canonicalMigration.replace(/\n/g, "\r\n");
+assert.equal(sourceSha256(crlfCanonicalMigration), sourceSha256(canonicalMigration), "canonical source hash is stable across LF and CRLF line endings");
+const crCanonicalMigration = canonicalMigration.replace(/\n/g, "\r");
+assert.equal(sourceSha256(crCanonicalMigration), sourceSha256(canonicalMigration), "canonical source hash is stable across LF and CR line endings");
+const changedCanonicalMigration = canonicalMigration.replace("runtime-only", "runtime-mutated");
+assert.notEqual(sourceSha256(changedCanonicalMigration), sourceSha256(canonicalMigration), "canonical source hash still detects non-EOL content changes");
+
+const migrationSha256 = sourceSha256(migrationSql);
 assert.equal(migrationSha256, canonicalMigrationSourceSha256, "canonical migration source SHA-256 matches the exact sanitized seven-statement migration");
 console.log(`comment-translator-paid-core-v1-gate0a2-migration-history-contract: PASS`);
 console.log(`full-preflight-envelope=REQUIRED trusted-external-adapter-lineage=OPAQUE_AND_UNPROVISIONED_IN_SOURCE_ONLY_RUN local-static-trusted-issuance=REJECTED internal-state-machine-fixture-not-live=PASS 8-pair and additive/post-apply mechanics=PASS`);

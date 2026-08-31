@@ -3,6 +3,7 @@
 ## Status
 
 - Date: 2026-08-31
+- Review revision: 2026-09-01, independent review iteration 1 addressed
 - Decision: approved A2 design, `history reconstruction + ordered legacy bridge`
 - Source base: exact fetched `origin/codex/comment-translator-paid-v1-preview` commit `a275174dc6494a8d159f1fff30318c05fece0107`
 - Current decision label: `NO-GO` until every production evidence gate in this document passes
@@ -88,33 +89,48 @@ Canonical `ct_paid_*` function overloads, Paid Cron jobs, and the two required V
 - `pg_net` is available at 0.20.4 but is not installed.
 - The Cron API supports `schedule`, `alter_job(..., active boolean)`, and `unschedule`.
 - Vault exposes supported `create_secret` and `update_secret` functions. No dedicated delete function is exposed.
+- Vault currently contains zero rows in total and zero rows for the two reserved names.
 
 ### Backup tooling
 
-The current host has no `supabase`, `docker`, `pg_dump`, `pg_restore`, or `psql` executable. The Free plan has no relied-upon automatic backup/PITR evidence for this operation. A manual logical backup and isolated restore rehearsal are therefore hard entry gates, not optional safeguards.
+The repository lockfile and current `node_modules` provide Supabase CLI `2.109.0`; implementation and operations must call that exact local binary and must not use `npx` or an unpinned global CLI. The current host has no `docker`, `pg_dump`, `pg_restore`, or `psql` executable. Production reports PostgreSQL `17.6`, so the approved backup environment must use PostgreSQL client major 17 and record the exact patch version or immutable container digest. The Free plan has no relied-upon automatic backup/PITR evidence for this operation. A manual logical backup and isolated restore rehearsal are therefore hard entry gates, not optional safeguards.
 
 ## Chosen architecture
 
-### 1. Reconstruct history instead of deleting it
+### 1. Reconcile history with inert markers, not legacy replay
 
-Recover the 18 production-only migration files from `supabase_migrations.schema_migrations.statements` and add them to `supabase/migrations` using their exact production versions and names.
+Add 18 history-marker migrations to `supabase/migrations` using the exact production versions and names. Each marker contains only comments with sanitized metadata and a PostgreSQL no-op such as `do $$ begin null; end $$;`. It must not contain or replay the production statement bodies.
 
-For each recovered file, record and test only sanitized metadata:
+This distinction is mandatory. Production already records these versions and skips the markers. Preview and a clean install apply the markers safely without recreating the incompatible legacy subsystem. Replaying the recovered legacy SQL on Preview would collide with the canonical entitlement table and its incompatible columns before the bridge could run.
 
-- version;
-- name;
-- statement count;
-- SQL byte count;
-- digest;
-- high-confidence secret match count.
+Commit a separate generated sanitized manifest for the original production history. The manifest is evidence, not executable SQL, and contains exactly this ordered set:
 
-The implementation must preserve the production statement order. It must not include production IDs, connection details, `created_by`, idempotency keys, or other private metadata.
+| Version | Name | Statements | Bytes | MD5 |
+| --- | --- | ---: | ---: | --- |
+| `20260624040504` | `comment_translator_real_comments_feed_snapshots` | 1 | 3473 | `32ce077c0d033e0aa166132d37c64973` |
+| `20260624141142` | `account_display_timezone_preference` | 1 | 700 | `bb06bafd3ffb897284b0e4cf27bc076f` |
+| `20260722000000` | `comment_translator_paid_entitlements` | 17 | 6038 | `9bd1986a3eb71496e96319ff87c5a6e3` |
+| `20260722001000` | `comment_translator_paid_usage_counters` | 25 | 10424 | `59114cdc1e208791aa5e4fd661b11c30` |
+| `20260722002000` | `comment_translator_obs_overlay_tokens` | 16 | 5209 | `0810fac8f39094e25567101dddcc4e42` |
+| `20260722003000` | `comment_translator_obs_overlay_browser_sessions` | 9 | 1771 | `adfad87c8014ec22eedd0cfe34d20fc6` |
+| `20260723000000` | `comment_translator_moderator_share_tokens` | 16 | 5082 | `a82bf8f600249ff1a4308d525354d89a` |
+| `20260723001000` | `comment_translator_moderator_share_browser_sessions` | 10 | 2117 | `db73510f8dc44e4fb1c293965396327e` |
+| `20260723002000` | `comment_translator_custom_dictionary` | 18 | 8172 | `bae5d675449b7aebf10d99a64c1e0459` |
+| `20260723003000` | `comment_translator_creator_history` | 12 | 2056 | `f0caa787a451a42a08bbb81bf4303c1f` |
+| `20260726111154` | `comment_translator_paid_entitlements` | 1 | 6065 | `293df19b9f922936c60038daf42cfebc` |
+| `20260728135736` | `comment_translator_paid_usage_counters` | 1 | 10461 | `dc486ca138f0d2e258581ab960a1aa98` |
+| `20260728142220` | `comment_translator_obs_overlay_tokens` | 1 | 5234 | `8f1ef08f04521176699abc35c2fd8c09` |
+| `20260728145324` | `comment_translator_obs_overlay_browser_sessions` | 1 | 1785 | `00590230209f530666c50460e5439fe8` |
+| `20260728160206` | `comment_translator_moderator_share_tokens` | 1 | 5107 | `9be8e7b679209f9c63da5688753bc49d` |
+| `20260728164122` | `comment_translator_moderator_share_browser_sessions` | 1 | 2133 | `6a4290f68e19c41f204305b63b7993fb` |
+| `20260728172220` | `comment_translator_custom_dictionary` | 1 | 8200 | `0e30272eb31457551f1d9eba7d7f37f8` |
+| `20260729035621` | `comment_translator_creator_history` | 1 | 2074 | `6590c4e2a350ba00b9e8dd21645fa4d8` |
 
-The two timestamp-variant pairs for the real-comments feed and account timezone are retained alongside the existing local files. Their SQL is content-equivalent and idempotent. The duplicated legacy migration variants are also retained because both versions already exist in production history and their second application succeeded there.
+The generated manifest also asserts original statement ordering, aggregate high-confidence secret matches = 0, and rollback statements = 0. Full statements remain available only from production migration history and the restricted logical backup; they are not committed.
 
-No production history row is deleted. No local historical migration is rewritten or removed. `migration repair --status applied` is forbidden unless a later, separately approved recovery step proves that the exact SQL effect already exists. It is not part of the normal A2 path.
+The two timestamp-variant pairs for the real-comments feed and account timezone remain as distinct versions because both are recorded remotely. No production history row is deleted. No local historical migration is rewritten or removed. `migration repair --status applied` is forbidden in the normal A2 path.
 
-After reconstruction, the repository contains every production history version. Before the new bridge and `pg_net` migration are added, the union is 53 files: 35 current local files plus 18 recovered production-only files.
+After markers are added, the repository contains 53 migration files: 35 current local files plus 18 markers.
 
 ### 2. Insert an intentional pre-base legacy bridge
 
@@ -124,12 +140,13 @@ Add an explicitly ordered migration before `20260812120000_comment_translator_pa
 
 The backdated ordering is intentional and documented. It is required because a newly timestamped migration would execute after the canonical base and could not free the colliding public table name.
 
-The bridge supports exactly two accepted states:
+The bridge supports exactly three accepted states, selected only by an exact catalog fingerprint:
 
 1. **Exact legacy state:** archive the known zero-row legacy subsystem.
 2. **Exact canonical state with no public legacy shape:** no-op. This allows the bridge to be applied safely to Preview, where canonical Paid Core v1 already exists.
+3. **Clean pre-base state:** no legacy or canonical Paid objects exist, so no-op. This allows a clean database to continue to the canonical base migration.
 
-Any absent, partial, mixed, non-empty, differently owned, differently shaped, or unexpectedly dependent legacy state raises an exception before object movement.
+Any partial, mixed, non-empty, differently owned, differently shaped, or unexpectedly dependent state raises an exception before object movement. State selection and every mutation occur under the same transaction advisory lock.
 
 #### Exact legacy preconditions
 
@@ -138,15 +155,25 @@ The bridge must verify inside its transaction:
 - all three expected public tables exist;
 - each table has zero rows;
 - RLS is enabled on all three;
-- the entitlement columns match the approved legacy list exactly;
-- the expected three function signatures exist and are `SECURITY DEFINER`;
-- the expected trigger exists and is enabled;
-- the expected two foreign keys exist;
+- table columns, indexes, policies, constraints, RLS flags, owners, ACLs, and row counts match the committed generated legacy-catalog manifest exactly;
+- the expected three function signatures, definitions, owners, `SECURITY DEFINER` flags, `search_path` settings, and ACLs match that manifest exactly;
+- the expected trigger definition and enabled state match that manifest exactly;
+- the expected two internal foreign keys match that manifest exactly;
 - the migration executor owns every moved table and function;
-- no external view/materialized-view dependency exists;
+- no outside-schema inbound foreign key, view, materialized view, rule, policy, trigger, event trigger, publication membership, function-body reference, or unexpected `pg_depend` edge exists;
 - no canonical `ct_paid_*` overload exists;
 - `comment_translator_paid_legacy_archive` does not exist;
 - no Paid Cron job exists.
+
+The initial manifest authority has these aggregate checks and must include the complete sorted object rows rather than only the digests:
+
+| Object | Columns | Column MD5 | Indexes | Index MD5 | Policies | Policy MD5 | Constraints | Constraint MD5 |
+| --- | ---: | --- | ---: | --- | ---: | --- | ---: | --- |
+| entitlements | 12 | `a7d8118a086072edb4e112d40e98ffcd` | 4 | `cd897d5454c63c1fdc53952e3c67b9bc` | 1 | `451bb730aa57c76a39b137db5d395a2d` | 7 | `db5a17b1b40cdd8bf6afabf9d476b3d7` |
+| usage counters | 8 | `5923a875a6e42b7e41813783f0d12260` | 1 | `67109e2ac5d86cacdb02c85cf94ebb1a` | 1 | `bad667c116f91ce1b1e0b1dd4c9aa8ee` | 6 | `fa4dcbefbb77ab95ab64cd5a65c093fe` |
+| usage events | 8 | `223ff60c557e872c0b8c3f03de405d04` | 1 | `f6af251d23d1d1281db01799a713b2c1` | 1 | `03465cd511b81de5490604e6ec6847de` | 6 | `2516198bd8853a23a238810c4c7b3474` |
+
+All three tables have RLS enabled. The three legacy function definitions have aggregate MD5 `6dc37ec241b7f07359a42e23741f87eb`; the single enabled trigger has aggregate MD5 `8af034bbb90bf8221228c263104a3e9a`; the observed outside dependency counts and publication memberships are zero. Implementation must generate and commit the full ACL rows and sorted object/signature lists, then require exact equality at preflight and inside the bridge.
 
 #### Atomic archive procedure
 
@@ -184,7 +211,17 @@ This is a no-op where `pg_net` is already installed and ensures the Task 9 maint
 
 The extension migration is separately approval-gated as part of the production migration apply. No extension version is pinned because Supabase manages available extension versions.
 
-After history reconstruction, the bridge, and the extension migration, the expected local migration count is 55. Against the observed production history of 22 rows, the expected pending count is 33. Both numbers must be recalculated from current state at action time; a mismatch stops execution.
+After history markers, the bridge, and the extension migration, the expected local migration count is 55.
+
+The expected convergence matrix is:
+
+| Environment | Observed history | Expected pending | Result |
+| --- | ---: | ---: | --- |
+| production | 22 | 33 | markers skipped; bridge archives exact legacy state; canonical chain applies |
+| Preview | 30 | 25 | five older local migrations, 18 markers, bridge canonical no-op, and `pg_net` no-op/apply as observed |
+| clean supported baseline | 0 | 55 | markers and bridge are no-ops; complete canonical replay |
+
+The five currently missing Preview versions are `20260527000000`, `20260601000000`, `20260624000000`, `20260705000000`, and `20260706073204`. Preview already has the canonical five-column entitlement shape, 82 `ct_paid_*` overloads, installed `pg_net`, and one inactive Paid Cron job; these are preflight evidence only and may drift. Before any mutation, use the exact local CLI to run `migration list` and `db push --dry-run --include-all` separately against each approved target and require the exact environment-specific set. A count-only match is insufficient.
 
 ### 4. Production migration sequence
 
@@ -194,7 +231,7 @@ The approved production apply sequence is fail-closed:
 2. prove backup and restore rehearsal completion;
 3. rerun the complete sanitized production fingerprint;
 4. run `supabase migration list` through the isolated production-targeting context;
-5. run `supabase db push --dry-run --include-all`;
+5. run the local `2.109.0` CLI `db push --dry-run --include-all`;
 6. require the exact expected pending version set and ordering;
 7. stop if the CLI asks for history repair or proposes an unknown migration;
 8. obtain the migration-apply approval;
@@ -203,7 +240,7 @@ The approved production apply sequence is fail-closed:
 
 `--include-all` is required because production has newer recorded versions while some valid local versions are missing. `--include-seed` and remote reset are forbidden.
 
-Each migration is independently transactional under the CLI. The bridge itself is one transaction. If the bridge commits and a later canonical migration fails, Paid remains disabled, Cron remains absent, and the operator stops rather than retrying blindly.
+Do not assume CLI transaction semantics. Before production approval, prove with CLI `2.109.0` in a disposable local stack that a deliberately failing bridge-shaped migration leaves neither moved objects nor a history row, and that the successful case commits both DDL and its history row. The bridge SQL also performs all checks and movement in one PostgreSQL transaction. If the bridge commits and a later canonical migration fails, Paid remains disabled, Cron remains absent, and the operator stops rather than retrying blindly.
 
 ### 5. Default-privilege boundary
 
@@ -223,7 +260,7 @@ Any current-object grant drift is a hard stop and is not covered by the historic
 
 ## Backup and restore gate
 
-Before any production DDL, prepare a temporary approved tooling environment containing the Supabase CLI, Docker, and compatible PostgreSQL client tools. Tool installation is a separate approval because none is currently present.
+Before any production DDL, prepare an approved temporary tooling environment. Reuse the lockfile-pinned local Supabase CLI `2.109.0`; no Supabase dependency change or CLI installation is required. Docker and PostgreSQL client tooling remain absent and require a separate setup approval. PostgreSQL client major must be 17, matching production `17.6`, and the exact patch version or immutable container digest must be recorded.
 
 Using the official Supabase logical-backup workflow, capture at minimum:
 
@@ -233,9 +270,11 @@ Using the official Supabase logical-backup workflow, capture at minimum:
 - `history_schema.sql` for `supabase_migrations`;
 - `history_data.sql` for `supabase_migrations`.
 
+Before backup, require total Vault rows = 0 and required-name rows = 0, matching the observed production state. If Vault is no longer empty, stop: a new design must cover the hosted Vault root-key boundary and new-project restore path before proceeding. Also run the exact local CLI equivalent of `supabase db diff --linked --schema auth,storage`; if it is non-empty, review it and create a restricted `auth_storage_changes.sql` artifact. Unreviewed Auth or Storage customizations are a hard stop.
+
 The files must be written outside the repository to a uniquely named restricted temporary directory. Never print the connection string or file content. Record only filenames, byte sizes, SHA-256 digests, exit statuses, and sanitized object/row counts.
 
-Restore all five files into an isolated disposable local Supabase/PostgreSQL environment using `ON_ERROR_STOP` and a single transaction where supported. Verify:
+Restore into an isolated disposable local Supabase stack backed by PostgreSQL 17. Restore in this order: `roles.sql`, `schema.sql`, reviewed `auth_storage_changes.sql` when present, `data.sql`, `history_schema.sql`, then `history_data.sql`. Use `ON_ERROR_STOP` and explicit transactions where the selected tools support them; record which files are transactional rather than claiming one transaction across unsupported restore modes. Verify:
 
 - restore exits successfully;
 - migration-history count and digest manifest match;
@@ -245,11 +284,15 @@ Restore all five files into an isolated disposable local Supabase/PostgreSQL env
 - the restored database accepts the bridge and canonical migration sequence in a rehearsal;
 - no production network endpoint is used by the restore target.
 
+Because the required pre-backup Vault count is zero, this rehearsal intentionally does not claim that a hosted Supabase Vault root key is portable. The two new encrypted references are created only after schema verification, and rollback to this pre-change backup therefore does not depend on decrypting them.
+
 The logical backup does not restore Storage object blobs. Gate 1 item 1 does not mutate Storage objects, so this limitation is recorded but does not broaden the task into a Storage migration.
 
 Backup artifacts and credentials must not be committed. Cleanup of the disposable restore target and backup files is a separate destructive action after the Gate is closed and requires exact-path confirmation.
 
 ## RPC and schema readback
+
+Implementation must generate and commit an exact canonical RPC manifest containing each schema/name/identity-argument tuple, return type, owner, `SECURITY DEFINER` flag, function config including `search_path`, sorted ACL, and function-definition digest. At the reviewed base the manifest contains 82 `ct_paid_*` overloads with aggregate MD5 `d975b161bf115fe6ecd80ad68c55134e`. The generated rows, not the count or aggregate digest alone, are the allowlist. The manifest is regenerated after any source change and production readback must equal the reviewed committed artifact.
 
 After migration apply, read back sanitized evidence for:
 
@@ -259,13 +302,17 @@ After migration apply, read back sanitized evidence for:
 - archive schema present with exactly three tables and three functions;
 - archived tables still zero-row, RLS-enabled, and inaccessible to application roles;
 - archived trigger disabled;
-- expected `ct_paid_*` function signatures and overload counts;
-- reconciler claim limit 50 and lease 120 seconds;
+- exact equality to the committed canonical RPC manifest;
+- reconciler claim default/hard limit 50 and lease exactly 120 seconds;
 - stale-token rejection contract;
-- cleanup limit and retention contract;
+- retention cleanup default/hard limit 500 and rejection outside 1 through 500;
+- sanitized scheduler evidence from `comment_translator_paid_scheduler_runs`, `ct_paid_record_sanitized_scheduler_run`, `ct_paid_read_sanitized_scheduler_run(text)`, and `ct_paid_read_sanitized_admin_visibility(timestamptz)`, including retry-attempt alerting at 5 or more;
 - `PUBLIC`, `anon`, and `authenticated` execute counts on Paid RPCs equal zero;
-- only explicitly documented `service_role` execute grants;
-- current-object security and performance advisors reviewed after DDL.
+- `service_role` execute privileges equal only the exact committed ACL manifest;
+- the public HTTP maintenance transport and private Vault transport remain unavailable to browser roles and executable by `service_role` only;
+- current-object security and performance advisors compared with a pre-DDL baseline.
+
+Advisor blocking is scoped and deterministic: any newly introduced advisory whose referenced object intersects the new canonical Paid, archive, `pg_net`, Vault-binding, or Cron objects is a hard stop; any new high/critical security advisory or missing RLS/grant boundary is also a hard stop. Unchanged pre-existing advisories outside this object set are recorded but do not become A2 blockers.
 
 No maintenance RPC is invoked in production during this Gate.
 
@@ -280,7 +327,7 @@ Create exactly one encrypted secret for each required name:
 - `comment_translator_paid_maintenance_url`
 - `comment_translator_paid_cron_token`
 
-Use `vault.create_secret` only when the name is absent. Use `vault.update_secret` only in a separately approved rotation path. Never query or return `decrypted_secret` during evidence collection.
+Create both records in one explicit transaction after taking a deterministic transaction advisory lock for this exact binding. Recheck that both names are absent under the lock, pass values through non-logged bound/session inputs rather than SQL interpolation, call `vault.create_secret` for both, and require exact count = distinct count = 2 before commit. Any create or assertion failure rolls back both records. Use `vault.update_secret` only in a separately approved rotation path. Never query or return `decrypted_secret` during evidence collection.
 
 Readback is limited to:
 
@@ -298,7 +345,8 @@ In one explicit transaction:
 3. use schedule `*/5 * * * *`;
 4. use only `select private.ct_paid_invoke_maintenance_from_vault();` as the command;
 5. immediately call `cron.alter_job(..., active := false)` before commit;
-6. read back the exact job row inside the transaction and commit only when it is inactive.
+6. require database `postgres` and username `postgres` in the exact row contract;
+7. read back the exact job row inside the transaction and commit only when it is inactive.
 
 The scheduler cannot observe the uncommitted active row. After commit, require:
 
@@ -307,7 +355,9 @@ The scheduler cannot observe the uncommitted active row. After commit, require:
 - scheduler process count = 1;
 - job runs = 0;
 - Cloudflare fallback scheduler = absent/inactive;
-- cadence, command digest, database, and username match the approved contract without exposing private values.
+- cadence, command digest, database `postgres`, and username `postgres` match the approved contract without exposing private values.
+
+Record the new job ID and a pre-transaction `cron.job_run_details` baseline. Keep the job inactive for a fixed 10-minute observation window after commit, covering two five-minute cadences. Query only that exact job ID and rows after the baseline; require run delta = 0 and `active=false` at the start and end of the window. Historical rows for unrelated jobs do not affect this scoped assertion.
 
 Cron activation is explicitly out of scope.
 
@@ -319,17 +369,9 @@ Rollback depends on the failure phase.
 
 Any bridge failure rolls back automatically. No history or object movement should remain. Recheck the original fingerprint and stop.
 
-### After bridge commit but before canonical base succeeds
+### After bridge commit
 
-An operator-only bridge reversal may run only when:
-
-- canonical public objects are absent;
-- archived tables remain zero-row;
-- archived object fingerprints are exact;
-- no new dependency exists;
-- Paid and Cron remain disabled.
-
-The reversal moves the functions and tables back to `public`, restores the approved grants, reenables the trigger, verifies the original legacy fingerprint, and removes the empty archive schema. It runs in one transaction and requires a separate production rollback approval.
+Do not manually move archived objects back while leaving the bridge migration recorded. That would create a non-retryable history/object mismatch. After commit, use only a reviewed forward fix or restore the complete verified pre-change backup, including `supabase_migrations`, under a separate destructive/downtime approval. The backup restore is the only exact pre-bridge reversal because it restores both objects and migration history together.
 
 ### After canonical migrations succeed
 
@@ -358,7 +400,7 @@ Execution stops immediately if any of these occur:
 - migration dry-run requests repair or proposes an unexpected version/order;
 - `pg_net` cannot be enabled through the approved migration role;
 - any migration fails or leaves history divergence;
-- current-object RLS/grants/advisors fail;
+- a new in-scope advisor finding, high/critical security advisory, RLS failure, or grant-manifest mismatch appears;
 - Vault names are duplicated or unreadable by count-only checks;
 - Cron is not exactly one row and inactive;
 - any Cron run occurs;
@@ -371,10 +413,10 @@ There is no automatic retry after a failed mutation. Diagnose and obtain a new a
 
 The implementation plan may create or modify only the minimum artifacts needed for this design:
 
-- 18 recovered historical migration files;
+- 18 inert history-marker migrations and the sanitized production-history manifest;
 - the ordered legacy bridge migration;
 - the ordered `pg_net` extension migration;
-- deterministic manifest and bridge contracts;
+- generated exact legacy-catalog and canonical-RPC/ACL manifests plus bridge contracts;
 - a read-only production preflight contract;
 - an approval-gated backup/restore runner or exact operator instructions;
 - an approval-gated production migration runner;
@@ -388,14 +430,14 @@ No runtime application behavior, UI, Stripe integration, Provider path, Cloudfla
 
 ### Static and contract tests
 
-- recovered-history version/name/count/digest manifest;
-- no secret/private identifier in recovered SQL or changed files;
+- production-history marker version/name/count/digest manifest;
+- no secret/private identifier in markers, generated manifests, or changed files;
 - exact migration ordering, including bridge before base and `pg_net` before Task 9;
 - bridge exact-legacy positive case;
 - canonical no-op positive case;
 - non-empty, partial, mixed, wrong-owner, extra-dependency, duplicate, and malformed negative cases;
 - archive privilege and disabled-trigger assertions;
-- rollback exact-state preconditions;
+- post-commit forward-fix/full-restore rollback contract;
 - production target and approval-token fail-closed behavior;
 - Cron exact name/cadence/command/inactive contract;
 - Vault count-only evidence contract.
@@ -405,12 +447,14 @@ No runtime application behavior, UI, Stripe integration, Provider path, Cloudfla
 Using the disposable restored database:
 
 1. replay all 55 migrations from an empty supported baseline;
-2. verify the restored legacy history converges through the bridge into canonical Paid Core v1;
+2. verify the restored exact legacy catalog converges through the bridge into canonical Paid Core v1;
 3. verify applying the bridge to an already-canonical Preview-shaped database is a no-op;
-4. verify bridge rollback before canonical apply;
-5. verify all canonical RPC privileges, constraints, and atomicity contracts;
-6. run `supabase db reset` and migration list consistency checks;
-7. ensure no external HTTP request or Cron run occurs.
+4. verify the clean pre-base bridge state is a no-op;
+5. inject one CLI migration failure and prove both object movement and its history row roll back;
+6. verify all canonical RPC privileges, constraints, scheduler limits, monitoring, and atomicity contracts;
+7. run `supabase db reset` and migration list consistency checks;
+8. prove the production, Preview, and clean expected-pending sets separately;
+9. ensure no external HTTP request or Cron run occurs.
 
 ### Repository verification
 
@@ -430,7 +474,7 @@ These approvals remain distinct:
 
 1. **Source implementation:** migration files, contracts, scripts, and docs only.
 2. **Commit/push/PR:** repository publication of the reviewed source change.
-3. **Tooling setup:** Supabase CLI, Docker, and PostgreSQL clients on an approved host.
+3. **Tooling setup:** Docker and PostgreSQL 17 clients on an approved host; the repository-local Supabase CLI is already available and pinned.
 4. **Backup execution:** production read and restricted local artifact creation.
 5. **Migration apply:** bridge, canonical migrations, and `pg_net` against production.
 6. **Vault write:** exactly two named encrypted production references.

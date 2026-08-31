@@ -66,6 +66,7 @@ assert.match(runtime, /generate_series\(1,\s*60\)/i, "runtime fixture exercises 
 assert.match(runtime, /61st|sixty.?first|rate-limited/i, "runtime fixture proves the 61st message is rate limited");
 assert.match(runtime, /openai_attempt[\s\S]+azure_direct_fallback|openai[\s\S]+azure_fallback/i, "runtime fixture uses provider-kind fixtures for OpenAI and Azure fallback");
 assert.match(runtime, /same.?hour|utc_hour[\s\S]+2/i, "runtime fixture asserts same-UTC-hour provider accounting");
+assert.match(runtime, /provider_detail\.utc_hour\s*=\s*v_utc_hour/i, "runtime fixture qualifies the UTC-hour column against a distinct PL/pgSQL variable");
 assert.match(runtime, /empty.?poll[\s\S]+0|provider_calls[\s\S]+0/i, "runtime fixture asserts empty polls do not call a provider");
 assert.match(runtime, /percentile_cont\(0\.50\)[\s\S]+percentile_cont\(0\.95\)/i, "runtime fixture reports RPC p50 and p95 latency");
 assert.match(runtime, /task11_empty_poll_observations[\s\S]+insert into task11_empty_poll_observations/i, "runtime fixture records every empty poll observation");

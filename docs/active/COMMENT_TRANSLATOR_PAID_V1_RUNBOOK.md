@@ -223,9 +223,21 @@ SQL harnessのRPC latency、row count、relation/index bytesは、Supabase Manag
 
 ### 13.4 Evidence state
 
-- `repository-implemented`: Preview harness、runtime/storage/cleanup SQL、focused contract、Runbook。
-- `locally-verified`: focused contract、syntax、lint/typecheck/buildの実行結果と、既存local-only fixtureの非変更。
-- `deployed Preview`: このsource-only taskでは未確認。
-- `external measurement`: Egress/Realtime、Preview runtime、Stripe/Provider/Cloudflareの実測は未実施。取得不能な測定は`UNKNOWN`。
-- `artifact identity`: Preview deploy artifactとの一致は未確認。
+- `repository-implemented`: Preview harness、runtime/storage/cleanup SQL、focused contract、Runbook。Preview実行で検出したPL/pgSQLの`utc_hour`変数/カラム衝突は、focused contractのRED→GREEN後に変数を`v_utc_hour`へ限定修正した。
+- `locally-verified`: focused contractは修正後PASS。既存local-only fixtureは変更していない。
+- `deployed Preview`: Cloudflareのactive versionはread-only確認済み。ただしGitHubにPR #808のcheck/deploy runがなく、active version metadataにも比較可能なsource revisionがない。
+- `external measurement`: 2026-08-31 18:45 JSTにPreview project限定でruntime/storageを実行し、SQL transaction observationとDashboard即時値を取得した。詳細は13.5。
+- `artifact identity`: PR #808 merge SHAとactive Preview versionを比較できるdigest/tag/messageがないため`UNKNOWN`。
 - `scheduler activation`: `false`。activation、production/live、commit、push、PR、mergeは別承認。
+
+### 13.5 2026-08-31 Preview execution evidence
+
+- target/preflight: linked project metadataと明示Preview project refが一致し、service-role environmentなし。`dry-run`とlinked migration `preflight`はPASS。
+- runtime: run id `task11-preview-20260831-a31f9c2d`。20 sessions、14,400 poll reads、3,600 heartbeat writes、160 restart windows、115,200 Cloudflare request plan、1,200 message commits、同一UTC hour provider rows 2、empty polls 14,400、provider calls 0、cleanup rows remaining 0。Provider/Stripe network calls、Cloudflare deploy、scheduler activationは0/未実施。
+- runtime repair: 初回実行はSQLSTATE 42702でtransaction rollback。原因はPreview fixtureのPL/pgSQL変数`utc_hour`と`provider_detail.utc_hour`の曖昧参照。focused contractで再現してから`v_utc_hour`へ限定修正し、contractとPreview runtime再実行がPASS。
+- RPC latency: p95はread poll budget 103 µs、heartbeat 1,105.05 µs、message reserve 530.05 µs、message finalize 615 µs、OpenAI hourly fixture 954.2 µs、Azure fallback hourly fixture 803.85 µs、session start 1,177.95 µs。
+- storage: temporary relation transaction限定でlogical attempts 129,600、attempt receipts 129,600、provider source receipts 28,800、provider hourly rows 28,800、session summaries 14,400。relation total 161,161,216 bytes、index 65,839,104 bytes、cleanup rows remaining 0。共有`public` relationへのpersistent fixture rowは残していない。
+- Egress: organization UsageをPreview projectへ限定し、同じbilling periodの実行直前/直後を観測。即時表示は0 GBのままで、表示上60%未満。Dashboard注記どおり最大1時間の反映遅延があるため、遅延後deltaは`pending-refresh`。
+- Realtime: Preview projectのObservability > Realtimeを`Last 60 minutes`で実行後に再観測。Connected Clients、Broadcast Events、Presence Eventsはno data、Postgres Changes Eventsは0で、表示上60%未満。最大24時間のUsage反映遅延があるため、billing usage側の遅延後deltaは`pending-refresh`。
+- cleanup: runtime/storageのtransaction observationはいずれもcleanup rows remaining 0で、exact remote cleanupは不要。session-onlyの未追跡実行計画は削除し、follow-up evidence branch/worktreeはPR review用に保持する。remote branch deletionは未実施。
+- acceptance classification: `preview_runtime=PASS`、`preview_storage=PASS`、`immediate_egress_gate=PASS-under-60`、`immediate_realtime_gate=PASS-under-60`、`bounded_preview_harness_acceptance=PASS`、`delayed_usage_delta=pending-refresh`、`ARTIFACT_IDENTITY=UNKNOWN`、`task11_full_acceptance=NO-GO-pending-delayed-usage-and-artifact-identity`。SQL row countやrelation bytesをEgress/Realtimeへ換算していない。

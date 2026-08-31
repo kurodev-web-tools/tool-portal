@@ -3,7 +3,7 @@
 ## Status
 
 - Date: 2026-08-31
-- Review revision: 2026-09-01, independent review iterations 1-3 addressed
+- Review revision: 2026-09-01, independent review iterations 1-5 addressed
 - Decision: approved A2 design, `history reconstruction + ordered legacy bridge`
 - Source base: exact fetched `origin/codex/comment-translator-paid-v1-preview` commit `a275174dc6494a8d159f1fff30318c05fece0107`
 - Current decision label: `NO-GO` until every production evidence gate in this document passes
@@ -307,7 +307,18 @@ The backup has two stages. First, take an unrestricted read-only rehearsal backu
 
 `T0` is the database server's `transaction_timestamp()` from the same held `REPEATABLE READ, READ ONLY` transaction that calls `pg_export_snapshot()` for the final schema/data/history dumps. Use local Supabase CLI `2.109.0` `db dump --dry-run` to obtain its exact Supabase filtering arguments, then execute the pinned PostgreSQL-17 `pg_dump` command with those reviewed arguments plus the exported snapshot. Keep the exporting transaction open until every snapshot-bound dump completes. The snapshot identifier and connection details are never printed or committed; only sanitized `T0`, completion times, sizes, and digests are evidence. Role-only output is captured separately because it is not part of the database data snapshot.
 
-This design does not claim zero-loss rollback. On the Free plan without PITR, emergency restore can lose every database write committed after `T0`. The accepted bound is at most 20 minutes. Backup/checksum must finish by `T0 + 10 minutes`; otherwise apply does not start. A pre-authorized watchdog begins the exact source-project pause immediately on a decisive failure and no later than `T0 + 10 minutes` if migration plus decisive readback has not already succeeded. The watchdog polls project status and requires confirmed inaccessibility by `T0 + 20 minutes`. Project-boundary pause covers Worker routes, webhooks, OAuth/Auth activity, schedulers, direct clients, and operator jobs.
+This design does not claim zero-loss rollback. On the Free plan without PITR, emergency restore can lose every database write committed after `T0`. The accepted bound is at most 20 minutes.
+
+The watchdog has an explicit state machine:
+
+1. `PRE_DDL_UNARMED`: final backup/checksum runs; no pause action is allowed.
+2. `ABORTED_NO_DDL_NO_PAUSE`: if backup/checksum does not finish by `T0 + 5 minutes`, discard this recovery candidate, do not start DDL, do not pause the healthy source, and require a new snapshot/`T0` for any later attempt.
+3. `ARMED_BEFORE_FIRST_DDL`: only after backup/checksum succeeds by `T0 + 5 minutes`, arm the pre-authorized watchdog immediately before the first production DDL.
+4. `SUCCESS_DISARMED`: if migration and decisive readback succeed before the watchdog deadline, disarm without pause.
+5. `PAUSE_REQUESTED`: once armed, begin exact source-project pause immediately on a decisive failure and no later than `T0 + 10 minutes` if success has not been reached.
+6. `PAUSE_CONFIRMED`: poll project status and require confirmed inaccessibility by `T0 + 20 minutes`.
+
+Project-boundary pause covers Worker routes, webhooks, OAuth/Auth activity, schedulers, direct clients, and operator jobs. A pause is never automatically reversed; recovery completion or any later unpause requires its own exact approval and post-cutover verification.
 
 Only confirmed inaccessibility by the deadline permits the `RPO <= 20 minutes` recovery restore. A pause request or pending state is not enough. If the project is not confirmed inaccessible by `T0 + 20 minutes`, do not restore or cut over from the `T0` backup, leave A2 at `NO-GO`, preserve evidence, and pursue a reviewed forward fix unless the user separately accepts a newly measured larger RPO. Before production apply, the user must accept this watchdog behavior, `RPO <= 20 minutes`, and emergency downtime/cutover. If exact pause authority is unavailable, production apply is forbidden until PITR or another enforceable recovery design exists.
 
@@ -506,7 +517,7 @@ No runtime application behavior, UI, Stripe integration, Provider path, Cloudfla
 - non-empty, partial, mixed, wrong-owner, extra-dependency, duplicate, and malformed negative cases;
 - archive privilege and disabled-trigger assertions;
 - post-commit forward-fix/recovery-project rollback contract;
-- exported-snapshot `T0`, bounded-RPO watchdog deadlines, exact project-pause completion, Storage/Vault-zero, recovery-capacity, and endpoint-cutover fail-closed contracts;
+- exported-snapshot `T0`, pre-DDL unarmed/abort behavior, bounded-RPO watchdog deadlines, exact project-pause completion, Storage/Vault-zero, recovery-capacity, and endpoint-cutover fail-closed contracts;
 - production target and approval-token fail-closed behavior;
 - Cron exact name/cadence/command/inactive contract;
 - Vault count-only evidence contract.
@@ -562,7 +573,7 @@ Gate 1 item 1 may be labeled `GO` only when all of the following are current and
 - reviewed source commit is merged into the intended Preview integration line;
 - Preview has all 55 exact history versions and passes canonical schema/RPC readback with no mutation to its inactive scheduler or Vault values;
 - manual logical backup and isolated restore rehearsal pass;
-- final recovery backup uses the exported-snapshot `T0`; the watchdog, 10/20-minute deadlines, and `RPO <= 20 minutes` are explicitly accepted; and exact pause/recovery-project/cutover capacity is ready;
+- final recovery backup uses the exported-snapshot `T0`; the watchdog, 5/10/20-minute deadlines, and `RPO <= 20 minutes` are explicitly accepted; and exact pause/recovery-project/cutover capacity is ready;
 - local and production migration histories are fully aligned;
 - bridge archived only the exact three-table/three-function zero-row Paid-legacy subsystem;
 - the six-table/seven-function separately governed source-era subsystem remains unchanged and passes its read-only safety manifest;

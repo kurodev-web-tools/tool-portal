@@ -225,9 +225,9 @@ SQL harnessのRPC latency、row count、relation/index bytesは、Supabase Manag
 
 - `repository-implemented`: Preview harness、runtime/storage/cleanup SQL、focused contract、Runbook。Preview実行で検出したPL/pgSQLの`utc_hour`変数/カラム衝突は、focused contractのRED→GREEN後に変数を`v_utc_hour`へ限定修正した。
 - `locally-verified`: focused contractは修正後PASS。既存local-only fixtureは変更していない。
-- `deployed Preview`: Cloudflareのactive versionはread-only確認済み。ただしGitHubにPR #808のcheck/deploy runがなく、active version metadataにも比較可能なsource revisionがない。
-- `external measurement`: 2026-08-31 18:45 JSTにPreview project限定でruntime/storageを実行し、SQL transaction observationとDashboard即時値を取得した。詳細は13.5。
-- `artifact identity`: PR #808 merge SHAとactive Preview versionを比較できるdigest/tag/messageがないため`UNKNOWN`。
+- `deployed Preview`: 最新Preview統合commit `306f5e5599abe0e2f440468b4c4343134f449308`、tree `93dfdb7745ee5cc5a5330c7328766c923961facc`からPreview専用buildを実行し、version tag/messageへ同じcommit/treeを記録して単一versionを100% deployした。read-only readbackでtag/message完全一致とactive deployment参照一致を確認した。
+- `external measurement`: 2026-08-31 18:45 JSTにPreview project限定でruntime/storageを実行し、SQL transaction observationとDashboard即時値を取得した。反映待ち後のUsage再観測と、上記deploy後のCloudflare metadata・HTTP・browser QAも完了した。詳細は13.5および13.6。
+- `artifact identity`: active Preview versionのtag/messageが上記commit/treeと完全一致するため`ARTIFACT_IDENTITY=KNOWN-via-version-tag-message`。
 - `scheduler activation`: `false`。activation、production/live、commit、push、PR、mergeは別承認。
 
 ### 13.5 2026-08-31 Preview execution evidence
@@ -237,7 +237,17 @@ SQL harnessのRPC latency、row count、relation/index bytesは、Supabase Manag
 - runtime repair: 初回実行はSQLSTATE 42702でtransaction rollback。原因はPreview fixtureのPL/pgSQL変数`utc_hour`と`provider_detail.utc_hour`の曖昧参照。focused contractで再現してから`v_utc_hour`へ限定修正し、contractとPreview runtime再実行がPASS。
 - RPC latency: p95はread poll budget 103 µs、heartbeat 1,105.05 µs、message reserve 530.05 µs、message finalize 615 µs、OpenAI hourly fixture 954.2 µs、Azure fallback hourly fixture 803.85 µs、session start 1,177.95 µs。
 - storage: temporary relation transaction限定でlogical attempts 129,600、attempt receipts 129,600、provider source receipts 28,800、provider hourly rows 28,800、session summaries 14,400。relation total 161,161,216 bytes、index 65,839,104 bytes、cleanup rows remaining 0。共有`public` relationへのpersistent fixture rowは残していない。
-- Egress: organization UsageをPreview projectへ限定し、同じbilling periodの実行直前/直後を観測。即時表示は0 GBのままで、表示上60%未満。Dashboard注記どおり最大1時間の反映遅延があるため、遅延後deltaは`pending-refresh`。
-- Realtime: Preview projectのObservability > Realtimeを`Last 60 minutes`で実行後に再観測。Connected Clients、Broadcast Events、Presence Eventsはno data、Postgres Changes Eventsは0で、表示上60%未満。最大24時間のUsage反映遅延があるため、billing usage側の遅延後deltaは`pending-refresh`。
+- database capacity: 反映待ち後のDashboard project限定値は`persistent_project_database_size=30.73-MB`。実schemaのread-only集計は`paid_schema_relation_count=33`、`paid_schema_total_bytes=2146304`、`paid_schema_index_bytes=1531904`。Dashboardの丸め済みpersistent project totalへPreview storage fixtureのdata+index total 161,161,216 bytesを全量加える保守的上限でも`projected_database_total=approximately-191.9-MB-under-300-MB`。temporary fixtureをpersistent quota実測と誤表示せず、persistent total、実schema、Preview負荷allocationを別々に測定して300 MB gateを判定した。
+- Egress: organization UsageをPreview projectへ限定し、同じbilling periodの実行直前/直後を観測。即時表示は0 GBのままで表示上60%未満。反映待ち後のproject限定再観測でも0 GBを維持し、`delayed_usage_delta=PASS-under-60`。
+- Realtime: Preview projectのObservability > Realtimeを`Last 60 minutes`で実行後に再観測。Connected Clients、Broadcast Events、Presence Eventsはno data、Postgres Changes Eventsは0。反映待ち後のproject限定billing UsageでもRealtime Messages 0、Concurrent Peak Connections 0を確認し、`delayed_usage_delta=PASS-under-60`。
 - cleanup: runtime/storageのtransaction observationはいずれもcleanup rows remaining 0で、exact remote cleanupは不要。session-onlyの未追跡実行計画は削除し、follow-up evidence branch/worktreeはPR review用に保持する。remote branch deletionは未実施。
-- acceptance classification: `preview_runtime=PASS`、`preview_storage=PASS`、`immediate_egress_gate=PASS-under-60`、`immediate_realtime_gate=PASS-under-60`、`bounded_preview_harness_acceptance=PASS`、`delayed_usage_delta=pending-refresh`、`ARTIFACT_IDENTITY=UNKNOWN`、`task11_full_acceptance=NO-GO-pending-delayed-usage-and-artifact-identity`。SQL row countやrelation bytesをEgress/Realtimeへ換算していない。
+- acceptance classification: `preview_runtime=PASS`、`preview_storage=PASS`、`immediate_egress_gate=PASS-under-60`、`immediate_realtime_gate=PASS-under-60`、`bounded_preview_harness_acceptance=PASS`、`delayed_usage_delta=PASS-under-60`、`ARTIFACT_IDENTITY=KNOWN-via-version-tag-message`、`task11_full_acceptance=PASS`。SQL row countやrelation bytesをEgress/Realtimeへ換算していない。
+
+### 13.6 2026-08-31 final closeout evidence
+
+- local preflight: 最新Preview統合treeと作業treeは一致。Paid Core contract 33/33、Preview専用OpenNext build、runtime/packaging contract、TypeScript、lint（0 errors / 既存2 warnings）、`git diff --check`がPASS。`package.json`とlockfileは不変。
+- deploy identity: Wrangler 4.95.0で`--strict --keep-vars`を使用し、commit/treeをversion tag/messageへ記録してPreviewへdeploy。readbackでは対象versionが1件、tag/message完全一致、timestamp最大のdeploymentが対象versionだけを100% activeとして参照し、`single-version-100-percent-active`。private version IDは記録しない。
+- delayed usage: Egress 0 GB、Realtime Messages 0、Concurrent Peak Connections 0。project filter、current billing cycle、最大1時間/24時間の反映待ちを経た値として`delayed_usage_delta=PASS-under-60`。
+- HTTP/browser: `/`、`/tools/`、`/tools/comment-translator/`、`/account/billing/`、`/legal/tokushoho/`はnonblank、同一pathname、framework error 0、overflow 0、console warning/error 0。Comment Translator、Billing、Tokushohoを390 / 820 / 1024 / 1280 / 1366 CSS pxで計15回確認し、blank、overflow、framework error、fixed overlay、console issueはすべて0。
+- authenticated billing: login promptなし、同意checkbox 3件、Free fail-closed、Checkout disabled、Customer Portal enabledを確認。購入、Portal起動、Stripe/Provider実通信は行っていない。
+- preserved boundaries: Supabase read-only再確認で関連scheduler 1件 / active 0、scheduler `active=false`。Supabase migration/history mutation、SQL write、function invocation、Vault/secret read、Production、Paid activation、公開、rollbackは行っていない。Task 11完了はGate 1、Task 12、Production deploy、Paid activationの承認を含まず、`Production-and-Paid-activation=separate approval`。

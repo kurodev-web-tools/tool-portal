@@ -2045,9 +2045,22 @@ assert.deepEqual(parseAuthorityMarkers(operatorDocument), [
   ["historical-a2-source-era-local", "34"],
   ["historical-a2-preview-post-apply", "29"],
   ["current-repository-clean-install-inventory", "35"],
-  ["task11-remote-apply-evidence", "not-claimed"],
-  ["current-compatibility-base", "8538befbd6513d057bcf1f558fecc7a5ce2d5102"]
-], "authority document records the exact sanitized compatibility rebaseline markers");
+  ["task11-remote-apply-evidence", "externally-read-only-verified"],
+  ["current-compatibility-base", "04247e49c7abfd02f7ee9fb0d7fff0de68ddd9a2"],
+  ["task11-preview-target-selection", "unique-active-preview-candidate"],
+  ["task11-local-link-metadata", "absent"],
+  ["task11-preview-history", "30-total-30-unique-exact"],
+  ["task11-preview-history-entry", "exactly-once"],
+  ["task11-preview-function-signatures", "2-exact-single-overload"],
+  ["task11-preview-semantic-canonical", "verified"],
+  ["task11-preview-raw-body-identity", "not-byte-identical-semantic-canonical-equal"],
+  ["task11-preview-security", "verified"],
+  ["task11-preview-scheduler", "1-total-0-active"],
+  ["task11-preview-vault", "2-names-values-not-read"],
+  ["task11-closeout-mutation", "none"],
+  ["task11-deployed-artifact-identity", "unknown"]
+], "authority document records the exact sanitized compatibility and Task 11 remote evidence markers");
+assert.match(operatorDocument, /Task 11 migration, which was local-only in the historical remote observation and is now externally observed exactly once in the current Preview history\./, "authority document distinguishes historical Task 11 local-only classification from current Preview presence");
 const operatorMappingRows = parseOperatorMappingRows(operatorDocument);
 assertOperatorMappingRows(operatorMappingRows);
 const swappedOperatorRows = operatorMappingRows.map((row) => [...row]);

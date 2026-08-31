@@ -10,7 +10,8 @@ const paths = {
   runtime: "scripts/fixtures/comment-translator-paid-core-v1-task11-preview-runtime.sql",
   storage: "scripts/fixtures/comment-translator-paid-core-v1-task11-preview-storage.sql",
   cleanup: "scripts/fixtures/comment-translator-paid-core-v1-task11-preview-cleanup.sql",
-  runbook: "docs/active/COMMENT_TRANSLATOR_PAID_V1_RUNBOOK.md"
+  runbook: "docs/active/COMMENT_TRANSLATOR_PAID_V1_RUNBOOK.md",
+  taskBoard: "task.md"
 };
 
 for (const [label, relativePath] of Object.entries(paths)) {
@@ -22,6 +23,7 @@ const runtime = fs.readFileSync(path.join(root, paths.runtime), "utf8");
 const storage = fs.readFileSync(path.join(root, paths.storage), "utf8");
 const cleanup = fs.readFileSync(path.join(root, paths.cleanup), "utf8");
 const runbook = fs.readFileSync(path.join(root, paths.runbook), "utf8");
+const taskBoard = fs.readFileSync(path.join(root, paths.taskBoard), "utf8");
 
 assert.match(harness, /parseArgs|parseArguments/, "harness has explicit argument parsing");
 assert.match(harness, /--dry-run[\s\S]+--preflight[\s\S]+--execute[\s\S]+--cleanup/, "harness exposes bounded dry-run, preflight, execute, and cleanup modes");
@@ -113,6 +115,43 @@ assert.match(runbook, /Management|Dashboard[\s\S]+Egress|Egress[\s\S]+Realtime/i
 assert.match(runbook, /UNKNOWN|externally-unverified/i, "Runbook preserves UNKNOWN for unavailable external measurements");
 assert.match(runbook, /supabase\.com\/docs\/guides\/platform\/manage-your-usage\/egress/i, "Runbook links the official Supabase Egress specification");
 assert.match(runbook, /supabase\.com\/docs\/guides\/realtime\/reports/i, "Runbook links the official Supabase Realtime reports specification");
+const capacityEvidence = runbook.match(/persistent_project_database_size=(\d+(?:\.\d+)?)-MB[^\n]+paid_schema_relation_count=(\d+)[^\n]+paid_schema_total_bytes=(\d+)[^\n]+paid_schema_index_bytes=(\d+)[^\n]+data\+index total ([\d,]+) bytes[^\n]+projected_database_total=approximately-(\d+(?:\.\d+)?)-MB-under-(\d+)-MB/);
+assert.ok(capacityEvidence, "Runbook records parseable persistent, actual schema, Preview load, and projected database evidence");
+const [, persistentDatabaseMbText, paidSchemaRelationCountText, paidSchemaTotalBytesText, paidSchemaIndexBytesText, previewFixtureTotalBytesText, projectedDatabaseMbText, databaseGateMbText] = capacityEvidence;
+const persistentDatabaseMb = Number(persistentDatabaseMbText);
+const paidSchemaRelationCount = Number(paidSchemaRelationCountText);
+const paidSchemaTotalBytes = Number(paidSchemaTotalBytesText);
+const paidSchemaIndexBytes = Number(paidSchemaIndexBytesText);
+const previewFixtureTotalBytes = Number(previewFixtureTotalBytesText.replaceAll(",", ""));
+const projectedDatabaseMb = Number(projectedDatabaseMbText);
+const databaseGateMb = Number(databaseGateMbText);
+assert.equal(persistentDatabaseMb, 30.73, "persistent Preview project database total matches the supplied measurement");
+assert.equal(paidSchemaRelationCount, 33, "actual Paid schema relation count matches the supplied measurement");
+assert.equal(paidSchemaTotalBytes, 2146304, "actual Paid schema total allocation matches the supplied measurement");
+assert.equal(paidSchemaIndexBytes, 1531904, "actual Paid schema index allocation matches the supplied measurement");
+assert.ok(paidSchemaIndexBytes <= paidSchemaTotalBytes, "actual Paid schema index allocation is contained in total relation allocation");
+assert.equal(previewFixtureTotalBytes, 161161216, "Preview storage fixture total matches the supplied load measurement");
+const conservativeProjectedDatabaseMb = persistentDatabaseMb + previewFixtureTotalBytes / 1_000_000;
+assert.equal(Number(conservativeProjectedDatabaseMb.toFixed(1)), projectedDatabaseMb, "projected database total is derived from the persistent total plus the full Preview fixture allocation");
+assert.ok(conservativeProjectedDatabaseMb < databaseGateMb, "conservative projected database total remains below the 300 MB acceptance gate");
+assert.match(runbook, /Egress 0 GB[^\n]+Realtime Messages 0[^\n]+Concurrent Peak Connections 0/, "Runbook records each delayed Supabase usage measurement");
+assert.match(runbook, /306f5e5599abe0e2f440468b4c4343134f449308[^\n]+93dfdb7745ee5cc5a5330c7328766c923961facc/, "Runbook records the exact deployed Git commit and tree");
+assert.match(runbook, /single-version-100-percent-active/, "Runbook records that the identified version alone serves all Preview traffic");
+assert.match(runbook, /Production[^\n]+Paid activation[^\n]+separate approval/i, "Runbook keeps Production and Paid activation outside Task 11 closeout");
+assert.match(runbook, /delayed_usage_delta=PASS-under-60[^\n]+ARTIFACT_IDENTITY=KNOWN-via-version-tag-message[^\n]+task11_full_acceptance=PASS/, "Runbook reaches full Task 11 acceptance only with delayed usage and artifact identity gates passed");
+const task11StatusRow = taskBoard.split(/\r?\n/).find((line) => line.includes("| P1 | Comment Translator Paid Core v1 Task 11 |")) ?? "";
+assert.match(task11StatusRow, /persistent_project_database_size=30\.73-MB[^\n]+33 relations \/ total 2,146,304 bytes \/ index 1,531,904 bytes[^\n]+preview_storage_fixture_total_bytes=161161216[^\n]+projected_database_total=approximately-191\.9-MB-under-300-MB/, "task board carries the persistent, actual schema, Preview load, and projected database evidence");
+assert.match(task11StatusRow, /Egress 0 GB[^\n]+Realtime Messages 0[^\n]+Concurrent Peak Connections 0/, "task board carries each delayed usage measurement");
+assert.match(task11StatusRow, /ARTIFACT_IDENTITY=KNOWN-via-version-tag-message[^\n]+single-version-100-percent-active/, "task board binds artifact identity to the sole active Preview version");
+assert.match(task11StatusRow, /scheduler[^\n]+active[^\n]+false/i, "task board keeps scheduler activation outside Task 11 closeout");
+assert.match(task11StatusRow, /Production[^\n]+Paid activation[^\n]+別承認/, "task board keeps Production and Paid activation as separate approvals");
+assert.match(task11StatusRow, /task11_status=CLOSED/, "task board records Task 11 as closed after its concrete gate assertions pass");
+assert.match(task11StatusRow, /task11_full_acceptance=PASS/, "task board records full Task 11 acceptance after its concrete gate assertions pass");
+const task11CloseoutNote = taskBoard.split(/\r?\n/).find((line) => line.startsWith("- Comment Translator Paid Core v1 Task 11 final closeout:")) ?? "";
+assert.match(task11CloseoutNote, /306f5e5599abe0e2f440468b4c4343134f449308[^\n]+93dfdb7745ee5cc5a5330c7328766c923961facc/, "final closeout uses the exact approved Preview commit and tree");
+assert.match(task11CloseoutNote, /persistent_project_database_size=30\.73-MB[^\n]+paid_schema_relation_count=33[^\n]+paid_schema_total_bytes=2146304[^\n]+paid_schema_index_bytes=1531904[^\n]+preview_storage_fixture_total_bytes=161161216[^\n]+projected_database_total=approximately-191\.9-MB-under-300-MB/, "final closeout carries the concrete database capacity acceptance evidence");
+assert.match(task11CloseoutNote, /Egress 0 GB[^\n]+Realtime Messages 0[^\n]+Concurrent Peak Connections 0[^\n]+single-version-100-percent-active[^\n]+task11_status=CLOSED[^\n]+task11_full_acceptance=PASS/, "final closeout reaches CLOSED/PASS only after delayed usage and single-version deployment gates pass");
+assert.match(task11CloseoutNote, /scheduler[^\n]+active[^\n]+false[^\n]+Production[^\n]+activation[^\n]+未実施/i, "final closeout preserves scheduler, Production, and activation boundaries");
 
 const harnessModule = await import(pathToFileURL(path.join(root, paths.harness)).href);
 assert.equal(typeof harnessModule.parseArgs, "function", "harness exposes its argument parser for behavior contract coverage");

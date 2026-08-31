@@ -169,3 +169,63 @@ Task 10の現在状態:
 - approval-gated: Gate 0、Task 11、production設定、remote migration/RPC/Cron、live Stripe/Provider/Cloudflare操作、deploy、公開、commit、push、PR、merge、cleanup。
 
 Task 10は、Gate 0の承認やTask 11 Local/Preview QAを代替しない。
+
+## 13. Task 11 Preview bounded load harness
+
+### 13.1 範囲と安全境界
+
+Task 11 Preview harnessは、共有Previewへ実行する前提の、合成データだけを使うbounded load commandである。既存の`comment-translator-paid-core-v1-task11-local-load-fixture.ps1`とそのSQLはlocal-container専用のまま変更せず、Preview harnessへ転用しない。
+
+- `run-id`は`task11-preview-YYYYMMDD-<8〜24文字の小文字英数字>`を明示する。run-idからowner、session、attempt、reservationのnamespaceを決定し、同じrun-idの残留があれば開始せずfail closedとする。
+- 実行上限は同時20 session。runtime fixtureは20 session、720 poll/session、180 coalesced heartbeat/session、1 comment/minuteの60-message boundary、同じUTC hourのOpenAI/Azure fallback accountingを測る。
+- 24時間分は20×8のrestart plan（160 window、115,200 planned poll/request fixture）として記録する。DB clockを偽装せず、24時間経過そのものは測定しないため`restart_elapsed=not-simulated`とする。
+- provider、Stripe、Cloudflare、YouTube、schedulerへの実通信は行わない。OpenAI/Azureはreceipt/accounting fixtureだけであり、Cloudflareはrequest-count fixtureだけである。
+- SQLは`BEGIN`から`ROLLBACK`までのtransactionで合成行を測定し、run namespaceだけをcleanupしてから結果を返す。共有のUTC poll bucket、provider circuit、既存fixtureを直接削除・resetしない。
+- storage fixtureは共有`public` relationへ書き込まず、schema形状に対応するrun専用temporary relationと一時indexへlogical attempt/attempt receipt 129,600行、provider source/hourly 28,800行、session summary 14,400行を投入し、`pg_total_relation_size`/`pg_indexes_size`を測る。temporary relationはtransaction終了時に破棄するため共有Previewのrelation/index bloatを残さない。これは`temporary-relation-transaction-only`のSQL観測であり、Supabase Dashboardのpersistent Database quotaや本番artifact identityの証拠ではない。
+
+### 13.2 実行モード
+
+次の例は説明用のsanitized run-idとproject-ref placeholderである。project-refの実値、token、service-role key、CLI出力をチャットやログへ貼らない。CLIの通常profile認証を使い、`SUPABASE_SERVICE_ROLE_KEY`、`--db-url`、`--local`は使用しない。
+
+```powershell
+$env:COMMENT_TRANSLATOR_PAID_TASK11_PREVIEW_TARGET = "preview"
+$env:COMMENT_TRANSLATOR_PAID_TASK11_PREVIEW_PROJECT_REF = "<verified-preview-project-ref>"
+$runId = "task11-preview-20260831-abcd1234"
+$harness = "scripts/comment-translator-paid-core-v1-task11-preview-load-harness.mjs"
+
+node $harness --dry-run --fixture runtime --run-id $runId
+node $harness --preflight --fixture runtime --run-id $runId --confirm-preview-target
+```
+
+`--dry-run`は外部へ接続しない。`--preflight`はlinked migration listだけをread-onlyで確認する。`--execute`はPreview target確認、別途の明示approval flag、下記のapproval environment valueをすべて要求する。runtime/storageを分けて実行し、`all`は両方を順番に実行する。
+
+```powershell
+$env:COMMENT_TRANSLATOR_PAID_TASK11_PREVIEW_LOAD_APPROVAL = "I approve the Task 11 bounded Preview load harness against the currently verified Preview target only; use synthetic fixtures with transaction rollback and exact run cleanup; do not run providers, Stripe, Cloudflare deploy, scheduler activation, production, or main."
+node $harness --execute --fixture runtime --run-id $runId --confirm-preview-target --approved-preview-load
+node $harness --execute --fixture storage --run-id $runId --confirm-preview-target --approved-preview-load
+```
+
+通常のexecuteはrollbackする。中断後にrun namespaceの残留がread-only確認で認められた場合だけ、同じrun-idを指定し、cleanupの別承認でexact cleanupを行う。cleanup対象はderived owner、run prefix、session referenceに一致する行だけで、global bucketや別fixtureを対象にしない。
+
+```powershell
+$env:COMMENT_TRANSLATOR_PAID_TASK11_PREVIEW_CLEANUP_APPROVAL = "I approve exact cleanup of the Task 11 synthetic Preview run namespace only; do not delete shared, production, or unrelated fixture data."
+node $harness --cleanup --fixture all --run-id $runId --confirm-preview-target --approved-preview-cleanup
+```
+
+### 13.3 Egress / Realtimeの外部測定境界
+
+SQL harnessのRPC latency、row count、relation/index bytesは、Supabase Management/DashboardのEgress・Realtime使用量とは別の証拠である。Egressは[Supabase Egress usage documentation](https://supabase.com/docs/guides/platform/manage-your-usage/egress)のUsage画面で、同じorganization、Preview project、期間を選び、Total Egressとcached/uncachedのbaseline/deltaを記録する。Realtimeは[Realtime reports](https://supabase.com/docs/guides/realtime/reports)のConnected Clients、Broadcast、Presence、Postgres Changesを同じ期間で記録する。
+
+- 60% gateは実行時点のplan quotaに対して適用し、固定値の推定やSQL row countからEgress/Realtimeを換算してPASSにしない。
+- Dashboard/Management APIの対象project、期間、plan quota、baselineまたはdeltaが取得不能・粒度不一致なら、その項目は`UNKNOWN`とする。UNKNOWNを測定済みPASSへ置き換えない。
+- `pg_total_relation_size`はDatabase relation allocationでありEgressではない。DB change row countはRealtime client event countではない。Realtime eventを測るには実際の購読状態とRealtime reportの観測が必要である。
+- quotaの現行値・plan区分は実行時に[Supabase billing and quotas](https://supabase.com/docs/guides/platform/billing-on-supabase)を再確認し、Database sizeの意味は[Database size documentation](https://supabase.com/docs/guides/platform/database-size)に従う。
+
+### 13.4 Evidence state
+
+- `repository-implemented`: Preview harness、runtime/storage/cleanup SQL、focused contract、Runbook。
+- `locally-verified`: focused contract、syntax、lint/typecheck/buildの実行結果と、既存local-only fixtureの非変更。
+- `deployed Preview`: このsource-only taskでは未確認。
+- `external measurement`: Egress/Realtime、Preview runtime、Stripe/Provider/Cloudflareの実測は未実施。取得不能な測定は`UNKNOWN`。
+- `artifact identity`: Preview deploy artifactとの一致は未確認。
+- `scheduler activation`: `false`。activation、production/live、commit、push、PR、mergeは別承認。

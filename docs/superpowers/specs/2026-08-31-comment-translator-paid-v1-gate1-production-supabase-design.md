@@ -303,9 +303,13 @@ Any current-object grant drift is a hard stop and is not covered by the historic
 
 Before any production DDL, prepare an approved temporary tooling environment. Reuse the lockfile-pinned local Supabase CLI `2.109.0`; no Supabase dependency change or CLI installation is required. Docker and PostgreSQL client tooling remain absent and require a separate setup approval. PostgreSQL client major must be 17, matching production `17.6`, and the exact patch version or immutable container digest must be recorded.
 
-The backup has two stages. First, take an unrestricted read-only rehearsal backup and prove local restore. Immediately before production apply, take the final transaction-consistent recovery backup while Free remains online and record the dump snapshot start as `T0`.
+The backup has two stages. First, take an unrestricted read-only rehearsal backup and prove local restore. Immediately before production apply, take the final transaction-consistent recovery backup while Free remains online.
 
-This design does not claim zero-loss rollback. On the Free plan without PITR, emergency restore can lose every database write committed after `T0`. The accepted bound is at most 20 minutes: backup/checksum must finish by `T0 + 10 minutes`, and migration plus the first decisive readback must finish by `T0 + 20 minutes`. Before production apply, the user must separately accept `RPO <= 20 minutes` and the emergency downtime/cutover procedure. If the backup misses the first deadline, apply does not start. If the migration path cannot reach success or a decisive failure by the second deadline, the source project is immediately paused through the pre-authorized exact project-pause action, covering Worker routes, webhooks, OAuth/Auth activity, schedulers, direct clients, and operator jobs at the project boundary. If project pause is unavailable or the bounded data-loss contract is not accepted, production apply is forbidden and A2 remains `NO-GO` until PITR or another enforceable recovery design exists.
+`T0` is the database server's `transaction_timestamp()` from the same held `REPEATABLE READ, READ ONLY` transaction that calls `pg_export_snapshot()` for the final schema/data/history dumps. Use local Supabase CLI `2.109.0` `db dump --dry-run` to obtain its exact Supabase filtering arguments, then execute the pinned PostgreSQL-17 `pg_dump` command with those reviewed arguments plus the exported snapshot. Keep the exporting transaction open until every snapshot-bound dump completes. The snapshot identifier and connection details are never printed or committed; only sanitized `T0`, completion times, sizes, and digests are evidence. Role-only output is captured separately because it is not part of the database data snapshot.
+
+This design does not claim zero-loss rollback. On the Free plan without PITR, emergency restore can lose every database write committed after `T0`. The accepted bound is at most 20 minutes. Backup/checksum must finish by `T0 + 10 minutes`; otherwise apply does not start. A pre-authorized watchdog begins the exact source-project pause immediately on a decisive failure and no later than `T0 + 10 minutes` if migration plus decisive readback has not already succeeded. The watchdog polls project status and requires confirmed inaccessibility by `T0 + 20 minutes`. Project-boundary pause covers Worker routes, webhooks, OAuth/Auth activity, schedulers, direct clients, and operator jobs.
+
+Only confirmed inaccessibility by the deadline permits the `RPO <= 20 minutes` recovery restore. A pause request or pending state is not enough. If the project is not confirmed inaccessible by `T0 + 20 minutes`, do not restore or cut over from the `T0` backup, leave A2 at `NO-GO`, preserve evidence, and pursue a reviewed forward fix unless the user separately accepts a newly measured larger RPO. Before production apply, the user must accept this watchdog behavior, `RPO <= 20 minutes`, and emergency downtime/cutover. If exact pause authority is unavailable, production apply is forbidden until PITR or another enforceable recovery design exists.
 
 Using the official Supabase logical-backup workflow, capture at minimum:
 
@@ -335,7 +339,7 @@ Before production apply, also prove that an approved PostgreSQL-17 Supabase reco
 
 The emergency restore/cutover procedure is concrete and never overwrites the source project blindly:
 
-1. pause the exact source project no later than `T0 + 20 minutes`, prove it inaccessible, and keep all schedulers inactive;
+1. prove the watchdog confirmed the exact source project inaccessible no later than `T0 + 20 minutes`, and keep all schedulers inactive;
 2. provision the pre-approved recovery project and enable the reviewed extension/config set;
 3. restore the final backup in the documented order, including Auth/Storage customizations and migration history;
 4. verify exact history, aggregate data counts, Auth-user count, zero Storage objects, grants/RLS, canonical or pre-bridge catalog as appropriate, and zero Vault records;
@@ -453,7 +457,7 @@ Execution stops immediately if any of these occur:
 - production target selection is not unique;
 - repository commit or migration manifest differs from the reviewed commit;
 - backup dump, checksum, or restore rehearsal is incomplete;
-- bounded `RPO <= 20 minutes` acceptance, exact project-pause authority, recovery-project capacity, or emergency cutover checklist is unavailable;
+- bounded `RPO <= 20 minutes` acceptance, pre-authorized watchdog/exact project-pause authority, recovery-project capacity, or emergency cutover checklist is unavailable;
 - the production fingerprint changes;
 - any Paid-legacy table contains a row;
 - a separately governed source-era object differs from its read-only safety manifest or requires mutation to continue;
@@ -480,7 +484,7 @@ The implementation plan may create or modify only the minimum artifacts needed f
 - generated exact legacy-catalog and canonical-RPC/ACL manifests plus bridge contracts;
 - a read-only production preflight contract;
 - an approval-gated backup/restore runner or exact operator instructions;
-- an exact bounded-RPO, project-pause, and recovery-project cutover checklist;
+- an exact bounded-RPO watchdog, project-pause verification, and recovery-project cutover checklist;
 - an approval-gated production migration runner;
 - an approval-gated Vault/Cron inactive configuration runner;
 - focused rollback and readback contracts;
@@ -502,7 +506,7 @@ No runtime application behavior, UI, Stripe integration, Provider path, Cloudfla
 - non-empty, partial, mixed, wrong-owner, extra-dependency, duplicate, and malformed negative cases;
 - archive privilege and disabled-trigger assertions;
 - post-commit forward-fix/recovery-project rollback contract;
-- bounded-RPO deadlines, exact project pause, Storage/Vault-zero, recovery-capacity, and endpoint-cutover fail-closed contracts;
+- exported-snapshot `T0`, bounded-RPO watchdog deadlines, exact project-pause completion, Storage/Vault-zero, recovery-capacity, and endpoint-cutover fail-closed contracts;
 - production target and approval-token fail-closed behavior;
 - Cron exact name/cadence/command/inactive contract;
 - Vault count-only evidence contract.
@@ -541,7 +545,7 @@ These approvals remain distinct:
 2. **Commit/push/PR:** repository publication of the reviewed source change.
 3. **Preview migration apply:** exact 25-version set and post-apply readback.
 4. **Tooling setup:** Docker and PostgreSQL 17 clients on an approved host; the repository-local Supabase CLI is already available and pinned.
-5. **Recovery capacity:** project cost/plan/capacity, exact source-project pause authority, and recovery/cutover readiness.
+5. **Recovery capacity:** project cost/plan/capacity, pre-authorized watchdog and exact source-project pause authority, and recovery/cutover readiness.
 6. **Backup execution:** production read and restricted local artifact creation.
 7. **Bounded recovery risk:** explicit acceptance of `RPO <= 20 minutes` and emergency downtime.
 8. **Production migration apply:** bridge, canonical migrations, and `pg_net` against production, with the pre-authorized pause deadline.
@@ -558,7 +562,7 @@ Gate 1 item 1 may be labeled `GO` only when all of the following are current and
 - reviewed source commit is merged into the intended Preview integration line;
 - Preview has all 55 exact history versions and passes canonical schema/RPC readback with no mutation to its inactive scheduler or Vault values;
 - manual logical backup and isolated restore rehearsal pass;
-- final recovery backup records `T0`, the 10/20-minute deadlines and `RPO <= 20 minutes` are explicitly accepted, and exact pause/recovery-project/cutover capacity is ready;
+- final recovery backup uses the exported-snapshot `T0`; the watchdog, 10/20-minute deadlines, and `RPO <= 20 minutes` are explicitly accepted; and exact pause/recovery-project/cutover capacity is ready;
 - local and production migration histories are fully aligned;
 - bridge archived only the exact three-table/three-function zero-row Paid-legacy subsystem;
 - the six-table/seven-function separately governed source-era subsystem remains unchanged and passes its read-only safety manifest;

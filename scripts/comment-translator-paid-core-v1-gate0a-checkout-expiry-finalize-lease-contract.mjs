@@ -51,7 +51,7 @@ assert.match(repairMigration, /grant execute on function public\.ct_paid_expire_
 assert.doesNotMatch(repairMigration, /grant\s+select\s+on\s+table/i, "repair adds no direct table grants");
 
 const historicalMigrations = [
-  ["supabase/migrations/20260812120000_comment_translator_paid_core_v1.sql", "c9b1e7b93b858a2ad941893dfadc080000345ba8"],
+  ["supabase/migrations/20260812120000_comment_translator_paid_core_v1.sql", "788aed04a9ec5a70150bc3b8dc3fc30c9b446681"],
   ["supabase/migrations/20260813140000_comment_translator_paid_task6_azure_uncertain_retry.sql", "c32eb1efc8d82734db33c8f56e953f4e5ceae5d4"],
   ["supabase/migrations/20260814110000_comment_translator_paid_task9_retention_observability.sql", "7a8adddcb2f2f007169ee9699e0c04c69dcc5947"]
 ];

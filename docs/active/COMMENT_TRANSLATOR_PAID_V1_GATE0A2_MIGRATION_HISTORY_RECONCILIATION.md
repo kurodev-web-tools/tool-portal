@@ -1,23 +1,37 @@
 # Comment Translator Paid Core v1 Gate 0-A2 Migration History Reconciliation
 
-Status: Preview post-apply evidence closeout. The approved history reconciliation and the two additive Task 6 migrations are complete for the currently linked Preview target. This document does not authorize another history repair, migration apply, SQL write, scheduler/Vault change, deploy, activation, or live provider/payment operation.
+Status: Gate 0-A2 repository compatibility rebaseline. The current repository migration inventory is 35 entries; historical source-era evidence remains 34 and historical Preview post-apply evidence remains 29. Current feature evidence is repository-only and does not claim Task 11 remote apply, deployed runtime, or artifact identity.
 
 ## Evidence state
 
-- `repository-merged`: PR #799 introduced the Gate 0-A2 canonical source and reconciliation contract; PR #800 repaired the Task 6 guard shape; PR #801 completed the approved whitespace-normalized exactly-one correction. The current authority is the merged Preview branch described below.
-- `locally-verified` (focused evidence only): the provider contract and migration parser pass at the current authority. The Gate 0-A2 contract uses an LF-canonicalized source SHA assertion: CRLF and standalone CR line endings are normalized to LF before hashing, while non-EOL content changes still change the SHA-256.
-- `externally-read-only-verified`: after the approved history-only reconciliation and ordered two-migration apply, a fresh sanitized Preview readback proved 29 total / 29 unique history entries with the exact expected inventory, both Task 6 entries exactly once, and no extra, missing, duplicate, or unknown entry. The post-apply semantic, privilege, ownership, lease, scheduler, and Vault-name-count checks described below passed without invoking an RPC/function or performing another mutation.
-- `deployed Preview`: the database migrations are externally verified as applied to the known linked Preview target. This is not evidence that a separately deployed application/Worker artifact corresponds to the repository authority.
+- `repository-merged`: PR #809 merge at `8538befbd6513d057bcf1f558fecc7a5ce2d5102` is the current repository compatibility-rebaseline input authority. The current feature implementation is repository-only evidence.
+- `historical-A2-execution-authority`: PR #801 / commit `b1cba3c5fe5191907a512fa2f8d5e975a714a9d8` remains the authority for the historical Preview execution record below; it is not the current authority or latest merge.
+- `locally-verified` (focused evidence only): the rebaseline contract keeps the historical 33-entry baseline and 34-entry source-era evidence explicit, adds only the one-entry post-reconciliation list, and requires exact current/clean-install inventory equality. The Gate 0-A2 contract uses an LF-canonicalized source SHA assertion: CRLF and standalone CR line endings are normalized to LF before hashing, while non-EOL content changes still change the SHA-256.
+- `historical-externally-read-only-verified`: after the separately approved historical history-only reconciliation and ordered two-migration apply, a sanitized Preview readback proved 29 total / 29 unique history entries with the exact historical expected inventory, both Task 6 entries exactly once, and no extra, missing, duplicate, or unknown entry. This record is not current Task 11 remote evidence.
+- `historical-deployed Preview evidence`: the historical database migrations were externally verified as applied to the then-linked Preview target. This does not prove the current repository migration was remotely applied, a deployed application/Worker artifact, or artifact identity.
 - Deterministic contract fixtures are source-contract evidence only, are explicitly `not-live`, and must never be accepted or described as fresh Preview runtime evidence. The operator path requires a separately supplied sanitized external read-only observation with an explicit successful result and current-preflight freshness provenance.
-- `ARTIFACT_IDENTITY=UNKNOWN`: no comparable deployed source/build digest was available. Scheduler remains outside this source-only change and is not activated here.
-- TDD record: before the canonical source existed, the focused contract exited 1 at the canonical-source existence assertion (`false !== true`); after adding the source, `node --check` and the focused contract exited 0 with PASS. The current bundle result is 24/29 runnable PASS and 5/29 setup-blocked because `node_modules/typescript` is absent; no dependency installation was performed. Final spec and code-quality reviews are GO. Remaining full toolchain checks are setup-blocked, and setup-blocked checks are not represented as passes.
+- `ARTIFACT_IDENTITY=UNKNOWN`: no comparable deployed source/build digest is available for the current repository or Task 11 runtime. Scheduler remains outside this source-only change and is not activated here.
+- TDD record: the current focused contract first exited 1 at the source-inventory assertion because the Task 11 migration was actual-only; the rebaseline GREEN run verifies the explicit 35-entry current/clean-install inventory and refreshed eighth pair fixture. After the user restored lockfile dependencies with `npm ci`, all 33 matching contracts passed (33/33), including the five checks previously setup-blocked by absent `node_modules/typescript`; tracked manifest and lockfile content remained unchanged.
 - Scheduler baseline contract: the previously observed Preview state has exactly one existing job with `active=false`; post-apply checks require that baseline to remain unchanged while every create/alter/activate/deactivate/delete operation delta is zero. An isolated-empty clean-install target expects zero jobs and `active=false`, with the same zero-operation deltas. No scheduler action is performed by this PR.
 
-Authority is `origin/codex/comment-translator-paid-v1-preview` at `b1cba3c5fe5191907a512fa2f8d5e975a714a9d8`, tree `2e1274c7cc796f9575425d47b5fa4f2ed298767e`. PR #799, PR #800, and PR #801 are merged into that authority; PR #801 is the latest merge.
+Current compatibility-rebaseline input authority is PR #809 merge at `8538befbd6513d057bcf1f558fecc7a5ce2d5102`, tree `72b1ec3aee3225e3b990c6274abae1d81c6e081b`. PR #801 / `b1cba3c5fe5191907a512fa2f8d5e975a714a9d8` is retained only as historical A2 execution evidence authority and is not described as the current authority or latest merge.
 
-## Post-apply execution closeout
+## Compatibility rebaseline authority
 
-The approved Preview operation completed in strict order. The history-only reconciliation retained the same-version `20260815090000_comment_translator_paid_cron_vault_transport` entry as matched and did not repair or rerun it. A dry-run then selected exactly the two approved Task 6 files and no unrelated local-only migration. The first apply produced an exact 28 total / 28 unique readback with only `20260813135500_comment_translator_paid_task6_azure_uncertain_retry_compatibility` newly present; the second produced the final exact 29 total / 29 unique inventory with `20260829100000_comment_translator_paid_task6_azure_uncertain_retry_guard_repair` also present exactly once. The final dry-run proposed zero migrations.
+The current repository inventory is the historical 33-entry local baseline plus the canonical remote-only source (historical source-era 34) plus one explicit post-reconciliation local migration. The filesystem inventory is compared for complete equality; no arbitrary migration is auto-accepted. The current clean-install fixture is the exact chronological 35-entry repository inventory. Task 11 remote apply evidence is not claimed; deployed runtime and artifact identity remain independently unverified.
+
+Sanitized authority markers:
+
+- historical-a2-local-baseline=33
+- historical-a2-source-era-local=34
+- historical-a2-preview-post-apply=29
+- current-repository-clean-install-inventory=35
+- task11-remote-apply-evidence=not-claimed
+- current-compatibility-base=8538befbd6513d057bcf1f558fecc7a5ce2d5102
+
+## Historical Preview post-apply execution evidence
+
+The separately approved historical Preview operation completed in strict order. The history-only reconciliation retained the same-version `20260815090000_comment_translator_paid_cron_vault_transport` entry as matched and did not repair or rerun it. A dry-run then selected exactly the two approved Task 6 files and no unrelated local-only migration. The first apply produced an exact 28 total / 28 unique readback with only `20260813135500_comment_translator_paid_task6_azure_uncertain_retry_compatibility` newly present; the second produced the final exact 29 total / 29 unique inventory with `20260829100000_comment_translator_paid_task6_azure_uncertain_retry_guard_repair` also present exactly once. The final dry-run proposed zero migrations. This historical record is not evidence that the current Task 11 migration was remotely applied.
 
 Sanitized post-apply evidence:
 
@@ -35,7 +49,7 @@ The isolated operator directory is retained as ignored local evidence and was no
 
 ## Observed history baseline
 
-The counts below are the pre-source observation: local baseline 33, remote 27, timestamp union 42, matched 18, local-only 15, and remote-only 9. The Paid subset is local-only 10 and remote-only 9. After adding the same-version source in this PR, the expected local source inventory is 34, matched is 19, local-only is 15, and remote-only is 8.
+The historical pre-source observation is local baseline 33, remote 27, timestamp union 42, matched 18, local-only 15, and remote-only 9. The Paid subset is local-only 10 and remote-only 9. Adding the canonical same-version source produced the historical source-era local inventory of 34, matched 19, local-only 15, and remote-only 8. The current repository inventory is separately rebaselined to 35 by the explicit post-reconciliation Task 11 migration, which remains local-only and is not part of the historical remote observation.
 
 | Remote observed entry | Canonical local entry | Classification and safe treatment |
 | --- | --- | --- |
@@ -82,7 +96,7 @@ Read-only catalog evidence for the already-applied function was:
 
 ## Historical operator convergence plan
 
-The procedure below is retained as the fail-closed execution record. It was completed for the currently linked Preview target under separate approvals; it does not authorize repeating any operation. The clean-install path was not used.
+The procedure below is retained as the historical fail-closed execution record. It was completed for the then-linked Preview target under separate approvals; it does not authorize repeating any operation. The clean-install path was not used.
 
 ### Common read-only preflight
 
@@ -93,7 +107,7 @@ The procedure below is retained as the fail-closed execution record. It was comp
 
 ### Clean-install path
 
-For a separately selected `isolated-empty` database, do not run migration-history repair. Immediately before any clean-install SQL, re-list migration history read-only and prove it is empty. A Preview target, any non-empty history, an unknown/unconfirmed target, or an uncertain readback is a hard stop before execution and cannot continue automatically. Only after that empty-history revalidation may the operator apply the canonical local inventory once in strict chronological order, including the new `20260815090000` source and both allowlisted Task 6 migrations. Submit only one migration at a time. After each submission, wait for an explicit successful history readback proving that exact canonical entry is present once before submitting the next migration. All 34 successful readbacks reach only the intermediate `clean-install-complete` state and prove 34 expected history entries and 34 SQL executions. Completion additionally requires an explicit successful post-apply read-only-check transition covering that exact history, seven-statement source exactness, function security/search path, ACLs, comment, isolated-empty scheduler baseline of zero inactive jobs, and no scheduler/Vault secret side effects. A missing, failed, uncertain, incomplete, duplicate, or mismatched post-check observation enters `stopped` and cannot continue. The checks do not change SQL, history, or operation counts.
+For a separately selected `isolated-empty` database, do not run migration-history repair. Immediately before any clean-install SQL, re-list migration history read-only and prove it is empty. A Preview target, any non-empty history, an unknown/unconfirmed target, or an uncertain readback is a hard stop before execution and cannot continue automatically. Only after that empty-history revalidation may the operator apply the current canonical local inventory once in strict chronological order, including the canonical `20260815090000` source, both allowlisted Task 6 migrations, and the explicit post-reconciliation Task 11 migration. Submit only one migration at a time. After each submission, wait for an explicit successful history readback proving that exact canonical entry is present once before submitting the next migration. All 35 successful readbacks reach only the intermediate `clean-install-complete` state and prove 35 expected history entries and 35 SQL executions. Completion additionally requires an explicit successful post-apply read-only-check transition covering that exact history, seven-statement source exactness, function security/search path, ACLs, comment, isolated-empty scheduler baseline of zero inactive jobs, and no scheduler/Vault secret side effects. A missing, failed, uncertain, incomplete, duplicate, or mismatched post-check observation enters `stopped` and cannot continue. The checks do not change SQL, history, or operation counts.
 
 ### Already-applied Preview path
 
@@ -117,4 +131,4 @@ Rollback for this source-only PR is a normal source/branch revert followed by re
 
 ## Approval boundary
 
-Approved for this closeout: sanitized documentation update, local verification, commit, feature-branch push, and PR creation. The completed remote history repair and two additive applies are evidence recorded from separately approved operations; they are not performed by this closeout change. Not authorized here: another remote migration/history operation, SQL write, Cron/Vault/project change, scheduler activation, Cloudflare/Stripe/provider operation, deploy, browser QA, merge, dependency installation, or worktree cleanup.
+In this rebaseline: sanitized documentation update and local verification only. The historical remote history repair and two additive applies are evidence recorded from separately approved operations; they are not repeated here. Not authorized here: remote migration/history operation, SQL write, Cron/Vault/project change, scheduler activation, Cloudflare/Stripe/provider operation, deploy, browser QA, commit, push, PR creation, merge, dependency installation, or worktree cleanup.

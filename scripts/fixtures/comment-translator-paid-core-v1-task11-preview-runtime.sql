@@ -299,14 +299,14 @@ declare
   openai_provider_attempt text;
   azure_provider_attempt text;
   source_expires_at timestamptz;
-  utc_hour timestamptz;
+  v_utc_hour timestamptz;
   recorded boolean;
   start_time timestamptz;
   same_utc_hour_provider_rows integer;
 begin
   select * into context_row from task11_preview_context;
   select * into run_owner from task11_preview_owners where owner_number = 1;
-  utc_hour := date_trunc('hour', statement_timestamp());
+  v_utc_hour := date_trunc('hour', statement_timestamp());
 
   for provider_iteration in select generate_series(1, 20) loop
     source_expires_at := statement_timestamp() + interval '90 seconds';
@@ -351,7 +351,7 @@ begin
     start_time := clock_timestamp();
     recorded := public.ct_paid_record_provider_hourly_detail(
       openai_attempt_id, openai_provider_attempt, source_expires_at, run_owner.owner_user_id,
-      'openai', utc_hour, 1, 1, 1, 100, 90, 30, 25, 50, 1, 0,
+      'openai', v_utc_hour, 1, 1, 1, 100, 90, 30, 25, 50, 1, 0,
       0, 1, 0, 0, 0, 0, 0, 0, statement_timestamp()
     );
     insert into task11_rpc_latency values (
@@ -364,7 +364,7 @@ begin
     start_time := clock_timestamp();
     recorded := public.ct_paid_record_provider_hourly_detail(
       azure_attempt_id, azure_provider_attempt, source_expires_at, run_owner.owner_user_id,
-      'azure_fallback', utc_hour, 1, 1, 1, 100, 90, 0, 0, 50, 1, 0,
+      'azure_fallback', v_utc_hour, 1, 1, 1, 100, 90, 0, 0, 50, 1, 0,
       0, 0, 1, 0, 0, 0, 0, 0, statement_timestamp()
     );
     insert into task11_rpc_latency values (
@@ -377,14 +377,14 @@ begin
 
   if public.ct_paid_record_provider_hourly_detail(
     openai_attempt_id, openai_provider_attempt, source_expires_at, run_owner.owner_user_id,
-    'openai', utc_hour, 1, 1, 1, 100, 90, 30, 25, 50, 1, 0,
+    'openai', v_utc_hour, 1, 1, 1, 100, 90, 30, 25, 50, 1, 0,
     0, 1, 0, 0, 0, 0, 0, 0, statement_timestamp()
   ) then
     raise exception 'Task 11 Preview OpenAI provider fixture replay was double counted';
   end if;
   if public.ct_paid_record_provider_hourly_detail(
     azure_attempt_id, azure_provider_attempt, source_expires_at, run_owner.owner_user_id,
-    'azure_fallback', utc_hour, 1, 1, 1, 100, 90, 0, 0, 50, 1, 0,
+    'azure_fallback', v_utc_hour, 1, 1, 1, 100, 90, 0, 0, 50, 1, 0,
     0, 0, 1, 0, 0, 0, 0, 0, statement_timestamp()
   ) then
     raise exception 'Task 11 Preview Azure provider fixture replay was double counted';
@@ -394,7 +394,7 @@ begin
     into same_utc_hour_provider_rows
     from public.comment_translator_paid_provider_hourly_details as provider_detail
    where provider_detail.owner_user_id = run_owner.owner_user_id
-     and provider_detail.utc_hour = utc_hour;
+     and provider_detail.utc_hour = v_utc_hour;
   if same_utc_hour_provider_rows <> 2 then
     raise exception 'Task 11 Preview same UTC hour provider rows must equal two';
   end if;

@@ -123,6 +123,10 @@ const localBaselineMigrations = [
   "20260829100000_comment_translator_paid_task6_azure_uncertain_retry_guard_repair"
 ];
 
+const postReconciliationLocalMigrations = [
+  "20260831100000_comment_translator_paid_task11_message_rate_runtime_repair"
+];
+
 const remoteMigrations = [
   "20260615000000_comment_translator_sessions",
   "20260615001000_comment_translator_usage_ledger_events",
@@ -417,7 +421,7 @@ const independentlyObservedPairEvidence = [
   { remoteName: "20260823040930_comment_translator_paid_gate0a_schedule_function_privilege_repair", localName: "20260823130000_comment_translator_paid_gate0a_schedule_function_privilege_repair", category: "timestamp-mismatch", semanticEvidenceSha256: "888a2a3b2b5a41943c3fc66bac270d4944291fac20f58293c903e09e1e689d35", privilegeEvidenceSha256: "3dcdf98be4e19fd936cac61c9ba32d17780b3f81aa78c074cc9795b3b898c09b", ownerLeaseEvidenceSha256: "3d554c28e0b2eb6d6095ec16c9dd63068e081087493da0ed5f8237b4b8f86199", evidenceStatus: "verified", evidenceSource: pairEvidenceFixtureSource, operatorEvidenceRequirement: operatorPairEvidenceRequirement },
   { remoteName: "20260826072327_comment_translator_paid_gate0a_checkout_recovery_window_floor", localName: "20260826100000_comment_translator_paid_gate0a_checkout_recovery_window_floor", category: "timestamp-mismatch", semanticEvidenceSha256: "f4082365c6583a4d17d947bd8f4866c84b8eb1692a4885e60ef843876ef6fe2c", privilegeEvidenceSha256: "b0c8da4efc9c3ebfd903d966bb49b56f8172970df2d2de42b6db89873d017657", ownerLeaseEvidenceSha256: "9cd8114ea562614732f26fbb7d737b8a1b0530208de388d958a2b7df0629bf0c", evidenceStatus: "verified", evidenceSource: pairEvidenceFixtureSource, operatorEvidenceRequirement: operatorPairEvidenceRequirement },
   { remoteName: "20260826141718_comment_translator_paid_gate0a_recovery_floor_second_canonicalization", localName: "20260826110000_comment_translator_paid_gate0a_recovery_floor_second_canonicalization", category: "timestamp-mismatch", semanticEvidenceSha256: "aecb625b3113df75c935c8b33f6f7d53939d4e9fa8fc14d6edf0ef6aa3db1c80", privilegeEvidenceSha256: "eccb0215644ebcf0d01eb249176850d9d67d8385535bed1fb2b8e65abffe3898", ownerLeaseEvidenceSha256: "27040bd461764daf04bdf185bb4bcf1e6abf53d305f64a0062ad3c163821c4f9", evidenceStatus: "verified", evidenceSource: pairEvidenceFixtureSource, operatorEvidenceRequirement: operatorPairEvidenceRequirement },
-  { remoteName: "20260827024331_comment_translator_paid_checkout_expiry_finalize_lease", localName: "20260827020609_comment_translator_paid_checkout_expiry_finalize_lease", category: "timestamp-mismatch", semanticEvidenceSha256: "83aaceb5387a861feeea71bac2a755599f8d76b46c0f03fb5ccbf0a1c70b1f06", privilegeEvidenceSha256: "790594f11398723e665e5c76e0e8b68ad0a0e29bbc61c749e3a33b940795ac4d", ownerLeaseEvidenceSha256: "f6716702f2e95da6c5c239817b1bf11dc0c85e4557485cb7a30b00f79ceecde9", evidenceStatus: "verified", evidenceSource: pairEvidenceFixtureSource, operatorEvidenceRequirement: operatorPairEvidenceRequirement }
+  { remoteName: "20260827024331_comment_translator_paid_checkout_expiry_finalize_lease", localName: "20260827020609_comment_translator_paid_checkout_expiry_finalize_lease", category: "timestamp-mismatch", semanticEvidenceSha256: "3e2af245ab7c715b2f408712b8bad26e9c01d3fcf55ff957b80847b6984cc504", privilegeEvidenceSha256: "fd03bc431a21a5719a5cca30fab8f164e0bce677db43b56b4bad2c86a3784950", ownerLeaseEvidenceSha256: "fb990e5e4482b0bb6eaba8ab1cdc54c9a10c6d06ca90a0c494fc0600c38af622", evidenceStatus: "verified", evidenceSource: pairEvidenceFixtureSource, operatorEvidenceRequirement: operatorPairEvidenceRequirement }
 ];
 
 const deterministicPairEvidenceEnvelope = Object.freeze({
@@ -477,6 +481,7 @@ const independentlyObservedPreviewHistoryReadbacks = [
   { revert: "20260615000000_comment_translator_sessions|20260615001000_comment_translator_usage_ledger_events|20260623000000_comment_translator_real_comments_feed_snapshots|20260812120000_comment_translator_paid_core_v1|20260813130000_comment_translator_paid_task6_circuit_probe_claim|20260813131500_comment_translator_paid_task6_openai_rate_retry|20260813133000_comment_translator_paid_task6_owned_circuit_failure|20260813134500_comment_translator_paid_task6_azure_billing_split|20260813140000_comment_translator_paid_task6_azure_uncertain_retry|20260813141500_comment_translator_paid_task6_circuit_success_window|20260813143000_comment_translator_paid_task6_openai_resume_status|20260813144500_comment_translator_paid_task6_terminal_openai_partial|20260813150000_comment_translator_paid_task6_openai_partial_receipt|20260813151500_comment_translator_paid_task6_terminal_openai_partial_authority|20260813153000_comment_translator_paid_task6_replay_circuit_authority|20260813154500_comment_translator_paid_task6_dispatch_and_azure_partial_settlement|20260814100000_comment_translator_paid_task7_runtime_authority|20260814110000_comment_translator_paid_task9_retention_observability|20260815090000_comment_translator_paid_cron_vault_transport|20260818100000_comment_translator_paid_gate0a_poll_budget_rpc_repair|20260819100000_comment_translator_paid_gate0a_lifecycle_read_repair|20260819110000_comment_translator_paid_gate0a_capacity_read_repair|20260823120000_comment_translator_paid_gate0a_unbound_hold_recovery|20260823130000_comment_translator_paid_gate0a_schedule_function_privilege_repair|20260826100000_comment_translator_paid_gate0a_checkout_recovery_window_floor|20260826110000_comment_translator_paid_gate0a_recovery_floor_second_canonicalization".split("|"), apply: "20260615000000_comment_translator_sessions|20260615001000_comment_translator_usage_ledger_events|20260623000000_comment_translator_real_comments_feed_snapshots|20260812120000_comment_translator_paid_core_v1|20260813130000_comment_translator_paid_task6_circuit_probe_claim|20260813131500_comment_translator_paid_task6_openai_rate_retry|20260813133000_comment_translator_paid_task6_owned_circuit_failure|20260813134500_comment_translator_paid_task6_azure_billing_split|20260813140000_comment_translator_paid_task6_azure_uncertain_retry|20260813141500_comment_translator_paid_task6_circuit_success_window|20260813143000_comment_translator_paid_task6_openai_resume_status|20260813144500_comment_translator_paid_task6_terminal_openai_partial|20260813150000_comment_translator_paid_task6_openai_partial_receipt|20260813151500_comment_translator_paid_task6_terminal_openai_partial_authority|20260813153000_comment_translator_paid_task6_replay_circuit_authority|20260813154500_comment_translator_paid_task6_dispatch_and_azure_partial_settlement|20260814100000_comment_translator_paid_task7_runtime_authority|20260814110000_comment_translator_paid_task9_retention_observability|20260815090000_comment_translator_paid_cron_vault_transport|20260818100000_comment_translator_paid_gate0a_poll_budget_rpc_repair|20260819100000_comment_translator_paid_gate0a_lifecycle_read_repair|20260819110000_comment_translator_paid_gate0a_capacity_read_repair|20260823120000_comment_translator_paid_gate0a_unbound_hold_recovery|20260823130000_comment_translator_paid_gate0a_schedule_function_privilege_repair|20260826100000_comment_translator_paid_gate0a_checkout_recovery_window_floor|20260826110000_comment_translator_paid_gate0a_recovery_floor_second_canonicalization|20260827020609_comment_translator_paid_checkout_expiry_finalize_lease".split("|") },
 ];
 const independentlyObservedCleanInstallHistory = "20260527000000_account_preferences_foundation|20260601000000_youtube_oauth_credentials|20260615000000_comment_translator_sessions|20260615001000_comment_translator_usage_ledger_events|20260623000000_comment_translator_real_comments_feed_snapshots|20260624000000_account_display_timezone_preference|20260705000000_comment_translator_creator_waitlist_registrations|20260706073204_supabase_default_privileges_guard|20260812120000_comment_translator_paid_core_v1|20260813130000_comment_translator_paid_task6_circuit_probe_claim|20260813131500_comment_translator_paid_task6_openai_rate_retry|20260813133000_comment_translator_paid_task6_owned_circuit_failure|20260813134500_comment_translator_paid_task6_azure_billing_split|20260813135500_comment_translator_paid_task6_azure_uncertain_retry_compatibility|20260813140000_comment_translator_paid_task6_azure_uncertain_retry|20260813141500_comment_translator_paid_task6_circuit_success_window|20260813143000_comment_translator_paid_task6_openai_resume_status|20260813144500_comment_translator_paid_task6_terminal_openai_partial|20260813150000_comment_translator_paid_task6_openai_partial_receipt|20260813151500_comment_translator_paid_task6_terminal_openai_partial_authority|20260813153000_comment_translator_paid_task6_replay_circuit_authority|20260813154500_comment_translator_paid_task6_dispatch_and_azure_partial_settlement|20260814100000_comment_translator_paid_task7_runtime_authority|20260814110000_comment_translator_paid_task9_retention_observability|20260815090000_comment_translator_paid_cron_vault_transport|20260818100000_comment_translator_paid_gate0a_poll_budget_rpc_repair|20260819100000_comment_translator_paid_gate0a_lifecycle_read_repair|20260819110000_comment_translator_paid_gate0a_capacity_read_repair|20260823120000_comment_translator_paid_gate0a_unbound_hold_recovery|20260823130000_comment_translator_paid_gate0a_schedule_function_privilege_repair|20260826100000_comment_translator_paid_gate0a_checkout_recovery_window_floor|20260826110000_comment_translator_paid_gate0a_recovery_floor_second_canonicalization|20260827020609_comment_translator_paid_checkout_expiry_finalize_lease|20260829100000_comment_translator_paid_task6_azure_uncertain_retry_guard_repair".split("|");
+independentlyObservedCleanInstallHistory.push(...postReconciliationLocalMigrations);
 const independentlyObservedAdditiveHistoryReadbacks = [
   "20260615000000_comment_translator_sessions|20260615001000_comment_translator_usage_ledger_events|20260623000000_comment_translator_real_comments_feed_snapshots|20260812120000_comment_translator_paid_core_v1|20260813130000_comment_translator_paid_task6_circuit_probe_claim|20260813131500_comment_translator_paid_task6_openai_rate_retry|20260813133000_comment_translator_paid_task6_owned_circuit_failure|20260813134500_comment_translator_paid_task6_azure_billing_split|20260813135500_comment_translator_paid_task6_azure_uncertain_retry_compatibility|20260813140000_comment_translator_paid_task6_azure_uncertain_retry|20260813141500_comment_translator_paid_task6_circuit_success_window|20260813143000_comment_translator_paid_task6_openai_resume_status|20260813144500_comment_translator_paid_task6_terminal_openai_partial|20260813150000_comment_translator_paid_task6_openai_partial_receipt|20260813151500_comment_translator_paid_task6_terminal_openai_partial_authority|20260813153000_comment_translator_paid_task6_replay_circuit_authority|20260813154500_comment_translator_paid_task6_dispatch_and_azure_partial_settlement|20260814100000_comment_translator_paid_task7_runtime_authority|20260814110000_comment_translator_paid_task9_retention_observability|20260815090000_comment_translator_paid_cron_vault_transport|20260818100000_comment_translator_paid_gate0a_poll_budget_rpc_repair|20260819100000_comment_translator_paid_gate0a_lifecycle_read_repair|20260819110000_comment_translator_paid_gate0a_capacity_read_repair|20260823120000_comment_translator_paid_gate0a_unbound_hold_recovery|20260823130000_comment_translator_paid_gate0a_schedule_function_privilege_repair|20260826100000_comment_translator_paid_gate0a_checkout_recovery_window_floor|20260826110000_comment_translator_paid_gate0a_recovery_floor_second_canonicalization|20260827020609_comment_translator_paid_checkout_expiry_finalize_lease".split("|"),
   "20260615000000_comment_translator_sessions|20260615001000_comment_translator_usage_ledger_events|20260623000000_comment_translator_real_comments_feed_snapshots|20260812120000_comment_translator_paid_core_v1|20260813130000_comment_translator_paid_task6_circuit_probe_claim|20260813131500_comment_translator_paid_task6_openai_rate_retry|20260813133000_comment_translator_paid_task6_owned_circuit_failure|20260813134500_comment_translator_paid_task6_azure_billing_split|20260813135500_comment_translator_paid_task6_azure_uncertain_retry_compatibility|20260813140000_comment_translator_paid_task6_azure_uncertain_retry|20260813141500_comment_translator_paid_task6_circuit_success_window|20260813143000_comment_translator_paid_task6_openai_resume_status|20260813144500_comment_translator_paid_task6_terminal_openai_partial|20260813150000_comment_translator_paid_task6_openai_partial_receipt|20260813151500_comment_translator_paid_task6_terminal_openai_partial_authority|20260813153000_comment_translator_paid_task6_replay_circuit_authority|20260813154500_comment_translator_paid_task6_dispatch_and_azure_partial_settlement|20260814100000_comment_translator_paid_task7_runtime_authority|20260814110000_comment_translator_paid_task9_retention_observability|20260815090000_comment_translator_paid_cron_vault_transport|20260818100000_comment_translator_paid_gate0a_poll_budget_rpc_repair|20260819100000_comment_translator_paid_gate0a_lifecycle_read_repair|20260819110000_comment_translator_paid_gate0a_capacity_read_repair|20260823120000_comment_translator_paid_gate0a_unbound_hold_recovery|20260823130000_comment_translator_paid_gate0a_schedule_function_privilege_repair|20260826100000_comment_translator_paid_gate0a_checkout_recovery_window_floor|20260826110000_comment_translator_paid_gate0a_recovery_floor_second_canonicalization|20260827020609_comment_translator_paid_checkout_expiry_finalize_lease|20260829100000_comment_translator_paid_task6_azure_uncertain_retry_guard_repair".split("|")
@@ -586,6 +591,13 @@ function parseOperatorMappingRows(operatorDocument) {
     rows.push([remoteName, localName, category]);
   }
   return rows;
+}
+
+function parseAuthorityMarkers(operatorDocument) {
+  return operatorDocument.split(/\r?\n/).flatMap((line) => {
+    const match = line.match(/^- ([a-z0-9-]+)=([^\s]+)$/);
+    return match ? [[match[1], match[2]]] : [];
+  });
 }
 
 function assertOperatorMappingRows(rows) {
@@ -1999,10 +2011,12 @@ const currentLocalMigrations = fs
   .filter((entry) => entry.isFile() && entry.name.endsWith(".sql"))
   .map((entry) => entry.name.slice(0, -4))
   .sort();
-const expectedCurrentLocal = [...localBaselineMigrations, migrationName].sort();
-assert.deepEqual(currentLocalMigrations, expectedCurrentLocal, "current source inventory is baseline local history plus only the canonical remote-only source");
+const historicalSourceEraLocalMigrations = [...localBaselineMigrations, migrationName].sort();
+const expectedCurrentLocal = [...localBaselineMigrations, migrationName, ...postReconciliationLocalMigrations].sort();
+assert.deepEqual(currentLocalMigrations, expectedCurrentLocal, "current source inventory is historical baseline plus the canonical source and explicit post-reconciliation migrations");
 
 assert.equal(localBaselineMigrations.length, 33, "observed local baseline has 33 migrations");
+assert.equal(historicalSourceEraLocalMigrations.length, 34, "historical source-era local inventory has 34 migrations");
 assert.equal(remoteMigrations.length, 27, "observed remote history has 27 migrations");
 const localVersions = versionSet(localBaselineMigrations);
 const remoteVersions = versionSet(remoteMigrations);
@@ -2025,7 +2039,16 @@ for (const [remoteName, localName] of semanticMappings) {
   assert.ok(localBaselineMigrations.includes(localName), `mapped local entry exists: ${localName}`);
   assert.notEqual(versionOf(remoteName), versionOf(localName), `mapped entry has an explicit timestamp mismatch: ${localName}`);
 }
-const operatorMappingRows = parseOperatorMappingRows(fs.readFileSync(operatorDocumentPath, "utf8"));
+const operatorDocument = fs.readFileSync(operatorDocumentPath, "utf8");
+assert.deepEqual(parseAuthorityMarkers(operatorDocument), [
+  ["historical-a2-local-baseline", "33"],
+  ["historical-a2-source-era-local", "34"],
+  ["historical-a2-preview-post-apply", "29"],
+  ["current-repository-clean-install-inventory", "35"],
+  ["task11-remote-apply-evidence", "not-claimed"],
+  ["current-compatibility-base", "8538befbd6513d057bcf1f558fecc7a5ce2d5102"]
+], "authority document records the exact sanitized compatibility rebaseline markers");
+const operatorMappingRows = parseOperatorMappingRows(operatorDocument);
 assertOperatorMappingRows(operatorMappingRows);
 const swappedOperatorRows = operatorMappingRows.map((row) => [...row]);
 const firstSwappedLocalTarget = swappedOperatorRows[1][1];
@@ -2036,6 +2059,18 @@ assert.notEqual(normalizeSql("select 1; \nselect 2;"), normalizeSql("select 1;\n
 assert.deepEqual(sameVersionSourceMatches, [migrationName], "the new source is the only same-version remote-only match");
 assert.ok(remoteMigrations.includes(migrationName), "remote-only migration is present in the observed remote history");
 assert.ok(!localBaselineMigrations.includes(migrationName), "remote-only migration was absent from the pre-source local baseline");
+assert.deepEqual(postReconciliationLocalMigrations, [
+  "20260831100000_comment_translator_paid_task11_message_rate_runtime_repair"
+], "post-reconciliation local migration is an explicit one-entry list");
+assert.equal(postReconciliationLocalMigrations.length, 1, "post-reconciliation local migration list has exactly one entry");
+for (const migration of postReconciliationLocalMigrations) {
+  assert.ok(!localBaselineMigrations.includes(migration), `post-reconciliation migration is not in historical baseline: ${migration}`);
+  assert.ok(!remoteMigrations.includes(migration), `post-reconciliation migration is not in historical remote observation: ${migration}`);
+  assert.ok(!additiveAllowlist.includes(migration), `post-reconciliation migration is not in the Task 6 additive allowlist: ${migration}`);
+  assert.equal(currentLocalMigrations.filter((name) => name === migration).length, 1, `post-reconciliation migration is present once in current repository inventory: ${migration}`);
+  assert.equal(independentlyObservedCleanInstallHistory.filter((name) => name === migration).length, 1, `post-reconciliation migration is present once in clean-install observation history: ${migration}`);
+}
+assert.deepEqual(independentlyObservedCleanInstallHistory, expectedCurrentLocal, "clean-install observation history exactly matches the current repository inventory in chronological order");
 assert.deepEqual(absentRemotePaidMigrations, [
   "20260813135500_comment_translator_paid_task6_azure_uncertain_retry_compatibility",
   "20260829100000_comment_translator_paid_task6_azure_uncertain_retry_guard_repair"
@@ -3228,12 +3263,12 @@ for (const [index, migration] of currentLocalMigrations.entries()) {
   cleanInstallFixture = readBackCleanInstallMigration(submitted, migration, observeIndependentExternalCleanInstall(submitted, "migration-readback", migration, expectedHistory));
   assert.equal(cleanInstallFixture.history.filter((name) => name === migration).length, 1, `clean-install migration ${index + 1} readback proves one canonical history entry`);
 }
-assert.equal(cleanInstallFixture.phase, "clean-install-complete", "all 34 successful readbacks reach clean-install-complete");
+assert.equal(cleanInstallFixture.phase, "clean-install-complete", "all 35 successful readbacks reach clean-install-complete");
 assert.equal(completePostApplyReadOnlyChecks(cleanInstallFixture).stopReason, "post-apply-read-only-check-observation-envelope-missing", "clean-install completion requires an explicit post-apply read-only-check observation envelope");
-assert.deepEqual(cleanInstallFixture.history, currentLocalMigrations, "clean install records all 34 canonical migrations in chronological order only after readback");
-assert.deepEqual(cleanInstallFixture.sqlExecutions, currentLocalMigrations, "clean install executes all 34 canonical migrations exactly once in chronological order");
-assert.equal(cleanInstallFixture.history.length, 34, "clean install has exactly 34 history entries after all readbacks");
-assert.equal(cleanInstallFixture.sqlExecutions.length, 34, "clean install has exactly 34 SQL executions after all readbacks");
+assert.deepEqual(cleanInstallFixture.history, currentLocalMigrations, "clean install records all 35 canonical migrations in chronological order only after readback");
+assert.deepEqual(cleanInstallFixture.sqlExecutions, currentLocalMigrations, "clean install executes all 35 canonical migrations exactly once in chronological order");
+assert.equal(cleanInstallFixture.history.length, 35, "clean install has exactly 35 history entries after all readbacks");
+assert.equal(cleanInstallFixture.sqlExecutions.length, 35, "clean install has exactly 35 SQL executions after all readbacks");
 assert.equal(cleanInstallFixture.operations.length, 0, "completed clean install still has zero history-repair operations");
 const staticCleanInstallPostApplyObservation = {
   result: "success",
@@ -3617,7 +3652,7 @@ assert.strictEqual(applyCleanInstallMigration(completedCleanInstallRerun, curren
 
 const currentLocalVersions = versionSet(currentLocalMigrations);
 assert.equal(intersection([...currentLocalVersions], [...remoteVersions]).length, 19, "post-source current matched count is 19");
-assert.equal(difference([...currentLocalVersions], [...remoteVersions]).length, 15, "post-source current local-only count remains 15");
+assert.equal(difference([...currentLocalVersions], [...remoteVersions]).length, 16, "post-reconciliation current local-only count is 16");
 assert.equal(difference([...remoteVersions], [...currentLocalVersions]).length, 8, "post-source current remote-only count is 8");
 
 assert.deepEqual(cleanInstallOrder, [
@@ -3682,5 +3717,5 @@ console.log(`pair-evidence freshness required missing/mismatched freshness=REJEC
 console.log(`preview-observations full-preflight-envelope=REQUIRED bare-preflight=REJECTED full-readback-envelope=REQUIRED bare-readback=REJECTED bare-callback=REJECTED relabelled/self-generated/issued-but-static=REJECTED sync-and-promise-outer/nested=REJECTED cyclic-or-unbounded-envelope=REJECTED internal-not-live-post-apply-mechanics=PASS concrete-post-apply-observations=VERIFIED missing-or-mismatched-capability-provenance-freshness-target=REJECTED pair-envelope-capability-target=REQUIRED zero-additional-operations=true zero-additional-sql-executions=true`);
 console.log(`common-concrete-post-apply-checks preview=VERIFIED clean-install=VERIFIED canonical-source=statement-count-and-sequence-sha256-body/function-md5-and-source-sha256 function-security=security-definer-and-exact-search-path schema-acl=owner/public/anon/authenticated/service_role-usage-exact function-acl=owner/public/anon/authenticated/service_role-execute-exact comment-sha256=exact owner-lease-boundary=exact side-effects=scheduler-job-baseline-target-specific-active-false-and-create/alter/activate/deactivate/delete-operations-zero vault-write/url-persist/token-persist-zero missing-or-mutated-concrete-value=REJECTED history-unchanged=true zero-additional-operations=true zero-additional-sql-executions=true local-preview-fixture-authority=internal-not-live local-clean-install-fixture-authority=internal-not-live trusted-external-success=NOT_CLAIMED clean-install-capability/provenance/freshness/target=REQUIRED`);
 console.log(`observed-baseline union=42 matched=18 local-only=15 remote-only=9 paid-local-only=10 paid-remote-only=9`);
-console.log(`current-source matched=19 local-only=15 remote-only=8 local-migrations=34`);
+console.log(`current-source matched=19 local-only=16 remote-only=8 local-migrations=35`);
 console.log(`canonical statements=7 statement-sequence-sha256=${migrationStatementSequenceSha256} body-semantic-md5=${bodySemanticMd5} remote-function-md5=${remoteFunctionDefinitionMd5} migration-sha256=${migrationSha256}`);

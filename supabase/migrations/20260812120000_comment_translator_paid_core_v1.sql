@@ -6161,11 +6161,11 @@ begin
     or v_logical.expires_at <= p_now
     or v_provider_receipt.id is null
     or v_provider_receipt.owner_user_id <> p_owner_user_id
-    or v_provider_receipt.provider_kind is distinct from case
+    or v_provider_receipt.provider_kind is distinct from (case
       when p_provider = 'openai' then 'openai_attempt'
       when p_provider = 'azure_fallback' then 'azure_direct_fallback'
       else null
-    end
+    end)
   then
     raise exception 'provider hourly source authority is not valid';
   end if;

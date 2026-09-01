@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "classifications": [
+    "catalog-owned",
+    "auto-managed",
+    "real function reference",
+    "external user dependency"
+  ],
+  "environments": {
+    "production": {
+      "unexpectedPgDependEdges": 38,
+      "groups": [
+        {
+          "classid": "pg_event_trigger",
+          "refclassid": "pg_proc",
+          "deptype": "n",
+          "dependentCategory": "catalog-object",
+          "referencedCategory": "function",
+          "count": 1,
+          "classification": "real function reference"
+        },
+        {
+          "classid": "pg_policy",
+          "refclassid": "pg_class",
+          "deptype": "n",
+          "dependentCategory": "catalog-object",
+          "referencedCategory": "table",
+          "count": 13,
+          "classification": "catalog-owned"
+        },
+        {
+          "classid": "pg_proc",
+          "refclassid": "pg_language",
+          "deptype": "n",
+          "dependentCategory": "function",
+          "referencedCategory": "catalog-object",
+          "count": 11,
+          "classification": "catalog-owned"
+        },
+        {
+          "classid": "pg_proc",
+          "refclassid": "pg_namespace",
+          "deptype": "n",
+          "dependentCategory": "function",
+          "referencedCategory": "schema",
+          "count": 11,
+          "classification": "catalog-owned"
+        },
+        {
+          "classid": "pg_trigger",
+          "refclassid": "pg_class",
+          "deptype": "a",
+          "dependentCategory": "trigger",
+          "referencedCategory": "table",
+          "count": 1,
+          "classification": "auto-managed"
+        },
+        {
+          "classid": "pg_trigger",
+          "refclassid": "pg_proc",
+          "deptype": "n",
+          "dependentCategory": "trigger",
+          "referencedCategory": "function",
+          "count": 1,
+          "classification": "real function reference"
+        }
+      ],
+      "dependencyDigest": "5751a4e6a27f9b16537a2bca178990341d2659958c6ce2e4259e91edb3041c94",
+      "allPublicDeptypeCounts": {
+        "a": 294,
+        "i": 60,
+        "n": 185
+      },
+      "allPublicScopedEdgeCount": 539,
+      "nonUnexpectedScopedEdgeCount": 441,
+      "externalUserDependencyCount": 0,
+      "benignSchemaContractCount": 0,
+      "excludedDependencySummary": {
+        "internalDependencyCount": 60,
+        "benignSchemaContractCount": 0,
+        "overlapCount": 0,
+        "totalExcludedCount": 60
+      },
+      "typeEvidence": {
+        "scopedTypeEdges": 0,
+        "compositeRowType": 0,
+        "systemType": 0,
+        "publicUserType": 0,
+        "externalUserType": 0
+      }
+    },
+    "preview": {
+      "unexpectedPgDependEdges": 204,
+      "groups": [
+        {
+          "classid": "pg_constraint",
+          "refclassid": "pg_proc",
+          "deptype": "n",
+          "dependentCategory": "constraint",
+          "referencedCategory": "function",
+          "count": 1,
+          "classification": "real function reference"
+        },
+        {
+          "classid": "pg_proc",
+          "refclassid": "pg_language",
+          "deptype": "n",
+          "dependentCategory": "function",
+          "referencedCategory": "catalog-object",
+          "count": 82,
+          "classification": "catalog-owned"
+        },
+        {
+          "classid": "pg_proc",
+          "refclassid": "pg_namespace",
+          "deptype": "n",
+          "dependentCategory": "function",
+          "referencedCategory": "schema",
+          "count": 87,
+          "classification": "catalog-owned"
+        },
+        {
+          "classid": "pg_trigger",
+          "refclassid": "pg_class",
+          "deptype": "a",
+          "dependentCategory": "trigger",
+          "referencedCategory": "table",
+          "count": 17,
+          "classification": "auto-managed"
+        },
+        {
+          "classid": "pg_trigger",
+          "refclassid": "pg_proc",
+          "deptype": "n",
+          "dependentCategory": "trigger",
+          "referencedCategory": "function",
+          "count": 17,
+          "classification": "real function reference"
+        }
+      ],
+      "dependencyDigest": "a85dfb04ea062b754d4384a3e3b8a06cd6e363da32c4dc58f56892b5a95315b1",
+      "allPublicDeptypeCounts": {
+        "a": 672,
+        "i": 136,
+        "n": 563
+      },
+      "allPublicScopedEdgeCount": 1371,
+      "nonUnexpectedScopedEdgeCount": 1031,
+      "externalUserDependencyCount": 0,
+      "benignSchemaContractCount": 1,
+      "excludedDependencySummary": {
+        "internalDependencyCount": 136,
+        "benignSchemaContractCount": 1,
+        "overlapCount": 1,
+        "totalExcludedCount": 136
+      },
+      "typeEvidence": {
+        "scopedTypeEdges": 1,
+        "compositeRowType": 1,
+        "systemType": 0,
+        "publicUserType": 0,
+        "externalUserType": 0
+      }
+    }
+  },
+  "aggregateSha256": "94e6421b10a685888870e4ff83b6dac26899876371fac7a85e6fe4f95f86aaa1"
+}

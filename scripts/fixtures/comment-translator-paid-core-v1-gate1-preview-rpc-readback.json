@@ -1,0 +1,419 @@
+{
+  "schemaVersion": 1,
+  "target": "preview",
+  "transactionReadOnly": "on",
+  "transactionIsolation": "repeatable read",
+  "expectedCount": 81,
+  "observedCount": 81,
+  "missingCount": 0,
+  "extraCount": 0,
+  "exactIdentityMatchCount": 81,
+  "functions": [
+    {
+      "schema": "public",
+      "name": "ct_paid_abandon_logical_attempt",
+      "identityArguments": "p_attempt_id text, p_provider_attempt text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_apply_paid_unentitled_disposition",
+      "identityArguments": "p_lifecycle_id uuid, p_owner_user_id uuid, p_customer_binding_id uuid, p_subscription_binding_id uuid, p_product_id text, p_price_id text, p_entitlement_status text, p_current_period_start timestamp with time zone, p_current_period_end timestamp with time zone, p_cancel_at_period_end boolean, p_dispute_state text, p_projection_lease_token uuid, p_reconcile_lease_token uuid, p_operator_disposition text, p_lifecycle_state text, p_subscription_status text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_assert_current_paid_period",
+      "identityArguments": "p_owner_user_id uuid, p_period_start timestamp with time zone, p_period_end timestamp with time zone, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_assert_current_utc_month",
+      "identityArguments": "p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_assert_reconcile_lease_active",
+      "identityArguments": "p_lifecycle_id uuid, p_reconcile_lease_token uuid, p_work_kind text"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_azure_direct_fallback",
+      "identityArguments": "p_attempt_id text, p_provider_attempt text, p_owner_user_id uuid, p_session_reference_id text, p_period_start timestamp with time zone, p_period_end timestamp with time zone, p_utc_month date, p_input_characters bigint, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_begin_checkout",
+      "identityArguments": "p_owner_user_id uuid, p_stripe_customer_id text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_bind_checkout_session",
+      "identityArguments": "p_owner_user_id uuid, p_lifecycle_id uuid, p_hold_id uuid, p_customer_binding_id uuid, p_stripe_checkout_session_id text, p_stripe_customer_id text, p_stripe_expires_at timestamp with time zone, p_is_recovery_binding boolean, p_idempotency_key text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_bind_first_subscription",
+      "identityArguments": "p_lifecycle_id uuid, p_owner_user_id uuid, p_customer_binding_id uuid, p_stripe_subscription_id text, p_stripe_customer_id text, p_product_id text, p_price_id text, p_entitlement_status text, p_current_period_start timestamp with time zone, p_current_period_end timestamp with time zone, p_cancel_at_period_end boolean, p_dispute_state text, p_lifecycle_state text, p_projection_lease_token uuid, p_reconcile_lease_token uuid, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_bound_message_rate_receipt_expiry",
+      "identityArguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_checkout_hold_recovery_window_floor",
+      "identityArguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_claim_entitlement_projection",
+      "identityArguments": "p_owner_user_id uuid, p_lifecycle_id uuid, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_claim_provider_circuit_probe",
+      "identityArguments": "p_provider text, p_probe_attempt_id text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_claim_provider_dispatch",
+      "identityArguments": "p_attempt_id text, p_provider_attempt text, p_provider_kind text, p_dispatch_sequence integer, p_session_lease_token uuid, p_openai_slot_lease_token uuid, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_claim_reconciler",
+      "identityArguments": "p_now timestamp with time zone, p_limit integer"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_claim_stripe_event",
+      "identityArguments": "p_event_id text, p_event_type text, p_stripe_event_created_at timestamp with time zone, p_object_type text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_cleanup_attempt_ledgers",
+      "identityArguments": "p_now timestamp with time zone, p_limit integer"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_close_billing_period",
+      "identityArguments": "p_owner_user_id uuid, p_period_start timestamp with time zone, p_period_end timestamp with time zone, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_close_billing_period_reconciled",
+      "identityArguments": "p_lifecycle_id uuid, p_reconcile_lease_token uuid, p_owner_user_id uuid, p_period_start timestamp with time zone, p_period_end timestamp with time zone, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_close_utc_month",
+      "identityArguments": "p_utc_month date, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_close_utc_month_reconciled",
+      "identityArguments": "p_work_item_id uuid, p_reconcile_lease_token uuid, p_utc_month date, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_commit_billing_period_characters",
+      "identityArguments": "p_attempt_id text, p_provider_attempt text, p_actual_characters bigint, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_commit_checkout_redirect",
+      "identityArguments": "p_owner_user_id uuid, p_lifecycle_id uuid, p_hold_id uuid, p_customer_binding_id uuid, p_stripe_checkout_session_id text, p_stripe_customer_id text, p_stripe_expires_at timestamp with time zone, p_idempotency_key text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_commit_terminal_openai_partial",
+      "identityArguments": "p_attempt_id text, p_provider_attempt text, p_actual_characters bigint, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_convert_capacity",
+      "identityArguments": "p_lifecycle_id uuid, p_lifecycle_stage text, p_reconcile_lease_token uuid, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_disable_provider_circuit",
+      "identityArguments": "p_provider text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_expire_checkout_hold",
+      "identityArguments": "p_lifecycle_id uuid, p_owner_user_id uuid, p_hold_id uuid, p_stripe_session_status text, p_stripe_session_checked_at timestamp with time zone, p_reconcile_lease_token uuid, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_extend_openai_attempt",
+      "identityArguments": "p_attempt_id text, p_provider_attempt text, p_session_lease_token uuid, p_openai_slot_lease_token uuid, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_finalize_azure_fallback",
+      "identityArguments": "p_attempt_id text, p_provider_attempt text, p_session_lease_token uuid, p_outcome text, p_actual_input_characters bigint, p_now timestamp with time zone, p_provider_failure_class text"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_finalize_azure_fallback_with_billing_characters",
+      "identityArguments": "p_attempt_id text, p_provider_attempt text, p_session_lease_token uuid, p_outcome text, p_actual_input_characters bigint, p_actual_billing_input_characters bigint, p_now timestamp with time zone, p_provider_failure_class text"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_finalize_azure_fallback_with_metadata",
+      "identityArguments": "p_attempt_id text, p_provider_attempt text, p_session_lease_token uuid, p_outcome text, p_actual_input_characters bigint, p_actual_billing_input_characters bigint, p_provider_failure_class text, p_circuit_failure_state text, p_circuit_success_state text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_finalize_message_rate",
+      "identityArguments": "p_owner_user_id uuid, p_session_reference_id text, p_reservation_key text, p_translated_message_count integer, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_finalize_openai_attempt",
+      "identityArguments": "p_attempt_id text, p_provider_attempt text, p_session_lease_token uuid, p_openai_slot_lease_token uuid, p_outcome text, p_actual_input_characters bigint, p_actual_cost_micros bigint, p_provider_failure_class text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_finalize_openai_attempt_with_metadata",
+      "identityArguments": "p_attempt_id text, p_provider_attempt text, p_session_lease_token uuid, p_openai_slot_lease_token uuid, p_outcome text, p_actual_input_characters bigint, p_actual_cost_micros bigint, p_provider_failure_class text, p_successful_item_attempt_ids text[], p_successful_input_characters bigint, p_fallback_eligible boolean, p_circuit_failure_state text, p_circuit_success_state text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_finalize_openai_attempt_with_successes",
+      "identityArguments": "p_attempt_id text, p_provider_attempt text, p_session_lease_token uuid, p_openai_slot_lease_token uuid, p_outcome text, p_actual_input_characters bigint, p_actual_cost_micros bigint, p_provider_failure_class text, p_successful_item_attempt_ids text[], p_successful_input_characters bigint, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_finalize_reconciler",
+      "identityArguments": "p_lifecycle_id uuid, p_reconcile_lease_token uuid, p_next_reconcile_at timestamp with time zone, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_finalize_stripe_event",
+      "identityArguments": "p_event_id text, p_lease_token uuid, p_receipt_status text, p_error_class text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_invoke_maintenance_http",
+      "identityArguments": "p_maintenance_url text, p_cron_token text, p_authority text"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_mark_checkout_expire_required",
+      "identityArguments": "p_owner_user_id uuid, p_lifecycle_id uuid, p_hold_id uuid, p_customer_binding_id uuid, p_stripe_checkout_session_id text, p_stripe_customer_id text, p_stripe_expires_at timestamp with time zone, p_idempotency_key text, p_checkout_expires_at_target timestamp with time zone, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_mark_reconcile_failure_safe",
+      "identityArguments": "p_lifecycle_id uuid, p_reconcile_lease_token uuid, p_work_kind text, p_error_class text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_openai_attempt",
+      "identityArguments": "p_attempt_id text, p_provider_attempt text, p_owner_user_id uuid, p_session_reference_id text, p_period_start timestamp with time zone, p_period_end timestamp with time zone, p_utc_month date, p_input_characters bigint, p_estimated_cost_micros bigint, p_request_count integer, p_token_count bigint, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_probe_provider_circuit",
+      "identityArguments": "p_provider text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_project_entitlement",
+      "identityArguments": "p_lifecycle_id uuid, p_owner_user_id uuid, p_customer_binding_id uuid, p_subscription_binding_id uuid, p_product_id text, p_price_id text, p_entitlement_status text, p_current_period_start timestamp with time zone, p_current_period_end timestamp with time zone, p_cancel_at_period_end boolean, p_dispute_state text, p_projection_lease_token uuid, p_reconcile_lease_token uuid, p_now timestamp with time zone, p_lifecycle_state text, p_subscription_status text"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_read_entitlement",
+      "identityArguments": "p_owner_user_id uuid, p_lifecycle_id uuid"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_read_openai_attempt",
+      "identityArguments": "p_attempt_id text, p_provider_attempt text"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_read_openai_attempt_with_successes",
+      "identityArguments": "p_attempt_id text, p_provider_attempt text"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_read_poll_budget",
+      "identityArguments": "p_session_reference_id text, p_owner_user_id uuid, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_read_provider_attempt_replay_metadata",
+      "identityArguments": "p_attempt_id text, p_provider_attempt text"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_read_provider_circuit",
+      "identityArguments": "p_provider text"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_read_runtime_authority",
+      "identityArguments": "p_owner_user_id uuid, p_period_start timestamp with time zone, p_period_end timestamp with time zone, p_utc_month date, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_read_sanitized_admin_visibility",
+      "identityArguments": "p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_read_sanitized_scheduler_run",
+      "identityArguments": "p_authority text"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_reclaim_azure_fallback",
+      "identityArguments": "p_attempt_id text, p_provider_attempt text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_reclaim_openai_attempt",
+      "identityArguments": "p_attempt_id text, p_provider_attempt text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_record_attempt_circuit_failure",
+      "identityArguments": "p_provider text, p_attempt_id text, p_provider_attempt text, p_error_class text, p_allow_deferred_promotion boolean, p_disable_provider boolean, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_record_attempt_circuit_success",
+      "identityArguments": "p_provider text, p_attempt_id text, p_provider_attempt text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_record_consent",
+      "identityArguments": "p_owner_user_id uuid, p_document_type text, p_document_version text, p_consented_at timestamp with time zone, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_record_message_rate_success",
+      "identityArguments": "p_owner_user_id uuid, p_session_reference_id text, p_reservation_key text, p_successful_message_count integer, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_record_provider_circuit_failure",
+      "identityArguments": "p_provider text, p_error_class text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_record_provider_circuit_failure_owned",
+      "identityArguments": "p_provider text, p_error_class text, p_probe_attempt_id text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_record_provider_circuit_success",
+      "identityArguments": "p_provider text, p_probe_attempt_id text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_record_provider_hourly_detail",
+      "identityArguments": "p_attempt_id text, p_provider_attempt text, p_source_expires_at timestamp with time zone, p_owner_user_id uuid, p_provider text, p_utc_hour timestamp with time zone, p_request_count integer, p_session_count integer, p_comment_count integer, p_input_characters bigint, p_output_characters bigint, p_input_tokens bigint, p_output_tokens bigint, p_estimated_cost_micros bigint, p_success_count integer, p_failure_count integer, p_latency_up_to_100_ms_count integer, p_latency_101_to_250_ms_count integer, p_latency_251_to_500_ms_count integer, p_latency_501_to_1000_ms_count integer, p_latency_1001_to_2500_ms_count integer, p_latency_2501_to_5000_ms_count integer, p_latency_5001_to_10000_ms_count integer, p_latency_over_10000_ms_count integer, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_record_sanitized_scheduler_run",
+      "identityArguments": "p_authority text, p_run_at timestamp with time zone, p_status text, p_claim_count integer, p_retry_count integer, p_stale_count integer, p_error_class_counts jsonb, p_last_success_at timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_release_billing_period_characters",
+      "identityArguments": "p_attempt_id text, p_provider_attempt text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_release_capacity",
+      "identityArguments": "p_lifecycle_id uuid, p_reconcile_lease_token uuid, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_reserve_billing_period_characters",
+      "identityArguments": "p_attempt_id text, p_provider_attempt text, p_owner_user_id uuid, p_period_start timestamp with time zone, p_period_end timestamp with time zone, p_characters bigint, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_reserve_capacity",
+      "identityArguments": "p_lifecycle_id uuid, p_owner_user_id uuid, p_lifecycle_stage text, p_reconcile_lease_token uuid, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_reserve_message_rate",
+      "identityArguments": "p_owner_user_id uuid, p_session_reference_id text, p_reservation_key text, p_message_count integer, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_reserve_poll_budget",
+      "identityArguments": "p_session_reference_id text, p_owner_user_id uuid, p_daily_budget integer, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_retry_reconciler",
+      "identityArguments": "p_lifecycle_id uuid, p_reconcile_lease_token uuid, p_error_class text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_run_retention_cleanup",
+      "identityArguments": "p_now timestamp with time zone, p_limit integer"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_schedule_durable_reconciliation",
+      "identityArguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_schedule_unbound_checkout_recovery",
+      "identityArguments": ""
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_set_paid_unentitled_operator_disposition",
+      "identityArguments": "p_lifecycle_id uuid, p_operator_disposition text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_settle_azure_partial_failure",
+      "identityArguments": "p_attempt_id text, p_provider_attempt text, p_session_lease_token uuid, p_actual_input_characters bigint, p_actual_billing_input_characters bigint, p_provider_failure_class text, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_settle_logical_attempt_after_provider_failure",
+      "identityArguments": "p_attempt_id text, p_allow_unknown_reclaim boolean, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_start_session_and_reserve_poll_budget",
+      "identityArguments": "p_owner_user_id uuid, p_session_reference_id text, p_plan_entitlement_reference_id text, p_credential_reference_id text, p_daily_budget integer, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_terminalize_unbound_checkout_hold",
+      "identityArguments": "p_lifecycle_id uuid, p_owner_user_id uuid, p_hold_id uuid, p_reconcile_lease_token uuid"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_touch_active_paid_session_heartbeat",
+      "identityArguments": "p_owner_user_id uuid, p_session_reference_id text"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_upsert_session_summary",
+      "identityArguments": "p_owner_user_id uuid, p_session_reference_id text, p_started_at timestamp with time zone, p_ended_at timestamp with time zone, p_stop_reason text, p_provider_request_count integer, p_translated_message_count integer, p_input_characters bigint, p_output_characters bigint, p_now timestamp with time zone"
+    },
+    {
+      "schema": "public",
+      "name": "ct_paid_valid_successful_item_attempt_ids",
+      "identityArguments": "p_successful_item_attempt_ids text[]"
+    }
+  ],
+  "aggregateSha256": "3534e857f98429c71a83c61e0dab459221467d015a8dfeb19d0d57d7f8312ddb"
+}

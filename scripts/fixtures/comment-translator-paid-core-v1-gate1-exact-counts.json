@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "transaction": {
+    "readOnly": "on",
+    "isolation": "repeatable read"
+  },
+  "rawRowsStored": 0,
+  "payloadsStored": 0,
+  "environments": {
+    "production": {
+      "reltuplesNonZeroCandidateCount": 0,
+      "criticalRelation": {
+        "present": true,
+        "selectPrivilege": true,
+        "exactRowCount": 0
+      },
+      "bridgeRelations": {
+        "fixedSelectCount": 3,
+        "exactCountStatus": "pass",
+        "nonEmptyRelationCount": 0,
+        "totalRowCount": 0
+      }
+    },
+    "preview": {
+      "reltuplesNonZeroCandidateCount": 2,
+      "criticalRelation": {
+        "present": true,
+        "selectPrivilege": true,
+        "exactRowCount": 2
+      },
+      "bridgeRelations": {
+        "fixedSelectCount": 1,
+        "exactCountStatus": "pass",
+        "nonEmptyRelationCount": 1,
+        "totalRowCount": 2
+      }
+    }
+  },
+  "aggregateSha256": "86ca4c42bbe9b5a5150dc4e521bf1dac1e18dc9e9ced57332b09529b8af093b5"
+}

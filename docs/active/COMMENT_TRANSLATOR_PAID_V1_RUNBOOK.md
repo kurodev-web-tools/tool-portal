@@ -8,6 +8,14 @@
 
 ## 1. 常に守る境界
 
+<!-- gate1-current-readiness:start -->
+### Gate 1 Production Supabase readiness
+
+現在のGate 1手順と停止条件は[Production Supabase readiness](COMMENT_TRANSLATOR_PAID_V1_GATE1_PRODUCTION_SUPABASE_READINESS.md)を参照する。`gate1_status=NO-GO`、`source_artifact=UNCOMMITTED/UNKNOWN`、`verification=pending-review`、`activation-closed`。
+
+source readinessはPreview/Production apply、実backup/restore、Vault、Cron、deploy、activationの完了証拠ではない。既存Task 11のclosed証拠は保持し、Gate 1の外部証跡へ代用しない。必要操作の包括承認も、費用発生の許可や未取得証拠のPASS化を含まない。
+<!-- gate1-current-readiness:end -->
+
 - Paidの権限は、Checkout完了画面やブラウザの状態ではなく、署名済みWebhookから作られたserver-owned durable projectionだけを正本とする。
 - Freeは常に維持する。Paidのentitlement、quota、cost、Provider、capacityが読めない場合はPaidをfail closedで停止し、Freeへ自動移行してPaidの利用を継続しない。
 - 画面・ログ・runbook・運用報告には、status、count、時刻、error class、retry/stale件数などのsanitized metadataだけを出す。raw payload、コメント本文、Provider error本文、secret、token、Checkout URL、Customer/Subscriptionの値、provider target metadata、liveChatIdは出力・保存しない。

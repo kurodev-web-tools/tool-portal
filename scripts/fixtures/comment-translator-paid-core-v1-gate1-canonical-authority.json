@@ -1,0 +1,17 @@
+{
+  "browserExecuteRoles": [
+    "PUBLIC",
+    "anon",
+    "authenticated"
+  ],
+  "canonicalSource": "repository-migrations+safe-security-contract",
+  "definitionDriftExpectedTrueCount": 2,
+  "definitionDriftObservation": "UNVERIFIED_UNTIL_LOCAL_REPLAY",
+  "definitionDriftResolution": "forward-only-migration",
+  "lfReplaySource": "git-or-deployment-equivalent-source-bytes",
+  "previewReadbackRole": "observed-drift-only",
+  "rawDefinitionMd5Policy": "exact-pg-get-functiondef-md5",
+  "rowCountPolicy": "observation-only",
+  "schemaVersion": 1,
+  "serviceRolePolicy": "explicit-minimum-only"
+}

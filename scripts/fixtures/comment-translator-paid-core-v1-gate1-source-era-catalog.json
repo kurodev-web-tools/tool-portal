@@ -1,0 +1,2037 @@
+{
+  "aggregateSha256": "6f137c0ea8e7604e02343f2356d21f59b3054d217450b641b7861c8c9cd3f1c0",
+  "dependencyCounts": {
+    "eventTriggers": 0,
+    "inboundForeignKeys": 0,
+    "materializedViews": 0,
+    "outsideFunctionSourceReferences": 0,
+    "policies": 6,
+    "publications": 0,
+    "rules": 0,
+    "unexpectedPgDependEdges": 52,
+    "userTriggers": 0,
+    "views": 0
+  },
+  "functions": [
+    {
+      "acls": [
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.create_comment_translator_custom_dictionary_entry(p_owner_user_id uuid, p_entry_id uuid, p_term text, p_normalized_term text, p_replacement text, p_note text, p_source_language text, p_target_language text, p_created_at timestamp with time zone, p_updated_at timestamp with time zone)",
+          "objectKind": "function",
+          "privilege": "EXECUTE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.create_comment_translator_custom_dictionary_entry(p_owner_user_id uuid, p_entry_id uuid, p_term text, p_normalized_term text, p_replacement text, p_note text, p_source_language text, p_target_language text, p_created_at timestamp with time zone, p_updated_at timestamp with time zone)",
+          "objectKind": "function",
+          "privilege": "EXECUTE",
+          "schema": "public"
+        }
+      ],
+      "config": [
+        "search_path=public"
+      ],
+      "definitionMd5": "36a7689f75707b044305aa6b588c1e24",
+      "identityArguments": "p_owner_user_id uuid, p_entry_id uuid, p_term text, p_normalized_term text, p_replacement text, p_note text, p_source_language text, p_target_language text, p_created_at timestamp with time zone, p_updated_at timestamp with time zone",
+      "name": "create_comment_translator_custom_dictionary_entry",
+      "owner": "postgres",
+      "resultType": "text",
+      "schema": "public",
+      "securityDefiner": true
+    },
+    {
+      "acls": [
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.delete_comment_translator_custom_dictionary_entry(p_owner_user_id uuid, p_entry_id uuid, p_expected_updated_at timestamp with time zone)",
+          "objectKind": "function",
+          "privilege": "EXECUTE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.delete_comment_translator_custom_dictionary_entry(p_owner_user_id uuid, p_entry_id uuid, p_expected_updated_at timestamp with time zone)",
+          "objectKind": "function",
+          "privilege": "EXECUTE",
+          "schema": "public"
+        }
+      ],
+      "config": [
+        "search_path=public"
+      ],
+      "definitionMd5": "788d9bb3c65c2ba9661cb0b7458a3933",
+      "identityArguments": "p_owner_user_id uuid, p_entry_id uuid, p_expected_updated_at timestamp with time zone",
+      "name": "delete_comment_translator_custom_dictionary_entry",
+      "owner": "postgres",
+      "resultType": "text",
+      "schema": "public",
+      "securityDefiner": true
+    },
+    {
+      "acls": [
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.revoke_comment_translator_moderator_share_token(p_owner_user_id uuid, p_scope text, p_revoked_at timestamp with time zone)",
+          "objectKind": "function",
+          "privilege": "EXECUTE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.revoke_comment_translator_moderator_share_token(p_owner_user_id uuid, p_scope text, p_revoked_at timestamp with time zone)",
+          "objectKind": "function",
+          "privilege": "EXECUTE",
+          "schema": "public"
+        }
+      ],
+      "config": [
+        "search_path=public"
+      ],
+      "definitionMd5": "1352a8822e8fe2aa8efd9cb3c220564a",
+      "identityArguments": "p_owner_user_id uuid, p_scope text, p_revoked_at timestamp with time zone",
+      "name": "revoke_comment_translator_moderator_share_token",
+      "owner": "postgres",
+      "resultType": "text",
+      "schema": "public",
+      "securityDefiner": true
+    },
+    {
+      "acls": [
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.revoke_comment_translator_obs_overlay_token(p_owner_user_id uuid, p_scope text, p_revoked_at timestamp with time zone)",
+          "objectKind": "function",
+          "privilege": "EXECUTE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.revoke_comment_translator_obs_overlay_token(p_owner_user_id uuid, p_scope text, p_revoked_at timestamp with time zone)",
+          "objectKind": "function",
+          "privilege": "EXECUTE",
+          "schema": "public"
+        }
+      ],
+      "config": [
+        "search_path=public"
+      ],
+      "definitionMd5": "32b3099e1d1cdbe7dc23cfeefe8f9725",
+      "identityArguments": "p_owner_user_id uuid, p_scope text, p_revoked_at timestamp with time zone",
+      "name": "revoke_comment_translator_obs_overlay_token",
+      "owner": "postgres",
+      "resultType": "text",
+      "schema": "public",
+      "securityDefiner": true
+    },
+    {
+      "acls": [
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.update_comment_translator_custom_dictionary_entry(p_owner_user_id uuid, p_entry_id uuid, p_expected_updated_at timestamp with time zone, p_term text, p_normalized_term text, p_replacement text, p_note text, p_source_language text, p_target_language text, p_created_at timestamp with time zone, p_updated_at timestamp with time zone)",
+          "objectKind": "function",
+          "privilege": "EXECUTE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.update_comment_translator_custom_dictionary_entry(p_owner_user_id uuid, p_entry_id uuid, p_expected_updated_at timestamp with time zone, p_term text, p_normalized_term text, p_replacement text, p_note text, p_source_language text, p_target_language text, p_created_at timestamp with time zone, p_updated_at timestamp with time zone)",
+          "objectKind": "function",
+          "privilege": "EXECUTE",
+          "schema": "public"
+        }
+      ],
+      "config": [
+        "search_path=public"
+      ],
+      "definitionMd5": "62b0023b49ad3883c501ab1229ec4bd0",
+      "identityArguments": "p_owner_user_id uuid, p_entry_id uuid, p_expected_updated_at timestamp with time zone, p_term text, p_normalized_term text, p_replacement text, p_note text, p_source_language text, p_target_language text, p_created_at timestamp with time zone, p_updated_at timestamp with time zone",
+      "name": "update_comment_translator_custom_dictionary_entry",
+      "owner": "postgres",
+      "resultType": "text",
+      "schema": "public",
+      "securityDefiner": true
+    },
+    {
+      "acls": [
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.write_comment_translator_moderator_share_token(p_owner_user_id uuid, p_session_reference_id text, p_scope text, p_token_digest text, p_issued_at timestamp with time zone, p_expires_at timestamp with time zone)",
+          "objectKind": "function",
+          "privilege": "EXECUTE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.write_comment_translator_moderator_share_token(p_owner_user_id uuid, p_session_reference_id text, p_scope text, p_token_digest text, p_issued_at timestamp with time zone, p_expires_at timestamp with time zone)",
+          "objectKind": "function",
+          "privilege": "EXECUTE",
+          "schema": "public"
+        }
+      ],
+      "config": [
+        "search_path=public"
+      ],
+      "definitionMd5": "a12b5a95b9d5135f8749f80b97b25517",
+      "identityArguments": "p_owner_user_id uuid, p_session_reference_id text, p_scope text, p_token_digest text, p_issued_at timestamp with time zone, p_expires_at timestamp with time zone",
+      "name": "write_comment_translator_moderator_share_token",
+      "owner": "postgres",
+      "resultType": "text",
+      "schema": "public",
+      "securityDefiner": true
+    },
+    {
+      "acls": [
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.write_comment_translator_obs_overlay_token(p_owner_user_id uuid, p_session_reference_id text, p_scope text, p_token_digest text, p_issued_at timestamp with time zone, p_expires_at timestamp with time zone, p_mode text)",
+          "objectKind": "function",
+          "privilege": "EXECUTE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.write_comment_translator_obs_overlay_token(p_owner_user_id uuid, p_session_reference_id text, p_scope text, p_token_digest text, p_issued_at timestamp with time zone, p_expires_at timestamp with time zone, p_mode text)",
+          "objectKind": "function",
+          "privilege": "EXECUTE",
+          "schema": "public"
+        }
+      ],
+      "config": [
+        "search_path=public"
+      ],
+      "definitionMd5": "057ebb3ac21f047d240d68eaf4308e8b",
+      "identityArguments": "p_owner_user_id uuid, p_session_reference_id text, p_scope text, p_token_digest text, p_issued_at timestamp with time zone, p_expires_at timestamp with time zone, p_mode text",
+      "name": "write_comment_translator_obs_overlay_token",
+      "owner": "postgres",
+      "resultType": "text",
+      "schema": "public",
+      "securityDefiner": true
+    }
+  ],
+  "schemaVersion": 1,
+  "tables": [
+    {
+      "acls": [
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_creator_history",
+          "objectKind": "table",
+          "privilege": "DELETE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_creator_history",
+          "objectKind": "table",
+          "privilege": "INSERT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_creator_history",
+          "objectKind": "table",
+          "privilege": "MAINTAIN",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_creator_history",
+          "objectKind": "table",
+          "privilege": "REFERENCES",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_creator_history",
+          "objectKind": "table",
+          "privilege": "SELECT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_creator_history",
+          "objectKind": "table",
+          "privilege": "TRIGGER",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_creator_history",
+          "objectKind": "table",
+          "privilege": "TRUNCATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_creator_history",
+          "objectKind": "table",
+          "privilege": "UPDATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_creator_history",
+          "objectKind": "table",
+          "privilege": "DELETE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_creator_history",
+          "objectKind": "table",
+          "privilege": "INSERT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_creator_history",
+          "objectKind": "table",
+          "privilege": "MAINTAIN",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_creator_history",
+          "objectKind": "table",
+          "privilege": "REFERENCES",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_creator_history",
+          "objectKind": "table",
+          "privilege": "SELECT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_creator_history",
+          "objectKind": "table",
+          "privilege": "TRIGGER",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_creator_history",
+          "objectKind": "table",
+          "privilege": "TRUNCATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_creator_history",
+          "objectKind": "table",
+          "privilege": "UPDATE",
+          "schema": "public"
+        }
+      ],
+      "columns": [
+        {
+          "defaultDefinition": "gen_random_uuid()",
+          "name": "history_id",
+          "notNull": true,
+          "ordinal": 1,
+          "schema": "public",
+          "table": "comment_translator_creator_history",
+          "type": "uuid"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "owner_user_id",
+          "notNull": true,
+          "ordinal": 2,
+          "schema": "public",
+          "table": "comment_translator_creator_history",
+          "type": "uuid"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "session_reference_id",
+          "notNull": true,
+          "ordinal": 3,
+          "schema": "public",
+          "table": "comment_translator_creator_history",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "history_rows",
+          "notNull": true,
+          "ordinal": 4,
+          "schema": "public",
+          "table": "comment_translator_creator_history",
+          "type": "jsonb"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "recorded_at",
+          "notNull": true,
+          "ordinal": 5,
+          "schema": "public",
+          "table": "comment_translator_creator_history",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": "now()",
+          "name": "created_at",
+          "notNull": true,
+          "ordinal": 6,
+          "schema": "public",
+          "table": "comment_translator_creator_history",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": "now()",
+          "name": "updated_at",
+          "notNull": true,
+          "ordinal": 7,
+          "schema": "public",
+          "table": "comment_translator_creator_history",
+          "type": "timestamp with time zone"
+        }
+      ],
+      "constraints": [
+        {
+          "definition": "UNIQUE (owner_user_id, session_reference_id)",
+          "name": "comment_translator_creator_hi_owner_user_id_session_referen_key",
+          "schema": "public",
+          "table": "comment_translator_creator_history",
+          "type": "u"
+        },
+        {
+          "definition": "CHECK (jsonb_typeof(history_rows) = 'array'::text)",
+          "name": "comment_translator_creator_history_history_rows_check",
+          "schema": "public",
+          "table": "comment_translator_creator_history",
+          "type": "c"
+        },
+        {
+          "definition": "FOREIGN KEY (owner_user_id) REFERENCES auth.users(id) ON DELETE CASCADE",
+          "name": "comment_translator_creator_history_owner_user_id_fkey",
+          "schema": "public",
+          "table": "comment_translator_creator_history",
+          "type": "f"
+        },
+        {
+          "definition": "PRIMARY KEY (history_id)",
+          "name": "comment_translator_creator_history_pkey",
+          "schema": "public",
+          "table": "comment_translator_creator_history",
+          "type": "p"
+        },
+        {
+          "definition": "CHECK (length(TRIM(BOTH FROM session_reference_id)) > 0)",
+          "name": "comment_translator_creator_history_session_reference_nonempty",
+          "schema": "public",
+          "table": "comment_translator_creator_history",
+          "type": "c"
+        }
+      ],
+      "indexes": [
+        {
+          "definition": "CREATE UNIQUE INDEX comment_translator_creator_hi_owner_user_id_session_referen_key ON comment_translator_creator_history USING btree (owner_user_id, session_reference_id)",
+          "name": "comment_translator_creator_hi_owner_user_id_session_referen_key",
+          "schema": "public",
+          "table": "comment_translator_creator_history"
+        },
+        {
+          "definition": "CREATE INDEX comment_translator_creator_history_owner_recorded_idx ON comment_translator_creator_history USING btree (owner_user_id, recorded_at DESC)",
+          "name": "comment_translator_creator_history_owner_recorded_idx",
+          "schema": "public",
+          "table": "comment_translator_creator_history"
+        },
+        {
+          "definition": "CREATE UNIQUE INDEX comment_translator_creator_history_pkey ON comment_translator_creator_history USING btree (history_id)",
+          "name": "comment_translator_creator_history_pkey",
+          "schema": "public",
+          "table": "comment_translator_creator_history"
+        }
+      ],
+      "name": "comment_translator_creator_history",
+      "owner": "postgres",
+      "policies": [
+        {
+          "checkDefinition": "true",
+          "command": "ALL",
+          "name": "comment_translator_creator_history_service_role_all",
+          "permissive": true,
+          "roles": [
+            "service_role"
+          ],
+          "schema": "public",
+          "table": "comment_translator_creator_history",
+          "usingDefinition": "true"
+        }
+      ],
+      "rlsEnabled": true,
+      "rowCount": 0,
+      "schema": "public"
+    },
+    {
+      "acls": [
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_custom_dictionary_entries",
+          "objectKind": "table",
+          "privilege": "DELETE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_custom_dictionary_entries",
+          "objectKind": "table",
+          "privilege": "INSERT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_custom_dictionary_entries",
+          "objectKind": "table",
+          "privilege": "MAINTAIN",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_custom_dictionary_entries",
+          "objectKind": "table",
+          "privilege": "REFERENCES",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_custom_dictionary_entries",
+          "objectKind": "table",
+          "privilege": "SELECT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_custom_dictionary_entries",
+          "objectKind": "table",
+          "privilege": "TRIGGER",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_custom_dictionary_entries",
+          "objectKind": "table",
+          "privilege": "TRUNCATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_custom_dictionary_entries",
+          "objectKind": "table",
+          "privilege": "UPDATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_custom_dictionary_entries",
+          "objectKind": "table",
+          "privilege": "DELETE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_custom_dictionary_entries",
+          "objectKind": "table",
+          "privilege": "INSERT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_custom_dictionary_entries",
+          "objectKind": "table",
+          "privilege": "MAINTAIN",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_custom_dictionary_entries",
+          "objectKind": "table",
+          "privilege": "REFERENCES",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_custom_dictionary_entries",
+          "objectKind": "table",
+          "privilege": "SELECT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_custom_dictionary_entries",
+          "objectKind": "table",
+          "privilege": "TRIGGER",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_custom_dictionary_entries",
+          "objectKind": "table",
+          "privilege": "TRUNCATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_custom_dictionary_entries",
+          "objectKind": "table",
+          "privilege": "UPDATE",
+          "schema": "public"
+        }
+      ],
+      "columns": [
+        {
+          "defaultDefinition": null,
+          "name": "entry_id",
+          "notNull": true,
+          "ordinal": 1,
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries",
+          "type": "uuid"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "owner_user_id",
+          "notNull": true,
+          "ordinal": 2,
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries",
+          "type": "uuid"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "term",
+          "notNull": true,
+          "ordinal": 3,
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "normalized_term",
+          "notNull": true,
+          "ordinal": 4,
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "replacement",
+          "notNull": true,
+          "ordinal": 5,
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "note",
+          "notNull": false,
+          "ordinal": 6,
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "source_language",
+          "notNull": true,
+          "ordinal": 7,
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "target_language",
+          "notNull": true,
+          "ordinal": 8,
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "created_at",
+          "notNull": true,
+          "ordinal": 9,
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "updated_at",
+          "notNull": true,
+          "ordinal": 10,
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries",
+          "type": "timestamp with time zone"
+        }
+      ],
+      "constraints": [
+        {
+          "definition": "UNIQUE (owner_user_id, source_language, target_language, normalized_term)",
+          "name": "comment_translator_custom_dic_owner_user_id_source_language_key",
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries",
+          "type": "u"
+        },
+        {
+          "definition": "CHECK (char_length(normalized_term) >= 1 AND char_length(normalized_term) <= 80)",
+          "name": "comment_translator_custom_dictionary_entr_normalized_term_check",
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries",
+          "type": "c"
+        },
+        {
+          "definition": "CHECK (source_language = ANY (ARRAY['ja'::text, 'en'::text, 'ko'::text, 'zh'::text]))",
+          "name": "comment_translator_custom_dictionary_entr_source_language_check",
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries",
+          "type": "c"
+        },
+        {
+          "definition": "CHECK (target_language = ANY (ARRAY['ja'::text, 'en'::text]))",
+          "name": "comment_translator_custom_dictionary_entr_target_language_check",
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries",
+          "type": "c"
+        },
+        {
+          "definition": "CHECK (note IS NULL OR char_length(note) <= 240)",
+          "name": "comment_translator_custom_dictionary_entries_note_check",
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries",
+          "type": "c"
+        },
+        {
+          "definition": "PRIMARY KEY (entry_id)",
+          "name": "comment_translator_custom_dictionary_entries_pkey",
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries",
+          "type": "p"
+        },
+        {
+          "definition": "CHECK (char_length(replacement) >= 1 AND char_length(replacement) <= 120)",
+          "name": "comment_translator_custom_dictionary_entries_replacement_check",
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries",
+          "type": "c"
+        },
+        {
+          "definition": "CHECK (char_length(term) >= 1 AND char_length(term) <= 80)",
+          "name": "comment_translator_custom_dictionary_entries_term_check",
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries",
+          "type": "c"
+        },
+        {
+          "definition": "CHECK (source_language <> target_language)",
+          "name": "comment_translator_custom_dictionary_language_pair_check",
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries",
+          "type": "c"
+        }
+      ],
+      "indexes": [
+        {
+          "definition": "CREATE UNIQUE INDEX comment_translator_custom_dic_owner_user_id_source_language_key ON comment_translator_custom_dictionary_entries USING btree (owner_user_id, source_language, target_language, normalized_term)",
+          "name": "comment_translator_custom_dic_owner_user_id_source_language_key",
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries"
+        },
+        {
+          "definition": "CREATE UNIQUE INDEX comment_translator_custom_dictionary_entries_pkey ON comment_translator_custom_dictionary_entries USING btree (entry_id)",
+          "name": "comment_translator_custom_dictionary_entries_pkey",
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries"
+        },
+        {
+          "definition": "CREATE INDEX comment_translator_custom_dictionary_owner_idx ON comment_translator_custom_dictionary_entries USING btree (owner_user_id, entry_id)",
+          "name": "comment_translator_custom_dictionary_owner_idx",
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries"
+        }
+      ],
+      "name": "comment_translator_custom_dictionary_entries",
+      "owner": "postgres",
+      "policies": [
+        {
+          "checkDefinition": "true",
+          "command": "ALL",
+          "name": "comment_translator_custom_dictionary_service_role_all",
+          "permissive": true,
+          "roles": [
+            "service_role"
+          ],
+          "schema": "public",
+          "table": "comment_translator_custom_dictionary_entries",
+          "usingDefinition": "true"
+        }
+      ],
+      "rlsEnabled": true,
+      "rowCount": 0,
+      "schema": "public"
+    },
+    {
+      "acls": [
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_moderator_share_browser_sessions",
+          "objectKind": "table",
+          "privilege": "DELETE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_moderator_share_browser_sessions",
+          "objectKind": "table",
+          "privilege": "INSERT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_moderator_share_browser_sessions",
+          "objectKind": "table",
+          "privilege": "MAINTAIN",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_moderator_share_browser_sessions",
+          "objectKind": "table",
+          "privilege": "REFERENCES",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_moderator_share_browser_sessions",
+          "objectKind": "table",
+          "privilege": "SELECT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_moderator_share_browser_sessions",
+          "objectKind": "table",
+          "privilege": "TRIGGER",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_moderator_share_browser_sessions",
+          "objectKind": "table",
+          "privilege": "TRUNCATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_moderator_share_browser_sessions",
+          "objectKind": "table",
+          "privilege": "UPDATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_moderator_share_browser_sessions",
+          "objectKind": "table",
+          "privilege": "DELETE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_moderator_share_browser_sessions",
+          "objectKind": "table",
+          "privilege": "INSERT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_moderator_share_browser_sessions",
+          "objectKind": "table",
+          "privilege": "MAINTAIN",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_moderator_share_browser_sessions",
+          "objectKind": "table",
+          "privilege": "REFERENCES",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_moderator_share_browser_sessions",
+          "objectKind": "table",
+          "privilege": "SELECT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_moderator_share_browser_sessions",
+          "objectKind": "table",
+          "privilege": "TRIGGER",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_moderator_share_browser_sessions",
+          "objectKind": "table",
+          "privilege": "TRUNCATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_moderator_share_browser_sessions",
+          "objectKind": "table",
+          "privilege": "UPDATE",
+          "schema": "public"
+        }
+      ],
+      "columns": [
+        {
+          "defaultDefinition": null,
+          "name": "owner_user_id",
+          "notNull": true,
+          "ordinal": 1,
+          "schema": "public",
+          "table": "comment_translator_moderator_share_browser_sessions",
+          "type": "uuid"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "session_reference_id",
+          "notNull": true,
+          "ordinal": 2,
+          "schema": "public",
+          "table": "comment_translator_moderator_share_browser_sessions",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "token_version",
+          "notNull": true,
+          "ordinal": 3,
+          "schema": "public",
+          "table": "comment_translator_moderator_share_browser_sessions",
+          "type": "bigint"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "capability_digest",
+          "notNull": true,
+          "ordinal": 4,
+          "schema": "public",
+          "table": "comment_translator_moderator_share_browser_sessions",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "issued_at",
+          "notNull": true,
+          "ordinal": 5,
+          "schema": "public",
+          "table": "comment_translator_moderator_share_browser_sessions",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "expires_at",
+          "notNull": true,
+          "ordinal": 6,
+          "schema": "public",
+          "table": "comment_translator_moderator_share_browser_sessions",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": "now()",
+          "name": "created_at",
+          "notNull": true,
+          "ordinal": 7,
+          "schema": "public",
+          "table": "comment_translator_moderator_share_browser_sessions",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "updated_at",
+          "notNull": true,
+          "ordinal": 8,
+          "schema": "public",
+          "table": "comment_translator_moderator_share_browser_sessions",
+          "type": "timestamp with time zone"
+        }
+      ],
+      "constraints": [
+        {
+          "definition": "FOREIGN KEY (session_reference_id) REFERENCES comment_translator_sessions(session_reference_id) ON DELETE CASCADE",
+          "name": "comment_translator_moderator_share_br_session_reference_id_fkey",
+          "schema": "public",
+          "table": "comment_translator_moderator_share_browser_sessions",
+          "type": "f"
+        },
+        {
+          "definition": "UNIQUE (capability_digest)",
+          "name": "comment_translator_moderator_share_browse_capability_digest_key",
+          "schema": "public",
+          "table": "comment_translator_moderator_share_browser_sessions",
+          "type": "u"
+        },
+        {
+          "definition": "CHECK (token_version > 0)",
+          "name": "comment_translator_moderator_share_browser__token_version_check",
+          "schema": "public",
+          "table": "comment_translator_moderator_share_browser_sessions",
+          "type": "c"
+        },
+        {
+          "definition": "CHECK (capability_digest ~ '^[a-f0-9]{64}$'::text)",
+          "name": "comment_translator_moderator_share_browser_sessions_digest_chec",
+          "schema": "public",
+          "table": "comment_translator_moderator_share_browser_sessions",
+          "type": "c"
+        },
+        {
+          "definition": "CHECK (expires_at > issued_at)",
+          "name": "comment_translator_moderator_share_browser_sessions_expiry_chec",
+          "schema": "public",
+          "table": "comment_translator_moderator_share_browser_sessions",
+          "type": "c"
+        },
+        {
+          "definition": "PRIMARY KEY (owner_user_id)",
+          "name": "comment_translator_moderator_share_browser_sessions_pkey",
+          "schema": "public",
+          "table": "comment_translator_moderator_share_browser_sessions",
+          "type": "p"
+        }
+      ],
+      "indexes": [
+        {
+          "definition": "CREATE UNIQUE INDEX comment_translator_moderator_share_browse_capability_digest_key ON comment_translator_moderator_share_browser_sessions USING btree (capability_digest)",
+          "name": "comment_translator_moderator_share_browse_capability_digest_key",
+          "schema": "public",
+          "table": "comment_translator_moderator_share_browser_sessions"
+        },
+        {
+          "definition": "CREATE UNIQUE INDEX comment_translator_moderator_share_browser_sessions_pkey ON comment_translator_moderator_share_browser_sessions USING btree (owner_user_id)",
+          "name": "comment_translator_moderator_share_browser_sessions_pkey",
+          "schema": "public",
+          "table": "comment_translator_moderator_share_browser_sessions"
+        },
+        {
+          "definition": "CREATE INDEX comment_translator_moderator_share_browser_sessions_session_idx ON comment_translator_moderator_share_browser_sessions USING btree (session_reference_id)",
+          "name": "comment_translator_moderator_share_browser_sessions_session_idx",
+          "schema": "public",
+          "table": "comment_translator_moderator_share_browser_sessions"
+        }
+      ],
+      "name": "comment_translator_moderator_share_browser_sessions",
+      "owner": "postgres",
+      "policies": [
+        {
+          "checkDefinition": "true",
+          "command": "ALL",
+          "name": "comment_translator_moderator_share_browser_sessions_service_rol",
+          "permissive": true,
+          "roles": [
+            "service_role"
+          ],
+          "schema": "public",
+          "table": "comment_translator_moderator_share_browser_sessions",
+          "usingDefinition": "true"
+        }
+      ],
+      "rlsEnabled": true,
+      "rowCount": 0,
+      "schema": "public"
+    },
+    {
+      "acls": [
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_moderator_share_tokens",
+          "objectKind": "table",
+          "privilege": "DELETE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_moderator_share_tokens",
+          "objectKind": "table",
+          "privilege": "INSERT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_moderator_share_tokens",
+          "objectKind": "table",
+          "privilege": "MAINTAIN",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_moderator_share_tokens",
+          "objectKind": "table",
+          "privilege": "REFERENCES",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_moderator_share_tokens",
+          "objectKind": "table",
+          "privilege": "SELECT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_moderator_share_tokens",
+          "objectKind": "table",
+          "privilege": "TRIGGER",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_moderator_share_tokens",
+          "objectKind": "table",
+          "privilege": "TRUNCATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_moderator_share_tokens",
+          "objectKind": "table",
+          "privilege": "UPDATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_moderator_share_tokens",
+          "objectKind": "table",
+          "privilege": "DELETE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_moderator_share_tokens",
+          "objectKind": "table",
+          "privilege": "INSERT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_moderator_share_tokens",
+          "objectKind": "table",
+          "privilege": "MAINTAIN",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_moderator_share_tokens",
+          "objectKind": "table",
+          "privilege": "REFERENCES",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_moderator_share_tokens",
+          "objectKind": "table",
+          "privilege": "SELECT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_moderator_share_tokens",
+          "objectKind": "table",
+          "privilege": "TRIGGER",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_moderator_share_tokens",
+          "objectKind": "table",
+          "privilege": "TRUNCATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_moderator_share_tokens",
+          "objectKind": "table",
+          "privilege": "UPDATE",
+          "schema": "public"
+        }
+      ],
+      "columns": [
+        {
+          "defaultDefinition": null,
+          "name": "owner_user_id",
+          "notNull": true,
+          "ordinal": 1,
+          "schema": "public",
+          "table": "comment_translator_moderator_share_tokens",
+          "type": "uuid"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "session_reference_id",
+          "notNull": true,
+          "ordinal": 2,
+          "schema": "public",
+          "table": "comment_translator_moderator_share_tokens",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "scope",
+          "notNull": true,
+          "ordinal": 3,
+          "schema": "public",
+          "table": "comment_translator_moderator_share_tokens",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "token_digest",
+          "notNull": true,
+          "ordinal": 4,
+          "schema": "public",
+          "table": "comment_translator_moderator_share_tokens",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "issued_at",
+          "notNull": true,
+          "ordinal": 5,
+          "schema": "public",
+          "table": "comment_translator_moderator_share_tokens",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "expires_at",
+          "notNull": true,
+          "ordinal": 6,
+          "schema": "public",
+          "table": "comment_translator_moderator_share_tokens",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "revoked_at",
+          "notNull": false,
+          "ordinal": 7,
+          "schema": "public",
+          "table": "comment_translator_moderator_share_tokens",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": "1",
+          "name": "version",
+          "notNull": true,
+          "ordinal": 8,
+          "schema": "public",
+          "table": "comment_translator_moderator_share_tokens",
+          "type": "bigint"
+        },
+        {
+          "defaultDefinition": "now()",
+          "name": "created_at",
+          "notNull": true,
+          "ordinal": 9,
+          "schema": "public",
+          "table": "comment_translator_moderator_share_tokens",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "updated_at",
+          "notNull": true,
+          "ordinal": 10,
+          "schema": "public",
+          "table": "comment_translator_moderator_share_tokens",
+          "type": "timestamp with time zone"
+        }
+      ],
+      "constraints": [
+        {
+          "definition": "FOREIGN KEY (session_reference_id) REFERENCES comment_translator_sessions(session_reference_id) ON DELETE CASCADE",
+          "name": "comment_translator_moderator_share_to_session_reference_id_fkey",
+          "schema": "public",
+          "table": "comment_translator_moderator_share_tokens",
+          "type": "f"
+        },
+        {
+          "definition": "CHECK (token_digest ~ '^[a-f0-9]{64}$'::text)",
+          "name": "comment_translator_moderator_share_tokens_digest_check",
+          "schema": "public",
+          "table": "comment_translator_moderator_share_tokens",
+          "type": "c"
+        },
+        {
+          "definition": "CHECK (expires_at > issued_at)",
+          "name": "comment_translator_moderator_share_tokens_expiry_check",
+          "schema": "public",
+          "table": "comment_translator_moderator_share_tokens",
+          "type": "c"
+        },
+        {
+          "definition": "PRIMARY KEY (owner_user_id, scope)",
+          "name": "comment_translator_moderator_share_tokens_pkey",
+          "schema": "public",
+          "table": "comment_translator_moderator_share_tokens",
+          "type": "p"
+        },
+        {
+          "definition": "CHECK (revoked_at IS NULL OR revoked_at >= issued_at)",
+          "name": "comment_translator_moderator_share_tokens_revocation_check",
+          "schema": "public",
+          "table": "comment_translator_moderator_share_tokens",
+          "type": "c"
+        },
+        {
+          "definition": "CHECK (scope = 'moderator-share-read'::text)",
+          "name": "comment_translator_moderator_share_tokens_scope_check",
+          "schema": "public",
+          "table": "comment_translator_moderator_share_tokens",
+          "type": "c"
+        },
+        {
+          "definition": "UNIQUE (token_digest)",
+          "name": "comment_translator_moderator_share_tokens_token_digest_key",
+          "schema": "public",
+          "table": "comment_translator_moderator_share_tokens",
+          "type": "u"
+        },
+        {
+          "definition": "CHECK (version > 0)",
+          "name": "comment_translator_moderator_share_tokens_version_check",
+          "schema": "public",
+          "table": "comment_translator_moderator_share_tokens",
+          "type": "c"
+        }
+      ],
+      "indexes": [
+        {
+          "definition": "CREATE UNIQUE INDEX comment_translator_moderator_share_tokens_pkey ON comment_translator_moderator_share_tokens USING btree (owner_user_id, scope)",
+          "name": "comment_translator_moderator_share_tokens_pkey",
+          "schema": "public",
+          "table": "comment_translator_moderator_share_tokens"
+        },
+        {
+          "definition": "CREATE INDEX comment_translator_moderator_share_tokens_session_idx ON comment_translator_moderator_share_tokens USING btree (session_reference_id)",
+          "name": "comment_translator_moderator_share_tokens_session_idx",
+          "schema": "public",
+          "table": "comment_translator_moderator_share_tokens"
+        },
+        {
+          "definition": "CREATE UNIQUE INDEX comment_translator_moderator_share_tokens_token_digest_key ON comment_translator_moderator_share_tokens USING btree (token_digest)",
+          "name": "comment_translator_moderator_share_tokens_token_digest_key",
+          "schema": "public",
+          "table": "comment_translator_moderator_share_tokens"
+        }
+      ],
+      "name": "comment_translator_moderator_share_tokens",
+      "owner": "postgres",
+      "policies": [
+        {
+          "checkDefinition": "true",
+          "command": "ALL",
+          "name": "comment_translator_moderator_share_tokens_service_role_all",
+          "permissive": true,
+          "roles": [
+            "service_role"
+          ],
+          "schema": "public",
+          "table": "comment_translator_moderator_share_tokens",
+          "usingDefinition": "true"
+        }
+      ],
+      "rlsEnabled": true,
+      "rowCount": 0,
+      "schema": "public"
+    },
+    {
+      "acls": [
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_obs_overlay_browser_sessions",
+          "objectKind": "table",
+          "privilege": "DELETE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_obs_overlay_browser_sessions",
+          "objectKind": "table",
+          "privilege": "INSERT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_obs_overlay_browser_sessions",
+          "objectKind": "table",
+          "privilege": "MAINTAIN",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_obs_overlay_browser_sessions",
+          "objectKind": "table",
+          "privilege": "REFERENCES",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_obs_overlay_browser_sessions",
+          "objectKind": "table",
+          "privilege": "SELECT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_obs_overlay_browser_sessions",
+          "objectKind": "table",
+          "privilege": "TRIGGER",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_obs_overlay_browser_sessions",
+          "objectKind": "table",
+          "privilege": "TRUNCATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_obs_overlay_browser_sessions",
+          "objectKind": "table",
+          "privilege": "UPDATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_obs_overlay_browser_sessions",
+          "objectKind": "table",
+          "privilege": "DELETE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_obs_overlay_browser_sessions",
+          "objectKind": "table",
+          "privilege": "INSERT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_obs_overlay_browser_sessions",
+          "objectKind": "table",
+          "privilege": "MAINTAIN",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_obs_overlay_browser_sessions",
+          "objectKind": "table",
+          "privilege": "REFERENCES",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_obs_overlay_browser_sessions",
+          "objectKind": "table",
+          "privilege": "SELECT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_obs_overlay_browser_sessions",
+          "objectKind": "table",
+          "privilege": "TRIGGER",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_obs_overlay_browser_sessions",
+          "objectKind": "table",
+          "privilege": "TRUNCATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_obs_overlay_browser_sessions",
+          "objectKind": "table",
+          "privilege": "UPDATE",
+          "schema": "public"
+        }
+      ],
+      "columns": [
+        {
+          "defaultDefinition": null,
+          "name": "owner_user_id",
+          "notNull": true,
+          "ordinal": 1,
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_browser_sessions",
+          "type": "uuid"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "session_reference_id",
+          "notNull": true,
+          "ordinal": 2,
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_browser_sessions",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "token_version",
+          "notNull": true,
+          "ordinal": 3,
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_browser_sessions",
+          "type": "bigint"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "capability_digest",
+          "notNull": true,
+          "ordinal": 4,
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_browser_sessions",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "issued_at",
+          "notNull": true,
+          "ordinal": 5,
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_browser_sessions",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "expires_at",
+          "notNull": true,
+          "ordinal": 6,
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_browser_sessions",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "updated_at",
+          "notNull": true,
+          "ordinal": 7,
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_browser_sessions",
+          "type": "timestamp with time zone"
+        }
+      ],
+      "constraints": [
+        {
+          "definition": "FOREIGN KEY (session_reference_id) REFERENCES comment_translator_sessions(session_reference_id) ON DELETE CASCADE",
+          "name": "comment_translator_obs_overlay_browse_session_reference_id_fkey",
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_browser_sessions",
+          "type": "f"
+        },
+        {
+          "definition": "UNIQUE (capability_digest)",
+          "name": "comment_translator_obs_overlay_browser_se_capability_digest_key",
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_browser_sessions",
+          "type": "u"
+        },
+        {
+          "definition": "CHECK (token_version > 0)",
+          "name": "comment_translator_obs_overlay_browser_sess_token_version_check",
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_browser_sessions",
+          "type": "c"
+        },
+        {
+          "definition": "CHECK (capability_digest ~ '^[a-f0-9]{64}$'::text)",
+          "name": "comment_translator_obs_overlay_browser_sessions_digest_check",
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_browser_sessions",
+          "type": "c"
+        },
+        {
+          "definition": "CHECK (expires_at > issued_at)",
+          "name": "comment_translator_obs_overlay_browser_sessions_expiry_check",
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_browser_sessions",
+          "type": "c"
+        },
+        {
+          "definition": "PRIMARY KEY (owner_user_id)",
+          "name": "comment_translator_obs_overlay_browser_sessions_pkey",
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_browser_sessions",
+          "type": "p"
+        }
+      ],
+      "indexes": [
+        {
+          "definition": "CREATE UNIQUE INDEX comment_translator_obs_overlay_browser_se_capability_digest_key ON comment_translator_obs_overlay_browser_sessions USING btree (capability_digest)",
+          "name": "comment_translator_obs_overlay_browser_se_capability_digest_key",
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_browser_sessions"
+        },
+        {
+          "definition": "CREATE UNIQUE INDEX comment_translator_obs_overlay_browser_sessions_pkey ON comment_translator_obs_overlay_browser_sessions USING btree (owner_user_id)",
+          "name": "comment_translator_obs_overlay_browser_sessions_pkey",
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_browser_sessions"
+        }
+      ],
+      "name": "comment_translator_obs_overlay_browser_sessions",
+      "owner": "postgres",
+      "policies": [
+        {
+          "checkDefinition": "true",
+          "command": "ALL",
+          "name": "comment_translator_obs_overlay_browser_sessions_service_role_al",
+          "permissive": true,
+          "roles": [
+            "service_role"
+          ],
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_browser_sessions",
+          "usingDefinition": "true"
+        }
+      ],
+      "rlsEnabled": true,
+      "rowCount": 0,
+      "schema": "public"
+    },
+    {
+      "acls": [
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_obs_overlay_tokens",
+          "objectKind": "table",
+          "privilege": "DELETE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_obs_overlay_tokens",
+          "objectKind": "table",
+          "privilege": "INSERT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_obs_overlay_tokens",
+          "objectKind": "table",
+          "privilege": "MAINTAIN",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_obs_overlay_tokens",
+          "objectKind": "table",
+          "privilege": "REFERENCES",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_obs_overlay_tokens",
+          "objectKind": "table",
+          "privilege": "SELECT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_obs_overlay_tokens",
+          "objectKind": "table",
+          "privilege": "TRIGGER",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_obs_overlay_tokens",
+          "objectKind": "table",
+          "privilege": "TRUNCATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_obs_overlay_tokens",
+          "objectKind": "table",
+          "privilege": "UPDATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_obs_overlay_tokens",
+          "objectKind": "table",
+          "privilege": "DELETE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_obs_overlay_tokens",
+          "objectKind": "table",
+          "privilege": "INSERT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_obs_overlay_tokens",
+          "objectKind": "table",
+          "privilege": "MAINTAIN",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_obs_overlay_tokens",
+          "objectKind": "table",
+          "privilege": "REFERENCES",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_obs_overlay_tokens",
+          "objectKind": "table",
+          "privilege": "SELECT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_obs_overlay_tokens",
+          "objectKind": "table",
+          "privilege": "TRIGGER",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_obs_overlay_tokens",
+          "objectKind": "table",
+          "privilege": "TRUNCATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_obs_overlay_tokens",
+          "objectKind": "table",
+          "privilege": "UPDATE",
+          "schema": "public"
+        }
+      ],
+      "columns": [
+        {
+          "defaultDefinition": null,
+          "name": "owner_user_id",
+          "notNull": true,
+          "ordinal": 1,
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_tokens",
+          "type": "uuid"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "session_reference_id",
+          "notNull": true,
+          "ordinal": 2,
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_tokens",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "scope",
+          "notNull": true,
+          "ordinal": 3,
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_tokens",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "token_digest",
+          "notNull": true,
+          "ordinal": 4,
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_tokens",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "issued_at",
+          "notNull": true,
+          "ordinal": 5,
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_tokens",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "expires_at",
+          "notNull": true,
+          "ordinal": 6,
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_tokens",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "revoked_at",
+          "notNull": false,
+          "ordinal": 7,
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_tokens",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": "1",
+          "name": "version",
+          "notNull": true,
+          "ordinal": 8,
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_tokens",
+          "type": "bigint"
+        },
+        {
+          "defaultDefinition": "now()",
+          "name": "created_at",
+          "notNull": true,
+          "ordinal": 9,
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_tokens",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "updated_at",
+          "notNull": true,
+          "ordinal": 10,
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_tokens",
+          "type": "timestamp with time zone"
+        }
+      ],
+      "constraints": [
+        {
+          "definition": "CHECK (token_digest ~ '^[a-f0-9]{64}$'::text)",
+          "name": "comment_translator_obs_overlay_tokens_digest_check",
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_tokens",
+          "type": "c"
+        },
+        {
+          "definition": "CHECK (expires_at > issued_at)",
+          "name": "comment_translator_obs_overlay_tokens_expiry_check",
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_tokens",
+          "type": "c"
+        },
+        {
+          "definition": "PRIMARY KEY (owner_user_id, scope)",
+          "name": "comment_translator_obs_overlay_tokens_pkey",
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_tokens",
+          "type": "p"
+        },
+        {
+          "definition": "CHECK (revoked_at IS NULL OR revoked_at >= issued_at)",
+          "name": "comment_translator_obs_overlay_tokens_revocation_check",
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_tokens",
+          "type": "c"
+        },
+        {
+          "definition": "CHECK (scope = 'obs-overlay-read'::text)",
+          "name": "comment_translator_obs_overlay_tokens_scope_check",
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_tokens",
+          "type": "c"
+        },
+        {
+          "definition": "FOREIGN KEY (session_reference_id) REFERENCES comment_translator_sessions(session_reference_id) ON DELETE CASCADE",
+          "name": "comment_translator_obs_overlay_tokens_session_reference_id_fkey",
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_tokens",
+          "type": "f"
+        },
+        {
+          "definition": "UNIQUE (token_digest)",
+          "name": "comment_translator_obs_overlay_tokens_token_digest_key",
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_tokens",
+          "type": "u"
+        },
+        {
+          "definition": "CHECK (version > 0)",
+          "name": "comment_translator_obs_overlay_tokens_version_check",
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_tokens",
+          "type": "c"
+        }
+      ],
+      "indexes": [
+        {
+          "definition": "CREATE UNIQUE INDEX comment_translator_obs_overlay_tokens_pkey ON comment_translator_obs_overlay_tokens USING btree (owner_user_id, scope)",
+          "name": "comment_translator_obs_overlay_tokens_pkey",
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_tokens"
+        },
+        {
+          "definition": "CREATE INDEX comment_translator_obs_overlay_tokens_session_idx ON comment_translator_obs_overlay_tokens USING btree (session_reference_id)",
+          "name": "comment_translator_obs_overlay_tokens_session_idx",
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_tokens"
+        },
+        {
+          "definition": "CREATE UNIQUE INDEX comment_translator_obs_overlay_tokens_token_digest_key ON comment_translator_obs_overlay_tokens USING btree (token_digest)",
+          "name": "comment_translator_obs_overlay_tokens_token_digest_key",
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_tokens"
+        }
+      ],
+      "name": "comment_translator_obs_overlay_tokens",
+      "owner": "postgres",
+      "policies": [
+        {
+          "checkDefinition": "true",
+          "command": "ALL",
+          "name": "comment_translator_obs_overlay_tokens_service_role_all",
+          "permissive": true,
+          "roles": [
+            "service_role"
+          ],
+          "schema": "public",
+          "table": "comment_translator_obs_overlay_tokens",
+          "usingDefinition": "true"
+        }
+      ],
+      "rlsEnabled": true,
+      "rowCount": 0,
+      "schema": "public"
+    }
+  ],
+  "triggers": []
+}

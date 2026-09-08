@@ -8,8 +8,26 @@
 - Source base: exact fetched `origin/codex/comment-translator-paid-v1-preview` commit `a275174dc6494a8d159f1fff30318c05fece0107`
 - Current decision label: `NO-GO` until every production evidence gate in this document passes
 - Scope: Gate 1 item 1 only
+- Amendment status (2026-09-03): written amendment approved by the user after independent `sol-reviewer / medium` document review. The canonical structure/operational-observation split and bounded local preservation tests below may now be implemented in the existing verified Luna Max task. This approval does not authorize additional remote operations, tooling repair/install, cleanup, commit/push/PR, deploy or activation. Overall Gate 1 remains `NO-GO` pending its separate evidence gates.
 
 This design does not authorize a production mutation. Source implementation, dependency/tooling setup, backup execution, migration apply, extension enablement, Vault writes, and Cron configuration remain separate approval gates.
+
+## Target binding amendment (2026-09-05)
+
+This amendment resolves the approved local preflight implementation blocker and supersedes any instruction that calls the saved inventory targetFingerprint a SHA-256 project identity.
+
+- Preserve environment-inventories schemaVersion 2, its aggregateSha256, final55/final56 and pending26/pending34 unchanged. Its existing 32-hex targetFingerprint is a legacy MD5 database-state observation. It is neither a project identifier nor a source from which to manufacture the new SHA-256. State drift remains separately checked; never recompute the legacy digest to select a different target automatically.
+- Define a separate private TargetBindingV1 object with exactly: schemaVersion:1, target:"preview"|"production", connectionMode:"direct", projectRef, host, port:5432, database:"postgres", user:"postgres", sslMode:"verify-full", caSha256. projectRef must be the lowercase alphanumeric project reference independently confirmed by the operator in the intended Supabase project; host must be exactly "db."+projectRef+".supabase.co". All strings are exact ASCII, no whitespace, URLs, lists, aliases, control characters or secret fields. caSha256 is 64 lowercase hex over the exact approved CA file bytes. Unknown/missing keys, poolers, custom domains and hostaddr overrides are unsupported and blocked in this version.
+- The trusted operator obtains projectRef and Direct connection fields from that project's authenticated Supabase Dashboard Connect page, and the provider CA from its SSL settings. This is a future separately authorized operator input step, not performed by this source-only task. The operator reviews the target-to-project mapping independently of the runner's current environment, then supplies the exact immutable binding and independently retained expected digest through private process environment. The adapter never enrolls a binding or computes its expected approval digest from the current connection settings.
+- Inputs: GATE1_TARGET_BINDING_JSON contains the private object; GATE1_TARGET_BINDING_SHA256 contains the independently approved 64-hex digest. Calculate SHA-256 in Node over UTF-8 compact JSON.stringify of the strict object with lexicographically sorted keys; no trailing newline and no Unicode/whitespace coercion. Passwords and tokens are never hashed, stored in the object, printed, or passed in argv. The SHA-256 provides binding integrity relative to the operator's approved value, not a signature or proof against a malicious operator controlling both inputs.
+- Before any process that can connect: require explicit target, validate binding/digest, exact PGHOST/PGPORT/PGDATABASE/PGUSER equality, PGSSLMODE=verify-full, PGSSLROOTCERT whose regular-file bytes match caSha256, and environment password context. Do not use PGHOSTADDR, service files, multi-host routing or connstrings. Spawn verified PostgreSQL-17 psql without a shell and with --no-psqlrc, --no-password and ON_ERROR_STOP; construct a minimal child environment with only validated libpq fields and required OS process essentials. Do not inherit other PG*, PGSERVICE*, connection URLs or startup options. Set the read-only PGOPTIONS explicitly. Failure must not retry or fall back to require, pooler, another host or another target.
+- A successful authenticated TLS connection with verify-full binds the session to the operator-approved project-specific host. Within the same connection use the approved repeatable-read/read-only transaction and fixed catalog SELECTs, verify transaction flags and the exact relevant history/catalog evidence, then ROLLBACK. TLS connection evidence and catalog/state evidence are distinct. Never infer project identity from database name, counts, the legacy MD5 or a caller-supplied target label alone.
+- Retain Task 6's output schema; expose only fixed status/reason and existing sanitized evidence fields. No binding, host, user, projectRef, CA path, credential, SQL or raw process error may appear in output. Missing context returns exit 2 and blocked-context-absent; use fixed reasons TARGET_BINDING_MISSING, TARGET_BINDING_INVALID, TARGET_BINDING_DIGEST_MISMATCH, CONNECTION_BINDING_MISMATCH, TLS_CONTEXT_INVALID, CONNECTION_FAILED or REQUIRED_EVIDENCE_UNAVAILABLE as applicable. Missing scheduler/advisor/external evidence cannot be filled with zero or claimed PASS. This local slice cannot satisfy hosted readiness or authorize remote execution.
+- Tests use synthetic bindings and a fake transport only: valid match, swapped preview/production, wrong host/ref/port/user/database, malformed/extra/missing keys, wrong digest, secret-shaped input, missing/wrong CA, require-mode, inherited service/hostaddr override, TLS failure, and absent external evidence. Every preconnection failure asserts zero transport calls. Simulated success is fixture evidence only. No real binding/CA enrollment, network connection, Docker, DB integration or acquired-artifact changes are part of this implementation.
+
+- Force PGGSSENCMODE=disable in the minimal child environment regardless of inherited settings. Otherwise libpq can prefer GSS encryption over TLS, bypassing this amendment's CA/hostname verification mechanism. The fake transport test must assert this exact child setting alongside PGSSLMODE=verify-full and confirm inherited GSS options cannot override it.
+
+Sources: https://supabase.com/docs/guides/database/connecting-to-postgres, https://www.postgresql.org/docs/17/libpq-ssl.html and https://www.postgresql.org/docs/17/libpq-connect.html.
 
 ## Objective
 
@@ -165,10 +183,10 @@ The backdated ordering is intentional and documented. It is required because a n
 The bridge supports exactly three accepted states, selected only by an exact catalog fingerprint:
 
 1. **Exact legacy state:** archive the known zero-row Paid-legacy subsystem.
-2. **Exact canonical state with no public legacy shape:** no-op. This allows the bridge to be applied safely to Preview, where canonical Paid Core v1 already exists.
+2. **Exact canonical structural state with no public legacy shape:** no-op. This allows the bridge to be applied safely to Preview, where canonical Paid Core v1 already exists. Operational row counts are retained as separate observations, not compared with an empty installation to select this branch.
 3. **Clean pre-base state:** no legacy or canonical Paid objects exist, so no-op. This allows a clean database to continue to the canonical base migration.
 
-Any partial, mixed, non-empty, differently owned, differently shaped, or unexpectedly dependent state raises an exception before object movement. State selection and every mutation occur under the same transaction advisory lock.
+Any partial, mixed, non-empty Paid-legacy, differently owned, differently shaped, or unexpectedly dependent state raises an exception before object movement. Non-empty canonical tables alone do not select the legacy branch or constitute structural drift. State selection and every mutation occur under the same transaction advisory lock.
 
 #### Exact legacy preconditions
 
@@ -197,7 +215,23 @@ The initial Paid-legacy manifest authority has these aggregate checks and must i
 
 All three Paid-legacy tables have RLS enabled. The three Paid-legacy function definitions have aggregate MD5 `6dc37ec241b7f07359a42e23741f87eb`; the single enabled trigger has aggregate MD5 `8af034bbb90bf8221228c263104a3e9a`; the observed outside dependency counts and publication memberships are zero. Implementation must generate and commit the full sorted Paid-legacy object/signature lists, then require exact equality at preflight and inside the bridge. The separate source-era read-only manifest is evidence and is not an input to bridge mutation.
 
-A second committed `bridge-state-manifest` defines the canonical and clean no-op states. The canonical fingerprint is generated by applying all 55 migrations to a supported empty local stack and must exactly equal fresh Preview readback for every A2-reserved Paid schema/object: relations, columns, constraints, indexes, policies, triggers, RLS flags, owners, ACLs, functions, identity arguments, return types, function configs, and definition digests. The clean fingerprint requires complete absence of every A2-reserved Paid-legacy, canonical, and archive name before the base migration. Separately governed source-era names are excluded from state selection and remain untouched. The bridge embeds the exact sorted allowlists/digests generated from these artifacts; a count-only five-column/82-RPC check cannot select a no-op state.
+A second committed `bridge-state-manifest` defines the desired canonical and clean no-op states. Desired canonical is generated by replaying the repository migration corpus from a supported empty local Supabase stack together with the approved safe security contract; it is never generated by copying Preview. The saved Preview readback is immutable observed-drift evidence. The local replay must validate and compare the complete desired structural state—relations, columns, constraints, indexes, policies, triggers, RLS flags, owners, ACLs, functions, identity arguments, return types, function configs, raw definition digests, and the defined dependency counts—against that repository-derived authority. Preview projection is compared separately only to classify observed drift; it is not the same authority and its values must not be copied into the desired canonical state. Only canonical table `rowCount` is excluded from structural equality; every other required field and exact object identity remains mandatory. The clean fingerprint requires complete absence of every A2-reserved Paid-legacy, canonical, and archive name before the base migration. Separately governed source-era names are excluded from state selection and remain untouched. The bridge embeds the complete sorted structural rows, not just counts or digests; a count-only five-column/81-identity-RPC check cannot select a no-op state. Only a fresh readback after a separately approved hosted apply can prove deployed convergence.
+
+#### Approved amendment: canonical structure and operational preservation (2026-09-03)
+
+**Reason and alternatives.** A migration-only installation and a running Preview need not have the same business-row counts. The reported 4-versus-71 total and ten differing tables expose the coupling in the old full `TableRow` comparison; they are diagnostic observations, not new seed targets. Absence of direct `INSERT/COPY` alone does not exclude indirect writes, so provenance remains a diagnostic question. Reproducing Preview's counts with dummy rows would not prove structural equivalence or data preservation. Simply deleting all row-count checks would weaken the legacy safety boundary. The selected amendment separates canonical structure from operational observations while retaining the legacy and source-era safeguards.
+
+**Typed, versioned boundary.** Raw acquired artifacts retain their full `TableRow`, including a required nonnegative integer `rowCount`. Strict acquisition validation continues to reject absent/invalid counts and all other missing fields. A new version of the derived bridge-state fixture uses a dedicated canonical structural type; the legacy and source-era types keep `rowCount`. The projection must validate the full acquired schema before removing exactly the canonical table count field; it must not strip unknown fields or drop ACLs, definitions, dependencies, missing objects, or extra identities to make equality pass. Store the complete per-table count observation, keyed by schema/name and bound to its source artifact SHA-256, separately from structural state selection. Never overwrite an acquired artifact or reinterpret the old fixture version as the new contract.
+
+**Unchanged protection.** All three Paid-legacy tables must still be zero-row inside the bridge transaction; a single row fails before movement. Source-era non-mutation and its existing safety manifest are unchanged. Canonical owner, RLS, ACL, function identity/result/config/security/definition, trigger, constraint, index, policy, and dependency equality remain exact. `definitionMd5` remains `md5(pg_get_functiondef(oid))` over the raw server definition. Diagnostic LF/CRLF normalization does not replace this digest. The identity count stays 81 and is not a substitute for the complete FunctionRow manifest.
+
+**Canonical no-op and preservation.** After exact structural and absence checks, the canonical branch returns without application/catalog DDL, DML, sequence changes, grants/revokes, function invocation, or scheduler/Vault work. The migration runner's expected history bookkeeping is separate from the bridge body. Prove this branch boundary with static checks plus an isolated local integration case: compare complete structural state and operational counts before/after, and compare all table row values inside the disposable test database with a lossless, duplicate-sensitive equality assertion. Only booleans and sanitized counts leave that test. Count equality alone is not data-preservation proof. Do not read or export remote business rows for this test.
+
+Local preservation tests may use a small deterministic, constraint-valid synthetic dataset, isolated from real users, secrets, billing and Provider traffic. Its purpose is to detect same-count updates, deletes/inserts and other writes, not to reproduce Preview's 71 rows; its exact table/column scope must be listed in the implementation review. This is proposed local test scope, effective only after this written amendment is approved. No background writer or scheduler may run in that disposable case. A transaction advisory lock does not establish exclusion of normal application writers. Remote row counts remain snapshot observations, not a stable cross-run fingerprint; a future remote preservation assertion needs its own approved concurrency/evidence procedure and must not be inferred from equal counts under concurrent writes.
+
+**Remaining blockers and authority.** The reported four ACL identity groups and five raw function-definition differences remain unresolved. Use a supported local baseline with independently established roles/default privileges; do not grant whatever Preview happens to contain. Diagnose repository blob bytes, working-tree bytes, replay input bytes and raw/diagnostic digests separately before proposing any definition change. The authority records `definitionDriftExpectedTrueCount=2` as an expected post-replay classification, while `definitionDriftObservation=UNVERIFIED_UNTIL_LOCAL_REPLAY`; source-level LF equivalence is not a database measurement and must not be reported as a raw-digest PASS. Only the 55-migration Git/deployment-equivalent LF replay may determine the exact three LF-only identities and exact two true-drift identities. The two true drifts require a forward-only migration after that measurement; never guess its identities or rewrite historical migrations. Missing negative cases and CLI rollback/history atomicity remain mandatory. A missing Production canonical wrapper stays an explicitly limited evidence claim, not full Production PASS; it does not by itself require reacquisition for the already complete legacy/source-era slice. Docker unavailability is `SETUP_BLOCKED`, never PASS.
+
+This amendment does not approve remote readback, Preview/Production changes, existing-artifact cleanup, Docker repair/reset, dependency/image installation, source-definition or ACL waivers, commit/push/PR, deploy, or activation. Local source-readiness, Preview verification, and production Gate 1 `GO` remain distinct evidence states.
 
 #### Atomic archive procedure
 
@@ -235,29 +269,29 @@ This is a no-op where `pg_net` is already installed and ensures the Task 9 maint
 
 The extension migration is separately approval-gated as part of the production migration apply. No extension version is pinned because Supabase manages available extension versions.
 
-After history markers, the bridge, and the extension migration, the expected local migration count is 55.
+After history markers, the bridge, and the extension migration, the pre-forward diagnostic baseline is 55 migrations. The approved `20260904000000_comment_translator_paid_gate1_a3_canonical_convergence` adds exactly one migration: the final local and deployment inventory is 56. The version-2 environment fixture retains final55 separately from final56 and uses preview.pending26 and production.pending34. Saved history is not a fresh remote observation.
 
 The expected convergence matrix is:
 
 | Environment | Observed history | Expected pending | Result |
 | --- | ---: | ---: | --- |
-| production | 22 | 33 | markers skipped; bridge archives exact legacy state; canonical chain applies |
-| Preview | 30 | 25 | five older local migrations, 18 markers, bridge canonical no-op, and `pg_net` no-op/apply as observed |
-| clean supported baseline | 0 | 55 | markers and bridge are no-ops; complete canonical replay |
+| production | 22 | 34 | markers skipped; bridge archives exact legacy state; canonical chain applies |
+| Preview | 30 | 26 | five older local migrations, 18 markers, bridge canonical no-op, and `pg_net` no-op/apply as observed |
+| clean supported baseline | 0 | 56 | markers and bridge are no-ops; complete canonical replay |
 
-The five currently missing Preview versions are `20260527000000`, `20260601000000`, `20260624000000`, `20260705000000`, and `20260706073204`. Preview already has the canonical five-column entitlement shape, 82 `ct_paid_*` overloads, installed `pg_net`, and one inactive Paid Cron job; these are preflight evidence only and may drift. Before any mutation, use the exact local CLI to run `migration list` and `db push --dry-run --include-all` separately against each approved target and require the exact environment-specific set. A count-only match is insufficient.
+The five currently missing Preview versions are `20260527000000`, `20260601000000`, `20260624000000`, `20260705000000`, and `20260706073204`. Preview already has the canonical five-column entitlement shape, installed `pg_net`, and one inactive Paid Cron job; the saved HEAD Preview identity fixture records 81 direct `ct_paid_*` identities with `aggregateSha256` `7f833ff897e57d1d418bcf954c3367cd3b07612b09f4e182d94bbc5fee1680d9`. That fixture is preserved evidence, not a new remote readback, and its identity-only SHA-256 is not a FunctionRow-manifest MD5. The earlier 82-identity claim and MD5 `d975b161bf115fe6ecd80ad68c55134e` are retired because the corrected HEAD inventory distinguishes direct declarations from function-body reference tokens. These values are preflight evidence only and may drift. Before any mutation, use the exact local CLI to run `migration list` and `db push --dry-run --include-all` separately against each approved target and require the exact environment-specific set. A count-only match is insufficient.
 
 ### 4. Preview convergence gate
 
-Preview convergence is a separate remote-mutation approval and a mandatory production entry gate. Merging source does not apply its 25 pending migrations and cannot satisfy convergence.
+Preview convergence is a separate remote-mutation approval and a mandatory production entry gate. Merging source does not apply its 26 pending migrations and cannot satisfy convergence.
 
 After the reviewed implementation is merged into the intended Preview integration line:
 
 1. re-read the complete Preview migration and bridge-state fingerprints;
 2. obtain explicit Preview migration approval;
-3. require the exact 25-version dry-run set described above, with no repair request or unrelated version;
+3. require the exact 26-version dry-run set described above, with no repair request or unrelated version;
 4. apply only that exact set with local CLI `2.109.0`;
-5. require 55 total and 55 unique history versions matching the repository exactly;
+5. require 56 total and 56 unique history versions matching the repository exactly;
 6. require exact canonical active-schema and RPC/ACL manifest equality, archive schema absence, installed `pg_net`, and no retired source-era public objects;
 7. require the pre-existing scheduler to remain exactly one job and inactive, with no create/alter/activate/deactivate/delete delta and no new run;
 8. require the two pre-existing Preview Vault-name records and all secret values to remain untouched and unread.
@@ -366,7 +400,7 @@ Backup artifacts and credentials must not be committed. Cleanup of the disposabl
 
 ## RPC and schema readback
 
-Implementation must generate and commit an exact canonical RPC manifest containing each schema/name/identity-argument tuple, return type, owner, `SECURITY DEFINER` flag, function config including `search_path`, sorted ACL, and function-definition digest. At the reviewed base the manifest contains 82 `ct_paid_*` overloads with aggregate MD5 `d975b161bf115fe6ecd80ad68c55134e`. The generated rows, not the count or aggregate digest alone, are the allowlist. The manifest is regenerated after any source change and production readback must equal the reviewed committed artifact.
+Implementation must generate and commit an exact desired canonical RPC manifest containing each schema/name/identity-argument tuple, return type, owner, `SECURITY DEFINER` flag, function config including `search_path`, sorted ACL, and raw function-definition digest. The corrected implementation HEAD `2775fba1f5ca687d23b25c88286ec5125d1663ec` includes `a778b7f`'s corrected direct-declaration inventory: the repository and saved Preview identity fixture are 81/81 with missing=0 and extra=0. The fixture's `aggregateSha256` `7f833ff897e57d1d418bcf954c3367cd3b07612b09f4e182d94bbc5fee1680d9` covers the identity-only rows and must not be assigned to the complete FunctionRow manifest's MD5. The former 82-identity requirement and MD5 `d975b161bf115fe6ecd80ad68c55134e` are superseded. A separate complete FunctionRow manifest must still be generated from repository-derived normalized rows, independently recompute its MD5 over those complete rows, and require full row equality; no count-only or identity-only digest may satisfy that requirement. The generated rows, not the count or aggregate digest alone, are the allowlist. `PUBLIC`, `anon`, and `authenticated` Paid-RPC `EXECUTE` privileges must remain zero, while `service_role` entries are limited to the explicit minimum in the approved security contract. Preview RPC/ACL rows are observed drift and never replace the desired manifest. The manifest is regenerated after any source change; only a fresh readback after a separately approved hosted apply can establish deployed convergence.
 
 After migration apply, read back sanitized evidence for:
 
@@ -512,9 +546,9 @@ No runtime application behavior, UI, Stripe integration, Provider path, Cloudfla
 - no secret/private identifier in markers, generated manifests, or changed files;
 - exact migration ordering, including bridge before base and `pg_net` before Task 9;
 - bridge exact-legacy positive case;
-- full-manifest canonical no-op positive case;
+- full structural-manifest canonical no-op positive case, with separately validated operational observations and local data-preservation evidence;
 - full-manifest clean no-op positive case;
-- non-empty, partial, mixed, wrong-owner, extra-dependency, duplicate, and malformed negative cases;
+- non-empty Paid-legacy, partial, mixed, wrong-owner, extra-dependency, duplicate, and malformed negative cases; non-empty canonical is tested separately as a no-op, not relabeled as legacy;
 - archive privilege and disabled-trigger assertions;
 - post-commit forward-fix/recovery-project rollback contract;
 - exported-snapshot `T0`, pre-DDL unarmed/abort behavior, bounded-RPO watchdog deadlines, exact project-pause completion, Storage/Vault-zero, recovery-capacity, and endpoint-cutover fail-closed contracts;
@@ -526,9 +560,9 @@ No runtime application behavior, UI, Stripe integration, Provider path, Cloudfla
 
 Using the disposable restored database:
 
-1. replay all 55 migrations from an empty supported baseline;
+1. replay all 56 migrations from an empty supported baseline;
 2. verify the restored exact legacy catalog converges through the bridge into canonical Paid Core v1;
-3. verify applying the bridge to an already-canonical Preview-shaped database is a no-op;
+3. verify applying the bridge to an already-canonical structurally Preview-matching database is a no-op with unchanged structure and local data, both with migration-only rows and with the bounded synthetic preservation case; do not require operational counts to equal the saved Preview snapshot;
 4. verify the clean pre-base bridge state is a no-op;
 5. inject one CLI migration failure and prove both object movement and its history row roll back;
 6. verify all canonical RPC privileges, constraints, scheduler limits, monitoring, and atomicity contracts;
@@ -554,7 +588,7 @@ These approvals remain distinct:
 
 1. **Source implementation:** migration files, contracts, scripts, and docs only.
 2. **Commit/push/PR:** repository publication of the reviewed source change.
-3. **Preview migration apply:** exact 25-version set and post-apply readback.
+3. **Preview migration apply:** exact 26-version set and post-apply readback.
 4. **Tooling setup:** Docker and PostgreSQL 17 clients on an approved host; the repository-local Supabase CLI is already available and pinned.
 5. **Recovery capacity:** project cost/plan/capacity, pre-authorized watchdog and exact source-project pause authority, and recovery/cutover readiness.
 6. **Backup execution:** production read and restricted local artifact creation.
@@ -571,7 +605,7 @@ These approvals remain distinct:
 Gate 1 item 1 may be labeled `GO` only when all of the following are current and directly verified:
 
 - reviewed source commit is merged into the intended Preview integration line;
-- Preview has all 55 exact history versions and passes canonical schema/RPC readback with no mutation to its inactive scheduler or Vault values;
+- Preview has all 56 exact history versions and passes canonical schema/RPC readback with no mutation to its inactive scheduler or Vault values;
 - manual logical backup and isolated restore rehearsal pass;
 - final recovery backup uses the exported-snapshot `T0`; the watchdog, 5/10/20-minute deadlines, and `RPO <= 20 minutes` are explicitly accepted; and exact pause/recovery-project/cutover capacity is ready;
 - local and production migration histories are fully aligned;

@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 1,
+  "rows": [
+    {
+      "version": "20260624040504",
+      "name": "comment_translator_real_comments_feed_snapshots",
+      "statementCount": 1,
+      "sqlBytes": 3473,
+      "statementsMd5": "32ce077c0d033e0aa166132d37c64973",
+      "classification": "normalized-local-replacement",
+      "replacementVersion": "20260623000000"
+    },
+    {
+      "version": "20260624141142",
+      "name": "account_display_timezone_preference",
+      "statementCount": 1,
+      "sqlBytes": 700,
+      "statementsMd5": "bb06bafd3ffb897284b0e4cf27bc076f",
+      "classification": "normalized-local-replacement",
+      "replacementVersion": "20260624000000"
+    },
+    {
+      "version": "20260722000000",
+      "name": "comment_translator_paid_entitlements",
+      "statementCount": 17,
+      "sqlBytes": 6038,
+      "statementsMd5": "9bd1986a3eb71496e96319ff87c5a6e3",
+      "classification": "paid-legacy-archive-and-canonical-replacement",
+      "replacementVersion": "20260812120000"
+    },
+    {
+      "version": "20260722001000",
+      "name": "comment_translator_paid_usage_counters",
+      "statementCount": 25,
+      "sqlBytes": 10424,
+      "statementsMd5": "59114cdc1e208791aa5e4fd661b11c30",
+      "classification": "paid-legacy-archive-and-canonical-replacement",
+      "replacementVersion": "20260812120000"
+    },
+    {
+      "version": "20260722002000",
+      "name": "comment_translator_obs_overlay_tokens",
+      "statementCount": 16,
+      "sqlBytes": 5209,
+      "statementsMd5": "0810fac8f39094e25567101dddcc4e42",
+      "classification": "retained-production-only-outside-a2",
+      "replacementVersion": null
+    },
+    {
+      "version": "20260722003000",
+      "name": "comment_translator_obs_overlay_browser_sessions",
+      "statementCount": 9,
+      "sqlBytes": 1771,
+      "statementsMd5": "adfad87c8014ec22eedd0cfe34d20fc6",
+      "classification": "retained-production-only-outside-a2",
+      "replacementVersion": null
+    },
+    {
+      "version": "20260723000000",
+      "name": "comment_translator_moderator_share_tokens",
+      "statementCount": 16,
+      "sqlBytes": 5082,
+      "statementsMd5": "a82bf8f600249ff1a4308d525354d89a",
+      "classification": "retained-production-only-outside-a2",
+      "replacementVersion": null
+    },
+    {
+      "version": "20260723001000",
+      "name": "comment_translator_moderator_share_browser_sessions",
+      "statementCount": 10,
+      "sqlBytes": 2117,
+      "statementsMd5": "db73510f8dc44e4fb1c293965396327e",
+      "classification": "retained-production-only-outside-a2",
+      "replacementVersion": null
+    },
+    {
+      "version": "20260723002000",
+      "name": "comment_translator_custom_dictionary",
+      "statementCount": 18,
+      "sqlBytes": 8172,
+      "statementsMd5": "bae5d675449b7aebf10d99a64c1e0459",
+      "classification": "retained-production-only-outside-a2",
+      "replacementVersion": null
+    },
+    {
+      "version": "20260723003000",
+      "name": "comment_translator_creator_history",
+      "statementCount": 12,
+      "sqlBytes": 2056,
+      "statementsMd5": "f0caa787a451a42a08bbb81bf4303c1f",
+      "classification": "retained-production-only-outside-a2",
+      "replacementVersion": null
+    },
+    {
+      "version": "20260726111154",
+      "name": "comment_translator_paid_entitlements",
+      "statementCount": 1,
+      "sqlBytes": 6065,
+      "statementsMd5": "293df19b9f922936c60038daf42cfebc",
+      "classification": "paid-legacy-archive-and-canonical-replacement",
+      "replacementVersion": "20260812120000"
+    },
+    {
+      "version": "20260728135736",
+      "name": "comment_translator_paid_usage_counters",
+      "statementCount": 1,
+      "sqlBytes": 10461,
+      "statementsMd5": "dc486ca138f0d2e258581ab960a1aa98",
+      "classification": "paid-legacy-archive-and-canonical-replacement",
+      "replacementVersion": "20260812120000"
+    },
+    {
+      "version": "20260728142220",
+      "name": "comment_translator_obs_overlay_tokens",
+      "statementCount": 1,
+      "sqlBytes": 5234,
+      "statementsMd5": "8f1ef08f04521176699abc35c2fd8c09",
+      "classification": "retained-production-only-outside-a2",
+      "replacementVersion": null
+    },
+    {
+      "version": "20260728145324",
+      "name": "comment_translator_obs_overlay_browser_sessions",
+      "statementCount": 1,
+      "sqlBytes": 1785,
+      "statementsMd5": "00590230209f530666c50460e5439fe8",
+      "classification": "retained-production-only-outside-a2",
+      "replacementVersion": null
+    },
+    {
+      "version": "20260728160206",
+      "name": "comment_translator_moderator_share_tokens",
+      "statementCount": 1,
+      "sqlBytes": 5107,
+      "statementsMd5": "9be8e7b679209f9c63da5688753bc49d",
+      "classification": "retained-production-only-outside-a2",
+      "replacementVersion": null
+    },
+    {
+      "version": "20260728164122",
+      "name": "comment_translator_moderator_share_browser_sessions",
+      "statementCount": 1,
+      "sqlBytes": 2133,
+      "statementsMd5": "6a4290f68e19c41f204305b63b7993fb",
+      "classification": "retained-production-only-outside-a2",
+      "replacementVersion": null
+    },
+    {
+      "version": "20260728172220",
+      "name": "comment_translator_custom_dictionary",
+      "statementCount": 1,
+      "sqlBytes": 8200,
+      "statementsMd5": "0e30272eb31457551f1d9eba7d7f37f8",
+      "classification": "retained-production-only-outside-a2",
+      "replacementVersion": null
+    },
+    {
+      "version": "20260729035621",
+      "name": "comment_translator_creator_history",
+      "statementCount": 1,
+      "sqlBytes": 2074,
+      "statementsMd5": "6590c4e2a350ba00b9e8dd21645fa4d8",
+      "classification": "retained-production-only-outside-a2",
+      "replacementVersion": null
+    }
+  ],
+  "highConfidenceSecretMatches": 0,
+  "rollbackStatementCount": 0,
+  "aggregateSha256": "57f36c7a58f083f4e642fb481c81c20051c8b99064ee255549698d17fb82fd5a"
+}

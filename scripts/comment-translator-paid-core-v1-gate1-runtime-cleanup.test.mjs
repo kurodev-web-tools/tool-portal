@@ -161,8 +161,8 @@ assert.doesNotMatch(source, /maxBuffer:\s*localCliRunnerMaxBufferBytes,[\s\S]*?t
   "outer CLI spawnSync does not own the child timeout");
 assert.match(source, /timeoutMs:\s*localCliTimeoutMs/,
   "bounded timeout is owned by the CLI runner");
-assert.match(source, /command:\s*process\.execPath[\s\S]*args:\s*\[(?:supabaseCliPath|typeof supabaseCliPath)[\s\S]*\.\.\.args\]/,
-  "Supabase CLI uses the installed Node entrypoint and argv arrays");
+assert.ok(/command:\s*usePinnedGo \? previewGoCliPath : process\.execPath[\s\S]*args:\s*usePinnedGo \? args : \[(?:supabaseCliPath|typeof supabaseCliPath)[\s\S]*\.\.\.args\]/.test(source),
+  "Supabase CLI uses the installed entrypoint or hash-pinned Go binary with argv arrays");
 assert.doesNotMatch(source, /node_modules["'\\/]\.bin["'\\/]supabase\.cmd|process\.platform\s*===\s*["']win32["'][\s\S]*shell:/,
   "Supabase CLI does not use the shell .cmd shim");
 assert.match(source, /env:\s*transport\.environment/,
@@ -372,6 +372,33 @@ const spawnSync = (command, args, options = {}) => {
     timeout: 10000
   });
 }
+
+const pinnedGoProbe = runInjectedTransportProbe({
+  endpoint: "npipe:////./pipe/dockerDesktopLinuxEngine",
+  checks: `
+localCliProfile = "preview-pinned-go";
+fs.lstatSync = () => ({ isSymbolicLink: () => false });
+fs.readFileSync = () => Buffer.from("synthetic-binary");
+sha256Bytes = () => previewGoCliSha256;
+const result = runLocalSupabaseCli(root, ["migration", "up", "--local", "--include-all"]);
+assert.equal(result.status, 0);
+const configured = JSON.parse(transportCalls.at(-1).options.input);
+assert.equal(configured.command, previewGoCliPath);
+assert.deepEqual(configured.args, ["migration", "up", "--local", "--include-all"]);
+assert.equal(configured.shell, false);
+assert.equal(configured.env.DO_NOT_TRACK, "1");
+assert.equal(configured.env.SUPABASE_TELEMETRY_DISABLED, "1");
+const beforeMismatch = transportCalls.length;
+sha256Bytes = () => "0".repeat(64);
+assert.throws(() => runLocalSupabaseCli(root, ["migration", "up", "--local", "--include-all"]), /PREVIEW_GO_BINARY_IDENTITY/);
+assert.equal(transportCalls.length, beforeMismatch, "wrong binary blocks before runner spawn");
+sha256Bytes = () => previewGoCliSha256;
+fs.lstatSync = () => ({ isSymbolicLink: () => true });
+assert.throws(() => runLocalSupabaseCli(root, ["--version"]), /PREVIEW_GO_BINARY_REGULAR/);
+assert.equal(transportCalls.length, beforeMismatch, "symlink blocks before runner spawn");
+`
+});
+assert.equal(pinnedGoProbe.status, 0, "hash-pinned local Go routing accepts the exact binary and rejects drift before spawn");
 
 const validTransportProbe = runInjectedTransportProbe({
   endpoint: "npipe:////./pipe/dockerDesktopLinuxEngine",

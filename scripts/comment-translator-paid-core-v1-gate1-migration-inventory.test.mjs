@@ -3,7 +3,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { parseRestoreSql } from "./lib/comment-translator-paid-core-v1-gate1-restore-sql.mjs";
 
-import { computeObjectDigest } from "./lib/comment-translator-paid-core-v1-gate1-catalog.mjs";
+import { computeObjectDigest, parsePublicRpcDeclarations } from "./lib/comment-translator-paid-core-v1-gate1-catalog.mjs";
 import { validateEnvironmentInventoryFixture } from "./comment-translator-paid-core-v1-gate1-migration-contract.mjs";
 
 const fixturePath = path.join(
@@ -128,7 +128,7 @@ const invalidCases = [
 
 for (const [label, mutator] of invalidCases) expectRejected(label, mutator);
 
-// A3 may reinstall only the two original LF definitions and four reviewed
+// A3 may reinstall the two semantic and 76 observed newline-drift definitions and four reviewed
 // revokes. A text-wide DML search incorrectly inspects function bodies as if
 // applying the migration executed those bodies.
 const migrationRoot = path.join(process.cwd(), "supabase", "migrations");
@@ -144,6 +144,32 @@ const originalDefinitions = functionNames.map(name => {
   assert.equal(matches.length, 1, "exact original function identity");
   return statement(originalSql, matches[0]);
 });
+const previewEntry = JSON.parse(fs.readFileSync(path.join(process.cwd(), "scripts/fixtures/comment-translator-paid-core-v1-gate1-preview-entry-observation.json"), "utf8"));
+const rpcKey = row => `${row.schema}.${row.name}(${row.identityArguments})`;
+const latestDefinitions = new Map();
+for (const name of fs.readdirSync(migrationRoot).filter(name => name.endsWith(".sql") && !name.startsWith("20260904000000_")).sort()) {
+  const sql = readSql(name);
+  for (const span of sqlSpans(sql)) {
+    const value = statement(sql, span);
+    if (!/^create\s+(?:or\s+replace\s+)?function\s+public\.ct_paid_/i.test(value)) continue;
+    const declarations = parsePublicRpcDeclarations(value);
+    assert.equal(declarations.length, 1);
+    latestDefinitions.set(rpcKey(declarations[0]), value.replace(/^create\s+function/i, "create or replace function"));
+  }
+}
+assert.equal(previewEntry.newlineOnlyFunctions.length, 76);
+const retryOverride = readSql("20260813131500_comment_translator_paid_task6_openai_rate_retry.sql");
+const oldRetryGuard = retryOverride.match(/v_original := '((?:''|[^'])*)';/)?.[1].replaceAll("''", "'");
+const newRetryGuard = retryOverride.match(/v_definition := replace\(\s*v_definition,\s*v_original,\s*'((?:''|[^'])*)'\s*\);/)?.[1].replaceAll("''", "'");
+assert.ok(oldRetryGuard && newRetryGuard);
+const retryIdentity = previewEntry.newlineOnlyFunctions.find(f => f.name === "ct_paid_openai_attempt");
+const retrySource = latestDefinitions.get(rpcKey(retryIdentity));
+assert.equal(retrySource.split(oldRetryGuard).length - 1, 1);
+latestDefinitions.set(rpcKey(retryIdentity), retrySource.replace(oldRetryGuard, () => newRetryGuard));
+const newlineDefinitions = previewEntry.newlineOnlyFunctions.map(row => {
+  assert.ok(latestDefinitions.has(rpcKey(row)));
+  return latestDefinitions.get(rpcKey(row));
+});
 const revokes = [
   "revoke all privileges on table public.comment_translator_paid_maintenance_work_items from public, anon, authenticated, service_role;",
   "revoke all privileges on table public.comment_translator_paid_message_rate_reservation_tombstones from public, anon, authenticated, service_role;",
@@ -152,9 +178,10 @@ const revokes = [
 ];
 function assertForwardSource(sql) {
   const spans = sqlSpans(sql);
-  assert.equal(spans.length, 6, "A3 has exactly two definitions and four revokes");
+  assert.equal(spans.length, 82, "A3 has exactly 78 definitions and four revokes");
   assert.ok(spans.every(span => span.kind === "sql"));
-  assert.deepEqual(spans.map(span => statement(sql, span)), [...originalDefinitions, ...revokes]);
+  const expectedStatements = [...originalDefinitions, ...newlineDefinitions, ...revokes];
+  spans.forEach((span, index) => assert.ok(statement(sql, span) === expectedStatements[index], `A3 exact authoritative statement ${index}`));
 }
 assertForwardSource(forwardSql);
 assert.throws(() => assertForwardSource(forwardSql + "\ndrop table public.unexpected;"), "additional top-level DDL rejected");

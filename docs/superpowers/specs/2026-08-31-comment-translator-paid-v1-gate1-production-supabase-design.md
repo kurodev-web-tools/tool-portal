@@ -2,6 +2,8 @@
 
 ## Status
 
+- R7 amendment (2026-09-08, user approved): retain the exact56 migration inventory and Preview26/Production34 pending sets. The two confirmed-unapplied bridge/A3 files may accept the separately pinned complete observed Preview entry and reinstall the76 additional authoritative LF definitions. A3 now has78 exact definitions plus the original four revokes. The desired canonical structure and all81 complete FunctionRows, including raw definition MD5, remain unchanged. The Preview entry requires source-era/archive/legacy absence, exactly one matching inactive Cron job and exactly the two reserved Vault names; unknown state still rejects. Local exact-before reproduction, old-source refusal, actual CLI pending26 convergence, security/row/metadata preservation and rollback negatives are required before publication and hosted apply. Implementation status and results are maintained in the existing plan R7 and task.md. New source publication/merge must precede fresh hosted source bindings.
+
 - Date: 2026-08-31
 - Review revision: 2026-09-01, independent review iterations 1-5 addressed
 - Decision: approved A2 design, `history reconstruction + ordered legacy bridge`

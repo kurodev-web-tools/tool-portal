@@ -76,6 +76,11 @@ let verifiedDockerTransport = null;
 let terminationUnknown = false;
 let cliStartAttemptedProjects = new Set();
 let cliCachedImageInventory = null;
+// Preview acceptance uses the same bundled Go binary as the approved native
+// linked list/dry-run, rather than treating equal version text as binary identity.
+let localCliProfile = "bundled-entrypoint";
+const previewGoCliPath = path.join(root, "node_modules", "@supabase", "cli-windows-x64", "bin", "supabase-go.exe");
+const previewGoCliSha256 = "59cd06ac674fdf5d6add75206408ada0a24b1dcb796d099c13b1f2aaf3f463f0";
 
 function latchTerminationUnknown() {
   terminationUnknown = true;
@@ -1918,16 +1923,21 @@ function runLocalSupabaseCli(workDirectory, args) {
       cliDiagnostics: emptyCliRunnerDiagnostics()
     };
   }
+  const usePinnedGo = typeof localCliProfile === "string" && localCliProfile === "preview-pinned-go";
+  if (usePinnedGo) {
+    assert.equal(fs.lstatSync(previewGoCliPath).isSymbolicLink(), false, "PREVIEW_GO_BINARY_REGULAR");
+    assert.equal(sha256Bytes(fs.readFileSync(previewGoCliPath)), previewGoCliSha256, "PREVIEW_GO_BINARY_IDENTITY");
+  }
   const runnerResult = spawnSync(process.execPath, [cliRunnerPath], {
     input: JSON.stringify({
-      command: process.execPath,
-      args: [typeof supabaseCliPath === "string" ? supabaseCliPath : path.join(root, "node_modules", "supabase", "dist", "supabase.js"), ...args],
+      command: usePinnedGo ? previewGoCliPath : process.execPath,
+      args: usePinnedGo ? args : [typeof supabaseCliPath === "string" ? supabaseCliPath : path.join(root, "node_modules", "supabase", "dist", "supabase.js"), ...args],
       cwd: workDirectory,
       shell: false,
       preserveStdout: cliNeedsStructuredStdout(args) || (args[0] === "migration" && args[1] === "list"),
       structuredStdout: cliNeedsStructuredStdout(args),
       timeoutMs: cliTimeoutMs,
-      env: transport.environment
+      env: usePinnedGo ? {...transport.environment, DO_NOT_TRACK:"1", SUPABASE_TELEMETRY_DISABLED:"1"} : transport.environment
     }),
     cwd: root,
     env: transport.environment,
@@ -2565,7 +2575,7 @@ function removeGeneratedCliWorkDirectory(workDirectory) {
   if (!samePath(path.dirname(resolvedDirectory), temporaryRoot)) {
     throw new Error("CLI_WORK_DIRECTORY_SCOPE_INVALID");
   }
-  if (!/^gate1-cli-(?:atomicity|bridge-replay)-/.test(path.basename(resolvedDirectory))) {
+  if (!/^gate1-cli-(?:atomicity|bridge-replay|preview)-/.test(path.basename(resolvedDirectory))) {
     throw new Error("CLI_WORK_DIRECTORY_NAME_INVALID");
   }
   let stat = null;
@@ -3219,6 +3229,243 @@ function assertLocalPostapplyObservation(row) {
   };
 }
 
+function runCliPreviewConvergenceCase() {
+  // All writes are confined to a newly owned local CLI project. Hosted input
+  // contains only two function definitions and metadata, never production rows.
+  const fixture = readJson(path.join(fixturesRoot, "comment-translator-paid-core-v1-gate1-preview-entry-observation.json"));
+  const inputPath = process.env.GATE1_PREVIEW_REPRODUCTION_INPUT;
+  assert.ok(inputPath && fs.existsSync(inputPath), "PREVIEW_REPRODUCTION_INPUT_REQUIRED");
+  const input = readJson(inputPath);
+  assert.equal(input.functions.length, 2, "PREVIEW_TWO_SEMANTIC_INPUTS");
+  const expected = readJson(bridgeStatesPath).canonical;
+  for (const name of ["ct_paid_azure_direct_fallback", "ct_paid_record_provider_hourly_detail"]) {
+    const rows = input.functions.filter(f => f.name === name);
+    assert.equal(rows.length, 1, "PREVIEW_INPUT_IDENTITY");
+    const row = rows[0];
+    assert.equal(md5Bytes(row.definition), fixture.canonical.functions.find(f => f.name === name).definitionMd5, "PREVIEW_INPUT_HASH");
+    assert.equal(highConfidenceSecretPattern.test(row.definition), false, "PREVIEW_INPUT_SECRET_REJECTED");
+  }
+  const old = spawnSync("git", ["show", "a7532540c5a4d3998b36eaf1dec45d741348a810:supabase/migrations/20260811000000_comment_translator_paid_v1_legacy_schema_bridge.sql"], { cwd: root, encoding: "utf8", timeout: 30000, maxBuffer: 2 * 1024 * 1024 });
+  assert.equal(old.status, 0, "PREVIEW_OLD_BRIDGE_REQUIRED");
+  localCliProfile = "preview-pinned-go";
+  const version = cliVersionResult();
+  if (version.status !== "PASS") return { status: "SETUP_BLOCKED", reason: "SUPABASE_CLI_VERSION_UNAVAILABLE" };
+  cliCachedImageInventory = null;
+  if (!assertRequiredLocalImages().available) return { status: "SETUP_BLOCKED", reason: "REQUIRED_LOCAL_IMAGE_MISSING" };
+  const workDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "gate1-cli-preview-"));
+  let runtime = null;
+  let phase = "CLI_INIT";
+  let result;
+  let lastLocalSqlFailure = null;
+  try {
+    const init = runLocalSupabaseCli(workDirectory, ["init", "--force"]);
+    assert.equal(init.status, 0, "PREVIEW_CLI_INIT");
+    runtime = configureDisposableCliRuntime(workDirectory);
+    phase = "CLI_START";
+    const start = runLocalSupabaseCli(workDirectory, ["start", "--ignore-health-check", "--exclude", cliExcludedServices]);
+    if (start.status !== 0) {
+      const failure = new Error("PREVIEW_CLI_START");
+      failure.cliDiagnostics = localCliFailureDiagnostics(start);
+      throw failure;
+    }
+    const runtimeIdentity = cliRuntimeIdentity(workDirectory, runtime.ports.db);
+    const containerId = verifiedPostapplyContainer(runtime.projectId);
+    const sql = (text, allowFailure = false, role = localObjectRole) => {
+      assert.ok([localObjectRole, localAdminRole].includes(role), "PREVIEW_LOCAL_ROLE_ALLOWLIST");
+      const response = runDocker(["exec", "--interactive", containerId, "psql", "--no-psqlrc", "--no-password", "--quiet", "--tuples-only", "--no-align", "--set=ON_ERROR_STOP=1", `--username=${role}`, "--dbname=postgres"], text, { captureByteLimit: 2 * 1024 * 1024 });
+      assert.equal(response.terminationUnknown, false, "PREVIEW_PSQL_TERMINATION");
+      assert.equal(response.captureFailure, false, "PREVIEW_PSQL_CAPTURE");
+      if (response.exitCode !== 0) lastLocalSqlFailure = {phase,stderr:response.stderr};
+      if (!allowFailure && response.exitCode !== 0) {
+        const diagnosticsPath = process.env.GATE1_LOCAL_DIAGNOSTICS_PATH;
+        if (diagnosticsPath) {
+          const resolved = path.resolve(diagnosticsPath + ".psql.json");
+          assert.ok(resolved.startsWith(path.resolve(root, ".tmp") + path.sep), "PREVIEW_DIAGNOSTICS_SCOPE");
+          assert.equal(highConfidenceSecretPattern.test(response.stderr), false, "PREVIEW_DIAGNOSTICS_SECRET_REJECTED");
+          fs.writeFileSync(resolved, JSON.stringify({phase,stderr:response.stderr}, null, 2), {flag:"wx"});
+        }
+        throw new Error("PREVIEW_LOCAL_SQL_FAILED");
+      }
+      return response;
+    };
+    const json = text => JSON.parse(sql(text).stdout.trim());
+    const postgresSearchPath = json("select to_jsonb(current_setting('search_path')); ");
+    assert.equal(typeof postgresSearchPath, "string", "PREVIEW_POSTGRES_SEARCH_PATH");
+    // SET ROLE does not load the target role's per-role GUCs. Match the actual
+    // postgres connection's deparser context before running the bridge.
+    const postgresContextSql = `set local role postgres; select set_config('search_path', ${sqlLiteral(postgresSearchPath)}, true);`;
+    const cron = fixture.cron;
+    const insertPreviewCronSql = `insert into cron.job (schedule, command, nodename, nodeport, database, username, active, jobname) values (${sqlLiteral(cron.schedule)}, ${sqlLiteral(cron.command)}, ${sqlLiteral(cron.nodename)}, ${cron.nodeport}, ${sqlLiteral(cron.database)}, ${sqlLiteral(cron.username)}, false, ${sqlLiteral(cron.jobname)});`;
+    const migrationNames = repositoryMigrationNames();
+    const migrationsDirectory = path.join(workDirectory, "supabase", "migrations");
+    fs.mkdirSync(migrationsDirectory, { recursive: true });
+    phase = "BOOTSTRAP_CANONICAL";
+    sql("create extension if not exists pg_cron;");
+    phase = "LOCAL_FIXTURE_ROLE_PREFLIGHT";
+    sql(`begin;\n${insertPreviewCronSql}\n${postgresContextSql}\nrollback;`, false, localAdminRole);
+    phase = "BOOTSTRAP_CANONICAL";
+    for (const name of migrationNames.filter(n => n !== `${forwardConvergenceMigration}.sql`)) fs.writeFileSync(path.join(migrationsDirectory, name), canonicalMigrationBytes(name));
+    const bootstrap = runLocalSupabaseCli(workDirectory, ["migration", "up", "--local", "--include-all"]);
+    if (bootstrap.status !== 0) {
+      const diagnosticsPath = process.env.GATE1_LOCAL_DIAGNOSTICS_PATH;
+      if (diagnosticsPath) {
+        const resolved = path.resolve(diagnosticsPath);
+        const privateRoot = path.resolve(root, ".tmp");
+        assert.ok(resolved.startsWith(privateRoot + path.sep), "PREVIEW_DIAGNOSTICS_SCOPE");
+        assert.equal(highConfidenceSecretPattern.test(bootstrap.stderr), false, "PREVIEW_DIAGNOSTICS_SECRET_REJECTED");
+        fs.writeFileSync(resolved, JSON.stringify({phase, stderr:bootstrap.stderr}, null, 2), {flag:"wx"});
+      }
+      const failure = new Error("PREVIEW_CANONICAL_BOOTSTRAP");
+      failure.cliDiagnostics = localCliFailureDiagnostics(bootstrap);
+      throw failure;
+    }
+    phase = "CHECK_A3_NATIVE_SQL";
+    sql(`begin;\n${canonicalMigrationBytes(`${forwardConvergenceMigration}.sql`).toString("utf8")}\nrollback;`);
+    fs.writeFileSync(path.join(migrationsDirectory, `${forwardConvergenceMigration}.sql`), canonicalMigrationBytes(`${forwardConvergenceMigration}.sql`));
+    phase = "BOOTSTRAP_A3_CLI";
+    const bootstrapForward = runLocalSupabaseCli(workDirectory, ["migration", "up", "--local", "--include-all"]);
+    assert.equal(bootstrapForward.status, 0, "PREVIEW_A3_CLI_BOOTSTRAP");
+    const baseline = normalizeLocalPostapplyArtifact(readLocalPostapplyRow(runtime.projectId));
+    const baselineStructure = projectCanonicalStructuralState(baseline.canonical);
+    if (!canonicalStructuralEqual(baselineStructure, expected)) {
+      const differences = [];
+      for (const kind of ["tables", "functions", "triggers"]) {
+        for (const row of baselineStructure[kind]) {
+          const final = expected[kind].find(r => r.name === row.name && r.identityArguments === row.identityArguments && r.tableName === row.tableName);
+          const fields = Object.keys(row).filter(k => JSON.stringify(sortKeysDeep(row[k])) !== JSON.stringify(sortKeysDeep(final?.[k])));
+          if (fields.length) differences.push({kind,name:row.name,fields,...(fields.includes("definitionMd5") ? {observedMd5:row.definitionMd5,expectedMd5:final?.definitionMd5} : {})});
+        }
+      }
+      if (JSON.stringify(sortKeysDeep(baselineStructure.dependencyCounts)) !== JSON.stringify(sortKeysDeep(expected.dependencyCounts))) differences.push({kind:"dependencyCounts",observed:baselineStructure.dependencyCounts,expected:expected.dependencyCounts});
+      const failure = new Error("PREVIEW_CANONICAL_BASELINE");
+      failure.cliDiagnostics = {differences};
+      throw failure;
+    }
+    phase = "CANONICAL_ENTRY_COMPATIBILITY";
+    sql(`begin;\n${canonicalMigrationBytes(path.basename(bridgePath)).toString("utf8")}\nrollback;`);
+    assert.ok(canonicalStructuralEqual(projectCanonicalStructuralState(normalizeLocalPostapplyArtifact(readLocalPostapplyRow(runtime.projectId)).canonical), expected), "PREVIEW_CANONICAL_ENTRY_PRESERVED");
+    const canonicalCronRefusal = sql(`begin;\n${insertPreviewCronSql}\n${postgresContextSql}\n${canonicalMigrationBytes(path.basename(bridgePath)).toString("utf8")}\ncommit;`, true, localAdminRole);
+    assert.notEqual(canonicalCronRefusal.exitCode, 0, "PREVIEW_NO_GENERIC_CANONICAL_CRON_EXCEPTION");
+    assert.ok(canonicalCronRefusal.stderr.includes("Gate 1 Paid Cron job already exists"), "PREVIEW_CANONICAL_CRON_EXPECTED_REFUSAL");
+    phase = "REPRODUCE_OBSERVED_ENTRY";
+    const reproductionStatements = [];
+    for (const identity of fixture.newlineOnlyFunctions) {
+      const desired = expected.functions.find(f => f.name === identity.name && f.identityArguments === identity.identityArguments);
+      assert.ok(desired, "PREVIEW_NEWLINE_IDENTITY");
+      // Replace on the server: Windows stdin must not normalize the CRLF body.
+      reproductionStatements.push(`do $reproduce$ declare definition text; begin
+        select pg_get_functiondef(p.oid) into strict definition from pg_proc p join pg_namespace n on n.oid=p.pronamespace
+        where n.nspname=${sqlLiteral(identity.schema)} and p.proname=${sqlLiteral(identity.name)} and pg_get_function_identity_arguments(p.oid)=${sqlLiteral(identity.identityArguments)};
+        execute replace(definition, E'\\n', E'\\r\\n');
+      end $reproduce$;`);
+    }
+    for (const row of input.functions) reproductionStatements.push(`do $reproduce$ begin execute convert_from(decode('${Buffer.from(row.definition, "utf8").toString("hex")}', 'hex'), 'UTF8'); end $reproduce$;`);
+    // Restore only the four observed pre-convergence ACL differences.
+    for (const table of fixture.canonical.tables) {
+      const final = expected.tables.find(t => t.name === table.name);
+      if (JSON.stringify(sortKeysDeep(table.acls)) === JSON.stringify(sortKeysDeep(final.acls))) continue;
+      for (const acl of table.acls.filter(a => a.grantee !== "postgres")) {
+        assert.equal(acl.grantable, false, "PREVIEW_TABLE_ACL_GRANTABLE");
+        assert.match(acl.privilege, /^(SELECT|INSERT|UPDATE|DELETE|TRUNCATE|REFERENCES|TRIGGER|MAINTAIN)$/);
+        assert.ok(["PUBLIC", "anon", "authenticated", "service_role"].includes(acl.grantee));
+        reproductionStatements.push(`grant ${acl.privilege} on table public.${sqlIdentifier(table.name)} to ${acl.grantee === "PUBLIC" ? "public" : sqlIdentifier(acl.grantee)};`);
+      }
+    }
+    reproductionStatements.push("grant execute on function public.ct_paid_schedule_durable_reconciliation() to public, anon, authenticated, service_role;");
+    sql(`begin;\n${reproductionStatements.join("\n")}\ncommit;`);
+    // Synthetic values only. No reads of either encrypted or decrypted secret.
+    for (const name of fixture.vaultNames) sql(`select vault.create_secret('LOCAL_SYNTHETIC_NOT_A_CREDENTIAL', ${sqlLiteral(name)});`);
+    // Direct catalog writes are local fixture setup only; never widen grants.
+    sql(insertPreviewCronSql, false, localAdminRole);
+    sql(`delete from supabase_migrations.schema_migrations;
+      insert into supabase_migrations.schema_migrations(version,name,statements) values ${fixture.history.map(r => `(${sqlLiteral(r.version)},${sqlLiteral(r.name)},array[]::text[])`).join(",")};
+      insert into public.comment_translator_paid_openai_minute_buckets(minute_start,reserved_requests) values ('2026-01-01T00:00:00Z',0);`);
+    const entry = normalizeLocalPostapplyArtifact(readLocalPostapplyRow(runtime.projectId));
+    assert.ok(canonicalStructuralEqual(projectCanonicalStructuralState(entry.canonical), fixture.canonical), "PREVIEW_EXACT_OBSERVED_ENTRY");
+    assert.deepEqual(entry.history.rows, fixture.history, "PREVIEW_EXACT30_HISTORY");
+    assert.equal(entry.archive.tables.length + entry.archive.functions.length + entry.sourceEra.tables.length + entry.sourceEra.functions.length, 0);
+    const snapshotSql = `select jsonb_build_object(
+      'cron',(select jsonb_agg(to_jsonb(j) order by jobid) from cron.job j),
+      'vault',(select jsonb_agg(jsonb_build_object('id',id,'name',name,'created',created_at,'updated',updated_at) order by name) from vault.secrets),
+      'runs',(select count(*) from cron.job_run_details),
+      'history',(select jsonb_agg(jsonb_build_object('version',version,'name',name) order by version) from supabase_migrations.schema_migrations),
+      'rows',jsonb_build_object(${expected.tables.map(t => `${sqlLiteral(t.name)},(select coalesce(jsonb_agg(to_jsonb(r) order by to_jsonb(r)::text),'[]'::jsonb) from public.${sqlIdentifier(t.name)} r)`).join(",")})
+    );`;
+    const before = json(snapshotSql);
+    phase = "OLD_SOURCE_RED";
+    const red = sql(`begin;\n${old.stdout}\nrollback;`, true);
+    assert.notEqual(red.exitCode, 0, "PREVIEW_OLD_SOURCE_MUST_REFUSE");
+    assert.ok(red.stderr.includes("Gate 1 bridge state is partial, mixed, or unknown"), "PREVIEW_EXPECTED_OLD_REFUSAL");
+    assert.deepEqual(json(snapshotSql), before, "PREVIEW_OLD_REFUSAL_PRESERVES_STATE");
+    phase = "NEGATIVE_ENTRY_MATRIX";
+    const repaired = canonicalMigrationBytes(path.basename(bridgePath)).toString("utf8");
+    const negatives = [
+      ["active", "update cron.job set active=true where jobname='comment-translator-paid-maintenance';"],
+      ["duplicate", "insert into cron.job(schedule,command,nodename,nodeport,database,jobname,username,active) values ('*/5 * * * *','select 1','localhost',5432,'postgres','comment-translator-paid-maintenance','supabase_admin',false);"],
+      ["wrong-command", "update cron.job set command='select 1' where jobname='comment-translator-paid-maintenance';"],
+      ["unknown-acl", "grant select on public.comment_translator_paid_openai_minute_buckets to anon;"],
+      ["unknown-hash", "create or replace function public.ct_paid_schedule_durable_reconciliation() returns trigger language plpgsql set search_path=pg_catalog,public as $$ begin return new; end $$;"],
+      ["unknown-object", "create table public.comment_translator_paid_unknown_entry(id integer);"],
+      ["unknown-view", "create view public.comment_translator_paid_unknown_entry as select 1 as id;"],
+      ["source-era", "create table public.comment_translator_creator_history(id integer);"],
+      ["vault-name", "update vault.secrets set name='comment_translator_paid_unexpected' where name='comment_translator_paid_cron_token';"]
+    ];
+    for (const [name, mutation] of negatives) {
+      const administrativeFixture = ["active", "duplicate", "wrong-command", "vault-name"].includes(name);
+      const refused = sql(`begin;\n${mutation}\n${administrativeFixture ? postgresContextSql : ""}\n${repaired}\ncommit;`, true, administrativeFixture ? localAdminRole : localObjectRole);
+      assert.notEqual(refused.exitCode, 0, `PREVIEW_NEGATIVE_${name}`);
+      assert.ok(/Gate 1 (?:bridge state|observed Preview)/.test(refused.stderr), `PREVIEW_NEGATIVE_REACHED_BRIDGE_${name}`);
+      assert.deepEqual(json(snapshotSql), before, `PREVIEW_NEGATIVE_ROLLBACK_${name}`);
+    }
+    phase = "EXACT_PENDING26";
+    const applied = new Set(fixture.history.map(r => r.version));
+    const pending = migrationNames.filter(n => !applied.has(n.slice(0, 14)));
+    assert.equal(pending.length, 26, "PREVIEW_PENDING26");
+    phase = "CLI_FAILED_MIGRATION_ROLLBACK";
+    const bridgeName = path.basename(bridgePath);
+    fs.writeFileSync(path.join(migrationsDirectory, bridgeName), repaired + "\ndo $$ begin raise exception 'GATE1_R7_INJECTED_FAILURE'; end $$;\n");
+    const failed = runLocalSupabaseCli(workDirectory, ["migration", "up", "--local", "--include-all"]);
+    assert.notEqual(failed.status, 0, "PREVIEW_INJECTED_MIGRATION_REFUSED");
+    const partial = json(snapshotSql);
+    assert.equal(partial.history.length, 53, "PREVIEW_PRIOR23_ONLY_HISTORY");
+    assert.equal(partial.history.some(r => r.version === "20260811000000"), false, "PREVIEW_FAILED_BRIDGE_NO_HISTORY");
+    for (const field of ["cron", "vault", "runs", "rows"]) assert.deepEqual(partial[field], before[field], `PREVIEW_FAILED_BRIDGE_PRESERVES_${field}`);
+    // Reset only this owned synthetic local history to rerun the full exact26.
+    sql(`delete from supabase_migrations.schema_migrations where version not in (${fixture.history.map(r => sqlLiteral(r.version)).join(",")});`);
+    fs.writeFileSync(path.join(migrationsDirectory, bridgeName), canonicalMigrationBytes(bridgeName));
+    phase = "CLI_EXACT26_SUCCESS";
+    const migrated = runLocalSupabaseCli(workDirectory, ["migration", "up", "--local", "--include-all"]);
+    assert.equal(migrated.status, 0, "PREVIEW_MIGRATION_UP_SUCCESS");
+    const after = normalizeLocalPostapplyArtifact(readLocalPostapplyRow(runtime.projectId));
+    assert.ok(canonicalStructuralEqual(projectCanonicalStructuralState(after.canonical), expected), "PREVIEW_FINAL_COMPLETE_CANONICAL");
+    assertCanonicalPaidRpcSecurityBoundary(projectCanonicalStructuralState(after.canonical));
+    assert.deepEqual(after.history.rows, migrationNames.map(n => ({version:n.slice(0,14),name:n.slice(15,-4)})), "PREVIEW_FINAL_EXACT56");
+    assert.equal(after.archive.tables.length + after.archive.functions.length + after.sourceEra.tables.length + after.sourceEra.functions.length, 0);
+    const finalSnapshot = json(snapshotSql);
+    for (const field of ["cron", "vault", "runs", "rows"]) assert.deepEqual(finalSnapshot[field], before[field], `PREVIEW_SUCCESS_PRESERVES_${field}`);
+    assert.equal(json("select to_jsonb(exists(select 1 from pg_extension where extname='pg_net'));"), true);
+    result = {status:"PASS",runtimeIdentity,cliVersion:"2.109.0",cliProfile:"preview-pinned-go",cliBinarySha256:previewGoCliSha256,oldSourceRed:"PASS",exactObservedEntry:"PASS",pendingCount:26,historyCount:56,canonicalFunctionCount:81,negativeCases:negatives.length,failedMigrationHistoryRollback:"PASS",operationalRowsPreserved:true,cronVaultMetadataPreserved:true,cronRunDelta:0,secretValueReads:0,remoteMutations:0,hostedEvidence:false};
+  } catch (error) {
+    const diagnosticsPath = process.env.GATE1_LOCAL_DIAGNOSTICS_PATH;
+    if (diagnosticsPath && lastLocalSqlFailure) {
+      const resolved = path.resolve(diagnosticsPath + ".last-sql.json");
+      if (resolved.startsWith(path.resolve(root, ".tmp") + path.sep) && !fs.existsSync(resolved)
+        && !highConfidenceSecretPattern.test(lastLocalSqlFailure.stderr)) {
+        fs.writeFileSync(resolved, JSON.stringify(lastLocalSqlFailure, null, 2), {flag:"wx"});
+      }
+    }
+    result = {status:"FAIL",phase,reason:safeCaseReason(error),hostedEvidence:false,...(error.cliDiagnostics ? {diagnostics:error.cliDiagnostics} : {})};
+  } finally {
+    const cleanup = cleanupGeneratedRuntimeResources({
+      cliProjectId: runtime?.projectId && cliStartAttemptedProjects.has(runtime.projectId) ? runtime.projectId : "",
+      stopCli: projectId => stopGeneratedCliProject(workDirectory, projectId, ["stop", "--project-id", projectId, "--no-backup", "--yes"]),
+      workDirectory, removeDirectory: removeGeneratedCliWorkDirectory
+    });
+    result = cleanup.status === "PASS" ? {...result,generatedResourceCleanup:cleanup} : {status:"FAIL",reason:"GENERATED_RESOURCE_CLEANUP_FAILED",caseResult:result,cleanup};
+  }
+  return result;
+}
+
 function runCliPostapplyQueryCase(inputRows) {
   if (!fs.existsSync(supabaseCliPath)) return { status: "SETUP_BLOCKED", reason: "SUPABASE_CLI_MISSING" };
   cliCachedImageInventory = null;
@@ -3744,6 +3991,12 @@ function runNegativeThenAtomicity(expected, inputRows, options) {
 
 function run() {
   assert.equal(fs.existsSync(bridgePath), true, "bridge migration exists");
+  if (process.argv.includes("--phase=preview-convergence")) {
+    const result = runCliPreviewConvergenceCase();
+    console.log(JSON.stringify({schemaVersion:2,target:"local-only",phase:"preview-convergence",result,remoteMutations:0}));
+    if (result.status !== "PASS") process.exitCode = 1;
+    return;
+  }
   const r13 = validateR13Artifact();
   const production = validateProductionArtifactBoundary();
   const legacyInputs = validateLegacyInputs();

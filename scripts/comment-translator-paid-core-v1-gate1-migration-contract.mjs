@@ -632,7 +632,7 @@ function validateBridge() {
   assert.match(source, /set\s+local\s+lock_timeout\s*=\s*'5s'/i, "bridge lock timeout is fixed");
   assert.match(source, /set\s+local\s+statement_timeout\s*=\s*'60s'/i, "bridge statement timeout is fixed");
   assert.match(source, /pg_catalog\.pg_advisory_xact_lock\s*\(\s*pg_catalog\.hashtextextended\s*\(\s*'comment-translator-paid-v1-gate1-legacy-bridge'\s*,\s*0\s*\)\s*\)/i, "bridge advisory lock is fixed");
-  for (const state of ["exact-legacy", "exact-canonical", "exact-clean"]) assert.match(source, new RegExp(state, "i"), `bridge state is present: ${state}`);
+  for (const state of ["exact-legacy", "exact-canonical", "exact-clean", "exact-preview-entry"]) assert.match(source, new RegExp(state, "i"), `bridge state is present: ${state}`);
   assert.match(source, /is\s+not\s+distinct\s+from/i, "bridge compares catalog JSON structurally");
   assert.match(source, /jsonb/i, "bridge uses jsonb catalog state");
   assert.match(source, /scope_name\s*=\s*'canonical'\s+then\s+row_json\s*-\s*'rowCount'/i, "bridge excludes canonical operational rowCount from structural equality");
@@ -647,7 +647,11 @@ function validateBridge() {
   assert.doesNotMatch(source, /\b(?:drop\s+(?:table|schema|function)|truncate\s+(?:table|[a-z_]+)|delete\s+from|insert\s+into|update\s+cron\.job)\b/i, "bridge has no destructive DML");
   assert.match(source, /scope_hints\s+as[\s\S]+has_canonical_functions[\s\S]+has_legacy_functions/i, "bridge classifies the overlapping entitlement relation from direct function presence");
   assert.match(source, /classified_known_tables\s+as[\s\S]+['\"]unclassified['\"]/i, "bridge fails closed when the overlapping entitlement relation cannot be classified");
-  for (const name of sourceEraNames) assert.doesNotMatch(source, new RegExp(name, "i"), `bridge excludes source-era object: ${name}`);
+  const previewAbsenceGuard = source.match(/if v_state = 'exact-preview-entry' then([\s\S]*?)raise exception 'Gate 1 observed Preview source-era objects exist';\s*end if;/)?.[0];
+  assert.equal(typeof previewAbsenceGuard, "string", "Preview source-era check is an explicit read-only absence guard");
+  assert.doesNotMatch(previewAbsenceGuard, /\b(?:create|alter|drop|execute|perform|insert|update|delete|grant|revoke)\s/i);
+  const sourceWithoutAbsenceGuard = source.replace(previewAbsenceGuard, "");
+  for (const name of sourceEraNames) assert.doesNotMatch(sourceWithoutAbsenceGuard, new RegExp(name, "i"), `source-era object occurs only in the read-only Preview guard: ${name}`);
   assert.match(source, /alter\s+table\s+public\./i, "bridge has table move path");
   assert.match(source, /alter\s+function\s+public\./i, "bridge has function move path");
   assert.match(source, /comment_translator_paid_legacy_archive/i, "bridge archive schema is explicit");
@@ -720,7 +724,7 @@ function run() {
   if (missing.length > 0) {
     throw new Error(`MISSING_SANITIZED_CATALOG_FIXTURES:${missing.length}`);
   }
-  console.log(`markers=${markers} migrations=56 bridge-states=3 legacy-mutation-tables=3 legacy-mutation-functions=3 source-era-mutations=0`);
+  console.log(`markers=${markers} migrations=56 bridge-states=4 legacy-mutation-tables=3 legacy-mutation-functions=3 source-era-mutations=0`);
 }
 
 const invokedPath = process.argv[1] ? path.resolve(process.argv[1]) : null;

@@ -6,6 +6,10 @@
 
 source_artifactのUNKNOWNはGate 1で要求する承認済みimmutable authorityが未確立であることを示す。ソースPRのcommit作成とは別に確認する。
 
+2026-09-08 R7 source修正はローカル受け入れ済み: 実測Preview専用の厳密な入口判定と78定義のA3収束を実装した。実適用用と同一hashのGo CLI2.109.0 / PostgreSQL17で、実測before81関数・履歴30の再現、旧source RED、pending26→履歴56、最終81関数の全metadata/raw MD5/security完全一致、異常系9件、失敗migrationの履歴非追加、運用行とCron/Vault metadata保全、Cron run delta0を確認した。旧構造経路の退避3テーブル/3関数・最終canonicalもPASS。source/fixture/検証差分はrootがレビューし、サブエージェント未使用。追加のPreview read-only確認は予約対象114・未知relation0・履歴30で、外部DB変更なし。最終期待値とユーザー編集2ファイルは変更していない。詳細と制限は既存計画R7を参照する。R7のcommit/push/PR/merge、修正sourceでの新bindingと完全preapply確認、Preview実適用・適用後受け入れは未実施であり、工程3は未完了、Gate1 NO-GOを維持する。
+
+2026-09-08 工程3の読み取り記録: PR #814はPreview統合commit `4d346a8a78d3d5c1136ae75c635b7ccb18850f9a`へmerge済みで、source `a7532540c5a4d3998b36eaf1dec45d741348a810`と完全tree一致。native source collectorの56 migration照合、両環境の完全履歴照合、同梱Go CLI2.109.0による各1回のlist/dry-runが成功した。exact pendingはPreview26/Production34。Previewのfresh完全catalogは保存済みv2 baselineと全項目一致し、Advisorも取得時刻以外の全項目一致で新規/削除0。Production Advisorは今回のbaselineとして保持する。古いProduction診断fixtureのwrapper不足と、検証済みv2取得artifactを混同しない。詳細・digestはtask.mdとrestrictedなphase3記録を参照する。これは適用前の実測であり、適用後の完全catalog/security期待値、scheduler/Vaultの前後保存確認、最終9-stage authority、Preview/Production適用はまだ成立していない。CIは登録結果なし。Gate 1 NO-GOを維持する。
+
 この文書は実行順序と停止条件の運用入口であり、実環境のPASS証跡ではない。仕様は[承認済みdesign](../superpowers/specs/2026-08-31-comment-translator-paid-v1-gate1-production-supabase-design.md)、作業と最終allowlistは[承認済みplan](../superpowers/plans/2026-09-01-comment-translator-paid-v1-gate1-production-supabase-readiness.md)、最新の実行記録は[task.md](../../task.md)を参照する。矛盾があれば実行せず、具体的な差を解消する。
 
 2026-09-06の包括承認は、Gate 1 GOに必要な**費用を発生させない**操作に限る。承認の存在は、target照合・review・backup/recovery・実測条件の代わりにならない。各操作のscopeと前提は引き続き独立して記録する。Paid公開、Provider/Checkout実通信、通常deploy、Cron activationはGate 1に含まれない。

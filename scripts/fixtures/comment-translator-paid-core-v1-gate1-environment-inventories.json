@@ -1,0 +1,702 @@
+{
+  "aggregateSha256": "1523cd07e52dd14f45876f17a9787dd09ea994d7350f1f281535654c9d462c51",
+  "final55": [
+    {
+      "name": "account_preferences_foundation",
+      "version": "20260527000000"
+    },
+    {
+      "name": "youtube_oauth_credentials",
+      "version": "20260601000000"
+    },
+    {
+      "name": "comment_translator_sessions",
+      "version": "20260615000000"
+    },
+    {
+      "name": "comment_translator_usage_ledger_events",
+      "version": "20260615001000"
+    },
+    {
+      "name": "comment_translator_real_comments_feed_snapshots",
+      "version": "20260623000000"
+    },
+    {
+      "name": "account_display_timezone_preference",
+      "version": "20260624000000"
+    },
+    {
+      "name": "comment_translator_real_comments_feed_snapshots",
+      "version": "20260624040504"
+    },
+    {
+      "name": "account_display_timezone_preference",
+      "version": "20260624141142"
+    },
+    {
+      "name": "comment_translator_creator_waitlist_registrations",
+      "version": "20260705000000"
+    },
+    {
+      "name": "supabase_default_privileges_guard",
+      "version": "20260706073204"
+    },
+    {
+      "name": "comment_translator_paid_entitlements",
+      "version": "20260722000000"
+    },
+    {
+      "name": "comment_translator_paid_usage_counters",
+      "version": "20260722001000"
+    },
+    {
+      "name": "comment_translator_obs_overlay_tokens",
+      "version": "20260722002000"
+    },
+    {
+      "name": "comment_translator_obs_overlay_browser_sessions",
+      "version": "20260722003000"
+    },
+    {
+      "name": "comment_translator_moderator_share_tokens",
+      "version": "20260723000000"
+    },
+    {
+      "name": "comment_translator_moderator_share_browser_sessions",
+      "version": "20260723001000"
+    },
+    {
+      "name": "comment_translator_custom_dictionary",
+      "version": "20260723002000"
+    },
+    {
+      "name": "comment_translator_creator_history",
+      "version": "20260723003000"
+    },
+    {
+      "name": "comment_translator_paid_entitlements",
+      "version": "20260726111154"
+    },
+    {
+      "name": "comment_translator_paid_usage_counters",
+      "version": "20260728135736"
+    },
+    {
+      "name": "comment_translator_obs_overlay_tokens",
+      "version": "20260728142220"
+    },
+    {
+      "name": "comment_translator_obs_overlay_browser_sessions",
+      "version": "20260728145324"
+    },
+    {
+      "name": "comment_translator_moderator_share_tokens",
+      "version": "20260728160206"
+    },
+    {
+      "name": "comment_translator_moderator_share_browser_sessions",
+      "version": "20260728164122"
+    },
+    {
+      "name": "comment_translator_custom_dictionary",
+      "version": "20260728172220"
+    },
+    {
+      "name": "comment_translator_creator_history",
+      "version": "20260729035621"
+    },
+    {
+      "name": "comment_translator_paid_v1_legacy_schema_bridge",
+      "version": "20260811000000"
+    },
+    {
+      "name": "comment_translator_paid_core_v1",
+      "version": "20260812120000"
+    },
+    {
+      "name": "comment_translator_paid_task6_circuit_probe_claim",
+      "version": "20260813130000"
+    },
+    {
+      "name": "comment_translator_paid_task6_openai_rate_retry",
+      "version": "20260813131500"
+    },
+    {
+      "name": "comment_translator_paid_task6_owned_circuit_failure",
+      "version": "20260813133000"
+    },
+    {
+      "name": "comment_translator_paid_task6_azure_billing_split",
+      "version": "20260813134500"
+    },
+    {
+      "name": "comment_translator_paid_task6_azure_uncertain_retry_compatibility",
+      "version": "20260813135500"
+    },
+    {
+      "name": "comment_translator_paid_task6_azure_uncertain_retry",
+      "version": "20260813140000"
+    },
+    {
+      "name": "comment_translator_paid_task6_circuit_success_window",
+      "version": "20260813141500"
+    },
+    {
+      "name": "comment_translator_paid_task6_openai_resume_status",
+      "version": "20260813143000"
+    },
+    {
+      "name": "comment_translator_paid_task6_terminal_openai_partial",
+      "version": "20260813144500"
+    },
+    {
+      "name": "comment_translator_paid_task6_openai_partial_receipt",
+      "version": "20260813150000"
+    },
+    {
+      "name": "comment_translator_paid_task6_terminal_openai_partial_authority",
+      "version": "20260813151500"
+    },
+    {
+      "name": "comment_translator_paid_task6_replay_circuit_authority",
+      "version": "20260813153000"
+    },
+    {
+      "name": "comment_translator_paid_task6_dispatch_and_azure_partial_settlement",
+      "version": "20260813154500"
+    },
+    {
+      "name": "comment_translator_paid_task7_runtime_authority",
+      "version": "20260814100000"
+    },
+    {
+      "name": "comment_translator_paid_pg_net_extension",
+      "version": "20260814105000"
+    },
+    {
+      "name": "comment_translator_paid_task9_retention_observability",
+      "version": "20260814110000"
+    },
+    {
+      "name": "comment_translator_paid_cron_vault_transport",
+      "version": "20260815090000"
+    },
+    {
+      "name": "comment_translator_paid_gate0a_poll_budget_rpc_repair",
+      "version": "20260818100000"
+    },
+    {
+      "name": "comment_translator_paid_gate0a_lifecycle_read_repair",
+      "version": "20260819100000"
+    },
+    {
+      "name": "comment_translator_paid_gate0a_capacity_read_repair",
+      "version": "20260819110000"
+    },
+    {
+      "name": "comment_translator_paid_gate0a_unbound_hold_recovery",
+      "version": "20260823120000"
+    },
+    {
+      "name": "comment_translator_paid_gate0a_schedule_function_privilege_repair",
+      "version": "20260823130000"
+    },
+    {
+      "name": "comment_translator_paid_gate0a_checkout_recovery_window_floor",
+      "version": "20260826100000"
+    },
+    {
+      "name": "comment_translator_paid_gate0a_recovery_floor_second_canonicalization",
+      "version": "20260826110000"
+    },
+    {
+      "name": "comment_translator_paid_checkout_expiry_finalize_lease",
+      "version": "20260827020609"
+    },
+    {
+      "name": "comment_translator_paid_task6_azure_uncertain_retry_guard_repair",
+      "version": "20260829100000"
+    },
+    {
+      "name": "comment_translator_paid_task11_message_rate_runtime_repair",
+      "version": "20260831100000"
+    }
+  ],
+  "final56": [
+    {
+      "name": "account_preferences_foundation",
+      "version": "20260527000000"
+    },
+    {
+      "name": "youtube_oauth_credentials",
+      "version": "20260601000000"
+    },
+    {
+      "name": "comment_translator_sessions",
+      "version": "20260615000000"
+    },
+    {
+      "name": "comment_translator_usage_ledger_events",
+      "version": "20260615001000"
+    },
+    {
+      "name": "comment_translator_real_comments_feed_snapshots",
+      "version": "20260623000000"
+    },
+    {
+      "name": "account_display_timezone_preference",
+      "version": "20260624000000"
+    },
+    {
+      "name": "comment_translator_real_comments_feed_snapshots",
+      "version": "20260624040504"
+    },
+    {
+      "name": "account_display_timezone_preference",
+      "version": "20260624141142"
+    },
+    {
+      "name": "comment_translator_creator_waitlist_registrations",
+      "version": "20260705000000"
+    },
+    {
+      "name": "supabase_default_privileges_guard",
+      "version": "20260706073204"
+    },
+    {
+      "name": "comment_translator_paid_entitlements",
+      "version": "20260722000000"
+    },
+    {
+      "name": "comment_translator_paid_usage_counters",
+      "version": "20260722001000"
+    },
+    {
+      "name": "comment_translator_obs_overlay_tokens",
+      "version": "20260722002000"
+    },
+    {
+      "name": "comment_translator_obs_overlay_browser_sessions",
+      "version": "20260722003000"
+    },
+    {
+      "name": "comment_translator_moderator_share_tokens",
+      "version": "20260723000000"
+    },
+    {
+      "name": "comment_translator_moderator_share_browser_sessions",
+      "version": "20260723001000"
+    },
+    {
+      "name": "comment_translator_custom_dictionary",
+      "version": "20260723002000"
+    },
+    {
+      "name": "comment_translator_creator_history",
+      "version": "20260723003000"
+    },
+    {
+      "name": "comment_translator_paid_entitlements",
+      "version": "20260726111154"
+    },
+    {
+      "name": "comment_translator_paid_usage_counters",
+      "version": "20260728135736"
+    },
+    {
+      "name": "comment_translator_obs_overlay_tokens",
+      "version": "20260728142220"
+    },
+    {
+      "name": "comment_translator_obs_overlay_browser_sessions",
+      "version": "20260728145324"
+    },
+    {
+      "name": "comment_translator_moderator_share_tokens",
+      "version": "20260728160206"
+    },
+    {
+      "name": "comment_translator_moderator_share_browser_sessions",
+      "version": "20260728164122"
+    },
+    {
+      "name": "comment_translator_custom_dictionary",
+      "version": "20260728172220"
+    },
+    {
+      "name": "comment_translator_creator_history",
+      "version": "20260729035621"
+    },
+    {
+      "name": "comment_translator_paid_v1_legacy_schema_bridge",
+      "version": "20260811000000"
+    },
+    {
+      "name": "comment_translator_paid_core_v1",
+      "version": "20260812120000"
+    },
+    {
+      "name": "comment_translator_paid_task6_circuit_probe_claim",
+      "version": "20260813130000"
+    },
+    {
+      "name": "comment_translator_paid_task6_openai_rate_retry",
+      "version": "20260813131500"
+    },
+    {
+      "name": "comment_translator_paid_task6_owned_circuit_failure",
+      "version": "20260813133000"
+    },
+    {
+      "name": "comment_translator_paid_task6_azure_billing_split",
+      "version": "20260813134500"
+    },
+    {
+      "name": "comment_translator_paid_task6_azure_uncertain_retry_compatibility",
+      "version": "20260813135500"
+    },
+    {
+      "name": "comment_translator_paid_task6_azure_uncertain_retry",
+      "version": "20260813140000"
+    },
+    {
+      "name": "comment_translator_paid_task6_circuit_success_window",
+      "version": "20260813141500"
+    },
+    {
+      "name": "comment_translator_paid_task6_openai_resume_status",
+      "version": "20260813143000"
+    },
+    {
+      "name": "comment_translator_paid_task6_terminal_openai_partial",
+      "version": "20260813144500"
+    },
+    {
+      "name": "comment_translator_paid_task6_openai_partial_receipt",
+      "version": "20260813150000"
+    },
+    {
+      "name": "comment_translator_paid_task6_terminal_openai_partial_authority",
+      "version": "20260813151500"
+    },
+    {
+      "name": "comment_translator_paid_task6_replay_circuit_authority",
+      "version": "20260813153000"
+    },
+    {
+      "name": "comment_translator_paid_task6_dispatch_and_azure_partial_settlement",
+      "version": "20260813154500"
+    },
+    {
+      "name": "comment_translator_paid_task7_runtime_authority",
+      "version": "20260814100000"
+    },
+    {
+      "name": "comment_translator_paid_pg_net_extension",
+      "version": "20260814105000"
+    },
+    {
+      "name": "comment_translator_paid_task9_retention_observability",
+      "version": "20260814110000"
+    },
+    {
+      "name": "comment_translator_paid_cron_vault_transport",
+      "version": "20260815090000"
+    },
+    {
+      "name": "comment_translator_paid_gate0a_poll_budget_rpc_repair",
+      "version": "20260818100000"
+    },
+    {
+      "name": "comment_translator_paid_gate0a_lifecycle_read_repair",
+      "version": "20260819100000"
+    },
+    {
+      "name": "comment_translator_paid_gate0a_capacity_read_repair",
+      "version": "20260819110000"
+    },
+    {
+      "name": "comment_translator_paid_gate0a_unbound_hold_recovery",
+      "version": "20260823120000"
+    },
+    {
+      "name": "comment_translator_paid_gate0a_schedule_function_privilege_repair",
+      "version": "20260823130000"
+    },
+    {
+      "name": "comment_translator_paid_gate0a_checkout_recovery_window_floor",
+      "version": "20260826100000"
+    },
+    {
+      "name": "comment_translator_paid_gate0a_recovery_floor_second_canonicalization",
+      "version": "20260826110000"
+    },
+    {
+      "name": "comment_translator_paid_checkout_expiry_finalize_lease",
+      "version": "20260827020609"
+    },
+    {
+      "name": "comment_translator_paid_task6_azure_uncertain_retry_guard_repair",
+      "version": "20260829100000"
+    },
+    {
+      "name": "comment_translator_paid_task11_message_rate_runtime_repair",
+      "version": "20260831100000"
+    },
+    {
+      "version": "20260904000000",
+      "name": "comment_translator_paid_gate1_a3_canonical_convergence"
+    }
+  ],
+  "preview": {
+    "pending26": [
+      {
+        "name": "account_preferences_foundation",
+        "version": "20260527000000"
+      },
+      {
+        "name": "youtube_oauth_credentials",
+        "version": "20260601000000"
+      },
+      {
+        "name": "account_display_timezone_preference",
+        "version": "20260624000000"
+      },
+      {
+        "name": "comment_translator_real_comments_feed_snapshots",
+        "version": "20260624040504"
+      },
+      {
+        "name": "account_display_timezone_preference",
+        "version": "20260624141142"
+      },
+      {
+        "name": "comment_translator_creator_waitlist_registrations",
+        "version": "20260705000000"
+      },
+      {
+        "name": "supabase_default_privileges_guard",
+        "version": "20260706073204"
+      },
+      {
+        "name": "comment_translator_paid_entitlements",
+        "version": "20260722000000"
+      },
+      {
+        "name": "comment_translator_paid_usage_counters",
+        "version": "20260722001000"
+      },
+      {
+        "name": "comment_translator_obs_overlay_tokens",
+        "version": "20260722002000"
+      },
+      {
+        "name": "comment_translator_obs_overlay_browser_sessions",
+        "version": "20260722003000"
+      },
+      {
+        "name": "comment_translator_moderator_share_tokens",
+        "version": "20260723000000"
+      },
+      {
+        "name": "comment_translator_moderator_share_browser_sessions",
+        "version": "20260723001000"
+      },
+      {
+        "name": "comment_translator_custom_dictionary",
+        "version": "20260723002000"
+      },
+      {
+        "name": "comment_translator_creator_history",
+        "version": "20260723003000"
+      },
+      {
+        "name": "comment_translator_paid_entitlements",
+        "version": "20260726111154"
+      },
+      {
+        "name": "comment_translator_paid_usage_counters",
+        "version": "20260728135736"
+      },
+      {
+        "name": "comment_translator_obs_overlay_tokens",
+        "version": "20260728142220"
+      },
+      {
+        "name": "comment_translator_obs_overlay_browser_sessions",
+        "version": "20260728145324"
+      },
+      {
+        "name": "comment_translator_moderator_share_tokens",
+        "version": "20260728160206"
+      },
+      {
+        "name": "comment_translator_moderator_share_browser_sessions",
+        "version": "20260728164122"
+      },
+      {
+        "name": "comment_translator_custom_dictionary",
+        "version": "20260728172220"
+      },
+      {
+        "name": "comment_translator_creator_history",
+        "version": "20260729035621"
+      },
+      {
+        "name": "comment_translator_paid_v1_legacy_schema_bridge",
+        "version": "20260811000000"
+      },
+      {
+        "name": "comment_translator_paid_pg_net_extension",
+        "version": "20260814105000"
+      },
+      {
+        "version": "20260904000000",
+        "name": "comment_translator_paid_gate1_a3_canonical_convergence"
+      }
+    ],
+    "targetFingerprint": "ac49667d24515bcc7a44da7097e5143c"
+  },
+  "production": {
+    "pending34": [
+      {
+        "name": "comment_translator_real_comments_feed_snapshots",
+        "version": "20260623000000"
+      },
+      {
+        "name": "account_display_timezone_preference",
+        "version": "20260624000000"
+      },
+      {
+        "name": "comment_translator_creator_waitlist_registrations",
+        "version": "20260705000000"
+      },
+      {
+        "name": "supabase_default_privileges_guard",
+        "version": "20260706073204"
+      },
+      {
+        "name": "comment_translator_paid_v1_legacy_schema_bridge",
+        "version": "20260811000000"
+      },
+      {
+        "name": "comment_translator_paid_core_v1",
+        "version": "20260812120000"
+      },
+      {
+        "name": "comment_translator_paid_task6_circuit_probe_claim",
+        "version": "20260813130000"
+      },
+      {
+        "name": "comment_translator_paid_task6_openai_rate_retry",
+        "version": "20260813131500"
+      },
+      {
+        "name": "comment_translator_paid_task6_owned_circuit_failure",
+        "version": "20260813133000"
+      },
+      {
+        "name": "comment_translator_paid_task6_azure_billing_split",
+        "version": "20260813134500"
+      },
+      {
+        "name": "comment_translator_paid_task6_azure_uncertain_retry_compatibility",
+        "version": "20260813135500"
+      },
+      {
+        "name": "comment_translator_paid_task6_azure_uncertain_retry",
+        "version": "20260813140000"
+      },
+      {
+        "name": "comment_translator_paid_task6_circuit_success_window",
+        "version": "20260813141500"
+      },
+      {
+        "name": "comment_translator_paid_task6_openai_resume_status",
+        "version": "20260813143000"
+      },
+      {
+        "name": "comment_translator_paid_task6_terminal_openai_partial",
+        "version": "20260813144500"
+      },
+      {
+        "name": "comment_translator_paid_task6_openai_partial_receipt",
+        "version": "20260813150000"
+      },
+      {
+        "name": "comment_translator_paid_task6_terminal_openai_partial_authority",
+        "version": "20260813151500"
+      },
+      {
+        "name": "comment_translator_paid_task6_replay_circuit_authority",
+        "version": "20260813153000"
+      },
+      {
+        "name": "comment_translator_paid_task6_dispatch_and_azure_partial_settlement",
+        "version": "20260813154500"
+      },
+      {
+        "name": "comment_translator_paid_task7_runtime_authority",
+        "version": "20260814100000"
+      },
+      {
+        "name": "comment_translator_paid_pg_net_extension",
+        "version": "20260814105000"
+      },
+      {
+        "name": "comment_translator_paid_task9_retention_observability",
+        "version": "20260814110000"
+      },
+      {
+        "name": "comment_translator_paid_cron_vault_transport",
+        "version": "20260815090000"
+      },
+      {
+        "name": "comment_translator_paid_gate0a_poll_budget_rpc_repair",
+        "version": "20260818100000"
+      },
+      {
+        "name": "comment_translator_paid_gate0a_lifecycle_read_repair",
+        "version": "20260819100000"
+      },
+      {
+        "name": "comment_translator_paid_gate0a_capacity_read_repair",
+        "version": "20260819110000"
+      },
+      {
+        "name": "comment_translator_paid_gate0a_unbound_hold_recovery",
+        "version": "20260823120000"
+      },
+      {
+        "name": "comment_translator_paid_gate0a_schedule_function_privilege_repair",
+        "version": "20260823130000"
+      },
+      {
+        "name": "comment_translator_paid_gate0a_checkout_recovery_window_floor",
+        "version": "20260826100000"
+      },
+      {
+        "name": "comment_translator_paid_gate0a_recovery_floor_second_canonicalization",
+        "version": "20260826110000"
+      },
+      {
+        "name": "comment_translator_paid_checkout_expiry_finalize_lease",
+        "version": "20260827020609"
+      },
+      {
+        "name": "comment_translator_paid_task6_azure_uncertain_retry_guard_repair",
+        "version": "20260829100000"
+      },
+      {
+        "name": "comment_translator_paid_task11_message_rate_runtime_repair",
+        "version": "20260831100000"
+      },
+      {
+        "version": "20260904000000",
+        "name": "comment_translator_paid_gate1_a3_canonical_convergence"
+      }
+    ],
+    "targetFingerprint": "a1a748301ebad4c574043c136de7b300"
+  },
+  "schemaVersion": 2
+}

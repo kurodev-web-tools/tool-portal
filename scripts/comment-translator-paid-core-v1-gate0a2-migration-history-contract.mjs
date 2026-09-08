@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
+import { validateEnvironmentInventoryFixture } from "./comment-translator-paid-core-v1-gate1-migration-contract.mjs";
 
 const root = process.cwd();
 const migrationName = "20260815090000_comment_translator_paid_cron_vault_transport";
@@ -1951,6 +1952,11 @@ function intersection(left, right) {
   return sorted(left.filter((value) => rightSet.has(value)));
 }
 
+function expectedLiveRepositoryMigrationNames(fixture) {
+  const validatedFixture = validateEnvironmentInventoryFixture(fixture);
+  return validatedFixture.final56.map(({ version, name }) => `${version}_${name}`).sort();
+}
+
 assert.equal(fs.existsSync(migrationPath), true, "canonical remote-only migration source exists");
 const migrationSql = fs.readFileSync(migrationPath, "utf8");
 const planSql = extractPlanSql(fs.readFileSync(planPath, "utf8"));
@@ -2006,14 +2012,34 @@ const normalizedBody = bodyMatch[1].toLowerCase().replace(/\s+/g, "");
 const bodySemanticMd5 = crypto.createHash("md5").update(normalizedBody, "utf8").digest("hex");
 assert.equal(bodySemanticMd5, remoteFunctionBodySemanticMd5, "source body semantic hash matches the observed remote body");
 
-const currentLocalMigrations = fs
+const liveRepositoryMigrations = fs
   .readdirSync(path.join(root, "supabase", "migrations"), { withFileTypes: true })
   .filter((entry) => entry.isFile() && entry.name.endsWith(".sql"))
   .map((entry) => entry.name.slice(0, -4))
   .sort();
 const historicalSourceEraLocalMigrations = [...localBaselineMigrations, migrationName].sort();
 const expectedCurrentLocal = [...localBaselineMigrations, migrationName, ...postReconciliationLocalMigrations].sort();
-assert.deepEqual(currentLocalMigrations, expectedCurrentLocal, "current source inventory is historical baseline plus the canonical source and explicit post-reconciliation migrations");
+const currentLocalMigrations = expectedCurrentLocal;
+const environmentInventoryFixturePath = path.join(root, "scripts", "fixtures", "comment-translator-paid-core-v1-gate1-environment-inventories.json");
+const environmentInventoryFixture = JSON.parse(fs.readFileSync(environmentInventoryFixturePath, "utf8"));
+const approvedLiveRepositoryMigrations = expectedLiveRepositoryMigrationNames(environmentInventoryFixture);
+assert.equal(approvedLiveRepositoryMigrations.length, 56, "approved final56 inventory has 56 migrations");
+for (const migration of expectedCurrentLocal) {
+  assert.equal(approvedLiveRepositoryMigrations.includes(migration), true, "historical inventory remains a live final56 subset");
+}
+const inventoryMutationCases = [
+  ["missing", (fixture) => { fixture.final56 = fixture.final56.slice(0, -1); }],
+  ["duplicate", (fixture) => { fixture.final56[1] = structuredClone(fixture.final56[0]); }],
+  ["unknown", (fixture) => { fixture.final56[0] = { ...fixture.final56[0], version: "20990101000000", name: "unknown_migration" }; }],
+  ["wrong-name", (fixture) => { fixture.final56[0] = { ...fixture.final56[0], name: "wrong_name" }; }],
+  ["final55-substitution", (fixture) => { fixture.final56 = fixture.final55.map((row) => ({ ...row })); }]
+];
+for (const [label, mutate] of inventoryMutationCases) {
+  const mutatedFixture = structuredClone(environmentInventoryFixture);
+  mutate(mutatedFixture);
+  assert.throws(() => expectedLiveRepositoryMigrationNames(mutatedFixture), label);
+}
+assert.deepEqual(liveRepositoryMigrations, approvedLiveRepositoryMigrations, "current source inventory matches the approved final56 live repository inventory");
 
 assert.equal(localBaselineMigrations.length, 33, "observed local baseline has 33 migrations");
 assert.equal(historicalSourceEraLocalMigrations.length, 34, "historical source-era local inventory has 34 migrations");

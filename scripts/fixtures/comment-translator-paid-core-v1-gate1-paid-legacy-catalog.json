@@ -1,0 +1,1004 @@
+{
+  "aggregateSha256": "0ad9cccacb841932ac24a543256451ce4b04f145cb00ecb8bc758fc414ce3a47",
+  "dependencyCounts": {
+    "eventTriggers": 0,
+    "inboundForeignKeys": 0,
+    "materializedViews": 0,
+    "outsideFunctionSourceReferences": 0,
+    "policies": 3,
+    "publications": 0,
+    "rules": 0,
+    "unexpectedPgDependEdges": 35,
+    "userTriggers": 1,
+    "views": 0
+  },
+  "functions": [
+    {
+      "acls": [
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.apply_comment_translator_paid_entitlement_evidence(p_billing_user_reference_id text, p_stripe_customer_reference_id text, p_stripe_subscription_reference_id text, p_subscription_status text, p_billing_state text, p_current_period_end timestamp with time zone, p_evidence_event_reference_id text, p_evidence_created_at timestamp with time zone, p_evidence_recorded_at timestamp with time zone)",
+          "objectKind": "function",
+          "privilege": "EXECUTE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.apply_comment_translator_paid_entitlement_evidence(p_billing_user_reference_id text, p_stripe_customer_reference_id text, p_stripe_subscription_reference_id text, p_subscription_status text, p_billing_state text, p_current_period_end timestamp with time zone, p_evidence_event_reference_id text, p_evidence_created_at timestamp with time zone, p_evidence_recorded_at timestamp with time zone)",
+          "objectKind": "function",
+          "privilege": "EXECUTE",
+          "schema": "public"
+        }
+      ],
+      "config": [
+        "search_path=public"
+      ],
+      "definitionMd5": "91c3e836f1a13e3d04ad7cac0d126dcd",
+      "identityArguments": "p_billing_user_reference_id text, p_stripe_customer_reference_id text, p_stripe_subscription_reference_id text, p_subscription_status text, p_billing_state text, p_current_period_end timestamp with time zone, p_evidence_event_reference_id text, p_evidence_created_at timestamp with time zone, p_evidence_recorded_at timestamp with time zone",
+      "name": "apply_comment_translator_paid_entitlement_evidence",
+      "owner": "postgres",
+      "resultType": "boolean",
+      "schema": "public",
+      "securityDefiner": true
+    },
+    {
+      "acls": [
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.apply_comment_translator_paid_usage(p_billing_user_reference_id text, p_expected_period_end timestamp with time zone, p_usage_event_reference_id text, p_occurred_at timestamp with time zone, p_translated_message_count bigint, p_provider_input_character_count bigint, p_estimated_cost_micros bigint)",
+          "objectKind": "function",
+          "privilege": "EXECUTE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.apply_comment_translator_paid_usage(p_billing_user_reference_id text, p_expected_period_end timestamp with time zone, p_usage_event_reference_id text, p_occurred_at timestamp with time zone, p_translated_message_count bigint, p_provider_input_character_count bigint, p_estimated_cost_micros bigint)",
+          "objectKind": "function",
+          "privilege": "EXECUTE",
+          "schema": "public"
+        }
+      ],
+      "config": [
+        "search_path=public"
+      ],
+      "definitionMd5": "6662dde7f0e5bb1f555f91081799c43b",
+      "identityArguments": "p_billing_user_reference_id text, p_expected_period_end timestamp with time zone, p_usage_event_reference_id text, p_occurred_at timestamp with time zone, p_translated_message_count bigint, p_provider_input_character_count bigint, p_estimated_cost_micros bigint",
+      "name": "apply_comment_translator_paid_usage",
+      "owner": "postgres",
+      "resultType": "text",
+      "schema": "public",
+      "securityDefiner": true
+    },
+    {
+      "acls": [
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.sync_comment_translator_paid_usage_from_entitlement()",
+          "objectKind": "function",
+          "privilege": "EXECUTE",
+          "schema": "public"
+        }
+      ],
+      "config": [
+        "search_path=public"
+      ],
+      "definitionMd5": "58e92fd3410f7be6e00e57ddc84b3bef",
+      "identityArguments": "",
+      "name": "sync_comment_translator_paid_usage_from_entitlement",
+      "owner": "postgres",
+      "resultType": "trigger",
+      "schema": "public",
+      "securityDefiner": true
+    }
+  ],
+  "schemaVersion": 1,
+  "tables": [
+    {
+      "acls": [
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_entitlements",
+          "objectKind": "table",
+          "privilege": "DELETE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_entitlements",
+          "objectKind": "table",
+          "privilege": "INSERT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_entitlements",
+          "objectKind": "table",
+          "privilege": "MAINTAIN",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_entitlements",
+          "objectKind": "table",
+          "privilege": "REFERENCES",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_entitlements",
+          "objectKind": "table",
+          "privilege": "SELECT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_entitlements",
+          "objectKind": "table",
+          "privilege": "TRIGGER",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_entitlements",
+          "objectKind": "table",
+          "privilege": "TRUNCATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_entitlements",
+          "objectKind": "table",
+          "privilege": "UPDATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_entitlements",
+          "objectKind": "table",
+          "privilege": "DELETE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_entitlements",
+          "objectKind": "table",
+          "privilege": "INSERT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_entitlements",
+          "objectKind": "table",
+          "privilege": "MAINTAIN",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_entitlements",
+          "objectKind": "table",
+          "privilege": "REFERENCES",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_entitlements",
+          "objectKind": "table",
+          "privilege": "SELECT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_entitlements",
+          "objectKind": "table",
+          "privilege": "TRIGGER",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_entitlements",
+          "objectKind": "table",
+          "privilege": "TRUNCATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_entitlements",
+          "objectKind": "table",
+          "privilege": "UPDATE",
+          "schema": "public"
+        }
+      ],
+      "columns": [
+        {
+          "defaultDefinition": null,
+          "name": "billing_user_reference_id",
+          "notNull": true,
+          "ordinal": 1,
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "stripe_customer_reference_id",
+          "notNull": false,
+          "ordinal": 2,
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "stripe_subscription_reference_id",
+          "notNull": false,
+          "ordinal": 3,
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "subscription_status",
+          "notNull": true,
+          "ordinal": 4,
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "billing_state",
+          "notNull": true,
+          "ordinal": 5,
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "current_period_end",
+          "notNull": false,
+          "ordinal": 6,
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": "'signed-stripe-webhook'::text",
+          "name": "evidence_source",
+          "notNull": true,
+          "ordinal": 7,
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "evidence_event_reference_id",
+          "notNull": true,
+          "ordinal": 8,
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "evidence_created_at",
+          "notNull": true,
+          "ordinal": 9,
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "evidence_recorded_at",
+          "notNull": true,
+          "ordinal": 10,
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": "now()",
+          "name": "created_at",
+          "notNull": true,
+          "ordinal": 11,
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "updated_at",
+          "notNull": true,
+          "ordinal": 12,
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements",
+          "type": "timestamp with time zone"
+        }
+      ],
+      "constraints": [
+        {
+          "definition": "CHECK (billing_state <> 'paid-active'::text OR stripe_customer_reference_id IS NOT NULL AND stripe_subscription_reference_id IS NOT NULL AND current_period_end IS NOT NULL)",
+          "name": "comment_translator_paid_entitlements_active_references_check",
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements",
+          "type": "c"
+        },
+        {
+          "definition": "CHECK (billing_state = 'paid-inactive'::text OR (subscription_status = ANY (ARRAY['active'::text, 'trialing'::text])) AND billing_state = 'paid-active'::text)",
+          "name": "comment_translator_paid_entitlements_active_state_check",
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements",
+          "type": "c"
+        },
+        {
+          "definition": "CHECK (billing_user_reference_id ~ '^ctbill_[a-f0-9]{24}$'::text)",
+          "name": "comment_translator_paid_entitlements_billing_reference_check",
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements",
+          "type": "c"
+        },
+        {
+          "definition": "CHECK (billing_state = ANY (ARRAY['paid-active'::text, 'paid-inactive'::text]))",
+          "name": "comment_translator_paid_entitlements_billing_state_check",
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements",
+          "type": "c"
+        },
+        {
+          "definition": "CHECK (evidence_source = 'signed-stripe-webhook'::text)",
+          "name": "comment_translator_paid_entitlements_evidence_source_check",
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements",
+          "type": "c"
+        },
+        {
+          "definition": "PRIMARY KEY (billing_user_reference_id)",
+          "name": "comment_translator_paid_entitlements_pkey",
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements",
+          "type": "p"
+        },
+        {
+          "definition": "CHECK (subscription_status = ANY (ARRAY['active'::text, 'trialing'::text, 'past_due'::text, 'unpaid'::text, 'canceled'::text, 'incomplete'::text, 'incomplete_expired'::text, 'paused'::text]))",
+          "name": "comment_translator_paid_entitlements_subscription_status_check",
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements",
+          "type": "c"
+        }
+      ],
+      "indexes": [
+        {
+          "definition": "CREATE UNIQUE INDEX comment_translator_paid_entitlements_customer_key ON comment_translator_paid_entitlements USING btree (stripe_customer_reference_id) WHERE stripe_customer_reference_id IS NOT NULL",
+          "name": "comment_translator_paid_entitlements_customer_key",
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements"
+        },
+        {
+          "definition": "CREATE UNIQUE INDEX comment_translator_paid_entitlements_evidence_event_key ON comment_translator_paid_entitlements USING btree (evidence_event_reference_id)",
+          "name": "comment_translator_paid_entitlements_evidence_event_key",
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements"
+        },
+        {
+          "definition": "CREATE UNIQUE INDEX comment_translator_paid_entitlements_pkey ON comment_translator_paid_entitlements USING btree (billing_user_reference_id)",
+          "name": "comment_translator_paid_entitlements_pkey",
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements"
+        },
+        {
+          "definition": "CREATE UNIQUE INDEX comment_translator_paid_entitlements_subscription_key ON comment_translator_paid_entitlements USING btree (stripe_subscription_reference_id) WHERE stripe_subscription_reference_id IS NOT NULL",
+          "name": "comment_translator_paid_entitlements_subscription_key",
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements"
+        }
+      ],
+      "name": "comment_translator_paid_entitlements",
+      "owner": "postgres",
+      "policies": [
+        {
+          "checkDefinition": "true",
+          "command": "ALL",
+          "name": "comment_translator_paid_entitlements_service_role_all",
+          "permissive": true,
+          "roles": [
+            "service_role"
+          ],
+          "schema": "public",
+          "table": "comment_translator_paid_entitlements",
+          "usingDefinition": "true"
+        }
+      ],
+      "rlsEnabled": true,
+      "rowCount": 0,
+      "schema": "public"
+    },
+    {
+      "acls": [
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_usage_counters",
+          "objectKind": "table",
+          "privilege": "DELETE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_usage_counters",
+          "objectKind": "table",
+          "privilege": "INSERT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_usage_counters",
+          "objectKind": "table",
+          "privilege": "MAINTAIN",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_usage_counters",
+          "objectKind": "table",
+          "privilege": "REFERENCES",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_usage_counters",
+          "objectKind": "table",
+          "privilege": "SELECT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_usage_counters",
+          "objectKind": "table",
+          "privilege": "TRIGGER",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_usage_counters",
+          "objectKind": "table",
+          "privilege": "TRUNCATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_usage_counters",
+          "objectKind": "table",
+          "privilege": "UPDATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_usage_counters",
+          "objectKind": "table",
+          "privilege": "DELETE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_usage_counters",
+          "objectKind": "table",
+          "privilege": "INSERT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_usage_counters",
+          "objectKind": "table",
+          "privilege": "MAINTAIN",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_usage_counters",
+          "objectKind": "table",
+          "privilege": "REFERENCES",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_usage_counters",
+          "objectKind": "table",
+          "privilege": "SELECT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_usage_counters",
+          "objectKind": "table",
+          "privilege": "TRIGGER",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_usage_counters",
+          "objectKind": "table",
+          "privilege": "TRUNCATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_usage_counters",
+          "objectKind": "table",
+          "privilege": "UPDATE",
+          "schema": "public"
+        }
+      ],
+      "columns": [
+        {
+          "defaultDefinition": null,
+          "name": "billing_user_reference_id",
+          "notNull": true,
+          "ordinal": 1,
+          "schema": "public",
+          "table": "comment_translator_paid_usage_counters",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "current_period_end",
+          "notNull": true,
+          "ordinal": 2,
+          "schema": "public",
+          "table": "comment_translator_paid_usage_counters",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "reset_evidence_created_at",
+          "notNull": true,
+          "ordinal": 3,
+          "schema": "public",
+          "table": "comment_translator_paid_usage_counters",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": "0",
+          "name": "translated_message_count",
+          "notNull": true,
+          "ordinal": 4,
+          "schema": "public",
+          "table": "comment_translator_paid_usage_counters",
+          "type": "bigint"
+        },
+        {
+          "defaultDefinition": "0",
+          "name": "provider_input_character_count",
+          "notNull": true,
+          "ordinal": 5,
+          "schema": "public",
+          "table": "comment_translator_paid_usage_counters",
+          "type": "bigint"
+        },
+        {
+          "defaultDefinition": "0",
+          "name": "estimated_cost_micros",
+          "notNull": true,
+          "ordinal": 6,
+          "schema": "public",
+          "table": "comment_translator_paid_usage_counters",
+          "type": "bigint"
+        },
+        {
+          "defaultDefinition": "now()",
+          "name": "created_at",
+          "notNull": true,
+          "ordinal": 7,
+          "schema": "public",
+          "table": "comment_translator_paid_usage_counters",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "updated_at",
+          "notNull": true,
+          "ordinal": 8,
+          "schema": "public",
+          "table": "comment_translator_paid_usage_counters",
+          "type": "timestamp with time zone"
+        }
+      ],
+      "constraints": [
+        {
+          "definition": "CHECK (provider_input_character_count >= 0)",
+          "name": "comment_translator_paid_usag_provider_input_character_cou_check",
+          "schema": "public",
+          "table": "comment_translator_paid_usage_counters",
+          "type": "c"
+        },
+        {
+          "definition": "FOREIGN KEY (billing_user_reference_id) REFERENCES comment_translator_paid_entitlements(billing_user_reference_id) ON DELETE CASCADE",
+          "name": "comment_translator_paid_usage_co_billing_user_reference_id_fkey",
+          "schema": "public",
+          "table": "comment_translator_paid_usage_counters",
+          "type": "f"
+        },
+        {
+          "definition": "CHECK (translated_message_count >= 0)",
+          "name": "comment_translator_paid_usage_co_translated_message_count_check",
+          "schema": "public",
+          "table": "comment_translator_paid_usage_counters",
+          "type": "c"
+        },
+        {
+          "definition": "CHECK (estimated_cost_micros >= 0)",
+          "name": "comment_translator_paid_usage_count_estimated_cost_micros_check",
+          "schema": "public",
+          "table": "comment_translator_paid_usage_counters",
+          "type": "c"
+        },
+        {
+          "definition": "CHECK (reset_evidence_created_at < current_period_end)",
+          "name": "comment_translator_paid_usage_counter_period_check",
+          "schema": "public",
+          "table": "comment_translator_paid_usage_counters",
+          "type": "c"
+        },
+        {
+          "definition": "PRIMARY KEY (billing_user_reference_id)",
+          "name": "comment_translator_paid_usage_counters_pkey",
+          "schema": "public",
+          "table": "comment_translator_paid_usage_counters",
+          "type": "p"
+        }
+      ],
+      "indexes": [
+        {
+          "definition": "CREATE UNIQUE INDEX comment_translator_paid_usage_counters_pkey ON comment_translator_paid_usage_counters USING btree (billing_user_reference_id)",
+          "name": "comment_translator_paid_usage_counters_pkey",
+          "schema": "public",
+          "table": "comment_translator_paid_usage_counters"
+        }
+      ],
+      "name": "comment_translator_paid_usage_counters",
+      "owner": "postgres",
+      "policies": [
+        {
+          "checkDefinition": "true",
+          "command": "ALL",
+          "name": "comment_translator_paid_usage_counters_service_role_all",
+          "permissive": true,
+          "roles": [
+            "service_role"
+          ],
+          "schema": "public",
+          "table": "comment_translator_paid_usage_counters",
+          "usingDefinition": "true"
+        }
+      ],
+      "rlsEnabled": true,
+      "rowCount": 0,
+      "schema": "public"
+    },
+    {
+      "acls": [
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_usage_events",
+          "objectKind": "table",
+          "privilege": "DELETE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_usage_events",
+          "objectKind": "table",
+          "privilege": "INSERT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_usage_events",
+          "objectKind": "table",
+          "privilege": "MAINTAIN",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_usage_events",
+          "objectKind": "table",
+          "privilege": "REFERENCES",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_usage_events",
+          "objectKind": "table",
+          "privilege": "SELECT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_usage_events",
+          "objectKind": "table",
+          "privilege": "TRIGGER",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_usage_events",
+          "objectKind": "table",
+          "privilege": "TRUNCATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "postgres",
+          "objectIdentity": "public.comment_translator_paid_usage_events",
+          "objectKind": "table",
+          "privilege": "UPDATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_usage_events",
+          "objectKind": "table",
+          "privilege": "DELETE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_usage_events",
+          "objectKind": "table",
+          "privilege": "INSERT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_usage_events",
+          "objectKind": "table",
+          "privilege": "MAINTAIN",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_usage_events",
+          "objectKind": "table",
+          "privilege": "REFERENCES",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_usage_events",
+          "objectKind": "table",
+          "privilege": "SELECT",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_usage_events",
+          "objectKind": "table",
+          "privilege": "TRIGGER",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_usage_events",
+          "objectKind": "table",
+          "privilege": "TRUNCATE",
+          "schema": "public"
+        },
+        {
+          "grantable": false,
+          "grantee": "service_role",
+          "objectIdentity": "public.comment_translator_paid_usage_events",
+          "objectKind": "table",
+          "privilege": "UPDATE",
+          "schema": "public"
+        }
+      ],
+      "columns": [
+        {
+          "defaultDefinition": null,
+          "name": "usage_event_reference_id",
+          "notNull": true,
+          "ordinal": 1,
+          "schema": "public",
+          "table": "comment_translator_paid_usage_events",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "billing_user_reference_id",
+          "notNull": true,
+          "ordinal": 2,
+          "schema": "public",
+          "table": "comment_translator_paid_usage_events",
+          "type": "text"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "current_period_end",
+          "notNull": true,
+          "ordinal": 3,
+          "schema": "public",
+          "table": "comment_translator_paid_usage_events",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "occurred_at",
+          "notNull": true,
+          "ordinal": 4,
+          "schema": "public",
+          "table": "comment_translator_paid_usage_events",
+          "type": "timestamp with time zone"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "translated_message_count",
+          "notNull": true,
+          "ordinal": 5,
+          "schema": "public",
+          "table": "comment_translator_paid_usage_events",
+          "type": "bigint"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "provider_input_character_count",
+          "notNull": true,
+          "ordinal": 6,
+          "schema": "public",
+          "table": "comment_translator_paid_usage_events",
+          "type": "bigint"
+        },
+        {
+          "defaultDefinition": null,
+          "name": "estimated_cost_micros",
+          "notNull": true,
+          "ordinal": 7,
+          "schema": "public",
+          "table": "comment_translator_paid_usage_events",
+          "type": "bigint"
+        },
+        {
+          "defaultDefinition": "now()",
+          "name": "created_at",
+          "notNull": true,
+          "ordinal": 8,
+          "schema": "public",
+          "table": "comment_translator_paid_usage_events",
+          "type": "timestamp with time zone"
+        }
+      ],
+      "constraints": [
+        {
+          "definition": "CHECK (provider_input_character_count >= 0)",
+          "name": "comment_translator_paid_usag_provider_input_character_co_check1",
+          "schema": "public",
+          "table": "comment_translator_paid_usage_events",
+          "type": "c"
+        },
+        {
+          "definition": "FOREIGN KEY (billing_user_reference_id) REFERENCES comment_translator_paid_usage_counters(billing_user_reference_id) ON DELETE CASCADE",
+          "name": "comment_translator_paid_usage_ev_billing_user_reference_id_fkey",
+          "schema": "public",
+          "table": "comment_translator_paid_usage_events",
+          "type": "f"
+        },
+        {
+          "definition": "CHECK (translated_message_count >= 0)",
+          "name": "comment_translator_paid_usage_ev_translated_message_count_check",
+          "schema": "public",
+          "table": "comment_translator_paid_usage_events",
+          "type": "c"
+        },
+        {
+          "definition": "CHECK (estimated_cost_micros >= 0)",
+          "name": "comment_translator_paid_usage_event_estimated_cost_micros_check",
+          "schema": "public",
+          "table": "comment_translator_paid_usage_events",
+          "type": "c"
+        },
+        {
+          "definition": "CHECK (usage_event_reference_id ~ '^ctpue_[a-f0-9]{24}$'::text)",
+          "name": "comment_translator_paid_usage_event_reference_check",
+          "schema": "public",
+          "table": "comment_translator_paid_usage_events",
+          "type": "c"
+        },
+        {
+          "definition": "PRIMARY KEY (usage_event_reference_id)",
+          "name": "comment_translator_paid_usage_events_pkey",
+          "schema": "public",
+          "table": "comment_translator_paid_usage_events",
+          "type": "p"
+        }
+      ],
+      "indexes": [
+        {
+          "definition": "CREATE UNIQUE INDEX comment_translator_paid_usage_events_pkey ON comment_translator_paid_usage_events USING btree (usage_event_reference_id)",
+          "name": "comment_translator_paid_usage_events_pkey",
+          "schema": "public",
+          "table": "comment_translator_paid_usage_events"
+        }
+      ],
+      "name": "comment_translator_paid_usage_events",
+      "owner": "postgres",
+      "policies": [
+        {
+          "checkDefinition": "true",
+          "command": "ALL",
+          "name": "comment_translator_paid_usage_events_service_role_all",
+          "permissive": true,
+          "roles": [
+            "service_role"
+          ],
+          "schema": "public",
+          "table": "comment_translator_paid_usage_events",
+          "usingDefinition": "true"
+        }
+      ],
+      "rlsEnabled": true,
+      "rowCount": 0,
+      "schema": "public"
+    }
+  ],
+  "triggers": [
+    {
+      "definition": "CREATE TRIGGER comment_translator_paid_usage_sync_from_entitlement AFTER INSERT OR UPDATE OF billing_state, current_period_end, evidence_created_at, evidence_recorded_at ON comment_translator_paid_entitlements FOR EACH ROW EXECUTE FUNCTION sync_comment_translator_paid_usage_from_entitlement()",
+      "enabled": true,
+      "functionIdentity": "public.sync_comment_translator_paid_usage_from_entitlement()",
+      "name": "comment_translator_paid_usage_sync_from_entitlement",
+      "tableName": "comment_translator_paid_entitlements",
+      "tableSchema": "public"
+    }
+  ]
+}

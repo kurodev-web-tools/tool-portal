@@ -282,7 +282,6 @@ function edgeKey(edge) {
 function assertEdgeArray(rows, reason) {
   if (!Array.isArray(rows)) fail(reason);
   let previous = null;
-  const seen = new Set();
   for (const edge of rows) {
     if (!exactKeys(edge, EDGE_KEYS)
       || typeof edge.classid !== "string" || !SAFE_CLASS_NAME.test(edge.classid)
@@ -293,8 +292,10 @@ function assertEdgeArray(rows, reason) {
     assertEndpoint(edge.dependent, reason);
     assertEndpoint(edge.referenced, reason);
     const key = edgeKey(edge);
-    if (seen.has(key) || (previous !== null && compareLexical(previous, key) >= 0)) fail(reason);
-    seen.add(key);
+    // pg_depend can contain repeated complete addresses. Preserve their
+    // multiplicity: the final exact-array comparison rejects extra or missing
+    // occurrences against the independently bound expectations.
+    if (previous !== null && compareLexical(previous, key) > 0) fail(reason);
     previous = key;
   }
 }

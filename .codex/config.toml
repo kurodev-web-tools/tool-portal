@@ -2,11 +2,9 @@
 
 model_verbosity = "low"
 
-model = "gpt-5.6-luna"
-model_reasoning_effort = "max"
-plan_mode_reasoning_effort = "high"
+model = "gpt-6-astra"
+model_reasoning_effort = "low"
+plan_mode_reasoning_effort = "low"
 
 [agents]
-enabled = true
-max_concurrent_threads_per_session = 2
-interrupt_message = true
+enabled = false

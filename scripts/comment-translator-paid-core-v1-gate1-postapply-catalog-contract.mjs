@@ -5,7 +5,7 @@ import path from "node:path";
 import {
   CANONICAL_TABLE_NAMES
 } from "./lib/comment-translator-paid-core-v1-gate1-catalog.mjs";
-import { comparePostApplyCatalog } from "./lib/comment-translator-paid-core-v1-gate1-postapply-catalog.mjs";
+import { comparePostApplyCatalog, inspectPostApplyCatalogArtifact } from "./lib/comment-translator-paid-core-v1-gate1-postapply-catalog.mjs";
 
 const ROOT = process.cwd();
 const ARCHIVE_SCHEMA = "comment_translator_paid_legacy_archive";
@@ -431,6 +431,35 @@ function runMetadataCases(base) {
 }
 
 function runEdgeCases(base) {
+  // PostgreSQL may store the same complete dependency address more than once
+  // (for example, an index key also referenced by its partial predicate).
+  // Keep every occurrence; compare against the independently bound multiset.
+  const repeated = clone(base);
+  for (const location of [repeated.artifact, repeated.expectations]) {
+    for (const rows of Object.values(location.pgDependEdges)) {
+      if (rows.length > 0) rows.splice(0, 0, clone(rows[0]));
+    }
+  }
+  assert.equal(inspectPostApplyCatalogArtifact(repeated.artifact).status, "POSTAPPLY_CATALOG_SHAPE_VALID", "native repeated dependency rows retain a valid shape");
+  assertMatch(repeated, "identical dependency multiplicities");
+  for (const scope of Object.keys(repeated.artifact.pgDependEdges)) {
+    if (repeated.artifact.pgDependEdges[scope].length === 0) continue;
+    for (const side of ["artifact", "expectations"]) {
+      assertMismatch(mutate(repeated, side, (value) => {
+        value.pgDependEdges[scope].shift();
+      }), `${side} ${scope} missing repeated edge`, "pg-depend-edge-mismatch");
+      assertMismatch(mutate(repeated, side, (value) => {
+        value.pgDependEdges[scope].splice(0, 0, clone(value.pgDependEdges[scope][0]));
+      }), `${side} ${scope} extra repeated edge`, "pg-depend-edge-mismatch");
+      if (repeated[side].pgDependEdges[scope].length > 2) {
+        assertMismatch(mutate(repeated, side, (value) => {
+          const rows = value.pgDependEdges[scope];
+          rows.shift();
+          rows.push(clone(rows.at(-1)));
+        }), `${side} ${scope} same count different multiplicities`, "pg-depend-edge-mismatch");
+      }
+    }
+  }
   assertMismatch(mutate(base, "artifact", (artifact) => {
     artifact.pgDependEdges.canonical[0].dependent.identity = "public.replaced";
   }), "same count edge identity replacement", "pg-depend-edge-mismatch");

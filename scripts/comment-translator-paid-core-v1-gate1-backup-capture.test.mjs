@@ -37,7 +37,8 @@ function fixture(options = {}) {
       child.stdin = new Writable({ write(chunk, encoding, cb) {
         const text = chunk.toString(); cb();
         if (command === 'psql' && text.includes('BEGIN ISOLATION')) queueMicrotask(() => child.stdout.write(JSON.stringify({ serverMajor: 17,
-          t0: new Date().toISOString(), snapshot: '00000003-00000009-1', transactionReadOnly: 'on', transactionIsolation: 'repeatable read' }) + '\n'));
+          t0: new Date().toISOString(), snapshot: '00000003-00000009-1', transactionReadOnly: 'on', transactionIsolation: 'repeatable read',
+          vectorCounts: options.vectorCounts ?? { 'storage.buckets_vectors': 0, 'storage.vector_indexes': 0 } }) + '\n'));
         if (text === 'COMMIT;\n') { actions.push('commit'); queueMicrotask(() => child.finish(options.commitFailure ? 1 : 0)); }
       } });
       if (command !== 'psql') queueMicrotask(() => {
@@ -87,11 +88,28 @@ test('five captures, four identical snapshots, exact six-stage output and clean 
   }
   assert.ok(dumps[0].args.includes('auth')); assert.ok(!dumps[1].args.includes('auth'));
   assert.ok(dumps[1].args.includes('auth.schema_migrations'));
+  for (const table of ['storage.buckets_vectors', 'storage.vector_indexes']) {
+    assert.equal(dumps[1].args[dumps[1].args.indexOf(table) - 1], '--exclude-table');
+    assert.ok(dumps.filter((_, i) => i !== 1).every(x => !x.args.includes(table)));
+  }
+  assert.deepEqual(JSON.parse(JSON.stringify(result.evidence.vectorExclusion)), { snapshotSha256: hash('00000003-00000009-1'),
+    counts: { 'storage.buckets_vectors': 0, 'storage.vector_indexes': 0 } });
   assert.equal(result.artifacts[3].sql, 'SET session_replication_role = replica;\n\n' + data + '\nRESET ALL;\n');
   for (const item of result.artifacts) { assert.equal(item.sha256, hash(item.sql)); assert.equal(item.bytes, Buffer.byteLength(item.sql)); }
   assert.equal(result.evidence.rawHashes.data, hash(data));
   assert.equal(result.evidence.status, 'CAPTURED_NOT_PERSISTED');
   assert.ok(f.children.every(x => x.closed)); assert.equal(f.timers.size, 0);
+});
+
+test('nonempty or incomplete native vector counts stop before the four dumps despite caller zero claims', async () => {
+  for (const vectorCounts of [{}, { 'storage.buckets_vectors': 0 },
+    { 'storage.buckets_vectors': 1, 'storage.vector_indexes': 0 },
+    { 'storage.buckets_vectors': 0, 'storage.vector_indexes': 1 }]) {
+    const f = fixture({ vectorCounts });
+    await assert.rejects(f.capture.run({ ...input(), requireEmptyVectorTables: false, vectorCounts: { 'storage.buckets_vectors': 0, 'storage.vector_indexes': 0 } }), /SNAPSHOT_METADATA_INVALID/);
+    assert.ok(!f.actions.includes('pg_dump')); assert.ok(!f.actions.includes('commit'));
+    assert.ok(f.children.every(x => x.closed)); assert.equal(f.timers.size, 0);
+  }
 });
 test('each failed snapshot dump stops before commit and closes exporter', async () => {
   for (const failDump of [1, 2, 3, 4]) {

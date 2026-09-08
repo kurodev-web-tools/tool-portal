@@ -146,9 +146,10 @@ function postApply(stage, values, bundle, sourceObservation) {
 }
 
 function validState(s) {
-  require(keys(s, ['historyCount', 'historySha256', 'rowCounts', 'authUsers', 'authForeignKeysSha256', 'grantsRlsSha256', 'legacyRows', 'vaultRows', 'storageObjects']));
+  require(keys(s, ['historyCount', 'historySha256', 'rowCounts', 'authUsers', 'authForeignKeysSha256', 'grantsRlsSha256', 'legacyRows', 'vaultRows', 'storageObjects', 'vectorCounts']));
   require(Number.isSafeInteger(s.historyCount) && s.historyCount > 0 && sha(s.historySha256) && sha(s.authForeignKeysSha256) && sha(s.grantsRlsSha256));
   require(count(s.authUsers) && s.legacyRows === 0 && s.vaultRows === 0 && s.storageObjects === 0);
+  zero(s.vectorCounts, ['storage.buckets_vectors', 'storage.vector_indexes']);
   require(Array.isArray(s.rowCounts) && s.rowCounts.length > 0);
   let previous = '';
   for (const row of s.rowCounts) {
@@ -166,8 +167,10 @@ function backup(stage, values, bundle, policy) {
   // Successful dump hashes alone do not establish a usable recovery set.
   // The authority-bound stage includes the completed restricted persistence.
   require(stage !== 'finalBackup' || time(d.completedAt) <= t0 + 300000);
-  require(keys(o.exporter, ['isolation', 'readOnly', 'serverMajor', 'closedAt', 'exitCode', 'captureComplete', 'stderrBytes']));
+  require(keys(o.exporter, ['isolation', 'readOnly', 'serverMajor', 'closedAt', 'exitCode', 'captureComplete', 'stderrBytes', 'vectorExclusion']));
   require(o.exporter.isolation === 'repeatable read' && o.exporter.readOnly === true && o.exporter.serverMajor === 17 && o.exporter.exitCode === 0 && o.exporter.captureComplete === true && o.exporter.stderrBytes === 0);
+  require(keys(o.exporter.vectorExclusion, ['snapshotSha256', 'counts']) && o.exporter.vectorExclusion.snapshotSha256 === o.snapshotSha256);
+  zero(o.exporter.vectorExclusion.counts, ['storage.buckets_vectors', 'storage.vector_indexes']);
   require(within(o.exporter.closedAt, d) >= complete);
   require(Array.isArray(o.dumps) && o.dumps.length === 5);
   o.dumps.forEach((r, i) => {

@@ -52,6 +52,7 @@ $script:PostRestoreAssertions = @(
     "aggregate_row_counts",
     "auth_dependencies_and_user_count",
     "storage_object_count_zero",
+    "storage_vector_table_counts_zero",
     "grants_and_rls",
     "bridge_and_canonical_replay",
     "local_only_endpoint"
@@ -334,6 +335,19 @@ function New-CommandPlan {
     }
     Assert-SafeToken $Snapshot
 
+    foreach ($table in @('storage.buckets_vectors', 'storage.vector_indexes')) {
+        $vectorFilterMatches = 0
+        for ($index = 0; $index -lt @($ReviewedDataFilterArguments).Count; $index++) {
+            if ($ReviewedDataFilterArguments[$index] -ceq $table) {
+                if ($index -eq 0 -or $ReviewedDataFilterArguments[$index - 1] -cne '--exclude-table') {
+                    throw "VECTOR_EXCLUSION_FILTER_INVALID"
+                }
+                $vectorFilterMatches++
+            }
+        }
+        if ($vectorFilterMatches -ne 1) { throw "VECTOR_EXCLUSION_FILTER_INVALID" }
+    }
+
     $actualRolesPath = Join-Path $ArtifactDirectory "roles.sql"
     $actualSchemaPath = Join-Path $ArtifactDirectory "schema.sql"
     $actualAuthStoragePath = Join-Path $ArtifactDirectory "auth_storage_changes.sql"
@@ -416,6 +430,13 @@ function Assert-CommandPlanShape {
     if (($Plan.roles -join " ") -ne "--roles-only --role=postgres --quote-all-identifiers --no-role-passwords --no-comments --no-password --file [restricted]/roles.sql") {
         throw "ROLES_ARRAY_INVALID"
     }
+    foreach ($table in @('storage.buckets_vectors', 'storage.vector_indexes')) {
+        $index = [array]::IndexOf(@($Plan.data), $table)
+        if (@($Plan.data | Where-Object { $_ -ceq $table }).Count -ne 1 -or
+            $index -lt 1 -or $Plan.data[$index - 1] -cne '--exclude-table') {
+            throw "VECTOR_EXCLUSION_FILTER_INVALID"
+        }
+    }
     foreach ($name in @("schema", "data", "historySchema", "historyData")) {
         Assert-NativePgDumpCopyArguments @($Plan[$name])
     }
@@ -447,7 +468,8 @@ function Assert-CommandPlanShape {
 function New-SnapshotTransactionModel {
     return [ordered]@{
         begin = "BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;"
-        export = "SELECT transaction_timestamp(), pg_export_snapshot();"
+        export = "SET LOCAL row_security = off; SELECT transaction_timestamp(), pg_export_snapshot(), (SELECT count(*) FROM storage.buckets_vectors), (SELECT count(*) FROM storage.vector_indexes);"
+        vector_exclusion_requirement = "both-existing-empty-in-exported-snapshot"
         held_until = "after_all_four_snapshot_dumps_exit_zero"
         commit_condition = "all_four_snapshot_bound_dumps_exit_zero"
         failure_action = "rollback_and_never_accept"
@@ -938,7 +960,7 @@ function Assert-Contract {
     ) "RESTORE_ORDER_INVALID"
     Assert-ContractEqual $script:SnapshotDumpNames @("schema", "data", "history_schema", "history_data") "SNAPSHOT_DUMPS_INVALID"
 
-    $plan = New-CommandPlan -ReviewedFilterArguments @("--schema", "public") -ReviewedDataFilterArguments @("--schema", "*") -ArtifactDirectory ([IO.Path]::GetTempPath()) -Snapshot "synthetic-snapshot-token"
+    $plan = New-CommandPlan -ReviewedFilterArguments @("--schema", "public") -ReviewedDataFilterArguments @("--exclude-table", "storage.buckets_vectors", "--exclude-table", "storage.vector_indexes", "--schema", "*") -ArtifactDirectory ([IO.Path]::GetTempPath()) -Snapshot "synthetic-snapshot-token"
     if ($plan.supabase -join " " -ne "db dump --linked --dry-run") { throw "DISCOVERY_ARRAY_INVALID" }
     if ($plan.authStorageDiff[0] -ne "db" -or $plan.authStorageDiff[1] -ne "diff" -or $plan.authStorageDiff[2] -ne "--linked") { throw "AUTH_STORAGE_ARRAY_INVALID" }
     if ($plan.roles -join " " -ne "--roles-only --role=postgres --quote-all-identifiers --no-role-passwords --no-comments --no-password --file [restricted]/roles.sql") { throw "ROLES_ARRAY_INVALID" }

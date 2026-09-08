@@ -90,6 +90,32 @@ test('native version must be complete strict UTF8 PostgreSQL17 before session sp
     assert.equal(f.children.length, 0);
   }
 });
+
+test('vector exclusion guard is observed in the exporter transaction and cannot use caller counts', async () => {
+  const vectorCounts = { 'storage.buckets_vectors': 0, 'storage.vector_indexes': 0 };
+  const f = fixture({ payload: Buffer.from(JSON.stringify({ ...metadata(), vectorCounts }) + '\n') });
+  const session = await f.transport.open({ ...input(), requireEmptyVectorTables: true });
+  const sql = f.children[0].inputs[0];
+  assert.match(sql, /SELECT count\(\*\) FROM storage\.buckets_vectors/);
+  assert.match(sql, /SELECT count\(\*\) FROM storage\.vector_indexes/);
+  assert.match(sql, /statement_timeout = '10000ms'/);
+  assert.match(sql, /SET LOCAL row_security = off;/);
+  assert.equal((sql.match(/BEGIN ISOLATION/g) ?? []).length, 1);
+  assert.deepEqual({ ...session.vectorCounts }, vectorCounts);
+  assert.equal(Object.isFrozen(session.vectorCounts), true);
+  assert.equal(session.snapshot, metadata().snapshot);
+  await session.commit();
+  for (const invalid of [undefined, null, {}, { ...vectorCounts, extra: 0 },
+    { ...vectorCounts, 'storage.buckets_vectors': 1 }, { ...vectorCounts, 'storage.vector_indexes': 1 },
+    { ...vectorCounts, 'storage.vector_indexes': '0' }, { ...vectorCounts, 'storage.vector_indexes': false }]) {
+    const g = fixture({ payload: Buffer.from(JSON.stringify({ ...metadata(), vectorCounts: invalid }) + '\n') });
+    await assert.rejects(g.transport.open({ ...input(), requireEmptyVectorTables: true, vectorCounts }), /SNAPSHOT_METADATA_INVALID/);
+    assert.equal(g.children[0].didClose, true); assert.equal(g.timers.size, 0);
+  }
+  const g = fixture();
+  await assert.rejects(g.transport.open({ ...input(), requireEmptyVectorTables: 'true' }), /SNAPSHOT_CONTEXT_INVALID/);
+  assert.equal(g.calls.length, 0);
+});
 test('real transport implementation keeps session open until explicit clean commit', async () => {
   const f = fixture({ chunked: true }), session = await f.transport.open(input());
   assert.equal(session.snapshot, metadata().snapshot); session.assertActive();

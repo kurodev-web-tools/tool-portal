@@ -13,7 +13,8 @@ const schemaExcluded = 'information_schema pg_* _analytics _realtime _supavisor 
 const dataExcluded = 'information_schema pg_* graphql graphql_public pgsodium pgsodium_masks pgtle repack tiger tiger_data timescaledb_* _timescaledb_* topology vault etl extensions pgbouncer realtime supabase_migrations _analytics _realtime _supavisor'.split(' ');
 const schemaArgs = schemaExcluded.flatMap(name => ['--exclude-schema', name]);
 const dataArgs = [...dataExcluded.flatMap(name => ['--exclude-schema', name]),
-  ...['auth.schema_migrations', 'storage.migrations', 'supabase_functions.migrations'].flatMap(name => ['--exclude-table', name]), '--schema', '*'];
+  ...['auth.schema_migrations', 'storage.migrations', 'supabase_functions.migrations',
+    'storage.buckets_vectors', 'storage.vector_indexes'].flatMap(name => ['--exclude-table', name]), '--schema', '*'];
 const rolesArgs = ['--roles-only', '--role=postgres', '--quote-all-identifiers', '--no-role-passwords', '--no-comments', '--no-password'];
 const validText = text => typeof text === 'string' && !text.includes('\0') && Buffer.byteLength(text) <= MAX_BYTES &&
   new TextDecoder('utf-8', { fatal: true }).decode(Buffer.from(text)) === text;
@@ -103,7 +104,7 @@ export function createBackupCapture({ spawnImpl = spawn, spawnSyncImpl = spawnSy
         const raw = { roles: await capture('pg_dumpall', rolesArgs.slice(), invocation.env, controller.signal, 60000) };
         // Transform before holding the snapshot; unsupported roles stop early.
         const roles = transformRestoreRoles(raw.roles).sql;
-        session = await snapshotTransport.open({ target, bindingJson, expectedBindingSha256, env, signal: controller.signal });
+        session = await snapshotTransport.open({ target, bindingJson, expectedBindingSha256, env, signal: controller.signal, requireEmptyVectorTables: true });
         session.closed.then(result => { sessionClosed = result; if (!result.ok) controller.abort(); });
         const recipes = [ ['schema', '--schema-only', schemaArgs], ['data', '--data-only', dataArgs],
           ['historySchema', '--schema-only', ['--schema=supabase_migrations']], ['historyData', '--data-only', ['--schema=supabase_migrations']] ];
@@ -129,7 +130,8 @@ export function createBackupCapture({ spawnImpl = spawn, spawnSyncImpl = spawnSy
           if (!validText(sql)) throw error('BACKUP_TRANSFORM_LIMIT');
           return Object.freeze({ name, sql, rawSha256: hash(original), sha256: hash(sql), bytes: Buffer.byteLength(sql) });
         });
-        return { artifacts, evidence: { status: 'CAPTURED_NOT_PERSISTED', snapshotDumpCount: 4, elapsedMs, exporterClosed: true, rawHashes } };
+        return { artifacts, evidence: { status: 'CAPTURED_NOT_PERSISTED', snapshotDumpCount: 4, elapsedMs, exporterClosed: true, rawHashes,
+          vectorExclusion: { snapshotSha256: hash(session.snapshot), counts: session.vectorCounts } } };
       } catch (e) {
         controller.abort();
         let cleanupConfirmed = e.cleanupConfirmed !== false;

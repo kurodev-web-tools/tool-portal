@@ -88,10 +88,10 @@ function validPlanInput(artifactDirectory) {
   return {
     artifactDirectory,
     snapshot: "synthetic-snapshot-token",
-    reviewedSupabaseDataFilterArgs: ["--schema", "*", "--exclude-table", "auth.schema_migrations"],
+    reviewedSupabaseDataFilterArgs: ["--exclude-table", "storage.buckets_vectors", "--exclude-table", "storage.vector_indexes", "--schema", "*", "--exclude-table", "auth.schema_migrations"],
     reviewedSupabaseDataFilterEvidence: {
       status: "reviewed", source: "cli-data-dry-run-2.109.0", cliVersion: "2.109.0",
-      helpSha256: "c".repeat(64), flags: ["--schema", "*", "--exclude-table", "auth.schema_migrations"]
+      helpSha256: "c".repeat(64), flags: ["--exclude-table", "storage.buckets_vectors", "--exclude-table", "storage.vector_indexes", "--schema", "*", "--exclude-table", "auth.schema_migrations"]
     },
     reviewedSupabaseFilterArgs: ["--schema", "public"],
     reviewedSupabaseFilterEvidence: {
@@ -177,6 +177,25 @@ function runContract() {
       }
     }
     assert.deepEqual(plan.commands.data.slice(-4), ["--schema", "*", "--exclude-table", "auth.schema_migrations"]);
+    for (const table of ['storage.buckets_vectors', 'storage.vector_indexes']) {
+      assert.equal(plan.commands.data[plan.commands.data.indexOf(table) - 1], '--exclude-table');
+      for (const mode of ['missing', 'duplicate', 'include']) {
+        const bad = validPlanInput(artifactDirectory), args = bad.reviewedSupabaseDataFilterArgs;
+        const index = args.indexOf(table);
+        if (mode === 'missing') args.splice(index - 1, 2);
+        else if (mode === 'duplicate') args.push('--exclude-table', table);
+        else args[index - 1] = '--schema';
+        bad.reviewedSupabaseDataFilterEvidence.flags = args.slice();
+        const result = runPowerShell('Plan', bad);
+        assert.equal(result.status, 2);
+        assert.equal(JSON.parse(result.stdout).reason, 'VECTOR_EXCLUSION_FILTER_INVALID');
+      }
+    }
+    assert.match(plan.snapshot_transaction.export, /SELECT count\(\*\) FROM storage\.buckets_vectors/);
+    assert.match(plan.snapshot_transaction.export, /SELECT count\(\*\) FROM storage\.vector_indexes/);
+    assert.match(plan.snapshot_transaction.export, /^SET LOCAL row_security = off;/);
+    assert.equal(plan.snapshot_transaction.vector_exclusion_requirement, 'both-existing-empty-in-exported-snapshot');
+    assert.ok(plan.post_restore_assertions.includes('storage_vector_table_counts_zero'));
     for (const missingKey of ["reviewedSupabaseDataFilterArgs", "reviewedSupabaseDataFilterEvidence"]) {
       const missingInput = validPlanInput(artifactDirectory);
       delete missingInput[missingKey];
@@ -229,6 +248,7 @@ function runContract() {
       "aggregate_row_counts",
       "auth_dependencies_and_user_count",
       "storage_object_count_zero",
+      "storage_vector_table_counts_zero",
       "grants_and_rls",
       "bridge_and_canonical_replay",
       "local_only_endpoint"
@@ -360,7 +380,9 @@ $script:actualChecks = @(
     $_.Count -eq 5 -and $_[0] -eq '--no-psqlrc' -and $_[1] -eq '--set=ON_ERROR_STOP=1' -and $_[2] -eq '--single-transaction' -and $_[3] -eq '--file'
   }).Count -eq 6)
   (($actualRoles -join ' ') -eq ('--roles-only --role=postgres --quote-all-identifiers --no-role-passwords --no-comments --no-password --file ' + $actualRolesPath))
-  ($actualSchema[-1] -eq 'public' -and $actualData[-1] -eq '*')
+  ($actualSchema[-1] -eq 'public' -and $actualData[-1] -eq '*' -and
+    $actualData[[array]::IndexOf($actualData, 'storage.buckets_vectors') - 1] -eq '--exclude-table' -and
+    $actualData[[array]::IndexOf($actualData, 'storage.vector_indexes') - 1] -eq '--exclude-table')
   (@($actualSchema, $actualData, $actualHistorySchema, $actualHistoryData | Where-Object {
     @($_ | Where-Object { $_ -eq '--role=postgres' }).Count -eq 1 -and
     @($_ | Where-Object { $_ -eq '--quote-all-identifiers' }).Count -eq 1 -and
@@ -395,9 +417,19 @@ $instrumented = $builder.Replace($projection, $capture + [Environment]::NewLine 
     catch { $false }
   )
   $script:actualChecks = @()
-  $plan = New-CommandPlan -ReviewedFilterArguments @('--schema', 'public') -ReviewedDataFilterArguments @('--schema', '*') -ArtifactDirectory ([IO.Path]::GetTempPath()) -Snapshot 'synthetic-snapshot-token'
+  $plan = New-CommandPlan -ReviewedFilterArguments @('--schema', 'public') -ReviewedDataFilterArguments @('--exclude-table', 'storage.buckets_vectors', '--exclude-table', 'storage.vector_indexes', '--schema', '*') -ArtifactDirectory ([IO.Path]::GetTempPath()) -Snapshot 'synthetic-snapshot-token'
   if ($script:actualChecks.Count -ne 7) { throw 'ARRAY_CAPTURE_MISSING' }
   $shapeChecks = @(
+    foreach ($table in @('storage.buckets_vectors', 'storage.vector_indexes')) {
+      $originalData = @($plan.data)
+      foreach ($mutation in @('missing', 'duplicate')) {
+        if ($mutation -eq 'missing') { $plan.data = @($originalData | Where-Object { $_ -cne $table }) }
+        else { $plan.data = @($originalData) + @('--exclude-table', $table) }
+        try { Assert-CommandPlanShape $plan; $false }
+        catch { $_.Exception.Message -ceq 'VECTOR_EXCLUSION_FILTER_INVALID' }
+        $plan.data = $originalData
+      }
+    }
     foreach ($name in @('schema', 'data', 'historySchema', 'historyData')) {
       $original = @($plan[$name])
       foreach ($flag in @('--role=postgres', '--quote-all-identifiers', '--no-password')) {
@@ -427,10 +459,10 @@ $instrumented = $builder.Replace($projection, $capture + [Environment]::NewLine 
       for (const result of results) {
         assert.deepEqual(result.guardChecks, [...Array(6).fill(result.mode !== "guard-removed"), true]);
         assert.deepEqual(result.actualChecks, [result.mode !== "actualData", result.mode !== "actualHistoryData", true, true, true, true, true]);
-        assert.deepEqual(result.shapeChecks, Array(24).fill(true));
+        assert.deepEqual(result.shapeChecks, Array(28).fill(true));
         assert.equal(result.sanitizedCopyDefault, true);
       }
-      return 144;
+      return 160;
     }],
     ["pending-phase-transitions", () => {
       const pending = { ...base, now: time("08:00.000"), migrationCompletedAt: time("07:00.000"),

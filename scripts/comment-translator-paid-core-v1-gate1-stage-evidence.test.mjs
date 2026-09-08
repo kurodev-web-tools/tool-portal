@@ -59,11 +59,13 @@ function fixture() {
   for (const stage of ['rehearsalBackup', 'finalBackup']) {
     const start = stage === 'rehearsalBackup' ? 22 : 202;
     const files = names.map((name, i) => ({ name, bytes: i === 2 ? 0 : 20, sha256: h(`${stage}-${i}`) }));
-    const state = { historyCount: 22, historySha256: h('history'), rowCounts: [{ identitySha256: h('table'), rows: 2 }], authUsers: 1, authForeignKeysSha256: h('fk'), grantsRlsSha256: h('rls'), legacyRows: 0, vaultRows: 0, storageObjects: 0 };
+    const state = { historyCount: 22, historySha256: h('history'), rowCounts: [{ identitySha256: h('table'), rows: 2 }], authUsers: 1, authForeignKeysSha256: h('fk'), grantsRlsSha256: h('rls'), legacyRows: 0, vaultRows: 0, storageObjects: 0,
+      vectorCounts: { 'storage.buckets_vectors': 0, 'storage.vector_indexes': 0 } };
     p.backups[stage] = { directory: path.resolve('.tmp', stage), manifestSha256: h(stage), authReviewSha256: h('auth') };
     nativeSets[p.backups[stage].directory] = { status: 'PERSISTED_BYTES_VERIFIED', manifestSha256: h(stage), artifacts: files };
     observations[stage] = { schemaVersion: 1, t0: t(start), snapshotSha256: h(stage + '-snapshot'),
-      exporter: { isolation: 'repeatable read', readOnly: true, serverMajor: 17, closedAt: t(start + 20), exitCode: 0, captureComplete: true, stderrBytes: 0 },
+      exporter: { isolation: 'repeatable read', readOnly: true, serverMajor: 17, closedAt: t(start + 20), exitCode: 0, captureComplete: true, stderrBytes: 0,
+        vectorExclusion: { snapshotSha256: h(stage + '-snapshot'), counts: clone(state.vectorCounts) } },
       dumps: names.filter(n => n !== 'auth_storage_changes.sql').map((name, i) => ({ name, snapshotSha256: i === 0 ? null : h(stage + '-snapshot'), startedAt: t(start), completedAt: t(start + 10), rawSha256: h(name), exitCode: 0, captureComplete: true, stderrBytes: 0, clientMajor: 17 })),
       checksumCompletedAt: t(start + 15), manifestSha256: h(stage), files, authReviewSha256: h('auth'), sourceState: state,
       restore: stage === 'finalBackup' ? null : { targetKind: 'isolated-local-supabase', targetBindingSha256: bind.rehearsal, serverMajor: 17,
@@ -160,6 +162,22 @@ test('backup bytes/snapshot/restore and deadlines cannot be replaced by success 
   }
   for (const mutate of [o => { o.restore.transactions[3].transaction = false; }, o => { o.restore.transactions.reverse(); }, o => { o.restore.restoredState.rowCounts[0].rows++; }, o => { o.restore.targetBindingSha256 = bind.production; }, o => { o.restore.targetKind = 'remote'; }, o => { o.restore.canonicalReplay = 'PASS'; }]) { const f = fixture(); change(f, 'rehearsalBackup', 'observation', mutate); deny(f); }
   const f = fixture(); change(f, 'finalBackup', 'observation', o => { o.checksumCompletedAt = f.t(503); }); deny(f);
+});
+
+test('vector exclusion requires complete zero evidence from the same exporter snapshot and restored state', () => {
+  for (const stage of ['rehearsalBackup', 'finalBackup']) {
+    for (const mutate of [
+      o => { delete o.exporter.vectorExclusion; },
+      o => { o.exporter.vectorExclusion.snapshotSha256 = h('other-snapshot'); },
+      o => { delete o.exporter.vectorExclusion.counts['storage.vector_indexes']; },
+      o => { o.exporter.vectorExclusion.counts['storage.buckets_vectors'] = 1; },
+      o => { o.exporter.vectorExclusion.counts['storage.vector_indexes'] = '0'; },
+      o => { o.exporter.vectorExclusion.counts.extra = 0; },
+      o => { delete o.sourceState.vectorCounts; },
+      o => { o.sourceState.vectorCounts['storage.vector_indexes'] = 1; },
+    ]) { const f = fixture(); change(f, stage, 'observation', mutate); deny(f); }
+  }
+  const f = fixture(); change(f, 'rehearsalBackup', 'observation', o => { o.restore.restoredState.vectorCounts['storage.buckets_vectors'] = 1; }); deny(f);
 });
 
 test('Vault identities/encryption and Cron two-cadence identity/run invariants', () => {

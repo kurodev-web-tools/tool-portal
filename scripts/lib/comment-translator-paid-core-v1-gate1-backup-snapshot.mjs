@@ -6,12 +6,15 @@ import { parseStrictJson } from './comment-translator-paid-core-v1-gate1-evidenc
 const MAX_BYTES = 64 * 1024;
 const LIFETIME_MS = 300_000;
 const ARGS = Object.freeze(['--no-psqlrc', '--no-password', '--set=ON_ERROR_STOP=1', '--tuples-only', '--no-align', '--quiet']);
-const SQL = `BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;
+const SQL = requireEmptyVectorTables => `BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;
 SET LOCAL idle_in_transaction_session_timeout = '300000ms';
-SELECT json_build_object('serverMajor', current_setting('server_version_num')::int / 10000,
+${requireEmptyVectorTables ? "SET LOCAL statement_timeout = '10000ms';\nSET LOCAL row_security = off;\n" : ''}SELECT json_build_object('serverMajor', current_setting('server_version_num')::int / 10000,
   't0', transaction_timestamp(), 'snapshot', pg_export_snapshot(),
   'transactionReadOnly', current_setting('transaction_read_only'),
-  'transactionIsolation', current_setting('transaction_isolation'));
+  'transactionIsolation', current_setting('transaction_isolation')${requireEmptyVectorTables ? `,
+  'vectorCounts', json_build_object(
+    'storage.buckets_vectors', (SELECT count(*) FROM storage.buckets_vectors),
+    'storage.vector_indexes', (SELECT count(*) FROM storage.vector_indexes))` : ''});
 `;
 const safeError = (reason, cleanupConfirmed = true) => Object.assign(new Error(reason), { cleanupConfirmed });
 
@@ -22,8 +25,9 @@ export function createBackupSnapshotTransport({
   now = Date.now, setTimeoutImpl = setTimeout, clearTimeoutImpl = clearTimeout,
 } = {}) {
   return {
-    async open({ target, bindingJson, expectedBindingSha256, env, signal } = {}) {
+    async open({ target, bindingJson, expectedBindingSha256, env, signal, requireEmptyVectorTables = false } = {}) {
       if (signal !== undefined && !(signal instanceof AbortSignal)) throw safeError('SNAPSHOT_CONTEXT_INVALID');
+      if (typeof requireEmptyVectorTables !== 'boolean') throw safeError('SNAPSHOT_CONTEXT_INVALID');
       const parsed = parseTargetBinding(bindingJson);
       if (!parsed.ok || parsed.binding.target !== target ||
           !/^[a-f0-9]{64}$/.test(expectedBindingSha256 ?? '') ||
@@ -84,11 +88,18 @@ export function createBackupSnapshotTransport({
         try {
           const value = parseStrictJson(stdout.trim());
           const keys = ['serverMajor', 't0', 'snapshot', 'transactionReadOnly', 'transactionIsolation'];
+          if (requireEmptyVectorTables) keys.push('vectorCounts');
           if (!value || typeof value !== 'object' || Array.isArray(value) ||
               Object.keys(value).length !== keys.length || keys.some(key => !Object.hasOwn(value, key)) ||
               value.serverMajor !== 17 || value.transactionReadOnly !== 'on' || value.transactionIsolation !== 'repeatable read' ||
               typeof value.t0 !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(value.t0) ||
               typeof value.snapshot !== 'string' || !/^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{8}-[1-9][0-9]{0,9}$/.test(value.snapshot)) throw new Error();
+          if (requireEmptyVectorTables) {
+            const counts = value.vectorCounts, tables = ['storage.buckets_vectors', 'storage.vector_indexes'];
+            if (!counts || typeof counts !== 'object' || Array.isArray(counts) ||
+                Object.keys(counts).length !== tables.length || tables.some(name => counts[name] !== 0)) throw new Error();
+            Object.freeze(counts);
+          }
           const t0 = Date.parse(value.t0), age = now() - t0;
           const parts = value.t0.slice(0, 19).split(/[-T:]/).map(Number);
           const calendar = new Date(0);
@@ -139,7 +150,7 @@ export function createBackupSnapshotTransport({
       startupTimer = setTimeoutImpl(() => fail('SNAPSHOT_START_TIMEOUT'), 10_000);
       signal?.addEventListener('abort', onAbort, { once: true });
       if (signal?.aborted) onAbort();
-      try { if (!failure) child.stdin.write(SQL); }
+      try { if (!failure) child.stdin.write(SQL(requireEmptyVectorTables)); }
       catch { fail('SNAPSHOT_PROCESS_FAILED'); }
       try {
         await ready;
@@ -158,6 +169,7 @@ export function createBackupSnapshotTransport({
       };
       return Object.freeze({
         snapshot: metadata.snapshot, t0: metadata.t0, closed, assertActive,
+        ...(requireEmptyVectorTables ? { vectorCounts: metadata.vectorCounts } : {}),
         async commit() {
           assertActive();
           closeRequested = true;

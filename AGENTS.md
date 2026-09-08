@@ -10,20 +10,17 @@
 - The root thread must review `task.md` before implementation and prioritize the immediate tasks defined there.
 - After meaningful implementation work, the root thread must update `task.md` in the same cycle when the repository workflow expects it.
 - Add documentation only when needed and avoid creating overlapping documents.
-- Keep small, low-risk, obvious changes lightweight. Use delegated implementation for work that is multi-file, multi-module, long-running, or materially risky.
+- Keep small, low-risk, obvious changes lightweight. The primary agent implements directly, including multi-file and complex changes; use subagents only when the user explicitly requests them.
 
-## Delegated Implementation
+## Single-Agent Execution
 
-- Use `$bounded-autonomous-implementation` for multi-file, multi-module, long-running, or materially risky implementation when the required custom agents are available.
-- The root thread owns requirement interpretation, architecture within the approved design, task decomposition, agent routing, Git and worktree operations, `task.md` updates, diff inspection, verification, and final acceptance.
-- Delegate implementation to the least expensive adequate configured lane according to the skill. Do not silently substitute another agent role, model, or reasoning effort.
-- Every delegated writer must receive an explicit objective, exact file or module ownership, interfaces, constraints, and verification requirements.
-- Delegated agents may modify only the files or modules explicitly assigned to them. They must preserve unrelated and concurrent user changes.
-- Delegated agents must not modify `task.md`, project documentation, `AGENTS.md`, `.codex/*`, branch or worktree state, commits, pushes, or pull requests unless that work is explicitly included in their ownership.
-- Do not run more than one writer in the same worktree. Parallel writers require separate branches or worktrees and non-overlapping ownership.
-- While a delegated writer is active in the current worktree, the root thread must not edit tracked files in that worktree.
-- Read-only exploration, auditing, debugging, or review may run alongside one writer when it is necessary and does not duplicate work.
-- Treat delegated reports as claims, not proof. The root thread must inspect the actual diff, confirm scope discipline, and rerun the relevant verification before reporting completion.
+- Default to Astra Light: gpt-6-astra / low for normal execution and Plan mode.
+- The primary agent owns requirements, design, implementation, debugging, browser checks, review, Git operations, task.md updates, verification, and final acceptance.
+- Do not use subagents unless the user explicitly requests them for the current scope. Complexity, old plans, skills, and available role definitions do not authorize delegation.
+- Do not automatically raise reasoning effort or switch models. Request explicit approval for a different model or higher effort for the specific scope.
+- Reuse approved specifications. Inspect the actual diff and run the relevant acceptance checks; perform semantic review directly without a mandatory reviewer agent.
+- Historical Luna implementation packets and mandatory delegation instructions in plans or skills are superseded by this policy. Preserve their functional acceptance criteria and external-operation approval boundaries.
+- If subagents are explicitly requested, verify the available configured profiles, assign exact ownership and verification, keep one writer per worktree, and retain primary-agent final acceptance.
 
 ## Access Boundary
 

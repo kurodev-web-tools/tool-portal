@@ -12,7 +12,7 @@ const sourcePath = path.join(
   "scripts",
   "comment-translator-paid-core-v1-gate1-database-integration-contract.mjs"
 );
-const source = fs.readFileSync(sourcePath, "utf8");
+const source = fs.readFileSync(sourcePath, "utf8").replace(/\r\n/g, "\n");
 const cleanupSource = fs.readFileSync(
   path.join(process.cwd(), "scripts", "lib", "comment-translator-paid-core-v1-gate1-runtime-cleanup.mjs"),
   "utf8"
@@ -163,7 +163,7 @@ assert.match(source, /timeoutMs:\s*localCliTimeoutMs/,
   "bounded timeout is owned by the CLI runner");
 assert.ok(/command:\s*usePinnedGo \? previewGoCliPath : process\.execPath[\s\S]*args:\s*usePinnedGo \? args : \[(?:supabaseCliPath|typeof supabaseCliPath)[\s\S]*\.\.\.args\]/.test(source),
   "Supabase CLI uses the installed entrypoint or hash-pinned Go binary with argv arrays");
-assert.doesNotMatch(source, /node_modules["'\\/]\.bin["'\\/]supabase\.cmd|process\.platform\s*===\s*["']win32["'][\s\S]*shell:/,
+assert.doesNotMatch(source, /node_modules["'\\/]\.bin["'\\/]supabase\.cmd|process\.platform\s*===\s*["']win32["'][\s\S]*shell:\s*true/,
   "Supabase CLI does not use the shell .cmd shim");
 assert.match(source, /env:\s*transport\.environment/,
   "Docker and CLI paths receive the verified transport environment");
@@ -1157,3 +1157,19 @@ try {
 }
 
 console.log("comment-translator-paid-core-v1-gate1 runtime cleanup regression: PASS");
+
+const standalonePinnedProbe = runInjectedTransportProbe({
+  endpoint: "npipe:////./pipe/dockerDesktopLinuxEngine",
+  checks: `
+localCliProfile = "preview-pinned-go";
+fs.existsSync = (candidate) => candidate === previewGoCliPath;
+fs.lstatSync = () => ({ isSymbolicLink: () => false });
+fs.readFileSync = () => Buffer.from("synthetic-binary");
+sha256Bytes = () => previewGoCliSha256;
+assert.notEqual(cliVersionResult().code, "SUPABASE_CLI_MISSING", "pinned profile must not require npm entrypoint");
+assert.ok(transportCalls.some(call => call.command === process.execPath), "native profile reaches bounded runner");
+localCliProfile = "bundled-entrypoint";
+assert.equal(cliVersionResult().code, "SUPABASE_CLI_MISSING", "npm profile still requires its entrypoint");
+`
+});
+assert.equal(standalonePinnedProbe.status, 0, "standalone pinned CLI preflight does not depend on npm entrypoint");

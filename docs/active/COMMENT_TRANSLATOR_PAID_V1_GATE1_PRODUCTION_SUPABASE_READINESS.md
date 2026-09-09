@@ -1,10 +1,38 @@
 # Paid Core v1 Gate 1 — Production Supabase readiness
 
+2026-09-09 pre-publication review / lint LOCAL_REVIEWED・UNPUBLISHED: primary agentが実diffと新規moduleを直接レビューし、重大な指摘なし。既存lock固定のnpm ci --ignore-scripts --no-audit --no-fundを作業worktree内cacheで実行（691 packages）、manifest/lockfile SHA256不変。変更23 MJSのESLint --max-warnings=0 PASS、コード修正なし。直前の46 tests/native6file復元＋history56 replayの対象source/log SHA256不変を照合し、受理済み実行は反復しない。過去entryのESLint SETUP_BLOCKEDは今回解消。commit/push/PR・新本番backup・本番rehearsal・9-stage受理は未実施、Gate1 NO-GO。次は明示承認されたsource公開。
+
+2026-09-09 Production rehearsal preparation / default ACL capture LOCAL_VERIFIED・UNPUBLISHED: 検証済みdefault-table-ACL SQL/生成器をbackup-default-acl.mjsへ共通化。Production captureのRR/RO exporterにtableDefaultsを必須追加し、不足/不正/重複/許可外scope-role-privilegeを拒否、freezeしてschema artifactへ結合。対象はpostgresのglobal/public table defaultsとanon/authenticated/service_role。26件ローカル検証と同じ処理を使うがProduction source-stateは22固定を維持。source producer12filesに追加し未公開HEADを拒否することを確認。関連46 tests・5 syntax PASS、共通化後native6file復元state完全一致→history56/canonical/archive PASS、独立cleanup全0。ESLint setup-blocked。旧backupには新しい同snapshot default ACL/正式producer証跡がないため最終T0証拠には昇格させない。順序は公開前レビュー/必要チェック→明示承認によるcommit/push/PRとsource確定→別途承認された最新backup等の取得→本番22history/実データの隔離rehearsal→9-stage判定。本番変更/deployはその後の別承認。今回hosted接続/再取得/変更0、Gate1 NO-GO。
+
+2026-09-09 six-file restore + migration replay LOCAL_VERIFIED: --phase=local-restore-replay --local-cli=pinned-goを固定PG17/CLI2.109.0の所有隔離環境で完遂。ローカル26historyから同snapshot4dumpとrolesを取得し、6fileをhash確認してsingle-transaction/ON_ERROR_STOPで復元。復元前後source-state SHA256完全一致、その後history56/canonical構造/archive3tables・3functions PASS。空targetではhistory schema自体がない場合を受理。native診断でpublic12relationのtarget既定ACL混入を検出し、ローカルschema artifactに同snapshot取得のglobal/public既定table ACLの一時解除・正確復元を含めて修正。比較条件は維持し、Production validatorは22固定、local26専用validatorを分離。関連40 tests・8 syntax PASS、ESLintは依存未配置でsetup-blocked。独立inventoryでGate1 container/network/volume各0・scratch0。失敗attempt1–4も保持。これは本番22history/実データ/全source-eraの再現ではなく、Production6fileの完全rehearsal・9-stage受理・source公開は未完了。hosted接続/変更0、Gate1 NO-GO。
+
+2026-09-09 isolated local migration replay LOCAL_VERIFIED: --phase=local-replay --local-cli=pinned-goで既存postapply経路を実行。過去hosted catalogは読まず、fixture一致の旧SQL4件と現在migrationで検証。固定CLI2.109.0/PG17・既存cacheを使用し、privateなproject内scratchで起動。実SQL適用、履歴56件、canonical構造、archive3 tables/3 functionsがPASS。source-era0のためProduction shapeはsource-era-mismatchで拒否されることを確認し、hostedEvidence=falseを維持。関連3 tests/2 syntax PASS。終了後独立read-only inventoryでGate1 container/network/volume各0・scratch directory0。full6file backup restoreとmigration replayの一体実行/9-stage受理は未実施。hosted接続/変更0、Gate1 NO-GO。
+
+2026-09-09 legacy SQL recovery LOCAL_VERIFIED: 明示承認された保存backupのhistory_data.sqlのみread-onlyで解析。22history rowsから対象4件を抽出し、statements.join("\n")/末尾改行追加なしで既存fixtureのbytes/MD5全件一致。既存validateLegacyInputs PASS、parsed statement数17/25/17/25。合計32988 bytesをprivate ACLのignored recovered-legacy-sqlへ保存しreadback照合、secret scan PASS。元backup変更なし、SQL実行/hosted接続なし。CLIと元SQLの準備は解消したが、過去catalog証跡・隔離migration replay/完全rehearsal受理は未解決。Gate1 NO-GO。
+
+2026-09-09 pinned CLI runner接続 LOCAL_VERIFIED: --local-cli=pinned-goの明示選択で固定Go経路を利用し、npm配置がなければ承認済みignored tools配置へ解決。毎回のSHA256/symlink拒否、local transport、bounded runner、既存npm既定を維持。CLI存在preflightをprofile対応。実runner経由native2.109.0 PASS、runtime-cleanup/cli-atomicity-order/postapply-queryの3 tests PASS。元SQL4件のGit履歴8revisionを照合したがbyte/MD5一致0。元SQL・過去catalog証跡不足のためreplay未実施。次は外部保存backupのhistory_dataから4件のみのローカル抽出と既存fixture照合が必要（プロジェクト外読取の範囲確認後）。hosted操作0、Gate1 NO-GO。
+
+2026-09-09 CLI限定setup完了: 承認済み範囲でlock固定platform packageのSHA512とGo exe SHA256を照合し、ignored .tmp/tools/supabase-2.109.0へ配置。native --version=2.109.0 PASS、必要Docker image8種は既存cacheに存在。manifest/lock/node_modules変更・npm lifecycle・image pullなし。既存runnerはnode_modules entry前提のため未接続。旧履歴replayに必要な元SQL4件が未配置で、migration replay/完全rehearsalは未実施。hosted操作なし、Gate1 NO-GO。
+
+2026-09-09 合成データの6file復元・source-state照合・失敗transaction rollbackを隔離PG17で実証。22 tests PASS、所有container残存0。CLI限定setupは下記のとおり完了。元SQL4件が未配置でmigration replay/完全rehearsal証跡はinput-blocked。hosted操作なし、Gate1 NO-GO。
+
+2026-09-09 same-snapshot source-stateとfinalBackup観測adapterのローカル接続を検証済み。関連56 tests PASS、隔離PG17で同snapshot不変/新接続増分、RLS・function/sequence/default privileges変化を実測。通常captureで状態取得を必須化。rehearsal restore・9-stage全体受理・hosted backupは未実施、Gate1 NO-GO。詳細はR6。
+
 ## 現在の判断
+2026-09-09 外側process記録のローカル実装: 固定取得CLIの実終了・stdout bytes/hashと保存済取得record/6file/source10files/runを照合し、別protected directoryへbackup-process.jsonを排他的保存する。秘密はstdinのみ。timeout時の所有child tree停止と終了済PID非操作を検証。ローカルprocess証拠であり、本番backup・9-stage authorityではない。同snapshot source-stateとstage adapterは未完了、Gate1 NO-GO。詳細はR6。
+2026-09-09 保存/source-run結合のローカル実装: snapshot保持中に6file＋manifestの保存/fsync/readbackを完了し、close後に別の保護先へsource8files・run・target・T0・dump・manifestの記録を保存するnative APIを追加。caller入力変更/原本上書きを防止し、source前後不一致・保存失敗・5分期限超過を拒否。現HEADでは新producer未公開につきnative source guardで停止を実測。外部backup/復元未実施、outer native-process receipt/stage adapterと実証は未完了、Gate1 NO-GO。詳細はR6。
+2026-09-09 native証跡結合のローカル実装: capture自身がnative T0・binding/snapshot digest・dump時刻/終了結果/hash・exporter close観測を返す。時計異常は成功にしない。保存前の観測追加であり、旧原本復元・信頼済みreceipt・arm/GO成立ではない。次はrestricted保存とsource/run receiptの結合。外部backup/復元未実施、Gate1 NO-GO。詳細はR6。
+2026-09-09 Auth/Cron再照合完了: Production Auth18項目は保存exportと現在UI/設定GET応答で差分0。native Directの10分24秒後観測でProduction0job/0run、Preview同一inactive1job/27run、両方run増分0。Previewのjob ID・command・5分周期・postgres・最大run ID保持を確認。連続監視や将来のProduction Cron設定完了とは扱わない。Cloudflareログイン後のDashboard実測でProduction/PreviewともCronトリガー未設定、Preview authority=supabase-cron、Productionはauthority名なし。Cloudflare Cron fallback absentを観測時点で確認。稼働version表示はProduction f45136b2/Preview 9e1a72be（各100%）。配備annotationはartifact独立照合ではなくARTIFACT_IDENTITY=UNKNOWNを維持。DB/設定変更・backup/復元なし、Gate1 NO-GO。以下のAuth/10分差分未確認は過去checkpoint。
+2026-09-09 Direct接続前提の復旧完了: 保存済み接続設定/CA/credentialと既存PG17.11 clientを再利用し、両環境のverify-full/TLS1.3/PG17/読み取り専用RRを実測PASS。外部保存先の6-file backupは旧受け入れmanifestと同一bytesでnative検査PASS、Auth exportも残存している。旧worktree内証跡の原本欠落と区別する。Auth exportの旧hash/現在設定一致、backup取得provenanceと9-stage結合は未回復。旧backupは最終T0に使わない。新規backup/復元/DB変更なし。以下のDirect入力不在・backup所在未確認は前段のcheckpoint。詳細はR6。
+2026-09-09 新規read-only baseline: 承認済み既存Production/Previewを接続済みconnectorで観測。RR/ROの完全history/catalogはProduction22/pending34、Preview56/pending0、未知履歴0。Preview canonical33表/81関数/依存1443行。Production Vault0/Cron0、Preview予約Vault2件とinactive5分postgres Cron1件を確認。各観測の日時・完全結果・hashをrestricted保存し、旧原本の代替や旧時刻の復元とは扱わない。Direct verify-full設定は不在でnative証跡結合は未成立。Advisorは今回baselineのみ、Auth設定export/fallback/10分run delta/backup/復元は未確認。DB変更0。詳細はR6。
 
-`gate1_status=NO-GO` / `source_artifact=UNCOMMITTED/UNKNOWN` / `activation-closed`
+2026-09-09 証跡再取得方針（ユーザー承認）: Gitに残る実装・手順・過去の結果報告は保持する。復旧後に存在しない旧 `.tmp/gate1-evidence-20260908` 配下の証跡は「原本欠落」とし、hash・PASS報告だけから原本を再構成しない。ローカルテストは新しい日時で再取得する。Production backup・DB観測・復元試験は必要範囲と個別承認の確認後に新規実行し、旧観測時刻へ遡及させない。旧6-file backupの保存先原本は別途所在確認が必要で、作業フォルダー欠落だけから消失を断定しない。再取得は最終T0 backupの代用にならない。詳細はR6の再取得表。
 
-source_artifactのUNKNOWNはGate 1で要求する承認済みimmutable authorityが未確立であることを示す。ソースPRのcommit作成とは別に確認する。
+2026-09-09: PR #818のPreview merge/source包含/完全tree一致は前回確認済み（task.md参照）。復旧した同じ2d79 worktreeで元HEAD・既存branchへ復帰した。ただし参照先のprivate phase5 local acceptance証跡が存在せず、復旧後の証跡保持・hash連続性は未確認。以下の未公開・watchdog未実装案内は過去checkpoint。次の証跡結合と実運用入力はR6を参照。Gate1 NO-GO。
+
+`gate1_status=NO-GO` / `source_artifact=UNCOMMITTED/UNKNOWN` / `source_publication=PR818_MERGED_PREVIEW` / `trusted_nine_stage_authority=UNKNOWN` / `activation-closed`
+
+trusted_nine_stage_authorityのUNKNOWNはGate 1で要求する承認済みimmutable authorityが未確立であることを示す。ソースPRのcommit作成とは別に確認する。
 
 2026-09-08 PR #817 merge確認: source `ae544a55443ed90daf71d8975d2fcb2e45393b57` / Preview統合 `5a110ae110fe24689132440dc470b1105b08aa8e` は完全tree一致。native source collectorで56 migrationを再照合し、公開source8ファイル・既存証跡13件のhashを検証した。工程4のlocal6-file復元/bridge受け入れは保持。次は本番適用前の実watchdog・復旧/cutover手順・native authority取得経路の準備。既存State modeは状態判定のみで、期限を監視してpause/停止確認する実行経路の準備完了とは扱わない。古いbackupをfinal T0に流用せず、Preview applyも繰り返さない。新規hosted操作0、追加費用0、サブエージェントなし。Gate1 NO-GO。
 

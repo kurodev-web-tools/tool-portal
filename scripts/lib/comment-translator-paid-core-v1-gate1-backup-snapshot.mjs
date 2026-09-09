@@ -1,20 +1,24 @@
+import { BACKUP_TABLE_DEFAULTS_SQL, validateBackupTableDefaults } from './comment-translator-paid-core-v1-gate1-backup-default-acl.mjs';
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import { buildPsqlInvocation, computeBindingSha256, parseTargetBinding } from '../comment-translator-paid-core-v1-gate1-preflight-readonly.mjs';
 import { parseStrictJson } from './comment-translator-paid-core-v1-gate1-evidence.mjs';
+import { BACKUP_SOURCE_STATE_SQL, validateBackupSourceState } from './comment-translator-paid-core-v1-gate1-backup-state.mjs';
 
 const MAX_BYTES = 64 * 1024;
 const LIFETIME_MS = 300_000;
 const ARGS = Object.freeze(['--no-psqlrc', '--no-password', '--set=ON_ERROR_STOP=1', '--tuples-only', '--no-align', '--quiet']);
-const SQL = requireEmptyVectorTables => `BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;
+const SQL = (requireEmptyVectorTables, requireSourceState) => `BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;
 SET LOCAL idle_in_transaction_session_timeout = '300000ms';
+SET LOCAL search_path = pg_catalog, public;
 ${requireEmptyVectorTables ? "SET LOCAL statement_timeout = '10000ms';\nSET LOCAL row_security = off;\n" : ''}SELECT json_build_object('serverMajor', current_setting('server_version_num')::int / 10000,
   't0', transaction_timestamp(), 'snapshot', pg_export_snapshot(),
   'transactionReadOnly', current_setting('transaction_read_only'),
   'transactionIsolation', current_setting('transaction_isolation')${requireEmptyVectorTables ? `,
   'vectorCounts', json_build_object(
     'storage.buckets_vectors', (SELECT count(*) FROM storage.buckets_vectors),
-    'storage.vector_indexes', (SELECT count(*) FROM storage.vector_indexes))` : ''});
+    'storage.vector_indexes', (SELECT count(*) FROM storage.vector_indexes))` : ''}${requireSourceState ? `,
+  'sourceState', ${BACKUP_SOURCE_STATE_SQL}, 'tableDefaults', ${BACKUP_TABLE_DEFAULTS_SQL}` : ''});
 `;
 const safeError = (reason, cleanupConfirmed = true) => Object.assign(new Error(reason), { cleanupConfirmed });
 
@@ -25,9 +29,10 @@ export function createBackupSnapshotTransport({
   now = Date.now, setTimeoutImpl = setTimeout, clearTimeoutImpl = clearTimeout,
 } = {}) {
   return {
-    async open({ target, bindingJson, expectedBindingSha256, env, signal, requireEmptyVectorTables = false } = {}) {
+    async open({ target, bindingJson, expectedBindingSha256, env, signal, requireEmptyVectorTables = false, requireSourceState = false } = {}) {
       if (signal !== undefined && !(signal instanceof AbortSignal)) throw safeError('SNAPSHOT_CONTEXT_INVALID');
       if (typeof requireEmptyVectorTables !== 'boolean') throw safeError('SNAPSHOT_CONTEXT_INVALID');
+      if (typeof requireSourceState !== 'boolean' || (requireSourceState && !requireEmptyVectorTables)) throw safeError('SNAPSHOT_CONTEXT_INVALID');
       const parsed = parseTargetBinding(bindingJson);
       if (!parsed.ok || parsed.binding.target !== target ||
           !/^[a-f0-9]{64}$/.test(expectedBindingSha256 ?? '') ||
@@ -89,6 +94,7 @@ export function createBackupSnapshotTransport({
           const value = parseStrictJson(stdout.trim());
           const keys = ['serverMajor', 't0', 'snapshot', 'transactionReadOnly', 'transactionIsolation'];
           if (requireEmptyVectorTables) keys.push('vectorCounts');
+          if (requireSourceState) keys.push('sourceState', 'tableDefaults');
           if (!value || typeof value !== 'object' || Array.isArray(value) ||
               Object.keys(value).length !== keys.length || keys.some(key => !Object.hasOwn(value, key)) ||
               value.serverMajor !== 17 || value.transactionReadOnly !== 'on' || value.transactionIsolation !== 'repeatable read' ||
@@ -99,6 +105,13 @@ export function createBackupSnapshotTransport({
             if (!counts || typeof counts !== 'object' || Array.isArray(counts) ||
                 Object.keys(counts).length !== tables.length || tables.some(name => counts[name] !== 0)) throw new Error();
             Object.freeze(counts);
+          }
+          if (requireSourceState) {
+            validateBackupSourceState(value.sourceState);
+            validateBackupTableDefaults(value.tableDefaults);
+            value.tableDefaults.forEach(Object.freeze); Object.freeze(value.tableDefaults);
+            value.sourceState.rowCounts.forEach(Object.freeze);
+            Object.freeze(value.sourceState.rowCounts); Object.freeze(value.sourceState.vectorCounts); Object.freeze(value.sourceState);
           }
           const t0 = Date.parse(value.t0), age = now() - t0;
           const parts = value.t0.slice(0, 19).split(/[-T:]/).map(Number);
@@ -150,7 +163,7 @@ export function createBackupSnapshotTransport({
       startupTimer = setTimeoutImpl(() => fail('SNAPSHOT_START_TIMEOUT'), 10_000);
       signal?.addEventListener('abort', onAbort, { once: true });
       if (signal?.aborted) onAbort();
-      try { if (!failure) child.stdin.write(SQL(requireEmptyVectorTables)); }
+      try { if (!failure) child.stdin.write(SQL(requireEmptyVectorTables, requireSourceState)); }
       catch { fail('SNAPSHOT_PROCESS_FAILED'); }
       try {
         await ready;
@@ -170,6 +183,7 @@ export function createBackupSnapshotTransport({
       return Object.freeze({
         snapshot: metadata.snapshot, t0: metadata.t0, closed, assertActive,
         ...(requireEmptyVectorTables ? { vectorCounts: metadata.vectorCounts } : {}),
+        ...(requireSourceState ? { sourceState: metadata.sourceState, tableDefaults: metadata.tableDefaults } : {}),
         async commit() {
           assertActive();
           closeRequested = true;

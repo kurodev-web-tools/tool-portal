@@ -149,3 +149,42 @@ test('observation rechecks ACL, reparse, hardlinks and native handle identity', 
     assert.equal(f.handles.size, 0);
   }
 });
+
+
+test('acquisition record uses a separate exclusive flushed and hash-verified file', () => {
+  const f = fixture(), directory = 'Z:/gate1-synthetic-receipt';
+  assert.equal(f.store.prepareDirectory({ directory }).status, 'EMPTY_RESTRICTED_DIRECTORY_VERIFIED');
+  assert.equal(f.files.size, 0);
+  const record = { schemaVersion: 1, kind: 'backup-acquisition-observation', runId: 'a'.repeat(64) };
+  const saved = f.store.persistRecord({ directory, record });
+  assert.equal(saved.status, 'PERSISTED_RECORD_VERIFIED');
+  assert.deepEqual(f.writes, ['backup-acquisition.json']);
+  assert.equal(f.calls.filter(x => x === 'fsync').length, 1);
+  const readback = f.store.inspectRecord({ directory, expectedSha256: saved.sha256 });
+  assert.deepEqual(JSON.parse(JSON.stringify(readback.record)), record); assert.equal(readback.sha256, saved.sha256);
+  assert.throws(() => f.store.persistRecord({ directory, record }), /BACKUP_PERSISTENCE_REJECTED/);
+  assert.throws(() => f.store.inspectRecord({ directory, expectedSha256: '0'.repeat(64) }), /BACKUP_OBSERVATION_REJECTED/);
+  assert.equal(f.handles.size, 0);
+});
+
+test('record storage rejects unsafe directories, nonempty roots, oversized records and failed flushes', () => {
+  for (const options of [{ aclFailure: true }, { nonempty: true }, { fsyncFailure: true }, { corrupt: true }]) {
+    const f = fixture(options);
+    assert.throws(() => f.store.persistRecord({ directory: 'Z:/gate1-synthetic-receipt', record: { value: 1 } }), /BACKUP_PERSISTENCE_REJECTED/);
+    assert.equal(f.handles.size, 0);
+  }
+  const f = fixture();
+  assert.throws(() => f.store.persistRecord({ directory: 'relative', record: {} }), /BACKUP_PERSISTENCE_REJECTED/);
+  assert.throws(() => f.store.persistRecord({ directory: 'Z:/gate1-synthetic-receipt', record: { value: 'x'.repeat(65536) } }), /BACKUP_PERSISTENCE_REJECTED/);
+  assert.equal(f.files.size, 0);
+});
+
+test('outer process record has an explicit fixed filename; arbitrary filenames reject', () => {
+  const directory = 'Z:/gate1-synthetic-process-receipt', f = fixture();
+  assert.throws(() => f.store.persistRecord({ directory, name: '../unsafe', record: {} }), /BACKUP_PERSISTENCE_REJECTED/);
+  assert.equal(f.files.size, 0);
+  const result = f.store.persistRecord({ directory, name: 'backup-process.json', record: { kind: 'backup-native-process-observation' } });
+  assert.deepEqual(f.writes, ['backup-process.json']);
+  const observed = f.store.inspectRecord({ directory, name: 'backup-process.json', expectedSha256: result.sha256 });
+  assert.equal(observed.record.kind, 'backup-native-process-observation');
+});

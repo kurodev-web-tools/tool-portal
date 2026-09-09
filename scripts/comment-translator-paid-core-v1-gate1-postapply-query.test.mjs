@@ -216,7 +216,7 @@ const temporaryRoot = path.resolve("fixture-temp");
 const ownedDirectory = path.join(temporaryRoot, "gate1-cli-atomicity-fixture");
 const realpathFixture = { native: (value) => value };
 const removeDirectory = load("removeGeneratedCliWorkDirectory", {
-  terminationUnknown: false, path, process: { platform: process.platform }, os: { tmpdir: () => temporaryRoot },
+  terminationUnknown: false, path, process: { platform: process.platform, cwd: () => process.cwd() }, os: { tmpdir: () => temporaryRoot },
   fs: {
     lstatSync: () => {
       if (!directoryExists) throw Object.assign(new Error("absent"), { code: "ENOENT" });
@@ -231,3 +231,16 @@ assert.equal(removeCount, 1, "actual cleanup accepts the new phase's existing pr
 assert.throws(() => removeDirectory(path.resolve("outside", "gate1-cli-atomicity-fixture")), /CLI_WORK_DIRECTORY_SCOPE_INVALID/);
 assert.match(source, /process\.argv\.includes\("--phase=postapply-query"\)/);
 console.log("postapply-query tests passed (native boundary, ownership, independent comparisons, expected refusal, cleanup; actual IO=0)");
+
+// A local replay must remain executable without historical hosted catalog files.
+let localCalls = 0;
+const localProcess = { argv: ["node", "test", "--phase=local-replay"], exitCode: 0 };
+const localRun = load("run", {
+  assert, fs: { existsSync: () => true }, bridgePath: "local-bridge", process: localProcess,
+  validateLegacyInputs: () => [{ fileName: "validated" }],
+  validateR13Artifact: () => { throw new Error("HOSTED_ARTIFACT_MUST_NOT_BE_READ"); },
+  validateProductionArtifactBoundary: () => { throw new Error("HOSTED_ARTIFACT_MUST_NOT_BE_READ"); },
+  runCliPostapplyQueryCase: (rows) => { assert.equal(rows.length, 1); localCalls++; return {status:"PASS",productionShape:"NOT_ESTABLISHED",hostedEvidence:false}; },
+  console: { log: (value) => { const row=JSON.parse(value); assert.equal(row.target,"local-only"); assert.equal(row.phase,"local-replay"); } }
+});
+localRun(); assert.equal(localCalls,1); assert.equal(localProcess.exitCode,0);

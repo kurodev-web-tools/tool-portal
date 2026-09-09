@@ -131,6 +131,45 @@ export function createBackupArtifactStore({ fsApi = fs, spawnSyncImpl = spawnSyn
     } finally { if (fd !== undefined) { try { fsApi.closeSync(fd); } catch { /* terminal failure */ } } }
   }
   return {
+    prepareDirectory({ directory } = {}) {
+      try {
+        const root = resolveSafeRoot(directory);
+        verifyRepositoryBoundary(root); probe(root);
+        if (fsApi.readdirSync(root).length !== 0) fail();
+        return { status: 'EMPTY_RESTRICTED_DIRECTORY_VERIFIED' };
+      } catch { fail(); }
+    },
+    // Separate from the seven-entry artifact inventory. File safety only;
+    // semantic source/run authority remains the native producer's responsibility.
+    persistRecord({ directory, record, name = 'backup-acquisition.json' } = {}) {
+      try {
+        if (!['backup-acquisition.json', 'backup-process.json'].includes(name)) fail();
+        const root = resolveSafeRoot(directory);
+        if (!record || typeof record !== 'object' || Array.isArray(record)) fail();
+        const bytes = Buffer.from(JSON.stringify(record) + '\n');
+        if (bytes.length > 65536) fail();
+        parseStrictJson(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+        verifyRepositoryBoundary(root); probe(root);
+        if (fsApi.readdirSync(root).length !== 0) fail();
+        write(root, name, bytes);
+        readVerified(root, name, bytes.length, sha(bytes), 65536);
+        if (fsApi.readdirSync(root).join(',') !== name) fail();
+        return { status: 'PERSISTED_RECORD_VERIFIED', sha256: sha(bytes), bytes: bytes.length };
+      } catch { fail(); }
+    },
+    inspectRecord({ directory, expectedSha256, name = 'backup-acquisition.json' } = {}) {
+      try {
+        if (!['backup-acquisition.json', 'backup-process.json'].includes(name)) fail();
+        if (typeof expectedSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(expectedSha256)) fail();
+        const root = resolveSafeRoot(directory);
+        verifyRepositoryBoundary(root); probe(root);
+        if (fsApi.readdirSync(root).join(',') !== name) fail();
+        const bytes = readVerified(root, name, null, expectedSha256, 65536);
+        const record = parseStrictJson(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+        if (!record || typeof record !== 'object' || Array.isArray(record) || fsApi.readdirSync(root).join(',') !== name) fail();
+        return { status: 'PERSISTED_RECORD_VERIFIED', record, sha256: expectedSha256, bytes: bytes.length };
+      } catch { throw new Error('BACKUP_OBSERVATION_REJECTED'); }
+    },
     inspect({ directory, expectedManifestSha256 } = {}) {
       try {
         if (typeof expectedManifestSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(expectedManifestSha256)) fail();

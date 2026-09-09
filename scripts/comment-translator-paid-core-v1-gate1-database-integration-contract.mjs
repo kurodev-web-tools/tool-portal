@@ -78,8 +78,12 @@ let cliStartAttemptedProjects = new Set();
 let cliCachedImageInventory = null;
 // Preview acceptance uses the same bundled Go binary as the approved native
 // linked list/dry-run, rather than treating equal version text as binary identity.
-let localCliProfile = "bundled-entrypoint";
-const previewGoCliPath = path.join(root, "node_modules", "@supabase", "cli-windows-x64", "bin", "supabase-go.exe");
+let localCliProfile = process.argv.includes("--local-cli=pinned-go") ? "preview-pinned-go" : "bundled-entrypoint";
+const bundledGoCliPath = path.join(root, "node_modules", "@supabase", "cli-windows-x64", "bin", "supabase-go.exe");
+// Fixed approved setup location; never accept an executable path from the environment.
+const previewGoCliPath = fs.existsSync(bundledGoCliPath)
+  ? bundledGoCliPath
+  : path.join(root, ".tmp", "tools", "supabase-2.109.0", "supabase-go.exe");
 const previewGoCliSha256 = "59cd06ac674fdf5d6add75206408ada0a24b1dcb796d099c13b1f2aaf3f463f0";
 
 function latchTerminationUnknown() {
@@ -2481,7 +2485,7 @@ function assertGeneratedCliConfig(workDirectory, options) {
 }
 
 function cliVersionResult() {
-  if (!fs.existsSync(supabaseCliPath)) return { status: "SETUP_BLOCKED", code: "SUPABASE_CLI_MISSING" };
+  if (!fs.existsSync(typeof localCliProfile === "string" && localCliProfile === "preview-pinned-go" ? previewGoCliPath : supabaseCliPath)) return { status: "SETUP_BLOCKED", code: "SUPABASE_CLI_MISSING" };
   const result = runLocalSupabaseCli(root, ["--version"]);
   if (result.terminationUnknown === true) return { status: "UNKNOWN", code: "CLI_TERMINATION_UNKNOWN" };
   if (result.status !== 0 || result.signal !== "NONE" || result.errorCode !== "NONE") {
@@ -2572,7 +2576,8 @@ function removeGeneratedCliWorkDirectory(workDirectory) {
   const samePath = process.platform === "win32"
     ? (left, right) => left.toLowerCase() === right.toLowerCase()
     : (left, right) => left === right;
-  if (!samePath(path.dirname(resolvedDirectory), temporaryRoot)) {
+  if (!samePath(path.dirname(resolvedDirectory), temporaryRoot)
+      && !samePath(path.dirname(resolvedDirectory), path.resolve(process.cwd(), ".tmp", "gate1-local-replay"))) {
     throw new Error("CLI_WORK_DIRECTORY_SCOPE_INVALID");
   }
   if (!/^gate1-cli-(?:atomicity|bridge-replay|preview)-/.test(path.basename(resolvedDirectory))) {
@@ -2906,7 +2911,7 @@ function migrationListVersions(output) {
 }
 
 function runCliIsolatedBridgeReplayCase(inputRows) {
-  if (!fs.existsSync(supabaseCliPath)) return { status: "SETUP_BLOCKED", reason: "SUPABASE_CLI_MISSING" };
+  if (!fs.existsSync(typeof localCliProfile === "string" && localCliProfile === "preview-pinned-go" ? previewGoCliPath : supabaseCliPath)) return { status: "SETUP_BLOCKED", reason: "SUPABASE_CLI_MISSING" };
   cliCachedImageInventory = null;
   const versionCheck = cliVersionResult();
   if (versionCheck.status !== "PASS") return { status: "SETUP_BLOCKED", reason: versionCheck.code ?? "SUPABASE_CLI_VERSION_UNAVAILABLE" };
@@ -3467,7 +3472,7 @@ function runCliPreviewConvergenceCase() {
 }
 
 function runCliPostapplyQueryCase(inputRows) {
-  if (!fs.existsSync(supabaseCliPath)) return { status: "SETUP_BLOCKED", reason: "SUPABASE_CLI_MISSING" };
+  if (!fs.existsSync(typeof localCliProfile === "string" && localCliProfile === "preview-pinned-go" ? previewGoCliPath : supabaseCliPath)) return { status: "SETUP_BLOCKED", reason: "SUPABASE_CLI_MISSING" };
   cliCachedImageInventory = null;
   const versionCheck = cliVersionResult();
   if (versionCheck.status !== "PASS") return { status: "SETUP_BLOCKED", reason: versionCheck.code ?? "SUPABASE_CLI_VERSION_UNAVAILABLE" };
@@ -3475,10 +3480,12 @@ function runCliPostapplyQueryCase(inputRows) {
   if (!imageCheck.available) {
     return { status: "SETUP_BLOCKED", reason: "REQUIRED_LOCAL_IMAGE_MISSING", missingImageCount: imageCheck.missingCount };
   }
-  const workDirectory = fs.mkdtempSync(path.join(os.tmpdir(), "gate1-cli-atomicity-"));
+  const scratchRoot = (process.argv?.includes("--phase=local-replay") || process.argv?.includes("--phase=local-restore-replay")) ? path.join(process.cwd(), ".tmp", "gate1-local-replay") : os.tmpdir();
+  const workDirectory = fs.mkdtempSync(path.join(scratchRoot, "gate1-cli-atomicity-"));
   let phase = "WORK_DIRECTORY_CREATED";
   let runtime = null;
   let result = null;
+  let sixFileRoundTrip = null;
   try {
     result = (() => {
       phase = "CLI_INIT";
@@ -3549,6 +3556,37 @@ function runCliPostapplyQueryCase(inputRows) {
         };
       }
 
+      if (process.argv?.includes("--phase=local-restore-replay")) {
+        const nativeRoundTrip = (mode) => {
+          const child = spawnSync(process.execPath, [path.join(root, "scripts", "comment-translator-paid-core-v1-gate1-local-roundtrip.mjs")], {
+            input: JSON.stringify({mode, projectId:runtime.projectId, containerId:verifiedPostapplyContainer(runtime.projectId), workDirectory}),
+            cwd:root, env:verifiedDockerTransportOrNull().environment, encoding:"utf8", windowsHide:true, shell:false, timeout:180000, maxBuffer:131072
+          });
+          let observation;
+          try { observation = JSON.parse(child.stdout); } catch { throw new Error("LOCAL_ROUNDTRIP_OUTPUT_INVALID"); }
+          if (child.error || child.signal || child.status !== 0 || child.stderr !== "" ||
+              observation.status !== (mode === "capture" ? "LOCAL_SIX_FILE_CAPTURED" : "RESTORE_STATE_MATCH_OBSERVED")) {
+            const error = new Error("LOCAL_ROUNDTRIP_CHILD_FAILED");
+            error.cliDiagnostics = {roundTripPhase:mode, reason:/^[A-Z_]+$/.test(observation.reason ?? "") ? observation.reason : "CHILD_FAILED", phase:observation.phase ?? null, native:observation.native ?? null, comparison:observation.comparison ?? null};
+            throw error;
+          }
+          return observation;
+        };
+        phase = "CAPTURE_LOCAL_SIX_FILES";
+        const capture = nativeRoundTrip("capture");
+        phase = "RESET_LOCAL_RESTORE_TARGET";
+        const savedMigrations = path.join(workDirectory, "pre-restore-migrations");
+        fs.renameSync(migrationsDirectory, savedMigrations);
+        fs.mkdirSync(migrationsDirectory);
+        const reset = runLocalSupabaseCli(workDirectory, ["db", "reset", "--local", "--no-seed"]);
+        if (reset.status !== 0 || reset.terminationUnknown || reset.captureFailure || reset.timedOut) throw new Error("LOCAL_RESTORE_RESET_FAILED");
+        phase = "RESTORE_LOCAL_SIX_FILES";
+        const restore = nativeRoundTrip("restore");
+        fs.renameSync(migrationsDirectory, path.join(workDirectory, "empty-reset-migrations"));
+        fs.renameSync(savedMigrations, migrationsDirectory);
+        sixFileRoundTrip = {capture, restore, productionHistoryReproduced:false};
+      }
+
       phase = "BOOTSTRAP_CLI_EXTERNAL_DEPENDENCY";
       const externalDependencySql = `create extension if not exists pg_cron;
 do $$
@@ -3599,7 +3637,7 @@ $$;
       phase = "VALIDATE_LOCAL_POSTAPPLY";
       const observation = assertLocalPostapplyObservation(row);
       return {
-        status: "PASS", ...observation, runtimeIdentity,
+        status: "PASS", ...observation, runtimeIdentity, ...(sixFileRoundTrip ? {sixFileRoundTrip} : {}),
         existingRemoteConnections: 0, remoteMutations: 0,
         workDirectory: "RESTRICTED_DISPOSABLE_CREATED"
       };
@@ -3637,7 +3675,7 @@ $$;
 }
 
 function runCliRollbackHistoryAtomicCase(inputRows) {
-  if (!fs.existsSync(supabaseCliPath)) return { status: "SETUP_BLOCKED", reason: "SUPABASE_CLI_MISSING" };
+  if (!fs.existsSync(typeof localCliProfile === "string" && localCliProfile === "preview-pinned-go" ? previewGoCliPath : supabaseCliPath)) return { status: "SETUP_BLOCKED", reason: "SUPABASE_CLI_MISSING" };
   cliCachedImageInventory = null;
   const versionCheck = cliVersionResult();
   if (versionCheck.status !== "PASS") return { status: "SETUP_BLOCKED", reason: versionCheck.code ?? "SUPABASE_CLI_VERSION_UNAVAILABLE" };
@@ -3994,6 +4032,12 @@ function run() {
   if (process.argv.includes("--phase=preview-convergence")) {
     const result = runCliPreviewConvergenceCase();
     console.log(JSON.stringify({schemaVersion:2,target:"local-only",phase:"preview-convergence",result,remoteMutations:0}));
+    if (result.status !== "PASS") process.exitCode = 1;
+    return;
+  }
+  if (process.argv.includes("--phase=local-replay") || process.argv.includes("--phase=local-restore-replay")) {
+    const result = runCliPostapplyQueryCase(validateLegacyInputs());
+    console.log(JSON.stringify({schemaVersion:2,target:"local-only",phase:process.argv.includes("--phase=local-restore-replay") ? "local-restore-replay" : "local-replay",result,remoteMutations:0}));
     if (result.status !== "PASS") process.exitCode = 1;
     return;
   }

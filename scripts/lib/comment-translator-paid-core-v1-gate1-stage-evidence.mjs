@@ -24,7 +24,13 @@ const object = x => x !== null && typeof x === 'object' && !Array.isArray(x);
 const keys = (x, names) => object(x) && Object.keys(x).sort().join('\0') === [...names].sort().join('\0');
 const sha = x => typeof x === 'string' && /^[a-f0-9]{64}$/.test(x);
 const count = x => Number.isSafeInteger(x) && x >= 0;
-const iso = x => typeof x === 'string' && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(x) && Number.isFinite(Date.parse(x)) && new Date(x).toISOString() === x;
+const iso = x => {
+  if (typeof x !== 'string' || !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,6})?(?:Z|[+-]\d\d:\d\d)$/.test(x) || !Number.isFinite(Date.parse(x))) return false;
+  const parts = x.slice(0, 19).split(/[-T:]/).map(Number), calendar = new Date(0);
+  calendar.setUTCFullYear(parts[0], parts[1] - 1, parts[2]); calendar.setUTCHours(parts[3], parts[4], parts[5], 0);
+  return [calendar.getUTCFullYear(), calendar.getUTCMonth() + 1, calendar.getUTCDate(), calendar.getUTCHours(), calendar.getUTCMinutes(), calendar.getUTCSeconds()]
+    .every((value, i) => value === parts[i]);
+};
 const time = x => { require(iso(x)); return Date.parse(x); };
 const canonical = x => Array.isArray(x) ? x.map(canonical) : object(x) ? Object.fromEntries(Object.keys(x).sort().map(k => [k, canonical(x[k])])) : x;
 const equal = (a, b) => JSON.stringify(canonical(a)) === JSON.stringify(canonical(b));

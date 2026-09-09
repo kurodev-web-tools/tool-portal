@@ -16,6 +16,42 @@ const env = { PATH: 'synthetic-path', PGHOST: binding.host, PGPORT: '5432', PGDA
 const input = () => ({ target: 'production', bindingJson: JSON.stringify(binding), expectedBindingSha256: computeBindingSha256(binding), env: { ...env } });
 const metadata = () => ({ serverMajor: 17, t0: new Date(NOW).toISOString(), snapshot: '00000003-00000009-1', transactionReadOnly: 'on', transactionIsolation: 'repeatable read' });
 
+test('bounded future DB clock is accepted without extending the conservative lifetime', async () => {
+  for (const ahead of [0, 477, 1000]) {
+    const f = fixture({ payload: Buffer.from(JSON.stringify({ ...metadata(), t0: new Date(NOW + ahead).toISOString() }) + '\n') });
+    const session = await f.transport.open(input());
+    assert.equal(session.remainingMs(), 299000 + ahead);
+    f.advance(299000 + ahead);
+    assert.equal((await session.closed).reason, 'SNAPSHOT_DEADLINE_EXCEEDED');
+  }
+});
+
+test('wall clock changes cannot alter the monotonic snapshot deadline', async () => {
+  let mono = 0;
+  const f = fixture({ monotonicNow: () => mono });
+  const session = await f.transport.open(input());
+  f.shiftWall(-60000);
+  assert.equal(session.remainingMs(), 299000);
+  f.shiftWall(120000);
+  assert.equal(session.remainingMs(), 299000);
+  mono = 298999;
+  assert.equal(session.remainingMs(), 1);
+  mono = 299000;
+  assert.throws(session.assertActive, /SNAPSHOT_DEADLINE_EXCEEDED/);
+  assert.equal((await session.closed).closed, true);
+});
+
+test('invalid or regressing monotonic clock fails closed', async () => {
+  for (const invalid of [-1, NaN, Infinity]) {
+    let mono = 0;
+    const f = fixture({ monotonicNow: () => mono });
+    const session = await f.transport.open(input());
+    mono = invalid;
+    assert.throws(session.assertActive, /SNAPSHOT_DEADLINE_EXCEEDED/);
+    assert.equal((await session.closed).closed, true);
+  }
+});
+
 test('source-state option requires guarded exporter output and freezes accepted aggregates', async () => {
   const sourceState = { historyCount: 22, historySha256: '1'.repeat(64), rowCounts: [{ identitySha256: '2'.repeat(64), rows: 0 }],
     authUsers: 0, authForeignKeysSha256: '3'.repeat(64), grantsRlsSha256: '4'.repeat(64), legacyRows: 0, vaultRows: 0,
@@ -35,7 +71,7 @@ test('source-state option requires guarded exporter output and freezes accepted 
 });
 
 function fixture(options = {}) {
-  let clock = options.now ?? NOW, nextTimer = 1;
+  let clock = options.now ?? NOW, wallOffset = 0, nextTimer = 1;
   const timers = new Map(), calls = [], children = [];
   const setTimer = (fn, delay) => { const id = nextTimer++; timers.set(id, { fn, at: clock + delay }); return id; };
   const clearTimer = id => timers.delete(id);
@@ -48,7 +84,7 @@ function fixture(options = {}) {
     }
   };
   const transport = createBackupSnapshotTransport({
-    now: () => clock, setTimeoutImpl: setTimer, clearTimeoutImpl: clearTimer,
+    now: () => clock + wallOffset, monotonicNow: options.monotonicNow ?? (() => clock), setTimeoutImpl: setTimer, clearTimeoutImpl: clearTimer,
     fsApi: { lstatSync: () => ({ isFile: () => true }), readFileSync: () => options.badCa ? Buffer.from('wrong') : ca },
     spawnSyncImpl(command, args, config) {
       calls.push({ kind: 'version', command, args, config });
@@ -78,7 +114,7 @@ function fixture(options = {}) {
       children.push(child); return child;
     },
   });
-  return { transport, calls, children, timers, advance };
+  return { transport, calls, children, timers, advance, shiftWall: ms => { wallOffset += ms; } };
 }
 
 test('invalid target, digest, CA, environment and cancellation cannot spawn', async () => {
@@ -154,7 +190,8 @@ test('metadata corruption and non-readonly/non17 response rejects with confirmed
   const invalid = [
     { ...metadata(), extra: 1 }, { ...metadata(), serverMajor: 16 }, { ...metadata(), transactionReadOnly: 'off' },
     { ...metadata(), transactionIsolation: 'read committed' }, { ...metadata(), snapshot: 'private-invalid' },
-    { ...metadata(), t0: new Date(NOW + 1).toISOString() }, { ...metadata(), t0: new Date(NOW - 300000).toISOString() },
+    { ...metadata(), t0: new Date(NOW + 1001).toISOString() }, { ...metadata(), t0: new Date(NOW - 300000).toISOString() },
+    { ...metadata(), t0: '2026-09-08T00:00:01.000001Z' },
   ].map(value => Buffer.from(JSON.stringify(value) + '\n'));
   invalid.push(Buffer.from('{"serverMajor":17,"serverMajor":17}\n'), Buffer.from([0xff, 10]),
     Buffer.from('x'.repeat(65537)), Buffer.from(JSON.stringify(metadata()) + '\nextra\n'),

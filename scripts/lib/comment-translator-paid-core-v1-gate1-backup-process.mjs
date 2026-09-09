@@ -155,8 +155,8 @@ export function createBackupProcessReceipt({ store = createBackupArtifactStore()
         require(exact(c, ['startedAt', 'completedAt', 't0', 'sourceBindingSha256', 'snapshotSha256', 'exporterClosedObservedAt',
           'dumps', 'checksumCompletedAt', 'vectorExclusion', 'sourceState']) && c.sourceBindingSha256 === record.sourceBindingSha256 && isHash(c.snapshotSha256));
         validateBackupSourceState(c.sourceState);
-        require(time(observed.startedAt) <= time(c.startedAt) && time(c.startedAt) <= time(c.t0) &&
-          time(c.t0) <= time(c.checksumCompletedAt) && time(c.checksumCompletedAt) <= time(c.exporterClosedObservedAt) &&
+        require(time(observed.startedAt) <= time(c.startedAt) && time(c.startedAt) <= time(c.t0) + 1000 &&
+          time(c.t0) - 1000 <= time(c.checksumCompletedAt) && time(c.checksumCompletedAt) <= time(c.exporterClosedObservedAt) &&
           time(c.exporterClosedObservedAt) <= time(c.completedAt) && time(c.completedAt) <= time(record.createdAt));
         const dumpNames = ['roles', 'schema', 'data', 'historySchema', 'historyData'];
         require(Array.isArray(c.dumps) && c.dumps.length === 5);
@@ -166,7 +166,7 @@ export function createBackupProcessReceipt({ store = createBackupArtifactStore()
             dump.name === dumpNames[i] && dump.snapshotSha256 === (i === 0 ? null : c.snapshotSha256) && isHash(dump.rawSha256) &&
             dump.exitCode === 0 && dump.captureComplete === true && dump.stderrBytes === 0 && dump.clientMajor === 17);
           require(time(dump.startedAt) >= previous && time(dump.completedAt) >= time(dump.startedAt) &&
-            time(dump.completedAt) <= time(c.checksumCompletedAt) && (i === 0 || time(dump.startedAt) >= time(c.t0)));
+            time(dump.completedAt) <= time(c.checksumCompletedAt) && (i === 0 || time(dump.startedAt) >= time(c.t0) - 1000));
           previous = time(dump.completedAt);
         });
         require(exact(c.vectorExclusion, ['snapshotSha256', 'counts']) && c.vectorExclusion.snapshotSha256 === c.snapshotSha256 &&
@@ -174,7 +174,7 @@ export function createBackupProcessReceipt({ store = createBackupArtifactStore()
         require(time(record.capture.completedAt) <= time(output.verifiedAt) &&
           time(record.createdAt) <= time(output.verifiedAt) && time(output.verifiedAt) <= time(observed.completedAt));
         const after = verifySource(acquisition.sourceCommit); sourceShape(after); require(same(after, producerFiles));
-        const checkpoint = () => { const value = now(); require(Number.isFinite(value) && value >= time(observed.completedAt) && value <= time(record.capture.t0) + 300000); return new Date(value).toISOString(); };
+        const checkpoint = () => { const value = now(); require(Number.isFinite(value) && value >= time(observed.completedAt) && value <= time(record.capture.t0) + 299000); return new Date(value).toISOString(); };
         // Exact finalBackup observation shape. Only this native validation path
         // constructs it; the outer nine-stage authority/policy is still required.
         // Rehearsal cannot use restore:null and remains blocked on real restore.

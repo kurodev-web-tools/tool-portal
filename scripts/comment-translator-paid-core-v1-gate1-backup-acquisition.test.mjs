@@ -57,7 +57,7 @@ function fixture(options = {}) {
         sourceState: sourceState(),
           vectorExclusion: { snapshotSha256, counts: { 'storage.buckets_vectors': 0, 'storage.vector_indexes': 0 } },
         persistence: { manifestSha256: 'c'.repeat(64), files, checksumCompletedAt: iso(20) },
-        processObservations: { startedAt: iso(0), completedAt: iso(30), t0,
+        processObservations: { startedAt: iso(0), completedAt: iso(30), t0: options.t0 ?? t0,
           sourceBindingSha256: options.wrongBinding ? 'f'.repeat(64) : input.expectedBindingSha256,
           snapshotSha256, exporterClosedObservedAt: options.earlyClose ? iso(10) : iso(25), dumps } } };
     } }),
@@ -75,6 +75,18 @@ test('native join binds source/run, persists while held, then writes a sanitized
   assert.equal(record.capture.t0, t0); assert.equal(record.manifestSha256, 'c'.repeat(64));
   assert.equal(record.acquisitionAuthority, 'UNESTABLISHED'); assert.deepEqual(record.files, files);
   for (const value of ['private SQL', 'PGPASSWORD', 'Z:/', 'bindingJson']) assert.ok(!JSON.stringify(record).includes(value));
+});
+
+test('receipt join accepts bounded cross-clock skew but preserves same-clock ordering', async () => {
+  for (const offset of [-1000, 477, 1000]) {
+    const f = fixture({ t0: iso(offset) });
+    assert.equal((await f.acquire.run(request())).status, 'SOURCE_BOUND_BACKUP_OBSERVATION_PERSISTED');
+    assert.equal(f.records[0].capture.t0, iso(offset));
+  }
+  for (const offset of [-1001, 1003]) {
+    const f = fixture({ t0: iso(offset) });
+    await assert.rejects(f.acquire.run(request()), /BACKUP_ACQUISITION_REJECTED/);
+  }
 });
 
 test('source and directory prerequisites fail before capture, without overwriting or remote work', async () => {

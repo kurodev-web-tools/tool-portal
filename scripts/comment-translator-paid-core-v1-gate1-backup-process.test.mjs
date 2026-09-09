@@ -119,7 +119,7 @@ function receiptFixture(options = {}) {
     .map(name => ({ name, bytes: 1, sha256: 'f'.repeat(64) }));
   const record = { schemaVersion: 1, kind: 'backup-acquisition-observation', acquisitionAuthority: 'UNESTABLISHED',
     runId: output().runId, sourceCommit, sourceBindingSha256: binding, producerFiles: producers,
-    capture: { t0: '2026-09-09T00:00:00.000123Z', startedAt: '2026-09-08T23:59:59.500Z',
+    capture: { t0: options.t0 ?? '2026-09-09T00:00:00.000123Z', startedAt: '2026-09-08T23:59:59.500Z',
       completedAt: '2026-09-09T00:00:00.900Z', sourceBindingSha256: binding, snapshotSha256: '2'.repeat(64),
       checksumCompletedAt: '2026-09-09T00:00:00.700Z', exporterClosedObservedAt: '2026-09-09T00:00:00.800Z',
       dumps: ['roles', 'schema', 'data', 'historySchema', 'historyData'].map((name, i) => ({ name,
@@ -179,6 +179,17 @@ test('generated backup observation satisfies actual final stage contract with na
   const policy = { backups: { finalBackup: { directory: 'Z:/backup/run', manifestSha256: o.manifestSha256, authReviewSha256: o.authReviewSha256 } } };
   policy.backups.rehearsalBackup = policy.backups.finalBackup;
   assert.doesNotThrow(() => validate('finalBackup', { observation: o }, bundle, policy));
+  for (const offset of [477, 1101]) {
+    const t0 = new Date(Date.parse('2026-09-09T00:00:00Z') + offset).toISOString();
+    const skewed = receiptFixture({ t0 });
+    await skewed.runner.run({ acquisition: acquisition(), processReceiptDirectory: 'Z:/process/run' });
+    assert.doesNotThrow(() => validate('finalBackup', { observation: skewed.records[0].backupObservation }, bundle, policy));
+  }
+  const beyond = receiptFixture({ t0: '2026-09-09T00:00:01.102Z' });
+  await assert.rejects(beyond.runner.run({ acquisition: acquisition(), processReceiptDirectory: 'Z:/process/run' }), /BACKUP_PROCESS_RECEIPT_REJECTED/);
+  const lateBundle = structuredClone(bundle);
+  lateBundle.index.stages.finalBackup.completedAt = '2026-09-09T00:04:59.001Z';
+  assert.throws(() => validate('finalBackup', { observation: o }, lateBundle, policy), /STAGE_EVIDENCE_REJECTED/);
   assert.throws(() => validate('rehearsalBackup', { observation: o }, bundle, policy), /STAGE_EVIDENCE_REJECTED/);
   assert.throws(() => validate('finalBackup', { observation: { ...o, t0: '2026-02-30T00:00:00.000123Z' } }, bundle, policy), /STAGE_EVIDENCE_REJECTED/);
 });

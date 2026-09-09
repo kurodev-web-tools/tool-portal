@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import { EventEmitter } from 'node:events';
 import { PassThrough, Writable } from 'node:stream';
 import { createHash } from 'node:crypto';
+import { gzipSync } from 'node:zlib';
 import { createBackupCapture } from './lib/comment-translator-paid-core-v1-gate1-backup-capture.mjs';
 import { computeBindingSha256 } from './comment-translator-paid-core-v1-gate1-preflight-readonly.mjs';
 
@@ -58,7 +59,15 @@ function fixture(options = {}) {
           else child.finish(1);
           return;
         }
-        child.stdout.write(command === 'pg_dumpall' ? roles : args.includes('--schema-only') ? schema : data);
+        const text = command === 'pg_dumpall' ? roles : args.includes('--schema-only') ? (options.schema ?? schema) : data;
+        let output = Buffer.from(text);
+        if (command === 'pg_dump' && args.includes('--compress=gzip')) {
+          output = gzipSync(options.oversizedDecoded ? Buffer.alloc(32 * 1024 * 1024 + 1, 65) : output);
+          if (options.corruptGzip) output[output.length - 8] ^= 1;
+          if (options.truncatedGzip) output = output.subarray(0, output.length - 1);
+          if (options.trailingGzip) output = Buffer.concat([output, Buffer.from([0, 0])]);
+        } else if (command === 'pg_dump' && options.windowsTextMode) output = Buffer.from(text.replaceAll('\n', '\r\n'));
+        child.stdout.write(output);
         child.finish(0);
       });
       children.push(child); return child;
@@ -91,6 +100,7 @@ test('five captures, four identical snapshots, exact six-stage output and clean 
     assert.equal(call.config.shell, false); assert.equal(call.config.env.UNRELATED, undefined);
     assert.equal(call.config.env.PGSSLMODE, 'verify-full');
     assert.ok(!call.args.includes('--file')); assert.ok(!call.args.includes('--inserts'));
+    assert.ok(call.args.includes('--compress=gzip'));
   }
   assert.ok(dumps[0].args.includes('auth')); assert.ok(!dumps[1].args.includes('auth'));
   assert.ok(dumps[1].args.includes('auth.schema_migrations'));
@@ -103,6 +113,9 @@ test('five captures, four identical snapshots, exact six-stage output and clean 
   assert.equal(result.artifacts[3].sql, 'SET session_replication_role = replica;\n\n' + data + '\nRESET ALL;\n');
   for (const item of result.artifacts) { assert.equal(item.sha256, hash(item.sql)); assert.equal(item.bytes, Buffer.byteLength(item.sql)); }
   assert.equal(result.evidence.rawHashes.data, hash(data));
+  const observed = result.evidence.processObservations.dumps[2];
+  assert.deepEqual(observed.transport, { encoding: 'gzip', stdoutBytes: gzipSync(data).length,
+    stdoutSha256: hash(gzipSync(data)), decodedBytes: Buffer.byteLength(data) });
   assert.equal(result.evidence.status, 'CAPTURED_NOT_PERSISTED');
   assert.ok(f.children.every(x => x.closed)); assert.equal(f.timers.size, 0);
 });
@@ -112,6 +125,24 @@ test('missing or unsafe native source-state blocks snapshot dumps despite caller
     const f = fixture({ sourceState: state });
     await assert.rejects(f.capture.run({ ...input(), sourceState: sourceState(), requireSourceState: false }), /SNAPSHOT_METADATA_INVALID/);
     assert.equal(f.calls.filter(c => c.command === 'pg_dump' && c.args.includes('--snapshot')).length, 0);
+  }
+});
+
+test('Windows dump transport preserves original LF, CRLF and bare CR in SQL bodies', async () => {
+  const body = "SET standard_conforming_strings = on;\nCREATE FUNCTION public.fixture_newlines() RETURNS text LANGUAGE sql AS $body$\nSELECT 'LF\nCRLF\r\nCR\r日本語😀';\n$body$;\n";
+  const f = fixture({ schema: body, windowsTextMode: true });
+  const result = await f.capture.run(input());
+  assert.ok(result.artifacts[1].sql.includes(body));
+  assert.equal(result.artifacts[4].sql, body);
+  assert.equal(result.evidence.rawHashes.schema, hash(body));
+  assert.equal(result.evidence.processObservations.dumps[1].rawSha256, hash(body));
+});
+
+test('corrupt, truncated, trailing and oversized decoded gzip cannot return artifacts', async () => {
+  for (const key of ['corruptGzip', 'truncatedGzip', 'trailingGzip', 'oversizedDecoded']) {
+    const f = fixture({ [key]: true });
+    await assert.rejects(f.capture.run(input()), e => /^BACKUP_CAPTURE_(INVALID|LIMIT)$/.test(e.message) && e.cleanupConfirmed);
+    assert.ok(!f.actions.includes('commit')); assert.ok(f.children.every(x => x.closed)); assert.equal(f.timers.size, 0);
   }
 });
 

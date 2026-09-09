@@ -16,6 +16,24 @@ const env = { PATH: 'synthetic-path', PGHOST: binding.host, PGPORT: '5432', PGDA
 const input = () => ({ target: 'production', bindingJson: JSON.stringify(binding), expectedBindingSha256: computeBindingSha256(binding), env: { ...env } });
 const metadata = () => ({ serverMajor: 17, t0: new Date(NOW).toISOString(), snapshot: '00000003-00000009-1', transactionReadOnly: 'on', transactionIsolation: 'repeatable read' });
 
+test('source-state option requires guarded exporter output and freezes accepted aggregates', async () => {
+  const sourceState = { historyCount: 22, historySha256: '1'.repeat(64), rowCounts: [{ identitySha256: '2'.repeat(64), rows: 0 }],
+    authUsers: 0, authForeignKeysSha256: '3'.repeat(64), grantsRlsSha256: '4'.repeat(64), legacyRows: 0, vaultRows: 0,
+    storageObjects: 0, vectorCounts: { 'storage.buckets_vectors': 0, 'storage.vector_indexes': 0 } };
+  const f = fixture({ payload: Buffer.from(JSON.stringify({ ...metadata(), vectorCounts: sourceState.vectorCounts, sourceState, tableDefaults: [] }) + '\n') });
+  const session = await f.transport.open({ ...input(), requireEmptyVectorTables: true, requireSourceState: true });
+  assert.deepEqual(JSON.parse(JSON.stringify(session.sourceState)), sourceState);
+  assert.ok(Object.isFrozen(session.sourceState.rowCounts[0]));
+  assert.match(f.children[0].inputs[0], /'sourceState', \(/);
+  assert.match(f.children[0].inputs[0], /SET LOCAL row_security = off/);
+  assert.equal((await session.commit()).ok, true);
+  const missing = fixture({ payload: Buffer.from(JSON.stringify({ ...metadata(), vectorCounts: sourceState.vectorCounts }) + '\n') });
+  await assert.rejects(missing.transport.open({ ...input(), requireEmptyVectorTables: true, requireSourceState: true, sourceState }), /SNAPSHOT_METADATA_INVALID/);
+  const unguarded = fixture();
+  await assert.rejects(unguarded.transport.open({ ...input(), requireSourceState: true }), /SNAPSHOT_CONTEXT_INVALID/);
+  assert.equal(unguarded.calls.length, 0);
+});
+
 function fixture(options = {}) {
   let clock = options.now ?? NOW, nextTimer = 1;
   const timers = new Map(), calls = [], children = [];

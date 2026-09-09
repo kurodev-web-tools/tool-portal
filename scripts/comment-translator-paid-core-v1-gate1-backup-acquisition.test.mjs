@@ -52,7 +52,10 @@ function fixture(options = {}) {
       const dumps = ['roles', 'schema', 'data', 'historySchema', 'historyData'].map((name, i) => ({
         name, snapshotSha256: i === 0 ? null : snapshotSha256, startedAt: iso(i * 2), completedAt: iso(i * 2 + 1),
         rawSha256: artifacts[[0, 1, 3, 4, 5][i]].rawSha256, exitCode: 0, stderrBytes: 0, captureComplete: true, clientMajor: 17,
+        transport: { encoding: i === 0 ? 'plain' : 'gzip', stdoutBytes: 20, decodedBytes: 20,
+          stdoutSha256: i === 0 ? artifacts[0].rawSha256 : '7'.repeat(64) },
       }));
+      options.mutateDump?.(dumps);
       return { artifacts, evidence: { status: 'CAPTURED_PERSISTED_NOT_AUTHORITY', snapshotDumpCount: 4, exporterClosed: true,
         sourceState: sourceState(),
           vectorExclusion: { snapshotSha256, counts: { 'storage.buckets_vectors': 0, 'storage.vector_indexes': 0 } },
@@ -86,6 +89,16 @@ test('receipt join accepts bounded cross-clock skew but preserves same-clock ord
   for (const offset of [-1001, 1003]) {
     const f = fixture({ t0: iso(offset) });
     await assert.rejects(f.acquire.run(request()), /BACKUP_ACQUISITION_REJECTED/);
+  }
+});
+
+test('acquisition refuses missing, plain or malformed snapshot transport evidence', async () => {
+  for (const mutateDump of [d => { delete d[1].transport; }, d => { d[1].transport.encoding = 'plain'; },
+    d => { d[2].transport.decodedBytes = 32 * 1024 * 1024 + 1; },
+    d => { d[0].transport.stdoutSha256 = '8'.repeat(64); }, d => { d[1].transport.stdoutSha256 = 'bad'; }]) {
+    const f = fixture({ mutateDump });
+    await assert.rejects(f.acquire.run(request()), /BACKUP_ACQUISITION_REJECTED/);
+    assert.equal(f.records.length, 0);
   }
 });
 

@@ -2,6 +2,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { validBackupDumpTransport } from './comment-translator-paid-core-v1-gate1-backup-dump-transport.mjs';
 import { parseStrictJson } from './comment-translator-paid-core-v1-gate1-evidence.mjs';
 import { createBackupArtifactStore } from './comment-translator-paid-core-v1-gate1-backup-artifacts.mjs';
 import { verifyBackupAcquisitionSource, assertDistinctBackupDirectories, BACKUP_ACQUISITION_PRODUCERS } from './comment-translator-paid-core-v1-gate1-backup-acquisition.mjs';
@@ -162,7 +163,8 @@ export function createBackupProcessReceipt({ store = createBackupArtifactStore()
         require(Array.isArray(c.dumps) && c.dumps.length === 5);
         let previous = time(c.startedAt);
         c.dumps.forEach((dump, i) => {
-          require(exact(dump, ['name', 'snapshotSha256', 'startedAt', 'completedAt', 'rawSha256', 'exitCode', 'captureComplete', 'stderrBytes', 'clientMajor']) &&
+          require(exact(dump, ['name', 'snapshotSha256', 'startedAt', 'completedAt', 'rawSha256', 'exitCode', 'captureComplete', 'stderrBytes', 'clientMajor', 'transport']) &&
+            validBackupDumpTransport(dump, i) &&
             dump.name === dumpNames[i] && dump.snapshotSha256 === (i === 0 ? null : c.snapshotSha256) && isHash(dump.rawSha256) &&
             dump.exitCode === 0 && dump.captureComplete === true && dump.stderrBytes === 0 && dump.clientMajor === 17);
           require(time(dump.startedAt) >= previous && time(dump.completedAt) >= time(dump.startedAt) &&

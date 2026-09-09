@@ -4,6 +4,7 @@ import { AUTHORITY_STAGES, parseStrictJson, verifyAuthorityBundle } from './comm
 import { verifySourceCommitStage } from './comment-translator-paid-core-v1-gate1-source-evidence.mjs';
 import { comparePostApplyCatalog } from './comment-translator-paid-core-v1-gate1-postapply-catalog.mjs';
 import { inspectBackupArtifacts } from './comment-translator-paid-core-v1-gate1-backup-artifacts.mjs';
+import { validBackupDumpTransport } from './comment-translator-paid-core-v1-gate1-backup-dump-transport.mjs';
 
 const POST = ['previewReadback', 'productionReadback', 'canonicalReadback'];
 const BACKUPS = ['rehearsalBackup', 'finalBackup'];
@@ -181,7 +182,8 @@ function backup(stage, values, bundle, policy) {
   require(within(o.exporter.closedAt, d) >= complete);
   require(Array.isArray(o.dumps) && o.dumps.length === 5);
   o.dumps.forEach((r, i) => {
-    require(keys(r, ['name', 'snapshotSha256', 'startedAt', 'completedAt', 'rawSha256', 'exitCode', 'captureComplete', 'stderrBytes', 'clientMajor']));
+    require(keys(r, ['name', 'snapshotSha256', 'startedAt', 'completedAt', 'rawSha256', 'exitCode', 'captureComplete', 'stderrBytes', 'clientMajor', 'transport']));
+    require(validBackupDumpTransport(r, i));
     require(r.name === DUMPS[i] && sha(r.rawSha256) && r.exitCode === 0 && r.captureComplete === true && r.stderrBytes === 0 && r.clientMajor === 17);
     require(r.snapshotSha256 === (i === 0 ? null : o.snapshotSha256));
     const start = within(r.startedAt, d), end = within(r.completedAt, d);

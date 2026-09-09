@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import { createHash, randomBytes } from 'node:crypto';
 import { createBackupCapture } from './comment-translator-paid-core-v1-gate1-backup-capture.mjs';
+import { validBackupDumpTransport } from './comment-translator-paid-core-v1-gate1-backup-dump-transport.mjs';
 import { createBackupArtifactStore } from './comment-translator-paid-core-v1-gate1-backup-artifacts.mjs';
 import { validateBackupSourceState } from './comment-translator-paid-core-v1-gate1-backup-state.mjs';
 
@@ -23,6 +24,7 @@ export const BACKUP_ACQUISITION_PRODUCERS = Object.freeze([
   'scripts/lib/comment-translator-paid-core-v1-gate1-backup-process.mjs',
   'scripts/lib/comment-translator-paid-core-v1-gate1-backup-acquisition.mjs',
   'scripts/lib/comment-translator-paid-core-v1-gate1-backup-capture.mjs',
+  'scripts/lib/comment-translator-paid-core-v1-gate1-backup-dump-transport.mjs',
   'scripts/lib/comment-translator-paid-core-v1-gate1-backup-snapshot.mjs',
   'scripts/lib/comment-translator-paid-core-v1-gate1-backup-state.mjs',
   'scripts/lib/comment-translator-paid-core-v1-gate1-backup-default-acl.mjs',
@@ -86,7 +88,8 @@ function validateCapture(result, binding, inspection) {
   require(Array.isArray(o.dumps) && o.dumps.length === 5);
   let previous = start;
   o.dumps.forEach((dump, i) => {
-    require(exact(dump, ['name', 'snapshotSha256', 'startedAt', 'completedAt', 'rawSha256', 'exitCode', 'captureComplete', 'stderrBytes', 'clientMajor']));
+    require(exact(dump, ['name', 'snapshotSha256', 'startedAt', 'completedAt', 'rawSha256', 'exitCode', 'captureComplete', 'stderrBytes', 'clientMajor', 'transport']));
+    require(validBackupDumpTransport(dump, i));
     require(dump.name === dumpNames[i] && dump.snapshotSha256 === (i === 0 ? null : o.snapshotSha256) &&
       isHash(dump.rawSha256) && dump.rawSha256 === result.artifacts[dumpFileIndices[i]].rawSha256 &&
       dump.exitCode === 0 && dump.captureComplete === true && dump.stderrBytes === 0 && dump.clientMajor === 17);

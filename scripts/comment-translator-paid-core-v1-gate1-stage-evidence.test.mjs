@@ -7,6 +7,7 @@ import { AUTHORITY_STAGES, parseStrictJson } from './lib/comment-translator-paid
 import { CANONICAL_TABLE_NAMES } from './lib/comment-translator-paid-core-v1-gate1-catalog.mjs';
 import { comparePostApplyCatalog } from './lib/comment-translator-paid-core-v1-gate1-postapply-catalog.mjs';
 import { verifyGate1Evidence } from './lib/comment-translator-paid-core-v1-gate1-stage-evidence.mjs';
+import { validBackupDumpTransport } from './lib/comment-translator-paid-core-v1-gate1-backup-dump-transport.mjs';
 import { createApprovalSnapshot, evaluateGate1Decision } from './comment-translator-paid-core-v1-gate1-operator-contract.mjs';
 
 // Isolated module-link fixtures: the actual implementation is compiled intact;
@@ -66,7 +67,8 @@ function fixture() {
     observations[stage] = { schemaVersion: 1, t0: t(start), snapshotSha256: h(stage + '-snapshot'),
       exporter: { isolation: 'repeatable read', readOnly: true, serverMajor: 17, closedAt: t(start + 20), exitCode: 0, captureComplete: true, stderrBytes: 0,
         vectorExclusion: { snapshotSha256: h(stage + '-snapshot'), counts: clone(state.vectorCounts) } },
-      dumps: names.filter(n => n !== 'auth_storage_changes.sql').map((name, i) => ({ name, snapshotSha256: i === 0 ? null : h(stage + '-snapshot'), startedAt: t(start), completedAt: t(start + 10), rawSha256: h(name), exitCode: 0, captureComplete: true, stderrBytes: 0, clientMajor: 17 })),
+      dumps: names.filter(n => n !== 'auth_storage_changes.sql').map((name, i) => ({ name, snapshotSha256: i === 0 ? null : h(stage + '-snapshot'), startedAt: t(start), completedAt: t(start + 10), rawSha256: h(name), exitCode: 0, captureComplete: true, stderrBytes: 0, clientMajor: 17,
+        transport: { encoding: i === 0 ? 'plain' : 'gzip', stdoutBytes: 20, decodedBytes: 20, stdoutSha256: i === 0 ? h(name) : h(name + '-gzip') } })),
       checksumCompletedAt: t(start + 15), manifestSha256: h(stage), files, authReviewSha256: h('auth'), sourceState: state,
       restore: stage === 'finalBackup' ? null : { targetKind: 'isolated-local-supabase', targetBindingSha256: bind.rehearsal, serverMajor: 17,
         transactions: files.map(f => ({ name: f.name, sha256: f.sha256, exitCode: 0, onErrorStop: true, transaction: true })), restoredState: clone(state), bridgeReplay: 'committed-with-history', canonicalReplay: 'exact-catalog-match', cliVersion: '2.109.0', canonicalHistoryCount: 56, canonicalMigrationCorpusSha256: index.migrationCorpusSha256, startedAt: t(50), completedAt: t(180) } };
@@ -87,12 +89,12 @@ function fixture() {
 
 function harness(f, overrides = {}) {
   const calls = { authority: 0, source: 0, backup: 0 };
-  const verifier = new Function('createHash', 'path', 'AUTHORITY_STAGES', 'parseStrictJson', 'verifyAuthorityBundle', 'verifySourceCommitStage', 'comparePostApplyCatalog', 'inspectBackupArtifacts', body + '\nreturn verifyGate1Evidence;')(
+  const verifier = new Function('createHash', 'path', 'AUTHORITY_STAGES', 'parseStrictJson', 'verifyAuthorityBundle', 'verifySourceCommitStage', 'comparePostApplyCatalog', 'inspectBackupArtifacts', 'validBackupDumpTransport', body + '\nreturn verifyGate1Evidence;')(
     createHash, path, AUTHORITY_STAGES, parseStrictJson,
     () => { calls.authority++; return overrides.authority ?? { status: 'AUTHORITY_VALID', bundle: f.bundle }; },
     () => { calls.source++; return overrides.source ?? { status: 'SOURCE_STAGE_VALID', observation: f.sourceObservation }; },
     comparePostApplyCatalog,
-    ({ directory }) => { calls.backup++; if (overrides.backupFailure) throw Error('secret-canary'); return f.nativeSets[directory]; });
+    ({ directory }) => { calls.backup++; if (overrides.backupFailure) throw Error('secret-canary'); return f.nativeSets[directory]; }, validBackupDumpTransport);
   return { verifier, calls };
 }
 function change(f, stage, role, mutate, repin = false) {
@@ -114,6 +116,16 @@ test('nine actual stage validators and real catalog comparator pass synthetic li
   const r = verifier(f.request);
   assert.equal(r.status, 'GATE1_EVIDENCE_VALID'); assert.deepEqual(r.validStages, AUTHORITY_STAGES);
   assert.deepEqual(calls, { authority: 1, source: 1, backup: 2 }); assert.equal(JSON.stringify(f.request), before);
+});
+
+test('backup stages fail closed on absent, plain or malformed dump transport evidence', () => {
+  for (const stage of ['rehearsalBackup', 'finalBackup']) {
+    for (const mutate of [o => { delete o.dumps[1].transport; }, o => { o.dumps[2].transport.encoding = 'plain'; },
+      o => { o.dumps[3].transport.decodedBytes = 32 * 1024 * 1024 + 1; },
+      o => { o.dumps[0].transport.stdoutSha256 = h('different'); }]) {
+      const f = fixture(); change(f, stage, 'observation', mutate); deny(f);
+    }
+  }
 });
 
 test('policy/native authority/source fail closed; native default and arbitrary PASS never grant GO', () => {

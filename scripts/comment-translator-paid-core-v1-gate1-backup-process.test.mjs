@@ -8,6 +8,7 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import { createBackupProcessTransport, createBackupProcessReceipt } from './lib/comment-translator-paid-core-v1-gate1-backup-process.mjs';
 import { BACKUP_ACQUISITION_PRODUCERS } from './lib/comment-translator-paid-core-v1-gate1-backup-acquisition.mjs';
+import { validBackupDumpTransport } from './lib/comment-translator-paid-core-v1-gate1-backup-dump-transport.mjs';
 
 const sha = value => createHash('sha256').update(value).digest('hex');
 const sourceCommit = 'a'.repeat(40), binding = 'b'.repeat(64);
@@ -125,12 +126,15 @@ function receiptFixture(options = {}) {
       dumps: ['roles', 'schema', 'data', 'historySchema', 'historyData'].map((name, i) => ({ name,
         snapshotSha256: i === 0 ? null : '2'.repeat(64), startedAt: new Date(Date.parse('2026-09-09T00:00:00Z') + i * 100 + 1).toISOString(),
         completedAt: new Date(Date.parse('2026-09-09T00:00:00Z') + i * 100 + 50).toISOString(),
-        rawSha256: '3'.repeat(64), exitCode: 0, captureComplete: true, stderrBytes: 0, clientMajor: 17 })),
+        rawSha256: '3'.repeat(64), exitCode: 0, captureComplete: true, stderrBytes: 0, clientMajor: 17,
+        transport: { encoding: i === 0 ? 'plain' : 'gzip', stdoutBytes: 20, decodedBytes: 20,
+          stdoutSha256: (i === 0 ? '3' : '7').repeat(64) } })),
       sourceState: sourceState(),
           vectorExclusion: { snapshotSha256: '2'.repeat(64), counts: { 'storage.buckets_vectors': 0, 'storage.vector_indexes': 0 } } },
     manifestSha256: output().manifestSha256, files, createdAt: '2026-09-09T00:00:00.950Z' };
   if (options.missingSourceState) delete record.capture.sourceState;
   if (options.nonemptyState) record.capture.sourceState.vaultRows = 1;
+  options.mutateDump?.(record.capture.dumps);
   const store = {
     prepareDirectory() { actions.push('prepare'); return { status: 'EMPTY_RESTRICTED_DIRECTORY_VERIFIED' }; },
     inspectRecord({ name, expectedSha256 }) {
@@ -172,8 +176,8 @@ test('generated backup observation satisfies actual final stage contract with na
   const src = fs.readFileSync(new URL('./lib/comment-translator-paid-core-v1-gate1-stage-evidence.mjs', import.meta.url), 'utf8');
   const body = src.replace(/^import .*;\r?\n/gm, '').replaceAll('export ', '');
   // Same isolated import seam as the existing stage tests; no runtime authority.
-  const validate = new Function('createHash', 'inspectBackupArtifacts', body + '\nreturn backup;')(createHash,
-    () => ({ status: 'PERSISTED_BYTES_VERIFIED', manifestSha256: o.manifestSha256, artifacts: o.files }));
+  const validate = new Function('createHash', 'inspectBackupArtifacts', 'validBackupDumpTransport', body + '\nreturn backup;')(createHash,
+    () => ({ status: 'PERSISTED_BYTES_VERIFIED', manifestSha256: o.manifestSha256, artifacts: o.files }), validBackupDumpTransport);
   const descriptor = { startedAt: '2026-09-08T23:59:59.000Z', completedAt: '2026-09-09T00:00:02.000Z', targetBindings: { production: binding } };
   const bundle = { index: { stages: { finalBackup: descriptor, rehearsalBackup: descriptor } } };
   const policy = { backups: { finalBackup: { directory: 'Z:/backup/run', manifestSha256: o.manifestSha256, authReviewSha256: o.authReviewSha256 } } };
@@ -204,4 +208,17 @@ test('outer receipt rejects failed source, malformed capture, deadline and durab
   const f = receiptFixture();
   await assert.rejects(f.runner.run({ acquisition: acquisition(), processReceiptDirectory: 'Z:/backup/run/nested' }), /BACKUP_PROCESS_RECEIPT_REJECTED/);
   assert.ok(!f.actions.includes('child'));
+});
+
+test('native receipt retains transport evidence and refuses legacy or malformed transports', async () => {
+  const good = receiptFixture();
+  await good.runner.run({ acquisition: acquisition(), processReceiptDirectory: 'Z:/process/run' });
+  assert.equal(good.records[0].backupObservation.dumps[1].transport.encoding, 'gzip');
+  assert.equal(good.records[0].backupObservation.dumps[1].transport.stdoutSha256, '7'.repeat(64));
+  for (const mutateDump of [d => { delete d[1].transport; }, d => { d[3].transport.encoding = 'plain'; },
+    d => { d[4].transport.stdoutBytes = 0; }, d => { d[0].transport.decodedBytes = 19; }]) {
+    const f = receiptFixture({ mutateDump });
+    await assert.rejects(f.runner.run({ acquisition: acquisition(), processReceiptDirectory: 'Z:/process/run' }), /BACKUP_PROCESS_RECEIPT_REJECTED/);
+    assert.equal(f.records.length, 0);
+  }
 });

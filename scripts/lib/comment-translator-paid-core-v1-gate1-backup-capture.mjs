@@ -6,6 +6,7 @@ import { buildPsqlInvocation, computeBindingSha256, parseTargetBinding } from '.
 import { createBackupSnapshotTransport } from './comment-translator-paid-core-v1-gate1-backup-snapshot.mjs';
 import { transformRestoreRoles, transformRestoreSchema } from './comment-translator-paid-core-v1-gate1-restore-sql.mjs';
 import { BACKUP_DATA_EXCLUDED_SCHEMAS, BACKUP_DATA_EXCLUDED_TABLES } from './comment-translator-paid-core-v1-gate1-backup-state.mjs';
+import { decodeBackupDumpOutput } from './comment-translator-paid-core-v1-gate1-backup-dump-transport.mjs';
 
 const MAX_BYTES = 32 * 1024 * 1024;
 const hash = text => createHash('sha256').update(text).digest('hex');
@@ -42,11 +43,10 @@ export function createBackupCapture({ spawnImpl = spawn, spawnSyncImpl = spawnSy
           chunks.length = 0; reject(error(reason ?? 'BACKUP_PROCESS_FAILED', closed)); return;
         }
         try {
-          const text = new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks));
-          if (!validText(text) || !text.trim()) throw new Error();
+          const { text, rawSha256, transport } = decodeBackupDumpOutput(Buffer.concat(chunks), command === 'pg_dump' ? 'gzip' : 'plain');
           resolve({ text, observation: { startedAt, completedAt: stamp(), exitCode: code,
-            captureComplete: true, stderrBytes: 0, clientMajor: 17, rawSha256: hash(text) } });
-        } catch (e) { reject(error(e.message === 'BACKUP_CLOCK_INVALID' ? e.message : 'BACKUP_CAPTURE_INVALID')); }
+            captureComplete: true, stderrBytes: 0, clientMajor: 17, rawSha256, transport } });
+        } catch (e) { reject(error(['BACKUP_CLOCK_INVALID', 'BACKUP_CAPTURE_LIMIT'].includes(e.message) ? e.message : 'BACKUP_CAPTURE_INVALID')); }
       };
       const fail = value => {
         if (done || reason) return;
@@ -128,7 +128,7 @@ export function createBackupCapture({ spawnImpl = spawn, spawnSyncImpl = spawnSy
           session.assertActive();
           const remaining = session.remainingMs();
           if (!(remaining > 0)) throw error('BACKUP_DEADLINE');
-          const captured = await capture('pg_dump', [mode, '--role=postgres', '--quote-all-identifiers', '--no-password', '--snapshot', session.snapshot, ...filters],
+          const captured = await capture('pg_dump', [mode, '--compress=gzip', '--role=postgres', '--quote-all-identifiers', '--no-password', '--snapshot', session.snapshot, ...filters],
             invocation.env, controller.signal, Math.min(60000, remaining), stamp);
           raw[name] = captured.text;
           dumps.push({ name, snapshotSha256, ...captured.observation });

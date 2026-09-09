@@ -6,12 +6,13 @@ import {
   POSTAPPLY_CATALOG_SQL,
   collectPostApplyCatalogObservation
 } from "./lib/comment-translator-paid-core-v1-gate1-postapply-acquire.mjs";
-import { parseStrictJson } from "./lib/comment-translator-paid-core-v1-gate1-evidence.mjs";
+import { parseStrictJson, POSTAPPLY_MAX_OUTPUT_BYTES } from "./lib/comment-translator-paid-core-v1-gate1-evidence.mjs";
 import * as preflightModule from "./comment-translator-paid-core-v1-gate1-preflight-readonly.mjs";
 import { CANONICAL_TABLE_NAMES } from "./lib/comment-translator-paid-core-v1-gate1-catalog.mjs";
 import { inspectPostApplyCatalogArtifact } from "./lib/comment-translator-paid-core-v1-gate1-postapply-catalog.mjs";
 
 const SOURCE = fs.readFileSync(new URL("./lib/comment-translator-paid-core-v1-gate1-postapply-acquire.mjs", import.meta.url), "utf8");
+assert.match(SOURCE, /const MAX_OUTPUT_BYTES = POSTAPPLY_MAX_OUTPUT_BYTES;/, "extracted parser and collector use the shared production bound");
 const VALID_REQUEST = {
   target: "preview",
   sourceCommit: "0123456789abcdef0123456789abcdef01234567",
@@ -118,7 +119,7 @@ const parseEnd = SOURCE.indexOf("function sortArtifactRows(", parseStart);
 assert.ok(parseStart >= 0 && parseEnd > parseStart, "private row parser is bounded in source");
 const parseSingleJsonRow = new Function("Buffer", "MAX_OUTPUT_BYTES", "parseStrictJson", "exactKeys", "ROW_KEYS", `${SOURCE.slice(parseStart, parseEnd)}; return parseSingleJsonRow;`)(
   Buffer,
-  1024 * 1024,
+  POSTAPPLY_MAX_OUTPUT_BYTES,
   parseStrictJson,
   (value, keys) => value !== null && typeof value === "object" && !Array.isArray(value)
     && Object.keys(value).length === keys.length
@@ -262,7 +263,7 @@ function makeExtractedCollector({ target = "preview", versionResult = { status: 
   const collector = new Function(
     "requestIsValid", "unavailable", "result", "POSTAPPLY_STATUS", "REASONS",
     "process", "loadPreflight", "POSTAPPLY_CATALOG_SQL", "spawnSync", "fsApi",
-    "sortArtifactRows", "inspectPostApplyCatalogArtifact", "parseSingleJsonRow",
+    "sortArtifactRows", "inspectPostApplyCatalogArtifact", "parseSingleJsonRow", "MAX_OUTPUT_BYTES",
     collectorSource + "; return collectPostApplyCatalogObservation;"
   )(
     extractedRequestIsValid,
@@ -292,7 +293,8 @@ function makeExtractedCollector({ target = "preview", versionResult = { status: 
     fixtureFs,
     extractedSortArtifactRows,
     inspectPostApplyCatalogArtifact,
-    parseSingleJsonRow
+    parseSingleJsonRow,
+    POSTAPPLY_MAX_OUTPUT_BYTES
   );
   return { collector, state, processFixture, isolated };
 }
@@ -360,6 +362,26 @@ for (const [label, queryResult] of [
   assert.equal(fixture.state.nativeCalls.length, 2, label + ": version plus one query");
 }
 
+for (const bytes of [1133757, 4 * 1024 * 1024]) {
+  const json = JSON.stringify(rowFor('production'));
+  const stdout = json + ' '.repeat(bytes - Buffer.byteLength(json));
+  const f = makeExtractedCollector({ target: 'production', queryResult: { status: 0, stdout, stderr: '' } });
+  assert.equal((await f.collector(f.isolated.request)).status, 'POSTAPPLY_CATALOG_OBSERVED', 'large complete catalog accepted');
+  assert.equal(f.state.nativeCalls[0].options.maxBuffer, 1024 * 1024, 'version limit unchanged');
+  assert.equal(f.state.nativeCalls[1].options.maxBuffer, 4 * 1024 * 1024, 'catalog native limit');
+}
+for (const queryResult of [
+  { status: 0, stdout: 'x'.repeat(4 * 1024 * 1024 + 1), stderr: '' },
+  { status: 0, stdout: '界'.repeat(Math.floor(4 * 1024 * 1024 / 3) + 1), stderr: '' },
+  { status: 0, stdout: JSON.stringify(rowFor('production')), stderr: '', error: { code: 'ENOBUFS' } },
+  { status: 0, stdout: JSON.stringify(rowFor('production')), stderr: '', signal: 'SIGTERM' }
+]) {
+  const f = makeExtractedCollector({ target: 'production', queryResult });
+  const r = await f.collector(f.isolated.request);
+  assert.equal(r.status, 'POSTAPPLY_CATALOG_UNAVAILABLE');
+  assert.equal(r.artifact, null);
+  assert.equal(f.state.nativeCalls.length, 2, 'no retry on capture failure');
+}
 const malformedRowFixture = makeExtractedCollector({
   queryResult: { status: 0, stdout: JSON.stringify({ readOnly: null }), stderr: "" }
 });
@@ -425,7 +447,7 @@ assert.match(POSTAPPLY_CATALOG_SQL, /format\('%I\.%I', st\.schema_name, st\.tabl
 assert.match(POSTAPPLY_CATALOG_SQL, /format\('%I\.%I\(%s\)', sf\.schema_name, sf\.function_name/);
 assert.match(POSTAPPLY_CATALOG_SQL, /format\('%I\.%I\(%s\)', fn_ns\.nspname, fn\.proname/);
 assert.match(SOURCE, /await import\("\.\.\/comment-translator-paid-core-v1-gate1-preflight-readonly\.mjs"\)/);
-assert.match(SOURCE, /createPsqlTransport\(\{\s*spawnSyncImpl/);
+assert.match(SOURCE, /createPsqlTransport\(\{\s*maxOutputBytes: MAX_OUTPUT_BYTES,\s*spawnSyncImpl/);
 assert.match(SOURCE, /args\.length === 1 && args\[0\] === "--version"/);
 assert.match(SOURCE, /input: POSTAPPLY_CATALOG_SQL/);
 assert.match(SOURCE, /capture\.stderr !== ""/);

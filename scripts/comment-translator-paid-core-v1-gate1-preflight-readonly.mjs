@@ -9,6 +9,8 @@ import {
   CANONICAL_TABLE_NAMES
 } from "./lib/comment-translator-paid-core-v1-gate1-catalog.mjs";
 
+import { POSTAPPLY_MAX_OUTPUT_BYTES } from "./lib/comment-translator-paid-core-v1-gate1-evidence.mjs";
+
 export const SCHEMA_VERSION = 2;
 export const MAX_OUTPUT_BYTES = 1024 * 1024;
 export const MAX_RESULT_ROWS = 10_000;
@@ -1464,14 +1466,14 @@ export function parseCliArgs(argv) {
   return { target, reason: null };
 }
 
-function normalizeNativeCapture(result) {
+function normalizeNativeCapture(result, maxOutputBytes = MAX_OUTPUT_BYTES) {
   if (!result || result.status !== 0 || (result.error !== null && result.error !== undefined) || (result.signal !== null && result.signal !== undefined)) {
     return null;
   }
   if (typeof result.stdout !== "string" || typeof result.stderr !== "string") return null;
   const stdoutBytes = Buffer.byteLength(result.stdout, "utf8");
   const stderrBytes = Buffer.byteLength(result.stderr, "utf8");
-  if (stdoutBytes > MAX_OUTPUT_BYTES || stderrBytes > MAX_OUTPUT_BYTES || stdoutBytes + stderrBytes > MAX_OUTPUT_BYTES) {
+  if (stdoutBytes > maxOutputBytes || stderrBytes > maxOutputBytes || stdoutBytes + stderrBytes > maxOutputBytes) {
     return null;
   }
   if (result.stderr.length > 0) return null;
@@ -1486,9 +1488,10 @@ function failedNativeCapture() {
   return { exitCode: 1, stdout: "", stderr: "", rowCount: 0 };
 }
 
-export function createPsqlTransport({ spawnSyncImpl = spawnSync } = {}) {
+export function createPsqlTransport({ spawnSyncImpl = spawnSync, maxOutputBytes = MAX_OUTPUT_BYTES } = {}) {
   return {
     execute(invocation) {
+      if (!Number.isSafeInteger(maxOutputBytes) || maxOutputBytes < 1 || maxOutputBytes > POSTAPPLY_MAX_OUTPUT_BYTES) return failedNativeCapture();
       let versionResult;
       try {
         versionResult = spawnSyncImpl(invocation.command, ["--version"], {
@@ -1515,13 +1518,13 @@ export function createPsqlTransport({ spawnSyncImpl = spawnSync } = {}) {
           input: invocation.input,
           shell: false,
           windowsHide: true,
-          maxBuffer: MAX_OUTPUT_BYTES,
+          maxBuffer: maxOutputBytes,
           timeout: QUERY_CAPTURE_TIMEOUT_MS
         });
       } catch {
         return failedNativeCapture();
       }
-      const queryCapture = normalizeNativeCapture(result);
+      const queryCapture = normalizeNativeCapture(result, maxOutputBytes);
       if (!queryCapture) return failedNativeCapture();
       return {
         exitCode: 0,

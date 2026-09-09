@@ -1039,6 +1039,14 @@ assert.equal(
 assert.equal(nativeCaptureCalls[0].options.timeout, 10000, "version capture has the bounded timeout");
 assert.equal(nativeCaptureCalls[1].options.timeout, 60000, "query capture has the bounded timeout");
 
+for (const maxOutputBytes of [0, -1, NaN, Infinity, '4194304', 4 * 1024 * 1024 + 1]) {
+  let calls = 0;
+  const transport = createPsqlTransport({ maxOutputBytes, spawnSyncImpl: () => { calls++; return {}; } });
+  assert.equal(transport.execute({}).exitCode, 1, 'invalid output bound refused');
+  assert.equal(calls, 0, 'invalid output bound stops before native execution');
+}
+assert.equal(nativeCaptureCalls[0].options.maxBuffer, MAX_OUTPUT_BYTES);
+assert.equal(nativeCaptureCalls[1].options.maxBuffer, MAX_OUTPUT_BYTES, 'default preflight remains 1MiB');
 const versionStderrOnlyCalls = [];
 const versionStderrOnlyTransport = createPsqlTransport({
   spawnSyncImpl(command, args, options) {

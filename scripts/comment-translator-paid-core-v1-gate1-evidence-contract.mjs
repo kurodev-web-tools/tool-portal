@@ -273,6 +273,28 @@ try {
     assert.equal(validateEvidenceIndex(oversized, isolatedPolicy, root, nowMs).reason, "AUTHORITY_INDEX_INVALID", "oversized references fail before reads");
   });
 
+  for (const stage of ['previewReadback', 'rehearsalBackup', 'productionReadback', 'canonicalReadback']) {
+    withIsolatedFixture(({ root, policy: isolatedPolicy, index: isolatedIndex }) => {
+      for (const role of ['catalog', 'catalog-expectations']) {
+        const reference = isolatedIndex.stages[stage].artifacts[0];
+        const bytes = Buffer.from('{}' + ' '.repeat(4 * 1024 * 1024 - 2));
+        fs.writeFileSync(path.join(root, reference.path), bytes);
+        Object.assign(reference, { role, bytes: bytes.length, sha256: sha256(bytes) });
+        syncReceiptArtifacts(root, isolatedIndex, stage);
+        assert.equal(validateEvidenceIndex(isolatedIndex, isolatedPolicy, root, nowMs).status, 'AUTHORITY_VALID', stage + ' bounded catalog file read');
+        reference.bytes++;
+        assert.equal(validateEvidenceIndex(isolatedIndex, isolatedPolicy, root, nowMs).reason, 'AUTHORITY_INDEX_INVALID', '4MiB+1 rejected before artifact read');
+        reference.bytes--;
+      }
+      isolatedIndex.stages[stage].artifacts[0].role = 'observation';
+      assert.equal(validateEvidenceIndex(isolatedIndex, isolatedPolicy, root, nowMs).reason, 'AUTHORITY_INDEX_INVALID', 'non-catalog role keeps 1MiB');
+    });
+  }
+  withIsolatedFixture(({ root, policy: isolatedPolicy, index: isolatedIndex }) => {
+    const reference = isolatedIndex.stages.sourceCommit.artifacts[0];
+    Object.assign(reference, { role: 'catalog', bytes: 1024 * 1024 + 1 });
+    assert.equal(validateEvidenceIndex(isolatedIndex, isolatedPolicy, root, nowMs).reason, 'AUTHORITY_INDEX_INVALID', 'wrong stage cannot raise limit');
+  });
   withIsolatedFixture(({ root, policy: isolatedPolicy, index: isolatedIndex }) => {
     const totalOversized = clone(isolatedIndex);
     for (const stage of AUTHORITY_STAGES.slice(0, 3)) {

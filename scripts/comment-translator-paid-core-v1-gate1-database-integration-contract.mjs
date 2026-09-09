@@ -19,7 +19,7 @@ import {
 import { cleanupGeneratedRuntimeResources } from "./lib/comment-translator-paid-core-v1-gate1-runtime-cleanup.mjs";
 import { POSTAPPLY_CATALOG_SQL } from "./lib/comment-translator-paid-core-v1-gate1-postapply-acquire.mjs";
 import { inspectPostApplyCatalogArtifact } from "./lib/comment-translator-paid-core-v1-gate1-postapply-catalog.mjs";
-import { parseStrictJson } from "./lib/comment-translator-paid-core-v1-gate1-evidence.mjs";
+import { parseStrictJson, POSTAPPLY_MAX_OUTPUT_BYTES } from "./lib/comment-translator-paid-core-v1-gate1-evidence.mjs";
 
 const root = process.cwd();
 const fixturesRoot = path.join(root, "scripts", "fixtures");
@@ -3157,11 +3157,11 @@ function readLocalPostapplyRow(projectId) {
     "exec", "--interactive", "--env", "PGOPTIONS=-c default_transaction_read_only=on", containerId,
     "psql", "--no-psqlrc", "--no-password", "--quiet", "--tuples-only", "--no-align",
     "--set=ON_ERROR_STOP=1", "--username=postgres", "--dbname=postgres"
-  ], POSTAPPLY_CATALOG_SQL, { captureByteLimit: 1024 * 1024 });
+  ], POSTAPPLY_CATALOG_SQL, { captureByteLimit: POSTAPPLY_MAX_OUTPUT_BYTES });
   if (capture.exitCode !== 0 || capture.signal !== "NONE" || capture.errorCode !== "NONE"
     || capture.terminationUnknown !== false || capture.captureFailure !== false
     || typeof capture.stdout !== "string" || typeof capture.stderr !== "string" || capture.stderr !== ""
-    || Buffer.byteLength(capture.stdout, "utf8") + Buffer.byteLength(capture.stderr, "utf8") > 1024 * 1024) {
+    || Buffer.byteLength(capture.stdout, "utf8") + Buffer.byteLength(capture.stderr, "utf8") > POSTAPPLY_MAX_OUTPUT_BYTES) {
     const failure = new Error("POSTAPPLY_QUERY_CAPTURE_INVALID");
     failure.cliDiagnostics = {
       failureClass: "POSTAPPLY_QUERY_CAPTURE_INVALID",

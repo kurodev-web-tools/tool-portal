@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { POSTAPPLY_CATALOG_SQL } from "./lib/comment-translator-paid-core-v1-gate1-postapply-acquire.mjs";
-import { parseStrictJson } from "./lib/comment-translator-paid-core-v1-gate1-evidence.mjs";
+import { parseStrictJson, POSTAPPLY_MAX_OUTPUT_BYTES } from "./lib/comment-translator-paid-core-v1-gate1-evidence.mjs";
 import { inspectPostApplyCatalogArtifact } from "./lib/comment-translator-paid-core-v1-gate1-postapply-catalog.mjs";
 import { CANONICAL_TABLE_NAMES, projectCanonicalStructuralState, assertCanonicalStructuralState, canonicalStructuralEqual } from "./lib/comment-translator-paid-core-v1-gate1-catalog.mjs";
 
@@ -92,7 +92,7 @@ function reader(capture = successfulCapture) {
   const calls = [];
   const read = load("readLocalPostapplyRow", {
     verifiedPostapplyContainer: (id) => { calls.push(["verify", id]); return "a".repeat(64); },
-    runDocker: (...args) => { calls.push(args); return capture; }, POSTAPPLY_CATALOG_SQL, parseStrictJson, Buffer
+    runDocker: (...args) => { calls.push(args); return capture; }, POSTAPPLY_CATALOG_SQL, parseStrictJson, POSTAPPLY_MAX_OUTPUT_BYTES, Buffer
   });
   return { read, calls };
 }
@@ -100,11 +100,17 @@ const good = reader(); assert.deepEqual(clone(good.read("owned")), row);
 assert.deepEqual(good.calls[0], ["verify", "owned"]);
 assert.deepEqual(good.calls[1][0], ["exec", "--interactive", "--env", "PGOPTIONS=-c default_transaction_read_only=on", "a".repeat(64), "psql", "--no-psqlrc", "--no-password", "--quiet", "--tuples-only", "--no-align", "--set=ON_ERROR_STOP=1", "--username=postgres", "--dbname=postgres"]);
 assert.equal(good.calls[1][1], POSTAPPLY_CATALOG_SQL);
-assert.deepEqual(good.calls[1][2], { captureByteLimit: 1024 * 1024 });
+assert.deepEqual(good.calls[1][2], { captureByteLimit: 4 * 1024 * 1024 });
+for (const bytes of [1133757, 4 * 1024 * 1024]) {
+  const json = JSON.stringify(row);
+  const stdout = json + ' '.repeat(bytes - Buffer.byteLength(json));
+  assert.deepEqual(clone(reader({ ...successfulCapture, stdout }).read('owned')), row, 'large complete local catalog accepted');
+  if (bytes === 4 * 1024 * 1024) assert.throws(() => reader({ ...successfulCapture, stdout: stdout + ' ' }).read('owned'), /POSTAPPLY_QUERY_CAPTURE_INVALID/);
+}
 for (const patch of [
   { exitCode: 1 }, { signal: "SIGTERM" }, { errorCode: "ETIMEDOUT" },
   { terminationUnknown: true }, { captureFailure: true }, { captureFailure: undefined },
-  { stdout: null }, { stderr: "private warning" }, { stdout: "é".repeat(524289) }
+  { stdout: null }, { stderr: "private warning" }, { stdout: "é".repeat(2 * 1024 * 1024 + 1) }
 ]) assert.throws(() => reader({ ...successfulCapture, ...patch }).read("owned"), /POSTAPPLY_QUERY_CAPTURE_INVALID/);
 for (const stdout of ["", "{}\n{}", "{", '{"readOnly":null,"readOnly":null}', "{}"]) {
   assert.throws(() => reader({ ...successfulCapture, stdout }).read("owned"), /POSTAPPLY_QUERY_(ROW_COUNT|JSON_INVALID|ROW_SHAPE)/);

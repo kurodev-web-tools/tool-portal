@@ -70,6 +70,10 @@ const NATIVE_KEYS = Object.freeze([
   "stderrBytes"
 ]);
 const MAX_REFERENCE_BYTES = 1 * 1024 * 1024;
+// Full post-apply catalog JSON exceeds 1MiB with the complete dependency closure.
+// Share the bounded allowance across capture, parsing and catalog artifact reads.
+export const POSTAPPLY_MAX_OUTPUT_BYTES = 4 * 1024 * 1024;
+const POSTAPPLY_STAGES = new Set(['previewReadback', 'rehearsalBackup', 'productionReadback', 'canonicalReadback']);
 const MAX_AUTHORITY_DOCUMENT_BYTES = 1 * 1024 * 1024;
 const MAX_TOTAL_JSON_BYTES = 32 * 1024 * 1024;
 const MAX_GIT_CAPTURE_BYTES = 8 * 1024 * 1024;
@@ -536,9 +540,14 @@ function sameMetadata(left, right) {
     && left.ino === right.ino;
 }
 
-function readArtifact(evidence, reference) {
+function referenceByteLimit(reference, stage) {
+  return POSTAPPLY_STAGES.has(stage) && ['catalog', 'catalog-expectations'].includes(reference?.role)
+    ? POSTAPPLY_MAX_OUTPUT_BYTES : MAX_REFERENCE_BYTES;
+}
+
+function readArtifact(evidence, reference, stage) {
   if (!exactKeys(reference, RECEIPT_REFERENCE_KEYS) && !exactKeys(reference, ARTIFACT_REFERENCE_KEYS)) fail(REASONS.ARTIFACT_INVALID);
-  if (!isSha256(reference.sha256) || !Number.isSafeInteger(reference.bytes) || reference.bytes < 1 || reference.bytes > MAX_REFERENCE_BYTES || !reference.path.endsWith(".json")) fail(REASONS.ARTIFACT_INVALID);
+  if (!isSha256(reference.sha256) || !Number.isSafeInteger(reference.bytes) || reference.bytes < 1 || reference.bytes > referenceByteLimit(reference, stage) || !reference.path.endsWith(".json")) fail(REASONS.ARTIFACT_INVALID);
   const filePath = safeArtifactPath(evidence, reference.path);
   let descriptor;
   let fd;
@@ -646,9 +655,9 @@ function extractAuthorityIndex(authorityBytes) {
   }
 }
 
-function validateReference(reference, kind) {
+function validateReference(reference, kind, stage) {
   const keys = kind === "receipt" ? RECEIPT_REFERENCE_KEYS : ARTIFACT_REFERENCE_KEYS;
-  if (!exactKeys(reference, keys) || !isSha256(reference.sha256) || !Number.isSafeInteger(reference.bytes) || reference.bytes < 1 || reference.bytes > MAX_REFERENCE_BYTES || typeof reference.path !== "string" || !reference.path.endsWith(".json")) fail(REASONS.INDEX_INVALID);
+  if (!exactKeys(reference, keys) || !isSha256(reference.sha256) || !Number.isSafeInteger(reference.bytes) || reference.bytes < 1 || reference.bytes > referenceByteLimit(reference, stage) || typeof reference.path !== "string" || !reference.path.endsWith(".json")) fail(REASONS.INDEX_INVALID);
   if (kind === "artifact" && !ROLE_PATTERN.test(reference.role)) fail(REASONS.INDEX_INVALID);
 }
 
@@ -683,7 +692,7 @@ function validateIndexShape(index, policy) {
     const roles = new Set();
     const artifactPaths = new Set();
     for (const artifact of descriptor.artifacts) {
-      validateReference(artifact, "artifact");
+      validateReference(artifact, "artifact", stage);
       if (roles.has(artifact.role)) fail(REASONS.INDEX_INVALID);
       if (artifactPaths.has(artifact.path)) fail(REASONS.INDEX_INVALID);
       roles.add(artifact.role);
@@ -755,7 +764,7 @@ export function validateEvidenceIndex(index, policy, evidenceRoot, nowMs = Date.
       }
       compareReceipt(stage, descriptor, receipt, policy.expectedSourceCommit, policy.expectedMigrationCorpusSha256);
       for (const artifact of descriptor.artifacts) {
-        const bytes = readArtifact(evidence, artifact);
+        const bytes = readArtifact(evidence, artifact, stage);
         artifacts[artifact.path] = bytes;
       }
     }

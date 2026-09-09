@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 
-import { parseStrictJson } from "./comment-translator-paid-core-v1-gate1-evidence.mjs";
+import { parseStrictJson, POSTAPPLY_MAX_OUTPUT_BYTES } from "./comment-translator-paid-core-v1-gate1-evidence.mjs";
 import { inspectPostApplyCatalogArtifact } from "./comment-translator-paid-core-v1-gate1-postapply-catalog.mjs";
 
 const REQUEST_KEYS = Object.freeze([
@@ -20,7 +20,7 @@ const ROW_KEYS = Object.freeze([
 ]);
 const COMMIT_PATTERN = /^[a-f0-9]{40}$/;
 const SHA256_PATTERN = /^[a-f0-9]{64}$/;
-const MAX_OUTPUT_BYTES = 1024 * 1024;
+const MAX_OUTPUT_BYTES = POSTAPPLY_MAX_OUTPUT_BYTES;
 const POSTAPPLY_STATUS = "POSTAPPLY_CATALOG_OBSERVED";
 const UNAVAILABLE_STATUS = "POSTAPPLY_CATALOG_UNAVAILABLE";
 const REASONS = Object.freeze({
@@ -410,6 +410,7 @@ export async function collectPostApplyCatalogObservation(request) {
   const fixedInvocation = { ...invocation, input: POSTAPPLY_CATALOG_SQL };
   let queryAttempts = 0;
   const transport = preflight.createPsqlTransport({
+    maxOutputBytes: MAX_OUTPUT_BYTES,
     spawnSyncImpl(command, args, options) {
       if (!(args.length === 1 && args[0] === "--version")) queryAttempts += 1;
       return spawnSync(command, args, options);

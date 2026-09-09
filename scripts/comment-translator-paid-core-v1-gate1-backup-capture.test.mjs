@@ -23,6 +23,7 @@ function fixture(options = {}) {
   let next = 0, dumps = 0;
   const capture = createBackupCapture({
     ...(options.now ? { now: options.now } : {}),
+    ...(options.monotonicNow ? { monotonicNow: options.monotonicNow } : {}),
     ...(options.persistWhileHeld ? { persistWhileHeld: options.persistWhileHeld } : {}),
     fsApi: { lstatSync: () => ({ isFile: () => true }), readFileSync: () => ca },
     setTimeoutImpl(fn, delay) { const id = ++next; timers.set(id, fn); if ((options.timeout && delay === 60000) || (options.killAbsent && delay === 2000)) queueMicrotask(fn); return id; },
@@ -228,7 +229,7 @@ test('failed or mismatched held persistence cannot commit or return a successful
 
 test('persistence finishing after the held snapshot deadline cannot commit', async () => {
   const base = Date.parse('2026-09-09T00:00:00Z'); let clock = base + 10;
-  const f = fixture({ now: () => clock, t0: '2026-09-09T00:00:00Z', persistWhileHeld: async ({ artifacts }) => {
+  const f = fixture({ now: () => clock, monotonicNow: () => clock, t0: '2026-09-09T00:00:00Z', persistWhileHeld: async ({ artifacts }) => {
     clock = base + 300001;
     return { status: 'PERSISTED_BYTES_VERIFIED', manifestSha256: 'a'.repeat(64),
       artifacts: artifacts.map(({ name, bytes, sha256 }) => ({ name, bytes, sha256 })) };

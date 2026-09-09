@@ -168,11 +168,12 @@ function backup(stage, values, bundle, policy) {
   const o = values.observation, d = bundle.index.stages[stage], p = policy.backups[stage];
   require(keys(o, ['schemaVersion', 't0', 'snapshotSha256', 'exporter', 'dumps', 'checksumCompletedAt', 'manifestSha256', 'files', 'authReviewSha256', 'sourceState', 'restore']));
   require(o.schemaVersion === 1 && sha(o.snapshotSha256) && o.manifestSha256 === p.manifestSha256 && o.authReviewSha256 === p.authReviewSha256);
-  const t0 = within(o.t0, d), complete = within(o.checksumCompletedAt, d);
-  require(complete >= t0 && (stage !== 'finalBackup' || complete <= t0 + 300000));
+  const t0 = time(o.t0), complete = within(o.checksumCompletedAt, d);
+  require(t0 >= time(d.startedAt) - 1000 && t0 <= time(d.completedAt) + 1000);
+  require(complete >= t0 - 1000 && (stage !== 'finalBackup' || complete <= t0 + 299000));
   // Successful dump hashes alone do not establish a usable recovery set.
   // The authority-bound stage includes the completed restricted persistence.
-  require(stage !== 'finalBackup' || time(d.completedAt) <= t0 + 300000);
+  require(stage !== 'finalBackup' || time(d.completedAt) <= t0 + 299000);
   require(keys(o.exporter, ['isolation', 'readOnly', 'serverMajor', 'closedAt', 'exitCode', 'captureComplete', 'stderrBytes', 'vectorExclusion']));
   require(o.exporter.isolation === 'repeatable read' && o.exporter.readOnly === true && o.exporter.serverMajor === 17 && o.exporter.exitCode === 0 && o.exporter.captureComplete === true && o.exporter.stderrBytes === 0);
   require(keys(o.exporter.vectorExclusion, ['snapshotSha256', 'counts']) && o.exporter.vectorExclusion.snapshotSha256 === o.snapshotSha256);
@@ -184,7 +185,7 @@ function backup(stage, values, bundle, policy) {
     require(r.name === DUMPS[i] && sha(r.rawSha256) && r.exitCode === 0 && r.captureComplete === true && r.stderrBytes === 0 && r.clientMajor === 17);
     require(r.snapshotSha256 === (i === 0 ? null : o.snapshotSha256));
     const start = within(r.startedAt, d), end = within(r.completedAt, d);
-    require(end >= start && end <= complete && (i === 0 || start >= t0));
+    require(end >= start && end <= complete && (i === 0 || start >= t0 - 1000));
   });
   require(Array.isArray(o.files) && o.files.length === 6);
   o.files.forEach((f, i) => require(keys(f, ['name', 'bytes', 'sha256']) && f.name === FILES[i] && count(f.bytes) && (i === 2 || f.bytes > 0) && sha(f.sha256)));

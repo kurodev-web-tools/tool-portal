@@ -25,8 +25,8 @@ const envelope = text => 'SET session_replication_role = replica;\n\n' + text + 
 // persists/inspects them while the exporter is held. No restore, Auth/Storage
 // acquisition, stage authority or Gate decision is established here.
 export function createBackupCapture({ spawnImpl = spawn, spawnSyncImpl = spawnSync, fsApi = fs,
-  now = Date.now, setTimeoutImpl = setTimeout, clearTimeoutImpl = clearTimeout, persistWhileHeld } = {}) {
-  const snapshotTransport = createBackupSnapshotTransport({ spawnImpl, spawnSyncImpl, fsApi, now, setTimeoutImpl, clearTimeoutImpl });
+  now = Date.now, monotonicNow = () => performance.now(), setTimeoutImpl = setTimeout, clearTimeoutImpl = clearTimeout, persistWhileHeld } = {}) {
+  const snapshotTransport = createBackupSnapshotTransport({ spawnImpl, spawnSyncImpl, fsApi, now, monotonicNow, setTimeoutImpl, clearTimeoutImpl });
   function capture(command, args, env, signal, timeout, stamp) {
     if (signal.aborted) return Promise.reject(error('BACKUP_ABORTED'));
     const startedAt = stamp();
@@ -126,7 +126,7 @@ export function createBackupCapture({ spawnImpl = spawn, spawnSyncImpl = spawnSy
         const snapshotSha256 = hash(session.snapshot);
         for (const [name, mode, filters] of recipes) {
           session.assertActive();
-          const remaining = 300000 - (now() - Date.parse(session.t0));
+          const remaining = session.remainingMs();
           if (!(remaining > 0)) throw error('BACKUP_DEADLINE');
           const captured = await capture('pg_dump', [mode, '--role=postgres', '--quote-all-identifiers', '--no-password', '--snapshot', session.snapshot, ...filters],
             invocation.env, controller.signal, Math.min(60000, remaining), stamp);
@@ -136,7 +136,7 @@ export function createBackupCapture({ spawnImpl = spawn, spawnSyncImpl = spawnSy
           rawHashes[name] = hash(raw[name]);
         }
         session.assertActive();
-        const elapsedMs = now() - Date.parse(session.t0);
+        const elapsedMs = 300000 - session.remainingMs();
         if (elapsedMs < 0 || elapsedMs >= 300000) throw error('BACKUP_DEADLINE');
         const values = [ ['roles.sql', raw.roles, roles], ['schema.sql', raw.schema, prepareBackupSchemaWithDefaults(transformRestoreSchema(raw.schema).sql, session.tableDefaults)],
           ['auth_storage_changes.sql', authStorageSql, authStorageSql], ['data.sql', raw.data, envelope(raw.data)],

@@ -1,5 +1,43 @@
 # Paid Core v1 Gate 1 — Production Supabase readiness
 
+## 2026-09-09 Goal 2: clock fix locally accepted, publication pending
+
+ユーザー承認の時計修正をローカル実装・検証した。DB T0が受信したPC時刻より最大1000ms未来でも許容し、それを超える値はmicrosecond精度で拒否する。DB T0原文を変更しない。受信時の残り時間は `300000 - (hostNow - Date.parse(T0)) - 1000` msで固定し、以後は単調時計で減算する。許容差を5分枠へ加算しない。dump timeout・held persistence前後・exporter closeも同じ期限を使用する。`elapsedMs` はこの保守的な消費予算を表す。PC観測時刻は実時刻のまま保存し、逆行・非数値は失敗としてcleanupする。
+
+取得record・native process receipt・stage validatorはDB/PCをまたぐ順序のみ1秒を許容し、PC内のdump順序・checksum/close/persistence順序は厳密に保つ。完了上限は `T0 + 299000ms`。78関連tests PASS、最終microsecond境界追補後のsnapshot/capture32tests PASS、変更9mjsのESLint/syntax・actual diff review・diff check PASS。primary単独で実装・検証。今回remote操作なし。この状態はUNPUBLISHEDであり、公開済producer照合を迂回して取得しない。ソースのcommit/push/PRと公開が済んだ後に、既存Goal2のnative取得・full restore/replayを再開する。Goal2未完了、Gate1 NO-GO。以下のWindows同期待ちは旧checkpointであり、現在の次条件は修正ソースの公開。
+
+## 2026-09-09 Goal 2: 時計同期待ち
+
+2026-09-09 Goal 2 started / WAITING_FOR_LOCAL_CLOCK_SYNC: 最新Production6file取得＋隔離full restore/replay22→56をユーザー承認で開始。公開済source12producer照合・Goal1 baseline前確認PASS。保存先ACL初期設定は子Windows PowerShellのmodule path競合で停止し、空directoryを保護した後に再開。native captureはSNAPSHOT_METADATA_INVALIDで停止。固定RR/RO診断はPG17/read-only/isolation/sourceState22/defaultACL12/metadata形式が正常、DB T0が受信時369ms未来。別clock観測でもserver ahead516–899msを確認。時計検証を緩和せずWindows同期待ち。新規6file/取得record/process receiptは各0、残存idle transaction0。本番書込み0、復元/replay未実施、Goal2未完了、Gate1 NO-GO。
+
+証跡はignored `goal2-capture-attempt2.json` / `goal2-capture-diagnostic.json` / `goal2-metadata-diagnosis.json` / `goal2-clock-cleanup.json`。OS時刻変更は未実施。再確認でもserver ahead538–969ms、idle transaction0、保存先各0を観測。ignored復元driverを準備し構文確認済みだが未実行。native取得receipt/source/manifestを照合してから所有local環境を作成し、Auth/Storage公式初期化・全local service停止・6transaction復元・sourceState厳密一致を確認する設計。synthetic26用のsource-era欠落を許すチェッカーは本番22の受け入れに流用しない。同期後に時刻条件を再確認し、同じ承認範囲でnative取得・完全復元・migration replayを続行する。失敗時の保存先は空で保護済み、既存バックアップは変更していない。
+
+## 2026-09-09 Goal 1: 管理baseline差の説明と復元先条件
+
+Goal 1は `MANAGED_BASELINE_DIFFERENCES_EXPLAINED`。以下が現在のAuth/Storage判定であり、後続の過去checkpointの `BLOCKED_ON_BASELINE` / user delta未確定を置き換える。実際のhosted復元先は未観測、本番復旧可能性は未証明、Gate1は **NO-GO** のまま。
+
+固定CLI2.109.0/PG17.6.1.140で新規の所有隔離環境を作成し、生成configの `[storage].enabled=false` でCLIの事前Storage migrationを止めた。`--exclude storage-api`だけでは `initSchema15` の初期化jobを除外できない。空のStorage履歴から、承認済みStorage v1.72.11 imageの公式 `runMigrationsOnTenant` を `MULTI_TENANT=true`、`DB_INSTALL_ROLES=false`、migration refresh/vector migration無効で実行。Auth v2.192.0は公式 `GOTRUE_INDEX_WORKER_ENSURE_USER_SEARCH_INDEXES_EXIST=true` で起動した。管理tableの手動DROP、手動管理DDL、role権限拡大なし。公式根拠: [CLI初期化](https://github.com/supabase/cli/blob/v2.109.0/apps/cli-go/internal/db/start/start.go)、[Storage migration実装](https://github.com/supabase/storage/blob/518862dff5b2e4f3386ad51e4a172e91d0ce2ad2/src/internal/database/migrations/migrate.ts)。これはlocal再現条件であり、Production service設定の直接観測ではない。
+
+| 比較対象 | 確定した結果 |
+| --- | --- |
+| 履歴・構造 | Auth77、Storage68/name/hash全件一致。Auth4索引あり、Iceberg追加2tableなし。native catalog595件中593件が完全一致、共通function21定義も完全一致 |
+| ACL2件 | storage.buckets/objectsの所有者自身のgrant option表記のみ。他のACL、owner、RLS属性は完全一致。所有者は常にgrant optionを持つため実効権限差ではなく補正GRANT不要（[PostgreSQL 17権限仕様](https://www.postgresql.org/docs/17/ddl-priv.html)）。生ACL差は保持 |
+| 内部依存 | source/local各RI trigger92行とTOAST29行。pg_trigger/pg_constraint/親relationのnative情報で意味上のidentityを対応付け、raw identityと重複行数を保持。単純なOID除去・重複排除なし |
+| 外部依存 | source795/local762行の差33行はpublic policy→auth.uid()の13行とpublic FK→auth index/columnの20行。アプリschema復元に属し、管理schema差分SQLには含めない。未説明の比較差0 |
+
+**利用者差分:** 観測した管理baselineへの追加利用者DDLは不要。空ファイルを作って取得済みbackupとは扱わず、この判断と比較artifactのhashを保持する。アプリpolicy/FKの省略は認めない。次のfresh captureでsource状態の整合を再確認し、変化があれば再レビューする。今回のread-only再取得は以前のsource595objects/795dependenciesと完全一致したが、将来snapshotの保証にはしない。
+
+**実際の復元先の必須条件:**
+
+1. PG17と互換な公式Auth/Storage baseline・owner/role・RLS/ACL・関数/索引・履歴name/hashを復元先自身で確認する。不足はplatform/serviceの正式経路で整え、利用者postgresの権限拡大や管理table DROPで合わせない。local環境変数をhosted操作手順へそのまま転用しない。
+2. public schemaのdefault ACLを含む既存restore recipeを守り、public→Authの33依存行をschema復元後に確認する。
+3. Authデータとprovider/redirect等の設定、Storage実体、6fileのsnapshot/hash、通常postgresによるrestoreと22→56 replayはGoal 2以降の実測条件。この比較で成立したとは扱わない。
+4. 実hosted destinationの適合・作成可能性・復旧時間・切替は別証拠と承認が必要。未観測のままGOにしない。
+
+restricted evidence: `.tmp/gate1-evidence-20260909/auth-storage-review/goal1-acceptance.json`、同directoryのraw catalog/identity/外部依存一覧・初期化receipt。最終candidate cleanup2件、CLI cleanup2actions PASS。primary agentが実測・比較・受け入れを担当、サブエージェントなし。本番はTLS verify-full/read-only管理catalog再取得のみで書込み0、fresh6file取得・deploy・activationなし。
+
+2026-09-09 Auth/Storage delta review BLOCKED_ON_BASELINE: merged source1509dabの12producer照合PASS後、承認済みProduction Directをnative PG17.11/verify-full/read-onlyで確認。history22、legacy/Vault/Storage/vector0。Auth/Storage schema-onlyをrestricted artifactへ取得し、既存固定CLI2.109.0/PG17.6の所有ローカル隔離環境と比較。Auth migration77/latest20260625000000は一致、StorageはProduction68/latest67とlocal61/latest60で不一致。初期SQL token集計は本文保持不足のため無効（後続native catalog比較で置換）。これは管理baseline差を含み、review済みuser deltaや空auth_storage_changes.sqlの根拠にしない。schema dumpとversion queryは別snapshot。native CLIの既知TLS問題を回避するためhosted CLI diffは未実行。local cleanup2actions PASS、独立container/network/volume/scratch各0。本番書込み0、fresh6file capture未実施。次は復元先自身の管理baseline/依存関係を満たす経路を確定し、user-executable差分を再レビューする。Gate1 NO-GO。
+
 2026-09-09 pre-publication review / lint LOCAL_REVIEWED・UNPUBLISHED: primary agentが実diffと新規moduleを直接レビューし、重大な指摘なし。既存lock固定のnpm ci --ignore-scripts --no-audit --no-fundを作業worktree内cacheで実行（691 packages）、manifest/lockfile SHA256不変。変更23 MJSのESLint --max-warnings=0 PASS、コード修正なし。直前の46 tests/native6file復元＋history56 replayの対象source/log SHA256不変を照合し、受理済み実行は反復しない。過去entryのESLint SETUP_BLOCKEDは今回解消。commit/push/PR・新本番backup・本番rehearsal・9-stage受理は未実施、Gate1 NO-GO。次は明示承認されたsource公開。
 
 2026-09-09 Production rehearsal preparation / default ACL capture LOCAL_VERIFIED・UNPUBLISHED: 検証済みdefault-table-ACL SQL/生成器をbackup-default-acl.mjsへ共通化。Production captureのRR/RO exporterにtableDefaultsを必須追加し、不足/不正/重複/許可外scope-role-privilegeを拒否、freezeしてschema artifactへ結合。対象はpostgresのglobal/public table defaultsとanon/authenticated/service_role。26件ローカル検証と同じ処理を使うがProduction source-stateは22固定を維持。source producer12filesに追加し未公開HEADを拒否することを確認。関連46 tests・5 syntax PASS、共通化後native6file復元state完全一致→history56/canonical/archive PASS、独立cleanup全0。ESLint setup-blocked。旧backupには新しい同snapshot default ACL/正式producer証跡がないため最終T0証拠には昇格させない。順序は公開前レビュー/必要チェック→明示承認によるcommit/push/PRとsource確定→別途承認された最新backup等の取得→本番22history/実データの隔離rehearsal→9-stage判定。本番変更/deployはその後の別承認。今回hosted接続/再取得/変更0、Gate1 NO-GO。
@@ -238,3 +276,7 @@ bridge commit前はtransaction失敗に伴うcatalog/historyの原子性を確�
 target/commit/pending/fingerprintの不一致、legacy非zero、source-era変更、完全manifest/ACL/RLS/raw digest/dependency不一致、backup/recovery未完備、advisorの新規in-scopeまたはhigh/critical問題、Vault重複、Cron active/run発生、fallback二重化、秘密表示の必要性は停止条件。失敗したmutationを自動再試行しない。原因と変更するscopeを確定してから実行条件を更新する。
 
 GOには、review済みsourceのPreview統合merge、両環境final56と完全canonical/security一致、archive/source-era保持、実backup/rehearsal/final snapshot/watchdog/無償復旧能力、extensions利用可能、Vault exact2名、inactive Cron exact1件と10分run0、fallback無効、phase別rollback証拠がすべて必要。通常deployとactivationは未実施のままとする。未取得、未実装、stale、間接証拠、矛盾が1つでもあればNO-GO。
+
+2026-09-09 Storage baseline release identified: native verify-full/read-onlyでProduction storage.migrationsの68件を取得。公式storage v1.72.11 commit518862dff5b2e4f3386ad51e4a172e91d0ce2ad2のtenant SQL1-67は全件Git blob整合・本番name/hash一致。bootstrap0もpostgres-migrations v5.3.0公式SQLのname/SHA1(filename+SQL)一致、合計68/68。固定local storage v1.61.7は0060までで、差分0061-0067は公式platform更新と確認。v1.72.11は比較候補であり、本番稼働imageや復元先catalog適合の証明ではない。新image取得/新version起動/管理SQL適用は未実施。次は承認済みの使い捨てlocalサービスとして候補版を起動し、完全Auth/Storage catalog・ACL・依存関係を再比較する。本番書込み0、user delta未確定、Gate1 NO-GO。
+
+2026-09-09 Storage v1.72.11 local candidate comparison: 承認済みimageを取得しsha256:d189b8072865b5d8289af9435dee18eb6eef82f465e1d7d092fa9665bbd4ce54へ固定。既存所有local CLI環境内のStorageのみ候補serviceへ切替、local DB alias/network一致を確認しhosted credentialは渡さず実行。Auth77/Storage68とStorage name/hash全68一致。しかしnative RR/RO catalogはsource595/candidate621 objects、dependencies795/802で不一致。共通function21の定義は完全一致、source-only Auth index4、candidate-only Iceberg2tablesと関連18columns/5constraints/5indexes、共通storage.buckets/objectsのowner grant-option表記2差が残る。Auth4indexは公式Auth v2.192.0 indexworkerの定義に一致し、Storage0038/0047/0048はstorage.multitenantでIceberg table作成を分岐する。これは初期化設定差の説明であり、本番service設定の直接観測ではない。既存SQL token比較は文字列/dollar本文を十分保持していなかったため旧14/23・8/20件は判定根拠から除外。生本文を保持するとCRLF/LF由来の関数差も含むため、最終判断はnative catalog比較を使用する。2回目は不足していたnative定義/ACL/依存関係取得のため実施。両runの候補container cleanupとCLI cleanup2actions PASS、独立CLI container/network/volume・候補container・scratch各0。次は管理サービスの正式な初期化設定（Auth indexworkerとStorage multitenant分岐）を空の隔離環境で再現する設計確認。管理tableの手動DROP、role権限拡大、本番書込み、6file本番backupは未実施。user delta未確定、Gate1 NO-GO。

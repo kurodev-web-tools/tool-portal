@@ -72,11 +72,11 @@ function validateCapture(result, binding, inspection) {
   require(exact(o, ['startedAt', 'completedAt', 't0', 'sourceBindingSha256', 'snapshotSha256', 'exporterClosedObservedAt', 'dumps']));
   require(o.sourceBindingSha256 === binding && isHash(o.snapshotSha256));
   const start = time(o.startedAt), t0 = time(o.t0), end = time(o.completedAt), closed = time(o.exporterClosedObservedAt);
-  require(start <= t0 && end >= closed && closed >= t0);
+  require(start <= t0 + 1000 && end >= closed && closed >= t0 - 1000);
   require(exact(p, ['manifestSha256', 'files', 'checksumCompletedAt']) && isHash(p.manifestSha256) &&
     p.manifestSha256 === inspection.manifestSha256 && same(p.files, inspection.artifacts));
   const checksum = time(p.checksumCompletedAt);
-  require(checksum >= t0 && checksum <= closed && end <= t0 + 300000);
+  require(checksum >= t0 - 1000 && checksum <= closed && end <= t0 + 299000);
   require(Array.isArray(result.artifacts) && result.artifacts.length === 6 && Array.isArray(p.files) && p.files.length === 6);
   p.files.forEach((file, i) => {
     require(exact(file, ['name', 'bytes', 'sha256']) && file.name === fileNames[i] && isHash(file.sha256) &&
@@ -91,7 +91,7 @@ function validateCapture(result, binding, inspection) {
       isHash(dump.rawSha256) && dump.rawSha256 === result.artifacts[dumpFileIndices[i]].rawSha256 &&
       dump.exitCode === 0 && dump.captureComplete === true && dump.stderrBytes === 0 && dump.clientMajor === 17);
     const begin = time(dump.startedAt), finish = time(dump.completedAt);
-    require(begin >= previous && finish >= begin && finish <= checksum && (i === 0 || begin >= t0)); previous = finish;
+    require(begin >= previous && finish >= begin && finish <= checksum && (i === 0 || begin >= t0 - 1000)); previous = finish;
   });
   const vector = e.vectorExclusion;
   require(exact(vector, ['snapshotSha256', 'counts']) && vector.snapshotSha256 === o.snapshotSha256 &&
@@ -140,7 +140,7 @@ export function createBackupAcquisition({ store = createBackupArtifactStore(), c
         const observed = validateCapture(result, captureInput.expectedBindingSha256, inspection);
         const checkpoint = () => {
           const value = now();
-          require(Number.isFinite(value) && value >= time(observed.completedAt) && value <= time(observed.t0) + 300000);
+          require(Number.isFinite(value) && value >= time(observed.completedAt) && value <= time(observed.t0) + 299000);
           return new Date(value).toISOString();
         };
         phase = 'source-postcheck';

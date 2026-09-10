@@ -7,7 +7,7 @@ const fail = () => { throw new Error('RESTORE_SQL_LEXICAL_REJECTED'); };
 const wordStart = (c) => c !== undefined && /[A-Za-z_\u0080-\uffff]/u.test(c);
 const wordPart = (c) => c !== undefined && /[A-Za-z_0-9$\u0080-\uffff]/u.test(c);
 
-export function parseRestoreSql(source) {
+export function parseRestoreSql(source, { allowCopyText = false, allowTriviaOnly = false } = {}) {
   if (typeof source !== 'string' || !source.trim() || source.includes('\0') ||
       source.length > MAX_BYTES || Buffer.byteLength(source, 'utf8') > MAX_BYTES ||
       !source.isWellFormed()) fail();
@@ -32,7 +32,33 @@ export function parseRestoreSql(source) {
   const finishStatement = () => {
     if (!tokens.length) fail();
     const words = tokens.map((t) => t.value?.toUpperCase());
-    if (words[0] === 'COPY') fail();
+    if (words[0] === 'COPY') {
+      if (allowCopyText !== true) fail();
+      // Only pg_dump's qualified COPY table (columns) FROM stdin text form.
+      // CSV/binary/program/query forms require different record boundaries.
+      let at = 1;
+      const identifier = () => {
+        if (!['word', 'identifier'].includes(tokens[at]?.kind)) fail();
+        at++;
+      };
+      const punctuation = value => { if (tokens[at]?.value !== value) fail(); at++; };
+      identifier(); punctuation('.'); identifier(); punctuation('('); identifier();
+      while (tokens[at]?.value === ',') { at++; identifier(); }
+      punctuation(')');
+      if (tokens[at]?.kind !== 'word' || tokens[at++]?.value.toUpperCase() !== 'FROM' ||
+          tokens[at]?.kind !== 'word' || tokens[at++]?.value.toUpperCase() !== 'STDIN' || at !== tokens.length) fail();
+      const newline = source.slice(i).match(/^[\t ]*\r?\n/u)?.[0];
+      if (!newline) fail();
+      i += newline.length;
+      while (i < source.length) {
+        const end = source.indexOf('\n', i);
+        if (end < 0) fail();
+        const line = source.slice(i, source[end - 1] === '\r' ? end - 1 : end);
+        i = end + 1;
+        if (line === '\\.') { push('copy', i); return; }
+      }
+      fail();
+    }
     // A setting change affects the lexical interpretation of later statements.
     if (words[0] === 'RESET') {
       if (words[1] === 'ALL' || words[1] === 'STANDARD_CONFORMING_STRINGS') {
@@ -134,7 +160,7 @@ export function parseRestoreSql(source) {
   }
   if (restriction !== null || tokens.length) fail();
   if (start < i) push('trivia', i);
-  if (!spans.some((span) => span.kind === 'sql')) fail();
+  if (!spans.some((span) => span.kind === 'sql' || span.kind === 'copy') && allowTriviaOnly !== true) fail();
   return spans;
 }
 

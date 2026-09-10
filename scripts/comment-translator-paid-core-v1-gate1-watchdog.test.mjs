@@ -174,36 +174,53 @@ function nativeFixture(options = {}) {
   const digest = computeBindingSha256(target);
   const nativePolicy = { ...policy(), sourceBindingSha256: digest };
   const context = { policy: nativePolicy, bindingJson: JSON.stringify(target), accessToken: 'synthetic-token-not-a-real-credential',
+    publicProbe: { projectRef: target.projectRef, apiKey: 'sb_publishable_synthetic_fixture_key' },
     authorization: { runId: run, sourceCommit: source, sourceBindingSha256: digest,
       readOnlyPreflight: true, pauseRequest: true, confirmedInaccessibility: true },
     env: { PATH: 'synthetic-path', PGHOST: target.host, PGPORT: '5432', PGDATABASE: 'postgres', PGUSER: 'postgres',
       PGSSLMODE: 'verify-full', PGSSLROOTCERT: 'synthetic-ca', PGPASSWORD: 'fixture-only', UNRELATED_ENV: 'excluded' } };
-  const calls = [], settings = { status: 'ACTIVE_HEALTHY', tcp: 'ECONNREFUSED', http: 503, ...options };
+  const calls = [], settings = { status: 'ACTIVE_HEALTHY', tcp: 'ECONNREFUSED',
+    addresses: [{ address: '2001:db8::10', family: 6 }, { address: '192.0.2.10', family: 4 }], elapsed: 0, ...options };
   const seams = {
+    clock: { wallNow: () => Date.parse(t0) + settings.elapsed, monotonicNow: () => settings.elapsed },
+    lookupImpl(host, config, callback) {
+      calls.push({ kind: 'dns', host, config });
+      if (settings.deferDns) { settings.pendingDns = callback; settings.dnsEntered?.(); return; }
+      queueMicrotask(() => callback(settings.dnsError ? { code: settings.dnsError } : null,
+        settings.addressSequence?.shift() ?? settings.addresses));
+    },
     fsApi: { lstatSync: () => ({ isFile: () => true }), readFileSync: () => ca },
     requestImpl(config, callback) {
       calls.push({ kind: 'https', config }); const req = new EventEmitter();
       req.destroy = () => {};
       req.end = () => queueMicrotask(() => {
-        const res = new PassThrough(); res.statusCode = config.hostname === 'api.supabase.com' ? (settings.apiCode ?? 200) : settings.http;
+        const res = new PassThrough(); res.statusCode = config.hostname === 'api.supabase.com' ? (settings.apiCode ?? 200) :
+          (config.path.startsWith('/rest/v1/') ? settings.restCode : settings.authCode) ?? settings.http ??
+          (config.path.startsWith('/rest/v1/') ? 401 : 200);
         callback(res);
         if (config.method === 'POST') res.end('{}');
         else if (config.hostname === 'api.supabase.com') res.end(JSON.stringify({ ref: settings.wrongTarget ? 'other' : target.projectRef,
-          status: settings.status, database: { host: target.host, postgres_engine: '17' } }));
-        else res.end('service unavailable');
+          status: settings.projectStatusSequence?.shift() ?? settings.status, database: { host: target.host, postgres_engine: '17' } }));
+        else if (settings.rawBody !== undefined) res.end(settings.rawBody);
+        else if (res.statusCode === 503) res.end('service unavailable');
+        else res.end(JSON.stringify(config.path.startsWith('/rest/v1/') ?
+          (settings.restBody ?? { code: '42501', message: 'permission denied for table comment_translator_paid_entitlements', details: null, hint: null }) :
+          (settings.authBody ?? { name: 'GoTrue', version: 'v2.fixture', description: 'fixture' })));
       }); return req;
     },
     spawnImpl(command, args, config) {
       calls.push({ kind: 'psql', command, args, config }); const child = new EventEmitter();
       child.stdout = new PassThrough(); child.stderr = new PassThrough(); child.stdin = new PassThrough(); child.kill = () => true;
       child.stdin.on('finish', () => queueMicrotask(() => {
-        child.stdout.end(args.includes('--version') ? 'psql (PostgreSQL) 17.11\n' : '{"serverMajor":17,"readOnly":"on"}\n');
-        child.stderr.end(); child.emit('close', settings.pgFailure ? 1 : 0, null);
+        child.stdout.end(args.includes('--version') ? 'psql (PostgreSQL) 17.11\n' : JSON.stringify(
+          settings.pgBody ?? { serverMajor: 17, readOnly: 'on', tls: true, anonSelect: false }));
+        child.stderr.end(); child.emit('close', settings.pgFailure || (settings.failedAddress && settings.failedAddress === config.env.PGHOSTADDR) ? 1 : 0, null);
       })); return child;
     },
     connectImpl(config) {
       calls.push({ kind: 'tcp', config }); const socket = new EventEmitter(); socket.destroy = () => {};
-      queueMicrotask(() => settings.tcp === 'connected' ? socket.emit('connect') : socket.emit('error', { code: settings.tcp, port: 5432 }));
+      const result = settings.tcpByAddress?.[config.host] ?? settings.tcp;
+      queueMicrotask(() => result === 'connected' ? socket.emit('connect') : socket.emit('error', { code: result, port: 5432, address: config.host }));
       return socket;
     },
   };
@@ -211,7 +228,9 @@ function nativeFixture(options = {}) {
 }
 test('native transport refuses absent or mixed authorization with zero I/O', () => {
   for (const mutate of [c => { c.authorization.pauseRequest = false; }, c => { c.authorization.runId = 'e'.repeat(64); },
-    c => { c.policy.sourceBindingSha256 = 'e'.repeat(64); }, c => { c.env.PGSSLMODE = 'disable'; }]) {
+    c => { c.policy.sourceBindingSha256 = 'e'.repeat(64); }, c => { c.env.PGSSLMODE = 'disable'; },
+    c => { delete c.publicProbe; }, c => { c.publicProbe.projectRef = 'other'; },
+    c => { c.publicProbe.apiKey = 'sb_secret_never_accepted'; }]) {
     const f = nativeFixture(); mutate(f.context);
     assert.throws(() => createGate1WatchdogTransport(f.context, f.seams), /WATCHDOG_TRANSPORT_CONTEXT_INVALID/);
     assert.equal(f.calls.length, 0);
@@ -251,6 +270,148 @@ test('native preflight rejects wrong identity, HTTP redirects and failed databas
     await assert.rejects(transport.preflight({ signal: new AbortController().signal }), /WATCHDOG_PREFLIGHT_FAILED/);
     assert.equal(f.calls.filter(c => c.kind === 'https' && c.config.method === 'POST').length, 0);
   }
+});
+
+test('native endpoint baseline failure prevents pause, including after earlier readiness', async () => {
+  for (const route of ['restCode', 'authCode']) {
+    for (const status of [route === 'restCode' ? 200 : 401, 204, 302, 403, 404, 500, 503]) {
+      const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams);
+      const signal = new AbortController().signal;
+      await transport.preflight({ signal });
+      f.settings[route] = status;
+      await assert.rejects(transport.preflight({ signal }), /WATCHDOG_PREFLIGHT_FAILED/);
+      await assert.rejects(transport.requestPause({ signal }), /WATCHDOG_TRANSPORT_NOT_READY/);
+      assert.equal(f.calls.filter(c => c.kind === 'https' && c.config.method === 'POST').length, 0);
+    }
+  }
+});
+
+test('native baseline binds public key and validates every resolved address with original TLS hostname', async () => {
+  const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams);
+  await transport.preflight({ signal: new AbortController().signal });
+  const probes = f.calls.filter(c => c.kind === 'psql' && !c.args.includes('--version'));
+  assert.deepEqual(probes.map(c => c.config.env.PGHOSTADDR).sort(), f.settings.addresses.map(a => a.address).sort());
+  for (const p of probes) { assert.equal(p.config.env.PGHOST, 'db.fixtureproject.supabase.co'); assert.equal(p.config.env.PGSSLMODE, 'verify-full'); }
+  for (const c of f.calls.filter(c => c.kind === 'https' && c.config.hostname !== 'api.supabase.com')) {
+    assert.equal(c.config.headers.apikey, f.context.publicProbe.apiKey);
+    assert.equal(c.config.headers.Authorization, undefined);
+    assert.ok(['/auth/v1/health', '/rest/v1/comment_translator_paid_entitlements?select=*&limit=0'].includes(c.config.path));
+  }
+});
+
+test('native preflight rejects malformed backend evidence and incomplete address validation without pause', async () => {
+  for (const options of [{ authBody: { name: 'other' } }, { restBody: { code: '42501', message: 'permission denied for schema public' } },
+    { restBody: { code: 'PGRST301', message: 'invalid JWT' } }, { rawBody: '{' }, { rawBody: 'x'.repeat(65537) },
+    { pgBody: { serverMajor: 17, readOnly: 'on', tls: true, anonSelect: true } },
+    { pgBody: { serverMajor: 17, readOnly: 'on', tls: false, anonSelect: false } },
+    { addresses: [] }, { addresses: [{ address: 'not-an-ip', family: 4 }] },
+    { addresses: Array.from({ length: 9 }, (_, n) => ({ address: `192.0.2.${n+1}`, family: 4 })) },
+    { dnsError: 'ENOTFOUND' }, { dnsError: 'EAI_AGAIN' }, { failedAddress: '192.0.2.10' }]) {
+    const f = nativeFixture(options), transport = createGate1WatchdogTransport(f.context, f.seams);
+    const signal = new AbortController().signal;
+    await assert.rejects(transport.preflight({ signal }), /WATCHDOG_PREFLIGHT_FAILED/);
+    await assert.rejects(transport.requestPause({ signal }), /WATCHDOG_TRANSPORT_NOT_READY/);
+    assert.equal(f.calls.filter(c => c.kind === 'https' && c.config.method === 'POST').length, 0);
+  }
+});
+
+test('native DNS absence cannot replace per-address refusal; partial connectivity and transient DNS stay unknown', async () => {
+  const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams);
+  const signal = new AbortController().signal;
+  await transport.preflight({ signal }); await transport.requestPause({ signal });
+  Object.assign(f.settings, { status: 'INACTIVE', http: 503, dnsError: 'ENOTFOUND' });
+  for (const value of ['connected', 'ETIMEDOUT', 'ENOTFOUND']) {
+    f.settings.tcpByAddress = { '192.0.2.10': value };
+    assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
+  }
+  f.settings.tcpByAddress = {};
+  assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_INACCESSIBLE');
+  assert.ok(f.calls.filter(c => c.kind === 'tcp').every(c => ['192.0.2.10', '2001:db8::10'].includes(c.config.host)));
+  f.settings.dnsError = 'EAI_AGAIN';
+  assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
+});
+
+test('native new address invalidates same-run coverage and cannot be silently repinned after pause', async () => {
+  const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams);
+  const signal = new AbortController().signal;
+  await transport.preflight({ signal }); await transport.requestPause({ signal });
+  Object.assign(f.settings, { status: 'INACTIVE', http: 503 });
+  const original = f.settings.addresses;
+  f.settings.addresses = [...original, { address: '192.0.2.20', family: 4 }];
+  assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
+  f.settings.addresses = original;
+  assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
+  await assert.rejects(transport.preflight({ signal }), /WATCHDOG_PREFLIGHT_FAILED/);
+});
+
+test('native stopped evidence expires at the original deadline and cannot use an aborted signal', async () => {
+  const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams);
+  const signal = new AbortController().signal;
+  await transport.preflight({ signal }); await transport.requestPause({ signal });
+  Object.assign(f.settings, { status: 'INACTIVE', http: 503 });
+  const controller = new AbortController(); controller.abort();
+  assert.equal((await transport.confirmStopped({ signal: controller.signal })).status, 'SOURCE_STATUS_UNKNOWN');
+  f.settings.elapsed = 1200001;
+  assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
+});
+
+test('native preflight rejects address changes during validation and project state changes before readiness', async () => {
+  for (const options of [{ addressSequence: [[{ address: '192.0.2.10', family: 4 }], [{ address: '192.0.2.20', family: 4 }]] },
+    { projectStatusSequence: ['ACTIVE_HEALTHY', 'GOING_DOWN'] }]) {
+    const f = nativeFixture(options), transport = createGate1WatchdogTransport(f.context, f.seams);
+    const signal = new AbortController().signal;
+    await assert.rejects(transport.preflight({ signal }), /WATCHDOG_PREFLIGHT_FAILED/);
+    await assert.rejects(transport.requestPause({ signal }), /WATCHDOG_TRANSPORT_NOT_READY/);
+    assert.equal(f.calls.filter(c => c.kind === 'https' && c.config.method === 'POST').length, 0);
+  }
+});
+
+test('native confirmation brackets endpoint checks with project and DNS readback', async () => {
+  for (const change of ['resumed', 'new-address']) {
+    const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams);
+    const signal = new AbortController().signal;
+    await transport.preflight({ signal }); await transport.requestPause({ signal });
+    Object.assign(f.settings, { status: 'INACTIVE', http: 503 });
+    if (change === 'resumed') f.settings.projectStatusSequence = ['INACTIVE', 'ACTIVE_HEALTHY'];
+    else f.settings.addressSequence = [f.settings.addresses, [{ address: '192.0.2.20', family: 4 }]];
+    assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
+    assert.equal(f.calls.filter(c => c.kind === 'tcp').length, 2);
+  }
+});
+
+test('native cancelled DNS cannot later establish readiness or send a pause', async () => {
+  let dnsEntered;
+  const entered = new Promise(resolve => { dnsEntered = resolve; });
+  const f = nativeFixture({ deferDns: true, dnsEntered }), transport = createGate1WatchdogTransport(f.context, f.seams);
+  const controller = new AbortController();
+  const pending = transport.preflight({ signal: controller.signal });
+  const rejected = assert.rejects(pending, /WATCHDOG_PREFLIGHT_FAILED/);
+  await entered; assert.equal(typeof f.settings.pendingDns, 'function'); controller.abort(); await rejected;
+  f.settings.pendingDns(null, f.settings.addresses); await flush();
+  await assert.rejects(transport.requestPause({ signal: new AbortController().signal }), /WATCHDOG_TRANSPORT_NOT_READY/);
+  assert.equal(f.calls.filter(c => c.kind === 'https' && c.config.method === 'POST').length, 0);
+});
+
+test('native clock rollback cannot refresh expired pins and a new transport has no inherited readiness', async () => {
+  const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams);
+  const signal = new AbortController().signal;
+  await transport.preflight({ signal }); await transport.requestPause({ signal });
+  Object.assign(f.settings, { status: 'INACTIVE', http: 503, elapsed: 1200001 });
+  assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
+  f.settings.elapsed = 0;
+  assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
+  const next = createGate1WatchdogTransport(f.context, f.seams);
+  assert.equal((await next.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
+  await assert.rejects(next.requestPause({ signal }), /WATCHDOG_TRANSPORT_NOT_READY/);
+});
+
+test('native transport captures the key so caller mutation cannot change the bound probe credentials', async () => {
+  const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams);
+  const original = f.context.publicProbe.apiKey;
+  f.context.publicProbe.apiKey = 'sb_publishable_other_fixture_key';
+  await transport.preflight({ signal: new AbortController().signal });
+  const requests = f.calls.filter(c => c.kind === 'https' && c.config.hostname !== 'api.supabase.com');
+  assert.equal(requests.length, 2); assert.ok(requests.every(c => c.config.headers.apikey === original));
 });
 
 test('runner persists a hash-chained receipt before arm acknowledgement and terminal success', async () => {

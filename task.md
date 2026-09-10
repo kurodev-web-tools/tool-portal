@@ -1,3 +1,15 @@
+- 2026-09-10 Direct停止判定v2公開承認: ユーザーが検証済み6fileのcommit/push・既存Preview向けPR作成を承認。55+6tests/単独reviewを維持し製品・test source変更なし。merge/deploy/新Hosted停止・Recovery操作は今回対象外、Gate1 NO-GO。
+
+- 2026-09-10 Direct停止判定v2ローカル受入れ: ユーザー承認済みsupabase-inactive-v2/schema2をpolicy・実行承認・記録に固定。前後INACTIVE/両540/全IP終端観測を2回要求し、無応答はDirect UNKNOWNのまま管理/API証拠で判定。3秒/phase4秒/全体12秒・間隔1秒/pair30秒・5/10/20分を維持し、接続成功/対象・source・IP変更を恒久拒否。記録読戻し後の期限も検証。単独実装/diff review、watchdog55tests・別Preview observer6tests・scoped lint/operator PASS。未公開sourceのobserver実行は通信前に拒否、旧原本保全。変更6file、公開/Hosted/本番query・変更0、次はcommit/push/Preview PRの個別承認、Gate1 NO-GO。
+
+- 2026-09-10 Direct停止判定の再設計案: 実sourceと公式仕様を照合。TCP拒否保証の根拠不足、個別socket/監視全体が同じ3秒で後段照合を完了できない構造を確認。INACTIVE＋両540を2回独立照合しDirect成功を拒否条件とする案をactive readiness先頭へ具体化。Direct無応答は不明のままでも管理/API証拠で停止扱いにする保証変更と、個別3秒/全体12秒への変更を明示。厳格拒否維持/既存接続切断観測とも比較、単独仕様review・検証matrix準備。案は未採用・実装/Hosted操作0、旧失敗原本維持、Gate1 NO-GO。
+
+- 2026-09-10 Post-PR830試行終了: Preview pause1回、前後INACTIVE・Auth/REST両540完全応答は確認。Direct1接続は共通期限でcancel・明示拒否0、最終DNS未取得/全体3671msのため停止未受入れ。Recovery未作成。resume1回後ACTIVE_HEALTHY、77/77内容/権限保全と全read-only baselinePASS、2環境正常。本番query/変更・課金0。今回枠終了、次はDirect停止証明方式の設計判断。同条件再停止/timeout合格化なし、原本保全、単独/Gate1 NO-GO。
+
+- 2026-09-10 Post-PR830 Hosted再試行承認: ユーザーが新規保全backup→Preview pause1→月額0のRecovery合成/停止→Preview resume1を承認。新archive完全読取・77relation内容/権限前後一致、history56/Vault2/Storage0/Cron active0 PASS。本番変更/実data Hosted restore/削除/課金/公開は対象外。停止前、Gate1 NO-GO。
+
+- 2026-09-10 Post-PR830次回準備: Preview統合cad8830へ同worktree追従、公開producer7/7実バイト一致。540対応・失敗phase/status/completeを保持する別Preview read-only observerを準備し13検証群PASS。実preflight-onlyはPG17/TLS・anon拒否・REST401/42501・Auth200・DNS安定PASS、終了後も同Preview正常。停止証拠ではなくIP/run再利用不可。2環境正常・Recoveryなし・月額見積り0。新規保全backup→Preview pause1→Recovery合成/停止→Preview resume1の次回packetをactive readiness先頭へ記録、前回1試行終了のため新承認待ち。新backup/Hosted変更/本番query・変更/公開0、単独/Gate1 NO-GO。
+
 - 2026-09-10 HTTP540受入条件/公開承認: ユーザーが540停止判定の採用と検証済み4fileのcommit/push・Preview向けPR作成を承認。既存40tests/最終JSON異常系/lint/operator受入れを維持。merge・追加Hosted停止/Recovery・本番変更は対象外、Gate1 NO-GO。
 
 - 2026-09-10 Post-PR829試行終了/540修正ローカル準備: Preview pause1回、前後INACTIVEだがendpoint UNKNOWNで停止未受入れ。Recovery未作成、resume1回後ACTIVE_HEALTHY・77/77内容/権限保全と全read-only baselinePASS、2環境正常。本番変更/課金0。公式paused=540に対し公開sourceの503限定不整合を合成再現（今回UNKNOWNの実原因は未特定）。540限定・他コード/混在拒否の局所差分を準備、watchdog40tests・強化したJSON異常系・lint/operatorPASS。受入条件変更と4file公開は承認待ち、追加pauseなし、単独/Gate1 NO-GO。

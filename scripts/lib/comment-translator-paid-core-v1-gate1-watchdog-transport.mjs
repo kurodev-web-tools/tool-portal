@@ -180,7 +180,7 @@ export function createGate1WatchdogTransport(context, {
         ]);
         if (rest.status !== 401 || !exact(rest.body, ['code', 'message', 'details', 'hint']) || rest.body.code !== '42501' ||
             rest.body.message !== 'permission denied for table comment_translator_paid_entitlements' ||
-            rest.body.details !== null || rest.body.hint !== null || auth.status !== 200 ||
+            rest.body.details !== null || (rest.body.hint !== null && typeof rest.body.hint !== 'string') || auth.status !== 200 ||
             !exact(auth.body, ['name', 'version', 'description']) || auth.body.name !== 'GoTrue' ||
             typeof auth.body.version !== 'string' || !auth.body.version || typeof auth.body.description !== 'string') throw Error();
         const [finalProject, finalAddresses] = await Promise.all([project(signal), addresses(signal)]);

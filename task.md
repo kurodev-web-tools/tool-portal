@@ -1,3 +1,5 @@
+- 2026-09-10 Post-PR826 LOCAL_RETAINED_ATOMIC_REPLAY_PASS: Preview dd19e85へ追従、公開capture13/executor20/原本6file照合PASS。新規隔離先の全managed catalog/依存/ACL/default/空条件を照合後、正式通常postgres経路で実6fileを1回復元。失効前source・限定reset delta・commit後独立readbackすべてPASS（118663ms）。検証先破棄、owned container/volume0、永続claim保全。Hosted全HTTPS隔離/再開・全工程時間/incident鮮度は未受入れ、外部変更0、単独実行、Gate1 NO-GO。
+
 - 2026-09-10 Post-PR825 real atomic attempt / email-PKCE repair: Preview8c07fc7の公開capture13/executor20/原本6file照合PASS。完全managed catalog/history/ACLと空target条件を照合し、単体imageの広いdefault権限のみsourceへ縮小。実6file正式復元1回はguard拒否、停止確認・owned container/volume0。原本flow20行中magiclink2/recovery8の正規provider別名が未対応と判明し、メール失効条件を修正。実Auth API由来3別名の旧code拒否/新code・元password成功、対応外8組拒否、24tests・strict/Auth-TOTP・lint PASS。修正未公開、実復元未受入れ、Gate1 NO-GO。
 
 - 2026-09-10 Empty-baseline repair publication authorized: ユーザーが検証済み6ファイルのcommit/push/Preview向けPR作成を承認。24tests・baseline native8変化検出・managed baseline・adapter native4ケース・scoped lint/operator PASS。merge、実backup復元、Hosted操作は今回の公開対象外。Gate1 NO-GO。

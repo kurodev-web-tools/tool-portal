@@ -1,5 +1,13 @@
 # Comment Translator Paid Core v1 Gate 1 Production Supabase Readiness Implementation Plan
 
+## 2026-09-10 Post-PR826 local retained replay acceptance
+
+- [x] Verify PR826 merge dd19e85 and protected capture13/executor20/original6 binding.
+- [x] Compare full pinned empty managed catalog/dependencies/identity mappings, history, exact ACL/defaults and empty-data conditions on a fresh owned isolated target.
+- [x] Run the published ordinary-postgres retained adapter once: pre-reset source, fixed-reset delta and independent committed readback all PASS (118663ms). Dispose rehearsal target; owned containers/volumes0, permanent claims preserved.
+- [ ] Establish supported Hosted P2 whole-Recovery HTTPS isolation/reopening and target-specific execution authority. Local restoration success does not establish Hosted acceptance, incident freshness or overall recovery deadlines; Gate1 NO-GO.
+
+
 ## 2026-09-10 Post-PR825 email-PKCE continuation
 
 - [x] Verify published capture/executor/original inputs and attest the isolated empty target profile without widening privileges.

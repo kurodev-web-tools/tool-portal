@@ -87,8 +87,9 @@ END $ct$;
 // Native callers must bind published producers, managed-baseline identity and
 // destination before execution, own ON_ERROR_STOP and the external watchdog,
 // then require successful process closure plus independent committed readback.
-export function buildAtomicRestore(request, { localReplay = false } = {}) {
+export function buildAtomicRestore(request, { localReplay = false, failurePolicy = 'transactional-rollback' } = {}) {
   try {
+    if (!['transactional-rollback','discard-target-v1'].includes(failurePolicy)) throw Error();
     if (!exact(request, ['artifacts', 'sourceState'])) throw Error();
     const sourceState = structuredClone((localReplay ? validateLocalReplaySourceState : validateBackupSourceState)(request.sourceState));
     if (!Array.isArray(request.artifacts) || request.artifacts.length !== 6) throw Error();
@@ -118,7 +119,7 @@ export function buildAtomicRestore(request, { localReplay = false } = {}) {
 SET LOCAL statement_timeout='600000';
 SET LOCAL lock_timeout='10000';
 SET LOCAL row_security=off;
-${artifacts.map(a => [...a.sequences.map(atomicSequenceGuard), a.sql].join('\n')).join('\n')}
+${artifacts.map(a => [...a.sequences.filter(s => !(failurePolicy === 'discard-target-v1' && s.schema === 'auth' && s.sequence === 'refresh_tokens_id_seq')).map(atomicSequenceGuard), a.sql].join('\n')).join('\n')}
 SET LOCAL row_security=off;
 SET LOCAL session_replication_role=origin;
 SET LOCAL search_path=pg_catalog,public;
@@ -135,6 +136,7 @@ DO $ct$ BEGIN IF pg_temp.ct_atomic_fingerprint(false) IS DISTINCT FROM (SELECT v
 SELECT jsonb_build_object('kind','atomic-precommit-v1','fingerprint',(SELECT value FROM ct_atomic_expected));
 COMMIT;
 `;
-    return { schemaVersion: 1, sql, artifacts: artifacts.map(({ name, bytes, sha256 }) => ({ name, bytes, sha256 })), stageAuthority: false, gate: 'NO-GO' };
+    return { schemaVersion: 1, sql, artifacts: artifacts.map(({ name, bytes, sha256 }) => ({ name, bytes, sha256 })),
+      failurePolicy, wholeStateRollbackGuaranteed: failurePolicy === 'transactional-rollback', stageAuthority: false, gate: 'NO-GO' };
   } catch { throw Error('ATOMIC_RESTORE_INPUT_REJECTED'); }
 }

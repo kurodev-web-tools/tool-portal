@@ -1,3 +1,11 @@
+- 2026-09-10 Disposable-target PR publication authorized: ユーザーが検証済み14ファイルのcommit/push/Preview向けPR作成を承認。45tests・native4ケース・strict/Auth-TOTP・scoped lintの既存受入証拠を維持。merge、実backup復元、Hosted操作は対象外。Gate1 NO-GO。
+
+- 2026-09-10 Disposable-target policy LOCAL_VERIFIED: ユーザー承認後、既知Auth sequenceのみ元setvalを維持し、失敗先の再利用を永続claimで禁止する方式を実装。45tests・native4ケース（SQL失敗/接続断/commit後照合失敗/新規先成功）・既存strict/Auth-TOTP回帰PASS。失敗時sequence残存を明示、停止と破棄を区別し、別writerを停止しない。通常postgres/原本/成功時保持条件を維持、権限拡張0。実backup・Hosted実証は未受入れ、未commit/外部変更0/Gate1 NO-GO。旧未帰属volume13件と再利用防止claimは保全。
+
+- 2026-09-10 Stage3 adapter LOCAL_CONTRACT_VERIFIED / REAL_BACKUP_BLOCKED: 取得来歴と実行sourceの別照合・保護record join・通常postgres/所有隔離target/1transaction/独立readbackを追加。40tests・7file ESLint・operator・native正常/rollback/拒否PASS。cached管理Auth sequenceは所有権/SET ROLEとも不可、RESTART拒否。保存実backupのsetter1件もAuth。公開だけでは未解決、実backup実行0・権限拡張0。失敗先を隔離・破棄/再作成する保証変更案は未承認、active readiness先頭に条件を記載。未commit/外部変更0/Gate1 NO-GO。
+
+- 2026-09-10 Post-PR823 stages3/4 preflight: Preview8680e45へ追従、公開13producer一致PASS。保存済backup取得元f1959beと現在producerの照合は拒否され、実復元前で停止（迂回0/実backup実行0）。通常postgresのpg_authid/pg_auth_members読取はlocalで確認、owned cleanup0。次は取得来歴と実行sourceを別検証する通常権限atomic adapter。Hosted HTTPS全隔離は未確定、健全source停止/有料化/外部変更なし。Gate1 NO-GO。
+
 - 2026-09-10 Atomic PR acceptance: COPY/setval互換を追加し、実backup6file467983bytesのread-only静的照合PASS（COPY46/setval1、原本hash不変、実backup native実行0）。関連102tests・native rollback/ownership・cached Auth/TOTP・7file ESLint PASS。単独review、commit/push/Preview向けPRまでユーザー承認済。公開producer接続/通常postgres実backup復元/Hosted P2隔離は未受入れ、merge/外部変更なし、Gate1 NO-GO。現状authorityはactive readiness先頭、以下は履歴。未帰属volume13件は保全。
 
 - 2026-09-10 Atomic local implementation LOCAL_SYNTHETIC_VERIFIED / REAL_BACKUP_BLOCKED: 追加の単一transaction経路と固定reset/全行delta/commit後独立照合を実装。元6分割経路不変、単独実装。focused25・native10条件・cached Auth/TOTP・ESLint5file・operator/diff PASS。Auth稼働中の復元transaction待機を別接続で確認し、旧link/access/refresh拒否、元password/IDと同一TOTP factorのAAL2を確認。実backup・COPY/setval互換・通常postgres・published producer接続・Hosted全HTTPS隔離は未受入れ。初期試験の匿名volume削除漏れを修正、最終owned container/volume0、未帰属候補13件は削除せず保全。外部変更/commit/push/PR0、Gate1 NO-GO。active readiness先頭を現状authorityとし、直下の未承認proposal表記は過去checkpoint。

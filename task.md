@@ -1,3 +1,23 @@
+- 2026-09-10 承認済oracleローカル実装: publicProbe公開キー/対象binding、限定表401/42501＋Auth200＋native権限/TLSを事前確認。当該runで検証した全IP拒否と前後INACTIVE/両503を必須化。DNS不明単独・新IP・部分接続・期限超過・遅延応答は受入れ拒否。単独差分レビュー、watchdog37tests/scoped lint PASS。外部変更・公開0、Hosted実証未実施/Gate1 NO-GO。
+
+- 2026-09-10 Hosted oracle候補具体化: 公式OpenAPI公開キー制限を確認。Preview read-onlyでAuth200・表401/42501＋anon権限照合、固定IP＋元hostのnative PG17/TLS成功、誤host証明書拒否。root401本文は未分類で診断全体NOT_ACCEPTED維持。公開キー付き限定表経路＋当該runで検証した全IPの明示拒否を候補として記録、既存受入条件変更は未承認。製品source変更/再pause/本番アクセス/外部変更/公開0、Gate1 NO-GO。
+
+- 2026-09-10 Stop-oracle事前guard修正: 同一REST/Auth経路の両200を停止前に必須化。401等ではready拒否・pause送信0、再preflight失敗で旧ready解除。停止後INACTIVE/Direct拒否/両503条件は維持、DNS失敗を合格化しない。Hosted実証・適切な認証付きoracle設計は未受入れ。単独local修正、外部操作・公開0、Gate1 NO-GO。
+
+- 2026-09-10 Hosted pause反例/Preview再開済: 承認範囲でPreview pause1回、INACTIVE後Direct DNS失敗/REST/Auth401となり既存停止判定を拒否。Recovery未作成、Preview resume1回でACTIVE_HEALTHYへ復帰、本番も正常・変更0。native TLS/PG17で76/77 relation一致、Storage管理migration65→68（既存不変/公式3index追加ready-valid）だけ差分。厳密保全PASSへ昇格しない。Auth200・REST limit0の42501を独立権限照合、実ログインなし。元backup保全、停止判定修正が次工程、今回再pauseなし、Gate1 NO-GO。
+
+- 2026-09-10 Hosted合成rehearsal例外承認: ユーザーがPreview停止→新規Recovery合成検証→Recovery停止→Preview再開を月額見積り0の範囲で承認。本番停止/実データ移送/削除/課金は対象外。Preview停止前にnative TLS/read-only、77 relation全行/権限・履歴56・Vault2・Storage0・Cron active0と保護archive1122934bytesの完全読取/前後不変を確認。停止/再開は専用Supabase tools、Production watchdog変更なし。現在準備完了・停止前、Gate1 NO-GO。
+
+- 2026-09-10 Recovery capacity再確認: 接続済Supabaseをread-only確認、同一Free組織/東京のProduction・Preview2件ともACTIVE_HEALTHY、新Recoveryなし、月額見積りamount0。空き枠なし。既存の健全環境停止禁止/費用禁止を維持したままHosted事前実証は不可。Preview一時停止→新規空Recoveryで合成/停止検証→Recovery停止→Preview再開の具体案をactive readiness先頭へ記録、例外未承認。停止/作成/設定変更/実restore0、単独実行、Gate1 NO-GO。
+
+- 2026-09-10 追加経路LOCAL_PASS: Storage実fixture objectのupload/download/署名発行/public取得をanon/authenticated計10経路で拒否、bucket/object全行不変。service署名URLの取得は成功し、空inventory条件の必要性を確認。Realtime本体起動待機・単発binary受信を修正し、一括/単発HTTP202配送→suspend後各403・socket切断/再接続403→再開後配送を確認。独立DB readback、各owned残存0。単独実行、Hosted/公開操作0。残る全経路/Hosted停止/capacity/全工程期限は未受入れ、Gate1 NO-GO。
+
+- 2026-09-10 P6順序変更承認: Auth公開再開→運用者login→業務再開をユーザー承認、Hosted操作は対象外。合成で再開後失敗時のprovider停止だけではaccess/refresh/PKCEが有効と再確認、永続claim再利用拒否・ownedAuth/DB停止破棄PASS。別Storage試験はpolicy0/空bucketでanon/authenticated作成拒否、service positive control成功。Realtime v2.112.1は正常Broadcast→suspend反映/既存socket切断94ms/再接続403→再開後Broadcast成功、独立DB readbackもPASS。各owned残存0。単一local instanceの限定証拠であり、Hosted全経路/停止確認・capacity・全工程期限は未受入れ。製品source/原本不変、単独実行、Gate1 NO-GO。
+
+- 2026-09-10 P2組合せ合成検証PASS: Auth起動/provider停止/独立鍵の状態で既存atomic復元→失効→独立readback成功。15要求拒否、Auth全23表内容不変、メール増分0、元password/ID保持、owned残存0。別HTTP hook試験は運用者限定password成功/他者拒否だがrecovery拒否時flow_state更新を再現し不採用。P6をAuth公開再開後smokeへ変える案と既存利用者のAuth操作・失敗時token封じ込めリスクを記録、変更未承認。Hosted操作0/Gate1 NO-GO。
+
+- 2026-09-10 P2代替評価: ユーザーがsupport待ちを却下、問い合わせ案を撤回。Recovery provider/signup/Data API停止＋既存atomic resetを第一候補に整理。旧verify/PKCE・resend/OTP・Storage/Realtime・再開前operator限定smokeは別検証が必要。token hookはFree対応だが副作用/元fingerprint保持に未解決点。active readinessに比較/経路表/状態遷移/ローカル合成検証範囲を記録。合成nativeでprovider/signup停止6経路を拒否・対象4表行数不変、旧鍵/未resetでは旧access/PKCE成功を再現。全行/メール件数/併用/再開は未検証、owned残存0、製品実装・外部変更0、P2要件変更は未承認、Gate1 NO-GO。
+
 - 2026-09-10 Post-PR826 LOCAL_RETAINED_ATOMIC_REPLAY_PASS: Preview dd19e85へ追従、公開capture13/executor20/原本6file照合PASS。新規隔離先の全managed catalog/依存/ACL/default/空条件を照合後、正式通常postgres経路で実6fileを1回復元。失効前source・限定reset delta・commit後独立readbackすべてPASS（118663ms）。検証先破棄、owned container/volume0、永続claim保全。Hosted全HTTPS隔離/再開・全工程時間/incident鮮度は未受入れ、外部変更0、単独実行、Gate1 NO-GO。
 
 - 2026-09-10 Post-PR825 real atomic attempt / email-PKCE repair: Preview8c07fc7の公開capture13/executor20/原本6file照合PASS。完全managed catalog/history/ACLと空target条件を照合し、単体imageの広いdefault権限のみsourceへ縮小。実6file正式復元1回はguard拒否、停止確認・owned container/volume0。原本flow20行中magiclink2/recovery8の正規provider別名が未対応と判明し、メール失効条件を修正。実Auth API由来3別名の旧code拒否/新code・元password成功、対応外8組拒否、24tests・strict/Auth-TOTP・lint PASS。修正未公開、実復元未受入れ、Gate1 NO-GO。

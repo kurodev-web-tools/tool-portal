@@ -1,3 +1,5 @@
+- 2026-09-10 Post-PR825 real atomic attempt / email-PKCE repair: Preview8c07fc7の公開capture13/executor20/原本6file照合PASS。完全managed catalog/history/ACLと空target条件を照合し、単体imageの広いdefault権限のみsourceへ縮小。実6file正式復元1回はguard拒否、停止確認・owned container/volume0。原本flow20行中magiclink2/recovery8の正規provider別名が未対応と判明し、メール失効条件を修正。実Auth API由来3別名の旧code拒否/新code・元password成功、対応外8組拒否、24tests・strict/Auth-TOTP・lint PASS。修正未公開、実復元未受入れ、Gate1 NO-GO。
+
 - 2026-09-10 Empty-baseline repair publication authorized: ユーザーが検証済み6ファイルのcommit/push/Preview向けPR作成を承認。24tests・baseline native8変化検出・managed baseline・adapter native4ケース・scoped lint/operator PASS。merge、実backup復元、Hosted操作は今回の公開対象外。Gate1 NO-GO。
 
 - 2026-09-10 Post-PR824 local baseline repair: Preview805fade merge確認、公開capture13/executor20/保存原本6fileの照合PASS。空の公式Auth/Storage baselineは既存catalog/historyと一致したが、復元前に存在しないmigration history表参照で42P01を再現。baseline専用catalog fingerprintへ分離し、strict復元後SQLはbyte一致を維持。実backup native実行0、修正は未公開、Gate1 NO-GO。次は修正の公開後に実6file復元の受入れを継続。

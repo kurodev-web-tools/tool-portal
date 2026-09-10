@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
-import { buildAtomicRestore, ATOMIC_FINGERPRINT_SETUP_SQL } from './comment-translator-paid-core-v1-gate1-atomic-restore.mjs';
+import { buildAtomicRestore, ATOMIC_FINGERPRINT_SETUP_SQL, ATOMIC_BASELINE_FINGERPRINT_SETUP_SQL } from './comment-translator-paid-core-v1-gate1-atomic-restore.mjs';
 import { ATOMIC_LOCAL_DOCKER_ARGS } from './comment-translator-paid-core-v1-gate1-atomic-local-process.mjs';
 import { readRetainedAtomicBackup } from './comment-translator-paid-core-v1-gate1-atomic-retained.mjs';
 import { parseStrictJson } from './comment-translator-paid-core-v1-gate1-evidence.mjs';
@@ -19,7 +19,7 @@ export function validateAtomicPostgresTarget(t, v) {
 }
 
 export const ATOMIC_POSTGRES_BASELINE_SQL = `BEGIN; SET LOCAL row_security=off; SET LOCAL search_path=pg_catalog,public;
-${ATOMIC_FINGERPRINT_SETUP_SQL}
+${ATOMIC_BASELINE_FINGERPRINT_SETUP_SQL}
 SELECT json_build_object('role',current_user,'database',current_database(),'superuser',(SELECT rolsuper FROM pg_roles WHERE rolname=current_user),
  'serverMajor',current_setting('server_version_num')::integer / 10000,'authUsers',(SELECT count(*) FROM auth.users),
  'baselineSha256',encode(sha256(convert_to(pg_temp.ct_atomic_fingerprint(false)::text,'UTF8')),'hex')); ROLLBACK;`;

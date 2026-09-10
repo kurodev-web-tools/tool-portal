@@ -7,6 +7,11 @@ const names = ['roles.sql', 'schema.sql', 'auth_storage_changes.sql', 'data.sql'
 const tokens = ['confirmation_token', 'recovery_token', 'email_change_token_current', 'email_change_token_new', 'reauthentication_token', 'phone_change_token'];
 const methods = ['magiclink', 'recovery', 'email/signup', 'email_change'];
 const list = values => values.map(x => `'${x}'`).join(',');
+// Auth v2.192.0 emits method-named providers for these email flows. Keep
+// exact provider/method pairs; an arbitrary provider with an email method is
+// not evidence that it belongs to the reviewed email credential surface.
+const emailFlowSql = `((provider_type='email' AND authentication_method IN (${list(methods)})) OR
+  (provider_type=authentication_method AND provider_type IN ('magiclink','recovery','email_change')))`;
 const hash = value => createHash('sha256').update(value).digest('hex');
 const exact = (v, keys) => v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).sort().join(',') === [...keys].sort().join(',');
 
@@ -39,7 +44,7 @@ BEGIN
     IF atomic_relation.relkind='S' THEN atomic_projection := 'jsonb_build_object(''last_value'',t.last_value,''log_cnt'',t.log_cnt,''is_called'',t.is_called)'; END IF;
     IF project_reset AND atomic_relation.nspname='auth' THEN
       IF atomic_relation.relname IN ('sessions','refresh_tokens','mfa_amr_claims','one_time_tokens') THEN atomic_predicate := 'false'; END IF;
-      IF atomic_relation.relname='flow_state' THEN atomic_predicate := 'NOT (provider_type=''email'' AND authentication_method IN (${list(methods).replaceAll("'", "''")})) OR provider_type IS NULL OR authentication_method IS NULL'; END IF;
+      IF atomic_relation.relname='flow_state' THEN atomic_predicate := '${emailFlowSql.replaceAll("'", "''")} IS NOT TRUE'; END IF;
       IF atomic_relation.relname='users' THEN
         atomic_projection := 'to_jsonb(t) ${tokens.map(c => `|| jsonb_build_object(''${c}'', CASE WHEN t.${c} <> '''' THEN '''' ELSE t.${c} END)`).join(' ')}';
       END IF;
@@ -94,8 +99,8 @@ DO $ct$ BEGIN
   IF EXISTS (SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname !~ '^pg_' AND n.nspname <> 'information_schema' AND c.relkind IN ('f','m')) THEN RAISE EXCEPTION 'ATOMIC_RELATION_UNSUPPORTED'; END IF;
   IF EXISTS (SELECT 1 FROM auth.saml_relay_states) OR EXISTS (SELECT 1 FROM auth.saml_providers) THEN RAISE EXCEPTION 'ATOMIC_SAML_UNSUPPORTED'; END IF;
   IF (SELECT array_agg(e.enumlabel::text ORDER BY e.enumlabel::text) FROM pg_enum e JOIN pg_type t ON t.oid=e.enumtypid JOIN pg_namespace n ON n.oid=t.typnamespace WHERE n.nspname='auth' AND t.typname='one_time_token_type') IS DISTINCT FROM ARRAY[${list([...tokens].sort())}]::text[] THEN RAISE EXCEPTION 'ATOMIC_TOKEN_TYPE_UNSUPPORTED'; END IF;
-  IF EXISTS (SELECT 1 FROM auth.flow_state WHERE provider_type='email' AND (authentication_method IS NULL OR authentication_method NOT IN (${list(methods)}))) THEN RAISE EXCEPTION 'ATOMIC_FLOW_UNSUPPORTED'; END IF;
-  IF EXISTS (SELECT 1 FROM auth.flow_state WHERE provider_type IS NULL OR provider_type NOT IN ('email','synthetic-unrelated','unrelated') OR (provider_type <> 'email' AND authentication_method IS DISTINCT FROM 'oauth')) THEN RAISE EXCEPTION 'ATOMIC_FLOW_UNSUPPORTED'; END IF;
+  IF EXISTS (SELECT 1 FROM auth.flow_state WHERE ${emailFlowSql} IS NOT TRUE AND
+    (provider_type IN ('synthetic-unrelated','unrelated') AND authentication_method='oauth') IS NOT TRUE) THEN RAISE EXCEPTION 'ATOMIC_FLOW_UNSUPPORTED'; END IF;
   IF EXISTS (SELECT 1 FROM pg_trigger WHERE NOT tgisinternal AND tgrelid IN ('auth.users'::regclass,'auth.sessions'::regclass,'auth.refresh_tokens'::regclass,'auth.one_time_tokens'::regclass,'auth.flow_state'::regclass,'auth.mfa_amr_claims'::regclass,'auth.saml_relay_states'::regclass)) THEN RAISE EXCEPTION 'ATOMIC_TRIGGER_UNSUPPORTED'; END IF;
   IF EXISTS (SELECT 1 FROM pg_rewrite WHERE ev_class IN ('auth.users'::regclass,'auth.sessions'::regclass,'auth.refresh_tokens'::regclass,'auth.one_time_tokens'::regclass,'auth.flow_state'::regclass,'auth.mfa_amr_claims'::regclass,'auth.saml_relay_states'::regclass)) THEN RAISE EXCEPTION 'ATOMIC_RULE_UNSUPPORTED'; END IF;
   IF EXISTS (SELECT 1 FROM pg_constraint WHERE contype='f' AND confrelid IN ('auth.sessions'::regclass,'auth.refresh_tokens'::regclass,'auth.one_time_tokens'::regclass,'auth.flow_state'::regclass,'auth.mfa_amr_claims'::regclass,'auth.saml_relay_states'::regclass) AND NOT (
@@ -151,7 +156,7 @@ DELETE FROM auth.refresh_tokens;
 DELETE FROM auth.sessions;
 DELETE FROM auth.one_time_tokens WHERE token_type IN (${list(tokens)});
 ${tokens.map(c => `UPDATE auth.users SET ${c}='' WHERE ${c} <> '';`).join('\n')}
-DELETE FROM auth.flow_state WHERE provider_type='email' AND authentication_method IN (${list(methods)});
+DELETE FROM auth.flow_state WHERE ${emailFlowSql};
 DO $ct$ BEGIN IF pg_temp.ct_atomic_fingerprint(false) IS DISTINCT FROM (SELECT value FROM ct_atomic_expected) THEN RAISE EXCEPTION 'ATOMIC_DELTA_MISMATCH'; END IF; END $ct$;
 SELECT jsonb_build_object('kind','atomic-precommit-v1','fingerprint',(SELECT value FROM ct_atomic_expected));
 COMMIT;

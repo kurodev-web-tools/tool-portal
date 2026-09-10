@@ -1,5 +1,14 @@
 # Comment Translator Paid Core v1 Gate 1 Production Supabase Readiness Implementation Plan
 
+## 2026-09-10 Post-PR825 email-PKCE continuation
+
+- [x] Verify published capture/executor/original inputs and attest the isolated empty target profile without widening privileges.
+- [x] Execute one retained six-file atomic attempt; retain its generic guard refusal, stop/disposal evidence and original-hash verification without accepting restoration.
+- [x] Identify official method-named email-provider variants, reproduce the rejection with actual Auth API output, and correct the shared validation/projection/reset predicate locally.
+- [x] Verify old/fresh API codes, original-password/ID preservation, eight unsupported pairs and existing strict/Auth-TOTP regressions.
+- [ ] Publish the repair and rebind the executor before further retained-data restoration. Real restore and Hosted acceptance remain unproven; do not bypass publication or reset an in-flight replacement budget.
+
+
 ## 2026-09-10 Post-PR824 baseline continuation
 
 - [x] Verify merged805fade published capture/executor binding and protected six-file input without native restoration.

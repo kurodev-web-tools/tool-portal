@@ -3,7 +3,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { createGate1Watchdog, parseWatchdogTimestamp } from './lib/comment-translator-paid-core-v1-gate1-watchdog.mjs';
+import { performance } from 'node:perf_hooks';
+import { createGate1Watchdog, parseWatchdogTimestamp, STOP_EVIDENCE_POLICY } from './lib/comment-translator-paid-core-v1-gate1-watchdog.mjs';
 import { createGate1WatchdogTransport } from './lib/comment-translator-paid-core-v1-gate1-watchdog-transport.mjs';
 import { inspectBackupArtifacts } from './lib/comment-translator-paid-core-v1-gate1-backup-artifacts.mjs';
 import { parseStrictJson } from './lib/comment-translator-paid-core-v1-gate1-evidence.mjs';
@@ -84,6 +85,7 @@ export function runWatchdogProtocol({ input = process.stdin, output = process.st
     const decoder = new TextDecoder('utf-8', { fatal: true });
     const startupAbort = new AbortController();
     const wallNow = clock?.wallNow ?? Date.now;
+    const monotonicNow = clock?.monotonicNow ?? (() => performance.now());
     const startupTimer = setTimeout(() => stop(), 10000);
     const sameIdentity = o => o?.runId === context.policy.runId && o.sourceCommit === context.policy.sourceCommit &&
       o.sourceBindingSha256 === context.policy.sourceBindingSha256;
@@ -96,12 +98,21 @@ export function runWatchdogProtocol({ input = process.stdin, output = process.st
     async function finish(result) {
       if (finalizing) return; finalizing = true; clearTimeout(startupTimer); startupAbort.abort();
       input.pause(); input.destroy(); queue = [];
-      let final = { ...result };
+      let final = { ...result }; const persistenceStarted = monotonicNow();
+      const withinDeadline = () => {
+        const duration = monotonicNow() - persistenceStarted, wallAge = wallNow() - parseWatchdogTimestamp(result.t0);
+        return Number.isFinite(duration) && duration >= 0 && Number.isFinite(wallAge) &&
+          Math.max(result.elapsedMs + duration, wallAge) <= 1200000;
+      };
       if (journal) {
         let receiptFailed = false;
-        try { await journal.append({ type: 'terminal', result: final }); } catch { receiptFailed = true; }
+        // The persisted terminal is a candidate. Only the emitted terminal,
+        // after complete readback within the original deadline, grants eligibility.
+        const candidate = final.restoreEligible ? { ...final, restoreEligible: false, reason: 'WATCHDOG_RECEIPT_READBACK_PENDING' } : final;
+        try { await journal.append({ type: 'terminal', result: candidate }); } catch { receiptFailed = true; }
         try { Object.assign(final, await journal.close()); } catch { receiptFailed = true; }
         if (receiptFailed) final = { ...final, journalHealthy: false, restoreEligible: false, reason: 'WATCHDOG_RECEIPT_PERSISTENCE_FAILED' };
+        if (final.restoreEligible && !withinDeadline()) final = { ...final, restoreEligible: false, reason: 'WATCHDOG_FINAL_RECEIPT_DEADLINE_EXCEEDED' };
       }
       try { await write({ type: 'terminal', ...final }); } catch { /* Receipt remains separate from its delivery. */ }
       resolve(final);
@@ -118,11 +129,23 @@ export function runWatchdogProtocol({ input = process.stdin, output = process.st
         if (!exact(message, ['type', 'sequence', 'context', 'journalDirectory']) || message.type !== 'init' || sequence !== 0) throw Error('WATCHDOG_PROTOCOL_INVALID');
         context = message.context;
         const p = context?.policy;
-        if (!exact(p, ['schemaVersion', 't0', 'sourceBindingSha256', 'sourceCommit', 'runId']) || p.schemaVersion !== 1 ||
+        if (!exact(p, ['schemaVersion', 'stopEvidencePolicy', 't0', 'sourceBindingSha256', 'sourceCommit', 'runId']) || p.schemaVersion !== 2 ||
+            p.stopEvidencePolicy !== STOP_EVIDENCE_POLICY ||
             !/^[a-f0-9]{64}$/.test(p.runId ?? '') || !/^[a-f0-9]{64}$/.test(p.sourceBindingSha256 ?? '') ||
             !/^[a-f0-9]{40}$/.test(p.sourceCommit ?? '') || !Number.isFinite(parseWatchdogTimestamp(p.t0)) ||
             parseWatchdogTimestamp(p.t0) > wallNow() || wallNow() - parseWatchdogTimestamp(p.t0) > 300000) throw Error('WATCHDOG_PROTOCOL_INVALID');
-        const transport = createTransport(context);
+        const nativeTransport = createTransport(context);
+        let sourceInvalid = false;
+        const transport = { ...nativeTransport, async confirmStopped({ signal }) {
+          if (sourceInvalid) return { status: 'SOURCE_EVIDENCE_INVALIDATED' };
+          try { await verifySource({ repositoryRoot, sourceCommit: p.sourceCommit }); }
+          catch { sourceInvalid = true; return { status: 'SOURCE_EVIDENCE_INVALIDATED' }; }
+          if (signal.aborted) return { status: 'SOURCE_STATUS_UNKNOWN' };
+          const observed = await nativeTransport.confirmStopped({ signal });
+          try { await verifySource({ repositoryRoot, sourceCommit: p.sourceCommit }); }
+          catch { sourceInvalid = true; return { status: 'SOURCE_EVIDENCE_INVALIDATED' }; }
+          return signal.aborted ? { status: 'SOURCE_STATUS_UNKNOWN' } : observed;
+        } };
         await verifySource({ repositoryRoot, sourceCommit: p.sourceCommit });
         if (lost) throw Error('WATCHDOG_PROTOCOL_INVALID');
         journal = await openJournal({ repositoryRoot, directory: message.journalDirectory, runId: p.runId });

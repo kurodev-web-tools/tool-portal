@@ -8,13 +8,17 @@ import path from 'node:path';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { createGate1Watchdog } from './lib/comment-translator-paid-core-v1-gate1-watchdog.mjs';
-import { createGate1WatchdogTransport } from './lib/comment-translator-paid-core-v1-gate1-watchdog-transport.mjs';
+import { createGate1WatchdogTransport, observeGate1PauseRound, observeGate1DirectAddress } from './lib/comment-translator-paid-core-v1-gate1-watchdog-transport.mjs';
 import { computeBindingSha256 } from './comment-translator-paid-core-v1-gate1-preflight-readonly.mjs';
 import { runWatchdogProtocol } from './comment-translator-paid-core-v1-gate1-watchdog-runner.mjs';
 
 const t0 = '2026-09-08T00:00:00.000Z';
 const binding = 'a'.repeat(64), source = 'b'.repeat(40), run = 'c'.repeat(64);
-const policy = () => ({ schemaVersion: 1, t0, sourceBindingSha256: binding, sourceCommit: source, runId: run });
+const stopEvidencePolicy = 'supabase-inactive-v2';
+const policy = () => ({ schemaVersion: 2, stopEvidencePolicy, t0, sourceBindingSha256: binding, sourceCommit: source, runId: run });
+const round = (delta = {}) => ({ status: 'SOURCE_PAUSE_ROUND_COMPLETE', stopEvidencePolicy,
+  sourceBindingSha256: binding, sourceCommit: source, runId: run, pinSetId: 'e'.repeat(64),
+  pinnedAddressCount: 2, directRefusedCount: 2, directNoConnectCount: 0, ...delta });
 const flush = async () => { for (let i = 0; i < 30; i++) await Promise.resolve(); };
 function harness(overrides = {}) {
   let elapsed = 0, wallOffset = 0, next = 0;
@@ -94,15 +98,15 @@ test('stalled work triggers one pause before ten minutes and expires unconfirmed
 test('decisive failure pauses immediately and a late success cannot release the latch', async () => {
   const h = harness(); await h.backup(); await h.session.arm(); h.session.fail(); await flush();
   assert.equal(h.calls.pause, 1); assert.equal(await h.success(), false);
-  h.transport.confirmStopped = async () => ({ status: 'SOURCE_INACCESSIBLE', sourceBindingSha256: binding });
-  await h.advance(1000); const r = await h.session.finished;
+  h.transport.confirmStopped = async () => round();
+  await h.advance(2000); const r = await h.session.finished;
   assert.equal(r.state, 'PAUSE_CONFIRMED'); assert.equal(r.restoreEligible, true);
 });
 test('pause rejection is not retried; independent confirmation remains mandatory', async () => {
   let pause = 0;
   const h = harness({ transport: { requestPause: async () => { pause++; throw Error('private'); },
-    confirmStopped: async () => ({ status: 'SOURCE_INACCESSIBLE', sourceBindingSha256: binding }) } });
-  await h.backup(); await h.session.arm(); h.session.fail(); await h.advance(1000);
+    confirmStopped: async () => round() } });
+  await h.backup(); await h.session.arm(); h.session.fail(); await flush(); await h.advance(1000);
   const r = await h.session.finished; assert.equal(pause, 1); assert.equal(r.pauseAccepted, false);
   assert.equal(r.state, 'PAUSE_CONFIRMED'); assert.equal(JSON.stringify(r).includes('private'), false);
 });
@@ -132,8 +136,8 @@ test('failed durable arm record cannot acknowledge arm or pause healthy source',
 });
 test('record failure after arm never silently disarms or permits recovery', async () => {
   const h = harness({ record: async row => { if (row.event === 'PAUSE_REQUESTED') throw Error('disk'); },
-    transport: { confirmStopped: async () => ({ status: 'SOURCE_INACCESSIBLE', sourceBindingSha256: binding }) } });
-  await h.backup(); await h.session.arm(); h.session.fail(); await h.advance(1000);
+    transport: { confirmStopped: async () => round() } });
+  await h.backup(); await h.session.arm(); h.session.fail(); await flush(); await h.advance(1000);
   const r = await h.session.finished; assert.equal(h.calls.pause, 1); assert.equal(r.restoreEligible, false);
 });
 test('hung pause request is bounded and late confirmation cannot revive an expired run', async () => {
@@ -175,13 +179,16 @@ function nativeFixture(options = {}) {
   const nativePolicy = { ...policy(), sourceBindingSha256: digest };
   const context = { policy: nativePolicy, bindingJson: JSON.stringify(target), accessToken: 'synthetic-token-not-a-real-credential',
     publicProbe: { projectRef: target.projectRef, apiKey: 'sb_publishable_synthetic_fixture_key' },
-    authorization: { runId: run, sourceCommit: source, sourceBindingSha256: digest,
+    authorization: { runId: run, sourceCommit: source, sourceBindingSha256: digest, stopEvidencePolicy,
       readOnlyPreflight: true, pauseRequest: true, confirmedInaccessibility: true },
     env: { PATH: 'synthetic-path', PGHOST: target.host, PGPORT: '5432', PGDATABASE: 'postgres', PGUSER: 'postgres',
       PGSSLMODE: 'verify-full', PGSSLROOTCERT: 'synthetic-ca', PGPASSWORD: 'fixture-only', UNRELATED_ENV: 'excluded' } };
   const calls = [], settings = { status: 'ACTIVE_HEALTHY', tcp: 'ECONNREFUSED',
     addresses: [{ address: '2001:db8::10', family: 6 }, { address: '192.0.2.10', family: 4 }], elapsed: 0, ...options };
+  const scheduled = new Map(); let timerId = 0;
   const seams = {
+    timers: { setTimeout: (fn, ms) => { const id = ++timerId; scheduled.set(id, { fn, at: settings.elapsed + ms }); return id; },
+      clearTimeout: id => scheduled.delete(id) },
     clock: { wallNow: () => Date.parse(t0) + settings.elapsed, monotonicNow: () => settings.elapsed },
     lookupImpl(host, config, callback) {
       calls.push({ kind: 'dns', host, config });
@@ -194,6 +201,9 @@ function nativeFixture(options = {}) {
       calls.push({ kind: 'https', config }); const req = new EventEmitter();
       req.destroy = () => {};
       req.end = () => queueMicrotask(() => {
+        if (config.hostname !== 'api.supabase.com' && settings.httpDelayJump) {
+          settings.elapsed += settings.httpDelayJump; settings.httpDelayJump = 0;
+        }
         const res = new PassThrough(); res.statusCode = config.hostname === 'api.supabase.com' ? (settings.apiCode ?? 200) :
           (config.path.startsWith('/rest/v1/') ? settings.restCode : settings.authCode) ?? settings.http ??
           (config.path.startsWith('/rest/v1/') ? 401 : 200);
@@ -221,16 +231,63 @@ function nativeFixture(options = {}) {
       })); return child;
     },
     connectImpl(config) {
-      calls.push({ kind: 'tcp', config }); const socket = new EventEmitter(); socket.destroy = () => {};
+      calls.push({ kind: 'tcp', config }); const socket = new EventEmitter(); let destroyed = false;
+      if (settings.setupFailure) throw Error('synthetic socket setup failure');
+      socket.destroy = () => {
+        if (destroyed) return; destroyed = true;
+        queueMicrotask(() => {
+          if (settings.lateConnect) socket.emit('connect');
+          if (!settings.missingClose) socket.emit('close');
+        });
+      };
       const result = settings.tcpByAddress?.[config.host] ?? settings.tcp;
-      queueMicrotask(() => result === 'connected' ? socket.emit('connect') : socket.emit('error', { code: result, port: 5432, address: config.host }));
+      queueMicrotask(() => {
+        if (result === 'silent') return;
+        if (result === 'connected') socket.emit('connect');
+        else socket.emit('error', { code: result, port: settings.errorPort ?? 5432, address: settings.errorAddress ?? config.host });
+      });
       return socket;
     },
   };
-  return { context, seams, calls, settings, digest };
+  return { context, seams, calls, settings, digest, async advance(ms) {
+    const settleIO = async () => { await flush(); await new Promise(resolve => setImmediate(resolve)); await flush(); };
+    const end = settings.elapsed + ms; await settleIO();
+    for (let n = 0; n < 10000; n++) {
+      const next = [...scheduled].filter(([, v]) => v.at <= end).sort((a, b) => a[1].at - b[1].at)[0];
+      if (!next) { settings.elapsed = end; await settleIO(); return; }
+      scheduled.delete(next[0]); settings.elapsed = next[1].at; next[1].fn(); await settleIO();
+    }
+    throw Error('FIXTURE_TIMER_LOOP');
+  } };
 }
+test('v2 native silence needs the full observation window and terminal close before final readback', async () => {
+  const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams), signal = new AbortController().signal;
+  await transport.preflight({ signal }); await transport.requestPause({ signal });
+  Object.assign(f.settings, { status: 'INACTIVE', http: 540, tcp: 'silent' });
+  const before = f.calls.length; let settled = false;
+  const pending = transport.confirmStopped({ signal }).then(r => { settled = true; return r; });
+  await f.advance(2999); assert.equal(settled, false);
+  assert.equal(f.calls.slice(before).filter(c => c.kind === 'dns').length, 1);
+  await f.advance(1); const result = await pending;
+  assert.equal(result.status, 'SOURCE_PAUSE_ROUND_COMPLETE'); assert.equal(result.directNoConnectCount, 2);
+  assert.equal(result.directRefusedCount, 0); assert.equal(f.calls.slice(before).filter(c => c.kind === 'dns').length, 2);
+});
+test('v2 native early cancellation, missing close and late connect cannot become pause evidence', async () => {
+  for (const mode of ['cancel', 'missing-close', 'late-connect']) {
+    const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams), controller = new AbortController();
+    await transport.preflight({ signal: controller.signal }); await transport.requestPause({ signal: controller.signal });
+    Object.assign(f.settings, { status: 'INACTIVE', http: 540, tcp: 'silent', missingClose: mode === 'missing-close', lateConnect: mode === 'late-connect' });
+    const pending = transport.confirmStopped({ signal: controller.signal });
+    await f.advance(1000); if (mode === 'cancel') controller.abort();
+    await f.advance(3001); assert.notEqual((await pending).status, 'SOURCE_PAUSE_ROUND_COMPLETE');
+    Object.assign(f.settings, { tcp: 'ECONNREFUSED', missingClose: false, lateConnect: false });
+    if (mode === 'late-connect') assert.notEqual((await transport.confirmStopped({ signal: new AbortController().signal })).status, 'SOURCE_PAUSE_ROUND_COMPLETE');
+  }
+});
 test('native transport refuses absent or mixed authorization with zero I/O', () => {
   for (const mutate of [c => { c.authorization.pauseRequest = false; }, c => { c.authorization.runId = 'e'.repeat(64); },
+    c => { delete c.authorization.stopEvidencePolicy; }, c => { c.authorization.stopEvidencePolicy = 'legacy'; },
+    c => { delete c.policy.stopEvidencePolicy; }, c => { c.policy.schemaVersion = 1; },
     c => { c.policy.sourceBindingSha256 = 'e'.repeat(64); }, c => { c.env.PGSSLMODE = 'disable'; },
     c => { delete c.publicProbe; }, c => { c.publicProbe.projectRef = 'other'; },
     c => { c.publicProbe.apiKey = 'sb_secret_never_accepted'; }]) {
@@ -251,18 +308,20 @@ test('native pause is exact-origin, TLS-verified, preflight-gated, and one-shot'
   const pg = f.calls.find(c => c.kind === 'psql'); assert.equal(pg.config.shell, false);
   assert.equal(pg.config.env.UNRELATED_ENV, undefined); assert.equal(pg.args.join(' ').includes('fixture-only'), false);
 });
-test('native confirmation needs INACTIVE plus explicit database refusal and both HTTP540 probes', async () => {
+test('native confirmation needs INACTIVE, terminal Direct outcomes and both HTTP540 probes', async () => {
   const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams);
   const signal = new AbortController().signal;
   await transport.preflight({ signal }); await transport.requestPause({ signal });
   for (const delta of [{ status: 'GOING_DOWN' }, { status: 'INACTIVE', tcp: 'ENOTFOUND' },
     { status: 'INACTIVE', tcp: 'ETIMEDOUT' }, { status: 'INACTIVE', tcp: 'connected' },
     { status: 'INACTIVE', tcp: 'ECONNREFUSED', http: 401 }, { status: 'INACTIVE', tcp: 'ECONNREFUSED', http: 540, wrongTarget: true }]) {
+    const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams);
+    await transport.preflight({ signal }); await transport.requestPause({ signal });
     Object.assign(f.settings, { status: 'INACTIVE', tcp: 'ECONNREFUSED', http: 540, wrongTarget: false }, delta);
     assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
   }
   Object.assign(f.settings, { status: 'INACTIVE', tcp: 'ECONNREFUSED', http: 540, wrongTarget: false });
-  assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_INACCESSIBLE');
+  assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_PAUSE_ROUND_COMPLETE');
   for (const c of f.calls.filter(c => c.kind === 'https' && c.config.hostname !== 'api.supabase.com')) {
     assert.equal(c.config.headers.Authorization, undefined);
   }
@@ -274,11 +333,147 @@ test('native documented project pause accepts bounded complete HTTP540 without t
   Object.assign(f.settings, { status: 'INACTIVE', http: 540 });
   for (const body of ['', 'Project paused', '{"message":"Project paused"}', 'x'.repeat(65536)]) {
     f.settings.rawBody = body;
-    assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_INACCESSIBLE');
+    assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_PAUSE_ROUND_COMPLETE');
   }
   f.settings.rawBody = 'x'.repeat(65537);
   assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
   Object.assign(f.settings, { rawBody: 'Project paused', abortResponse: true });
+  assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
+});
+test('v2 policy is explicit and legacy pause evidence cannot authorize recovery', async () => {
+  const h = harness({ transport: { confirmStopped: async () => ({ status: 'SOURCE_INACCESSIBLE', sourceBindingSha256: binding }) } });
+  await h.backup(); await h.session.arm(); h.session.fail(); await h.advance(1200001);
+  assert.equal((await h.session.finished).restoreEligible, false);
+  for (const p of [{ ...policy(), schemaVersion: 1 }, { ...policy(), stopEvidencePolicy: undefined }]) {
+    assert.throws(() => createGate1Watchdog({ policy: p, transport: h.transport, record: async () => {} }), /WATCHDOG_CONTEXT_INVALID/);
+  }
+});
+test('v2 requires two complete rounds and records UNKNOWN Direct evidence for fully observed silence', async () => {
+  const h = harness({ transport: { confirmStopped: async () => round({ directRefusedCount: 0, directNoConnectCount: 2 }) } });
+  await h.backup(); await h.session.arm(); h.session.fail(); await flush();
+  assert.equal(h.session.snapshot().restoreEligible, false);
+  await h.advance(999); assert.equal(h.session.snapshot().restoreEligible, false);
+  await h.advance(1); const r = await h.session.finished;
+  assert.equal(r.restoreEligible, true); assert.equal(r.stopEvidencePolicy, stopEvidencePolicy);
+  assert.equal(r.stoppingEvidence.status, 'SOURCE_PAUSED_VERIFIED');
+  assert.equal(r.stoppingEvidence.rounds.length, 2); assert.equal(r.stoppingEvidence.directEvidence, 'UNKNOWN');
+  assert.ok(h.records.every(row => row.stopEvidencePolicy === stopEvidencePolicy));
+});
+test('v2 unknown intervening round resets the pair, and pin identity changes permanently veto', async () => {
+  const answers = [round(), null, round(), round()];
+  const h = harness({ transport: { confirmStopped: async () => answers.shift() } });
+  await h.backup(); await h.session.arm(); h.session.fail(); await flush();
+  await h.advance(2000); assert.equal(h.session.snapshot().restoreEligible, false);
+  await h.advance(1000); assert.equal((await h.session.finished).restoreEligible, true);
+  const invalid = harness({ transport: { confirmStopped: async () => round() } });
+  await invalid.backup(); await invalid.session.arm(); invalid.session.fail(); await flush();
+  invalid.transport.confirmStopped = async () => round({ pinSetId: 'f'.repeat(64) });
+  await invalid.advance(1000); invalid.transport.confirmStopped = async () => round();
+  await invalid.advance(1199001); assert.equal((await invalid.session.finished).restoreEligible, false);
+});
+test('v2 confirmation allows a full round but rejects a result after twelve seconds', async () => {
+  for (const duration of [11000, 12001]) {
+    let resolveRound;
+    const h = harness({ transport: { confirmStopped: () => new Promise(resolve => { resolveRound = resolve; }) } });
+    await h.backup(); await h.session.arm(); h.session.fail(); await flush();
+    await h.advance(duration); resolveRound(round()); await flush();
+    h.transport.confirmStopped = async () => round();
+    await h.advance(1000);
+    assert.equal(h.session.snapshot().restoreEligible, duration === 11000);
+    if (duration === 12001) { await h.advance(1200001); await h.session.finished; }
+  }
+});
+test('v2 pair expires after thirty seconds and source or run changes cannot recover later', async () => {
+  const h = harness({ transport: { confirmStopped: async () => round() } });
+  await h.backup(); await h.session.arm(); h.session.fail(); await flush();
+  h.setWallOffset(30001); await h.advance(1000); assert.equal(h.session.snapshot().restoreEligible, false);
+  await h.advance(1000); assert.equal((await h.session.finished).restoreEligible, true);
+  for (const mismatch of [{ runId: 'f'.repeat(64) }, { sourceCommit: 'f'.repeat(40) }, { stopEvidencePolicy: 'legacy' }]) {
+    const invalid = harness({ transport: { confirmStopped: async () => round(mismatch) } });
+    await invalid.backup(); await invalid.session.arm(); invalid.session.fail(); await flush();
+    invalid.transport.confirmStopped = async () => round();
+    await invalid.advance(1200001); assert.equal((await invalid.session.finished).restoreEligible, false);
+  }
+});
+test('v2 durable final evidence arriving after twenty minutes never grants eligibility', async () => {
+  let h;
+  h = harness({ transport: { confirmStopped: async () => round() }, record: async row => {
+    if (row.event === 'SOURCE_PAUSED_VERIFIED') h.setWallOffset(1200001);
+  } });
+  await h.backup(); await h.session.arm(); h.session.fail(); await flush(); await h.advance(2000);
+  assert.equal((await h.session.finished).restoreEligible, false);
+});
+test('v2 native Direct rejects setup and mismatched refusal and latches open and identity drift', async () => {
+  for (const delta of [{ setupFailure: true }, { errorPort: 5433 }, { errorAddress: '192.0.2.99' },
+    { tcp: 'ECONNRESET' }, { tcp: 'EHOSTUNREACH' }, { tcp: 'connected' }, { wrongTarget: true }]) {
+    const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams), signal = new AbortController().signal;
+    await transport.preflight({ signal }); await transport.requestPause({ signal });
+    Object.assign(f.settings, { status: 'INACTIVE', http: 540 }, delta);
+    assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
+    if (delta.tcp === 'connected' || delta.wrongTarget) {
+      Object.assign(f.settings, { tcp: 'ECONNREFUSED', wrongTarget: false });
+      assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
+    }
+  }
+});
+test('v2 shared round supervises hung readers by phase and cancels all work at the absolute deadline', async () => {
+  for (const mode of ['before', 'http', 'after', 'absolute']) {
+    const f = nativeFixture(), controller = new AbortController(); let reads = 0, cancelled = 0;
+    const hang = signal => new Promise(() => { signal.addEventListener('abort', () => { cancelled++; }); });
+    const pending = observeGate1PauseRound({ signal: controller.signal, pins: ['192.0.2.10'], sameProject: p => p.ref === 'fixture',
+      project: async s => { reads++; return mode === 'before' || (mode === 'after' && reads === 2) ? hang(s) : { ref: 'fixture', status: 'INACTIVE' }; },
+      addresses: async () => null, http: async (_, s) => mode === 'http' || mode === 'absolute' ? hang(s) : { status: 540 },
+      remainingMs: () => (mode === 'absolute' ? 2000 : 1200000) - f.settings.elapsed, invalidate: () => {},
+    }, f.seams);
+    await f.advance(mode === 'absolute' ? 2000 : 4000);
+    assert.equal(await pending, null); assert.ok(cancelled > 0);
+  }
+});
+test('v2 full round wall duration and malformed pins cannot bypass supervision', async () => {
+  const f = nativeFixture(); let entered = 0;
+  assert.equal(await observeGate1DirectAddress('not-an-ip', new AbortController().signal,
+    { ...f.seams, onConnect: () => { entered++; } }), 'UNKNOWN');
+  assert.equal(f.calls.length, 0); assert.equal(entered, 0);
+  const result = await observeGate1PauseRound({ signal: new AbortController().signal, pins: ['192.0.2.10'],
+    project: async () => ({ status: 'INACTIVE' }), sameProject: () => true, addresses: async () => null,
+    http: async () => { f.settings.elapsed += 7000; return { status: 540 }; },
+    remainingMs: () => 1200000 - f.settings.elapsed, invalidate: () => {},
+  }, f.seams);
+  assert.equal(result, null);
+});
+test('v2 native observer and supervisor accept only the second full silent round', async () => {
+  const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams), rows = [];
+  await transport.preflight({ signal: new AbortController().signal });
+  const session = createGate1Watchdog({ policy: f.context.policy, transport, record: async row => rows.push(row),
+    clock: f.seams.clock, timers: f.seams.timers });
+  assert.equal(await session.acceptBackup({ runId: run, sourceCommit: source, sourceBindingSha256: f.digest, t0,
+    manifestSha256: 'd'.repeat(64), completedAt: t0, checksumsCompletedAt: t0, inspectedAt: t0 }), true);
+  assert.equal(await session.arm(), true);
+  Object.assign(f.settings, { status: 'INACTIVE', http: 540, tcp: 'silent' }); session.fail();
+  await f.advance(3000); assert.equal(session.snapshot().restoreEligible, false);
+  await f.advance(5000); const result = await session.finished;
+  assert.equal(result.restoreEligible, true); assert.equal(result.stoppingEvidence.directEvidence, 'UNKNOWN');
+  assert.equal(result.stoppingEvidence.rounds.length, 2);
+  assert.equal(f.calls.filter(c => c.kind === 'tcp').length, 4);
+  assert.equal(f.calls.filter(c => c.kind === 'https' && c.config.method === 'POST').length, 1);
+  assert.equal(rows.at(-1).event, 'SOURCE_PAUSED_VERIFIED');
+});
+test('v2 observed identity or address drift latches even when its sibling reader fails', async () => {
+  for (const mode of ['identity', 'address']) {
+    const f = nativeFixture(); let reason;
+    const result = await observeGate1PauseRound({ signal: new AbortController().signal, pins: ['192.0.2.10'],
+      project: async () => { if (mode === 'address') throw Error('failed'); return { ref: 'other', status: 'INACTIVE' }; },
+      sameProject: p => p.ref === 'expected',
+      addresses: async () => { if (mode === 'identity') throw Error('failed'); return ['192.0.2.20']; },
+      http: async () => ({ status: 540 }), remainingMs: () => 1200000, invalidate: value => { reason = value; },
+    }, f.seams);
+    assert.equal(result, null); assert.equal(reason, mode === 'identity' ? 'IDENTITY_CHANGED' : 'ADDRESS_COVERAGE_CHANGED');
+  }
+});
+test('v2 individual HTTP bound rejects a response at 3500ms even inside the phase allowance', async () => {
+  const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams), signal = new AbortController().signal;
+  await transport.preflight({ signal }); await transport.requestPause({ signal });
+  Object.assign(f.settings, { status: 'INACTIVE', http: 540, httpDelayJump: 3500 });
   assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
 });
 
@@ -361,17 +556,20 @@ test('native preflight rejects malformed backend evidence and incomplete address
   }
 });
 
-test('native DNS absence cannot replace per-address refusal; partial connectivity and transient DNS stay unknown', async () => {
+test('native DNS absence retains all pins; partial connectivity and transient DNS stay unknown', async () => {
   const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams);
   const signal = new AbortController().signal;
   await transport.preflight({ signal }); await transport.requestPause({ signal });
   Object.assign(f.settings, { status: 'INACTIVE', http: 540, dnsError: 'ENOTFOUND' });
   for (const value of ['connected', 'ETIMEDOUT', 'ENOTFOUND']) {
+    const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams);
+    await transport.preflight({ signal }); await transport.requestPause({ signal });
+    Object.assign(f.settings, { status: 'INACTIVE', http: 540, dnsError: 'ENOTFOUND' });
     f.settings.tcpByAddress = { '192.0.2.10': value };
     assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
   }
   f.settings.tcpByAddress = {};
-  assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_INACCESSIBLE');
+  assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_PAUSE_ROUND_COMPLETE');
   assert.ok(f.calls.filter(c => c.kind === 'tcp').every(c => ['192.0.2.10', '2001:db8::10'].includes(c.config.host)));
   f.settings.dnsError = 'EAI_AGAIN';
   assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
@@ -512,17 +710,17 @@ async function processFixture(scenario) {
   const program = `
     import { performance } from 'node:perf_hooks';
     import { runWatchdogProtocol } from ${JSON.stringify(runner)};
-    let base, start, digest, pauses=0;
-    const factor=${scenario === 'stall' ? 20 : 1};
+    let base, start, digest, pauses=0,checks=0;
+    const factor=${scenario === 'stall' ? 20 : scenario === 'source-drift' ? 1000 : 1};
     const clock={wallNow:()=>base===undefined?Date.now():base+(performance.now()-start)*factor,monotonicNow:()=>performance.now()*factor};
     const result=await runWatchdogProtocol({clock,timers:{setTimeout:(fn,ms)=>setTimeout(fn,ms/factor),clearTimeout},
-      verifySource:async()=>{},
-      openJournal:async()=>({append:async()=>{},close:async()=>({receiptSha256:'f'.repeat(64),receiptBytes:1})}),
+      verifySource:async()=>{checks++;if(${scenario === 'source-drift'}&&checks>=3)throw Error('source changed');},
+      openJournal:async()=>({append:async()=>{},close:async()=>{if(${scenario === 'receipt-expired'})base+=1200001;return {receiptSha256:'f'.repeat(64),receiptBytes:1};}}),
       inspectBackup:()=>({status:'PERSISTED_BYTES_VERIFIED',manifestSha256:'d'.repeat(64),artifacts:Array(6).fill({})}),
       createTransport:context=>{base=Date.parse(context.policy.t0);start=performance.now();digest=context.policy.sourceBindingSha256;return {
         preflight:async()=>({status:'WATCHDOG_TRANSPORT_READY',sourceBindingSha256:digest}),
         requestPause:async()=>{pauses++;return {status:'PAUSE_REQUEST_ACCEPTED',sourceBindingSha256:digest};},
-        confirmStopped:async()=>({status:'SOURCE_INACCESSIBLE',sourceBindingSha256:digest})};}});
+        confirmStopped:async()=>({status:'SOURCE_PAUSE_ROUND_COMPLETE',stopEvidencePolicy:'supabase-inactive-v2',sourceBindingSha256:digest,sourceCommit:context.policy.sourceCommit,runId:context.policy.runId,pinSetId:'e'.repeat(64),pinnedAddressCount:1,directRefusedCount:1,directNoConnectCount:0})};}});
     console.log(JSON.stringify({type:'fixture-count',pauses,state:result.state}));
   `;
   const child = spawn(process.execPath, ['--input-type=module', '-e', program], { windowsHide: true, stdio: ['pipe', 'pipe', 'pipe'] });
@@ -548,7 +746,7 @@ async function processFixture(scenario) {
     else child.stdin.write(JSON.stringify({ type: 'success', sequence: 99, receipt: {} }) + '\n');
     const result = await wait('terminal'); await closed;
     assert.equal(stderr, ''); assert.equal(rows.find(r => r.type === 'fixture-count').pauses, 1);
-    assert.equal(result.state, 'PAUSE_CONFIRMED'); assert.equal(result.pauseAttempts, 1);
+    assert.equal(result.state, scenario === 'source-drift' ? 'PAUSE_UNCONFIRMED' : 'PAUSE_CONFIRMED'); assert.equal(result.pauseAttempts, 1);
     return result;
   } finally { clearTimeout(limit); if (child.exitCode === null) child.kill(); }
 }
@@ -557,4 +755,9 @@ test('separate-process timers keep running while the parent event loop is blocke
 });
 test('separate-process runner reacts to parent EOF and wrong message sequence after arm', async () => {
   await processFixture('eof'); await processFixture('sequence');
+});
+test('separate-process runner rejects source drift during a round and late final receipt readback', async () => {
+  const changed = await processFixture('source-drift'); assert.equal(changed.restoreEligible, false);
+  const expired = await processFixture('receipt-expired'); assert.equal(expired.restoreEligible, false);
+  assert.equal(expired.reason, 'WATCHDOG_FINAL_RECEIPT_DEADLINE_EXCEEDED');
 });

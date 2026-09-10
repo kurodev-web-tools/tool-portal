@@ -1,6 +1,8 @@
 import { performance } from 'node:perf_hooks';
 
 const BACKUP = 300000, PAUSE = 600000, CONFIRM = 1200000, MARGIN = 1000;
+export const STOP_EVIDENCE_POLICY = 'supabase-inactive-v2';
+export const STOP_ROUND_MS = 12000;
 const SHA = /^[a-f0-9]{64}$/, COMMIT = /^[a-f0-9]{40}$/;
 const exact = (o, keys) => o !== null && typeof o === 'object' && !Array.isArray(o) &&
   Object.keys(o).sort().join(',') === [...keys].sort().join(',');
@@ -17,14 +19,48 @@ export function parseWatchdogTimestamp(s) {
 }
 const timestamp = parseWatchdogTimestamp;
 
+// A complete round is supplied only by a bound native observer. The tracker
+// joins no partial samples and does not upgrade legacy inaccessibility receipts.
+export function createGate1PauseEvidenceTracker(policy) {
+  if (policy?.stopEvidencePolicy !== STOP_EVIDENCE_POLICY || !SHA.test(policy?.runId) ||
+      !SHA.test(policy?.sourceBindingSha256) || !COMMIT.test(policy?.sourceCommit)) throw Error('WATCHDOG_CONTEXT_INVALID');
+  const identity = Object.freeze({ ...policy });
+  let first = null, pinSetId = null, invalid = false;
+  return Object.freeze({
+    invalidate() { invalid = true; first = null; },
+    observe(r, start, end) {
+      if (r?.status === 'SOURCE_EVIDENCE_INVALIDATED') invalid = true;
+      if (r?.status !== 'SOURCE_PAUSE_ROUND_COMPLETE') { first = null; return null; }
+      if (r.runId !== identity.runId || r.sourceCommit !== identity.sourceCommit ||
+          r.sourceBindingSha256 !== identity.sourceBindingSha256 || r.stopEvidencePolicy !== identity.stopEvidencePolicy ||
+          (pinSetId && pinSetId !== r.pinSetId)) invalid = true;
+      const counts = ['pinnedAddressCount', 'directRefusedCount', 'directNoConnectCount'];
+      if (invalid || !exact(r, ['status', 'stopEvidencePolicy', 'runId', 'sourceCommit', 'sourceBindingSha256', 'pinSetId', ...counts]) ||
+          !SHA.test(r.pinSetId) || !counts.every(k => Number.isSafeInteger(r[k]) && r[k] >= 0) ||
+          r.pinnedAddressCount < 1 || r.pinnedAddressCount > 8 || r.directRefusedCount + r.directNoConnectCount !== r.pinnedAddressCount ||
+          !Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end < start || end > CONFIRM || end - start > STOP_ROUND_MS) {
+        first = null; return null;
+      }
+      pinSetId = r.pinSetId;
+      const completed = Object.freeze({ startedElapsedMs: start, completedElapsedMs: end,
+        pinnedAddressCount: r.pinnedAddressCount, directRefusedCount: r.directRefusedCount, directNoConnectCount: r.directNoConnectCount });
+      if (!first || start - first.completedElapsedMs < 1000 || end - first.startedElapsedMs > 30000) { first = completed; return null; }
+      const result = Object.freeze({ status: 'SOURCE_PAUSED_VERIFIED', stopEvidencePolicy: identity.stopEvidencePolicy,
+        pinSetId, directEvidence: first.directNoConnectCount || completed.directNoConnectCount ? 'UNKNOWN' : 'ALL_REFUSED',
+        rounds: Object.freeze([first, completed]) });
+      first = null; return result;
+    },
+  });
+}
+
 // This engine is not a Gate1 authority verifier. The native runner supplies the
 // transport and independently inspects persisted backups before accepting them.
 export function createGate1Watchdog({ policy, transport, record,
   clock = { wallNow: Date.now, monotonicNow: () => performance.now() },
   timers = { setTimeout, clearTimeout },
 } = {}) {
-  if (!exact(policy, ['schemaVersion', 't0', 'sourceBindingSha256', 'sourceCommit', 'runId']) ||
-      policy.schemaVersion !== 1 || !SHA.test(policy.sourceBindingSha256) || !SHA.test(policy.runId) ||
+  if (!exact(policy, ['schemaVersion', 'stopEvidencePolicy', 't0', 'sourceBindingSha256', 'sourceCommit', 'runId']) ||
+      policy.schemaVersion !== 2 || policy.stopEvidencePolicy !== STOP_EVIDENCE_POLICY || !SHA.test(policy.sourceBindingSha256) || !SHA.test(policy.runId) ||
       !COMMIT.test(policy.sourceCommit) || !Number.isFinite(timestamp(policy.t0)) ||
       typeof transport?.requestPause !== 'function' || typeof transport?.confirmStopped !== 'function' ||
       typeof record !== 'function') throw Error('WATCHDOG_CONTEXT_INVALID');
@@ -35,6 +71,7 @@ export function createGate1Watchdog({ policy, transport, record,
   let backup = false, armPending = false, armedAt = null, pauseAt = null, confirmedAt = null, disarmedAt = null;
   let pauseAttempts = 0, pauseAccepted = false, confirmationAttempts = 0, journalHealthy = true;
   let tickTimer, probePending = false, nextProbe = 0, clockHealthy = true, pauseSettled = false;
+  const evidenceTracker = createGate1PauseEvidenceTracker(policy); let stoppingEvidence = null;
   let recordChain = Promise.resolve(true);
   const active = new Set();
   let resolveFinished;
@@ -48,7 +85,9 @@ export function createGate1Watchdog({ policy, transport, record,
   const identity = o => o?.runId === policy.runId && o.sourceCommit === policy.sourceCommit && o.sourceBindingSha256 === policy.sourceBindingSha256;
   const result = () => Object.freeze({ ...policy, state, reason, decision: 'NO-GO', elapsedMs: elapsed,
     armedAt, pauseRequestedAt: pauseAt, confirmedAt, disarmedAt, pauseAttempts, pauseAccepted, confirmationAttempts,
-    journalHealthy, clockHealthy, restoreEligible: state === 'PAUSE_CONFIRMED' && journalHealthy && clockHealthy && timestamp(pauseAt) - epoch <= PAUSE });
+    journalHealthy, clockHealthy, stoppingEvidence,
+    restoreEligible: state === 'PAUSE_CONFIRMED' && journalHealthy && clockHealthy &&
+      stoppingEvidence?.status === 'SOURCE_PAUSED_VERIFIED' && timestamp(pauseAt) - epoch <= PAUSE });
   function finish(next, why) {
     if (ended) return;
     state = next; reason = why; ended = true; timers.clearTimeout(tickTimer);
@@ -67,10 +106,11 @@ export function createGate1Watchdog({ policy, transport, record,
       })]);
     } finally { timers.clearTimeout(timer); c.signal.removeEventListener('abort', abortListener); c.abort(); active.delete(c); }
   }
-  function append(event) {
+  function append(event, evidence) {
     let row;
-    try { row = Object.freeze({ schemaVersion: 1, event, at: iso(now()),
-      runId: policy.runId, sourceCommit: policy.sourceCommit, sourceBindingSha256: policy.sourceBindingSha256 }); }
+    try { row = Object.freeze({ schemaVersion: 2, stopEvidencePolicy: policy.stopEvidencePolicy, event, at: iso(now()),
+      runId: policy.runId, sourceCommit: policy.sourceCommit, sourceBindingSha256: policy.sourceBindingSha256,
+      ...(evidence ? { stoppingEvidence: evidence } : {}) }); }
     catch { journalHealthy = false; return Promise.resolve(false); }
     recordChain = recordChain.then(async () => {
       if (!journalHealthy) return false;
@@ -100,17 +140,17 @@ export function createGate1Watchdog({ policy, transport, record,
   }
   function probe() {
     if (ended || !pauseAttempts || probePending || elapsed < nextProbe || elapsed > CONFIRM) return;
-    probePending = true; confirmationAttempts++;
-    void bounded(signal => transport.confirmStopped({ signal }), Math.min(3000, CONFIRM - elapsed + 1)).then(async r => {
+    probePending = true; confirmationAttempts++; const roundStart = elapsed;
+    void bounded(signal => transport.confirmStopped({ signal }), Math.min(STOP_ROUND_MS, CONFIRM - elapsed + 1)).then(async r => {
       if (ended || now() > CONFIRM) return;
-      if (!exact(r, ['status', 'sourceBindingSha256']) || r.status !== 'SOURCE_INACCESSIBLE' ||
-          r.sourceBindingSha256 !== policy.sourceBindingSha256) return;
+      stoppingEvidence = evidenceTracker.observe(r, roundStart, elapsed);
+      if (!stoppingEvidence) return;
       const observed = elapsed;
-      const persisted = await append('SOURCE_INACCESSIBLE');
+      const persisted = await append('SOURCE_PAUSED_VERIFIED', stoppingEvidence);
       if (ended || now() > CONFIRM) return;
       confirmedAt = iso(observed);
-      finish('PAUSE_CONFIRMED', persisted && journalHealthy ? 'EXACT_SOURCE_CONFIRMED' : 'CONFIRMED_WITHOUT_DURABLE_RECEIPT');
-    }).catch(() => { /* Failed probes are not inaccessibility evidence. */ }).finally(() => {
+      finish('PAUSE_CONFIRMED', persisted && journalHealthy ? 'PROVIDER_PAUSE_VERIFIED' : 'CONFIRMED_WITHOUT_DURABLE_RECEIPT');
+    }).catch(() => { evidenceTracker.observe(null); }).finally(() => {
       probePending = false; nextProbe = elapsed + 1000;
     });
   }

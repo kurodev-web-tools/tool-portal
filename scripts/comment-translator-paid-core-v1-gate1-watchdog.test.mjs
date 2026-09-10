@@ -198,11 +198,14 @@ function nativeFixture(options = {}) {
           (config.path.startsWith('/rest/v1/') ? settings.restCode : settings.authCode) ?? settings.http ??
           (config.path.startsWith('/rest/v1/') ? 401 : 200);
         callback(res);
+        if (settings.abortResponse && config.hostname !== 'api.supabase.com') {
+          res.destroy(Error('synthetic interrupted response')); return;
+        }
         if (config.method === 'POST') res.end('{}');
         else if (config.hostname === 'api.supabase.com') res.end(JSON.stringify({ ref: settings.wrongTarget ? 'other' : target.projectRef,
           status: settings.projectStatusSequence?.shift() ?? settings.status, database: { host: target.host, postgres_engine: '17' } }));
         else if (settings.rawBody !== undefined) res.end(settings.rawBody);
-        else if (res.statusCode === 503) res.end('service unavailable');
+        else if (res.statusCode === 540) res.end('project paused');
         else res.end(JSON.stringify(config.path.startsWith('/rest/v1/') ?
           (settings.restBody ?? { code: '42501', message: 'permission denied for table comment_translator_paid_entitlements', details: null, hint: null }) :
           (settings.authBody ?? { name: 'GoTrue', version: 'v2.fixture', description: 'fixture' })));
@@ -248,22 +251,50 @@ test('native pause is exact-origin, TLS-verified, preflight-gated, and one-shot'
   const pg = f.calls.find(c => c.kind === 'psql'); assert.equal(pg.config.shell, false);
   assert.equal(pg.config.env.UNRELATED_ENV, undefined); assert.equal(pg.args.join(' ').includes('fixture-only'), false);
 });
-test('native confirmation needs INACTIVE plus explicit database refusal and both HTTP503 probes', async () => {
+test('native confirmation needs INACTIVE plus explicit database refusal and both HTTP540 probes', async () => {
   const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams);
   const signal = new AbortController().signal;
   await transport.preflight({ signal }); await transport.requestPause({ signal });
   for (const delta of [{ status: 'GOING_DOWN' }, { status: 'INACTIVE', tcp: 'ENOTFOUND' },
     { status: 'INACTIVE', tcp: 'ETIMEDOUT' }, { status: 'INACTIVE', tcp: 'connected' },
-    { status: 'INACTIVE', tcp: 'ECONNREFUSED', http: 401 }, { status: 'INACTIVE', tcp: 'ECONNREFUSED', http: 503, wrongTarget: true }]) {
-    Object.assign(f.settings, { status: 'INACTIVE', tcp: 'ECONNREFUSED', http: 503, wrongTarget: false }, delta);
+    { status: 'INACTIVE', tcp: 'ECONNREFUSED', http: 401 }, { status: 'INACTIVE', tcp: 'ECONNREFUSED', http: 540, wrongTarget: true }]) {
+    Object.assign(f.settings, { status: 'INACTIVE', tcp: 'ECONNREFUSED', http: 540, wrongTarget: false }, delta);
     assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
   }
-  Object.assign(f.settings, { status: 'INACTIVE', tcp: 'ECONNREFUSED', http: 503, wrongTarget: false });
+  Object.assign(f.settings, { status: 'INACTIVE', tcp: 'ECONNREFUSED', http: 540, wrongTarget: false });
   assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_INACCESSIBLE');
   for (const c of f.calls.filter(c => c.kind === 'https' && c.config.hostname !== 'api.supabase.com')) {
     assert.equal(c.config.headers.Authorization, undefined);
   }
 });
+test('native documented project pause accepts bounded complete HTTP540 without trusting the body format', async () => {
+  const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams);
+  const signal = new AbortController().signal;
+  await transport.preflight({ signal }); await transport.requestPause({ signal });
+  Object.assign(f.settings, { status: 'INACTIVE', http: 540 });
+  for (const body of ['', 'Project paused', '{"message":"Project paused"}', 'x'.repeat(65536)]) {
+    f.settings.rawBody = body;
+    assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_INACCESSIBLE');
+  }
+  f.settings.rawBody = 'x'.repeat(65537);
+  assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
+  Object.assign(f.settings, { rawBody: 'Project paused', abortResponse: true });
+  assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
+});
+
+test('native project pause rejects generic503, other errors and mixed endpoint status codes', async () => {
+  const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams);
+  const signal = new AbortController().signal;
+  await transport.preflight({ signal }); await transport.requestPause({ signal });
+  Object.assign(f.settings, { status: 'INACTIVE', http: 540, rawBody: '{"message":"Project paused"}' });
+  for (const status of [200, 204, 301, 401, 403, 500, 503, 541, 544, 546]) {
+    for (const [restCode, authCode] of [[status, status], [540, status], [status, 540]]) {
+      Object.assign(f.settings, { restCode, authCode });
+      assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
+    }
+  }
+});
+
 test('native preflight rejects wrong identity, HTTP redirects and failed database probe', async () => {
   for (const options of [{ wrongTarget: true }, { apiCode: 302 }, { pgFailure: true }]) {
     const f = nativeFixture(options), transport = createGate1WatchdogTransport(f.context, f.seams);
@@ -274,7 +305,7 @@ test('native preflight rejects wrong identity, HTTP redirects and failed databas
 
 test('native endpoint baseline failure prevents pause, including after earlier readiness', async () => {
   for (const route of ['restCode', 'authCode']) {
-    for (const status of [route === 'restCode' ? 200 : 401, 204, 302, 403, 404, 500, 503]) {
+    for (const status of [route === 'restCode' ? 200 : 401, 204, 302, 403, 404, 500, 503, 540]) {
       const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams);
       const signal = new AbortController().signal;
       await transport.preflight({ signal });
@@ -334,7 +365,7 @@ test('native DNS absence cannot replace per-address refusal; partial connectivit
   const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams);
   const signal = new AbortController().signal;
   await transport.preflight({ signal }); await transport.requestPause({ signal });
-  Object.assign(f.settings, { status: 'INACTIVE', http: 503, dnsError: 'ENOTFOUND' });
+  Object.assign(f.settings, { status: 'INACTIVE', http: 540, dnsError: 'ENOTFOUND' });
   for (const value of ['connected', 'ETIMEDOUT', 'ENOTFOUND']) {
     f.settings.tcpByAddress = { '192.0.2.10': value };
     assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
@@ -350,7 +381,7 @@ test('native new address invalidates same-run coverage and cannot be silently re
   const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams);
   const signal = new AbortController().signal;
   await transport.preflight({ signal }); await transport.requestPause({ signal });
-  Object.assign(f.settings, { status: 'INACTIVE', http: 503 });
+  Object.assign(f.settings, { status: 'INACTIVE', http: 540 });
   const original = f.settings.addresses;
   f.settings.addresses = [...original, { address: '192.0.2.20', family: 4 }];
   assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
@@ -363,7 +394,7 @@ test('native stopped evidence expires at the original deadline and cannot use an
   const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams);
   const signal = new AbortController().signal;
   await transport.preflight({ signal }); await transport.requestPause({ signal });
-  Object.assign(f.settings, { status: 'INACTIVE', http: 503 });
+  Object.assign(f.settings, { status: 'INACTIVE', http: 540 });
   const controller = new AbortController(); controller.abort();
   assert.equal((await transport.confirmStopped({ signal: controller.signal })).status, 'SOURCE_STATUS_UNKNOWN');
   f.settings.elapsed = 1200001;
@@ -386,7 +417,7 @@ test('native confirmation brackets endpoint checks with project and DNS readback
     const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams);
     const signal = new AbortController().signal;
     await transport.preflight({ signal }); await transport.requestPause({ signal });
-    Object.assign(f.settings, { status: 'INACTIVE', http: 503 });
+    Object.assign(f.settings, { status: 'INACTIVE', http: 540 });
     if (change === 'resumed') f.settings.projectStatusSequence = ['INACTIVE', 'ACTIVE_HEALTHY'];
     else f.settings.addressSequence = [f.settings.addresses, [{ address: '192.0.2.20', family: 4 }]];
     assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
@@ -411,7 +442,7 @@ test('native clock rollback cannot refresh expired pins and a new transport has 
   const f = nativeFixture(), transport = createGate1WatchdogTransport(f.context, f.seams);
   const signal = new AbortController().signal;
   await transport.preflight({ signal }); await transport.requestPause({ signal });
-  Object.assign(f.settings, { status: 'INACTIVE', http: 503, elapsed: 1200001 });
+  Object.assign(f.settings, { status: 'INACTIVE', http: 540, elapsed: 1200001 });
   assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');
   f.settings.elapsed = 0;
   assert.equal((await transport.confirmStopped({ signal })).status, 'SOURCE_STATUS_UNKNOWN');

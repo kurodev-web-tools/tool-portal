@@ -1,3 +1,11 @@
+- 2026-09-10 HTTP540受入条件/公開承認: ユーザーが540停止判定の採用と検証済み4fileのcommit/push・Preview向けPR作成を承認。既存40tests/最終JSON異常系/lint/operator受入れを維持。merge・追加Hosted停止/Recovery・本番変更は対象外、Gate1 NO-GO。
+
+- 2026-09-10 Post-PR829試行終了/540修正ローカル準備: Preview pause1回、前後INACTIVEだがendpoint UNKNOWNで停止未受入れ。Recovery未作成、resume1回後ACTIVE_HEALTHY・77/77内容/権限保全と全read-only baselinePASS、2環境正常。本番変更/課金0。公式paused=540に対し公開sourceの503限定不整合を合成再現（今回UNKNOWNの実原因は未特定）。540限定・他コード/混在拒否の局所差分を準備、watchdog40tests・強化したJSON異常系・lint/operatorPASS。受入条件変更と4file公開は承認待ち、追加pauseなし、単独/Gate1 NO-GO。
+
+- 2026-09-10 Post-PR829 Hosted合成rehearsal承認: 新規Preview保全backup/一時pause→月額0の新Recovery合成検証/pause→Preview resumeの今回1試行を承認。77relation前後一致・完全archive読取と直前独立readbackPASS。別Preview readonly observerの4検証群PASS、今回native検証したIPのみ同一process保持。本番変更/実データHosted restore/削除/課金/公開は対象外。停止前、Gate1 NO-GO。
+
+- 2026-09-10 Gate1 GO goal再設定: PR829 merge6be4a87へ同worktree追従、公開watchdog producer7/7実バイト一致。新Preview read-only baselineはAuth200/表401-42501/PG17-TLS/anon権限/全IP照合/誤host拒否PASS、旧NOT_ACCEPTED原本保全。現在2環境正常・Recoveryなし・月額見積り0。前回試行終了後の新たなPreview保全backup→pause1→synthetic Recovery作成/検証/pause1→Preview resume1の具体的実行packetをactive readiness先頭へ整理、実行承認待ち。実6file local復元受入れは維持、外部変更0/単独、Hosted・鮮度/期限・本番適用独立検証が残りGate1 NO-GO。
+
 - 2026-09-10 Post-PR828 readiness修正: Preview32924b6へ追従。実バイト照合4/7→CRLFのみの3件と判明し、producer7pathのLF属性固定・新規autocrlf checkout7/7一致を確認。その後Preview read-onlyで公開REST判定がhint文字列を拒否すると判明、null/textの非権威metadataだけ許容する局所修正。元NOT_ACCEPTED記録を保全。修正未公開のためnative source一致は再公開後に必要、再pause/本番/Recovery操作0、単独/Gate1 NO-GO。
 
 - 2026-09-10 承認済oracleローカル実装: publicProbe公開キー/対象binding、限定表401/42501＋Auth200＋native権限/TLSを事前確認。当該runで検証した全IP拒否と前後INACTIVE/両503を必須化。DNS不明単独・新IP・部分接続・期限超過・遅延応答は受入れ拒否。単独差分レビュー、watchdog37tests/scoped lint PASS。外部変更・公開0、Hosted実証未実施/Gate1 NO-GO。

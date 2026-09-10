@@ -10,6 +10,9 @@ import { parseStrictJson } from './comment-translator-paid-core-v1-gate1-evidenc
 import { parseWatchdogTimestamp } from './comment-translator-paid-core-v1-gate1-watchdog.mjs';
 
 const LIMIT = 65536, TIMEOUT = 3000;
+// Supabase's documented project-paused response; generic 5xx is insufficient.
+// https://supabase.com/docs/guides/troubleshooting/http-status-codes
+const PAUSED_HTTP = 540;
 const failure = code => new Error(code);
 const exact = (o, keys) => o !== null && typeof o === 'object' && !Array.isArray(o) &&
   Object.keys(o).sort().join(',') === [...keys].sort().join(',');
@@ -80,7 +83,7 @@ export function createGate1WatchdogTransport(context, {
             if (management && res.statusCode !== 200) { complete(true); return; }
             try {
               // Only the required stopping response may have a non-JSON body.
-              const body = !management && res.statusCode === 503 ? null : parseStrictJson(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks)));
+              const body = !management && res.statusCode === PAUSED_HTTP ? null : parseStrictJson(new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks)));
               complete(false, { status: res.statusCode, body });
             } catch { complete(true); }
           });
@@ -213,7 +216,7 @@ export function createGate1WatchdogTransport(context, {
         const [finalProject, finalAddresses] = await Promise.all([project(signal), addresses(signal, true)]);
         if (finalAddresses?.some(address => !pins.includes(address))) coverageLost = true;
         return answer(!signal.aborted && ready && !coverageLost && fresh() && db.every(Boolean) &&
-          rest.status === 503 && auth.status === 503 && sameProject(finalProject.body) && finalProject.body.status === 'INACTIVE'
+          rest.status === PAUSED_HTTP && auth.status === PAUSED_HTTP && sameProject(finalProject.body) && finalProject.body.status === 'INACTIVE'
           ? 'SOURCE_INACCESSIBLE' : 'SOURCE_STATUS_UNKNOWN');
       } catch { return answer('SOURCE_STATUS_UNKNOWN'); }
     },

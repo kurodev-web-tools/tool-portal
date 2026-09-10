@@ -1,3 +1,7 @@
+- 2026-09-10 Empty-baseline repair publication authorized: ユーザーが検証済み6ファイルのcommit/push/Preview向けPR作成を承認。24tests・baseline native8変化検出・managed baseline・adapter native4ケース・scoped lint/operator PASS。merge、実backup復元、Hosted操作は今回の公開対象外。Gate1 NO-GO。
+
+- 2026-09-10 Post-PR824 local baseline repair: Preview805fade merge確認、公開capture13/executor20/保存原本6fileの照合PASS。空の公式Auth/Storage baselineは既存catalog/historyと一致したが、復元前に存在しないmigration history表参照で42P01を再現。baseline専用catalog fingerprintへ分離し、strict復元後SQLはbyte一致を維持。実backup native実行0、修正は未公開、Gate1 NO-GO。次は修正の公開後に実6file復元の受入れを継続。
+
 - 2026-09-10 Disposable-target PR publication authorized: ユーザーが検証済み14ファイルのcommit/push/Preview向けPR作成を承認。45tests・native4ケース・strict/Auth-TOTP・scoped lintの既存受入証拠を維持。merge、実backup復元、Hosted操作は対象外。Gate1 NO-GO。
 
 - 2026-09-10 Disposable-target policy LOCAL_VERIFIED: ユーザー承認後、既知Auth sequenceのみ元setvalを維持し、失敗先の再利用を永続claimで禁止する方式を実装。45tests・native4ケース（SQL失敗/接続断/commit後照合失敗/新規先成功）・既存strict/Auth-TOTP回帰PASS。失敗時sequence残存を明示、停止と破棄を区別し、別writerを停止しない。通常postgres/原本/成功時保持条件を維持、権限拡張0。実backup・Hosted実証は未受入れ、未commit/外部変更0/Gate1 NO-GO。旧未帰属volume13件と再利用防止claimは保全。

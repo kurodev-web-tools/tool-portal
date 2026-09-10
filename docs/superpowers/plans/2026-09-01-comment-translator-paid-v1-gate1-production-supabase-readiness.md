@@ -1,5 +1,13 @@
 # Comment Translator Paid Core v1 Gate 1 Production Supabase Readiness Implementation Plan
 
+## 2026-09-10 Post-PR824 baseline continuation
+
+- [x] Verify merged805fade published capture/executor binding and protected six-file input without native restoration.
+- [x] Reproduce missing migration-history42P01 on an empty official managed baseline; do not create fake history to pass inspection.
+- [x] Separate baseline fingerprint from strict post-restore source/history checks and verify empty baseline plus security/data drift locally.
+- [ ] Publish the repair, attest the complete target profile and run the retained six-file atomic restoration. No unpublished-code bypass or Hosted operation is authorized by the local repair.
+
+
 ## 2026-09-10 Approved disposable-target failure policy
 
 The user approved replacing complete sequence rollback with permanent quarantine and disposal/recreation of a failed recovery target. Implement and verify locally; Hosted deletion still needs an exact target and separate authority. Keep source publication, original bytes, successful-state/reset checks, P2 before real data and the existing overall deadline.

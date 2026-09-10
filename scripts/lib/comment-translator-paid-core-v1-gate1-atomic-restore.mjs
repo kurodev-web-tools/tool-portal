@@ -25,7 +25,7 @@ export const ATOMIC_MANAGED_SHAPE_SQL = `(SELECT encode(sha256(convert_to(coales
 // Fingerprints contain no row values. Every ordinary user table (including
 // migration history and enrolled factors) is included, with duplicate rows kept.
 // The expected projection changes only the fixed credential allowlist.
-export const ATOMIC_FINGERPRINT_SETUP_SQL = `
+function fingerprintSetupSql(securitySql) { return `
 CREATE FUNCTION pg_temp.ct_atomic_fingerprint(project_reset boolean) RETURNS jsonb LANGUAGE plpgsql SET search_path=pg_catalog,public AS $ct$
 DECLARE atomic_relation record; atomic_projection text; atomic_predicate text; atomic_value text; atomic_result jsonb := '{}'::jsonb; atomic_total integer := 0;
 BEGIN
@@ -47,7 +47,7 @@ BEGIN
     EXECUTE format('SELECT encode(sha256(convert_to(coalesce(jsonb_agg(v ORDER BY v::text COLLATE "C"), ''[]''::jsonb)::text, ''UTF8'')), ''hex'') FROM (SELECT %s AS v FROM %s %I.%I t WHERE %s) s', atomic_projection, CASE WHEN atomic_relation.relkind='S' THEN '' ELSE 'ONLY' END, atomic_relation.nspname, atomic_relation.relname, atomic_predicate) INTO atomic_value;
     atomic_result := atomic_result || jsonb_build_object(encode(sha256(convert_to(jsonb_build_array(atomic_relation.nspname,atomic_relation.relname)::text,'UTF8')),'hex'),atomic_value);
   END LOOP;
-  RETURN jsonb_build_object('tables',atomic_result,'security', (${BACKUP_SOURCE_STATE_SQL}) - 'rowCounts',
+  RETURN jsonb_build_object('tables',atomic_result,'security', ${securitySql},
     'definitions', (SELECT encode(sha256(convert_to(coalesce(jsonb_agg(v ORDER BY v::text COLLATE "C"),'[]'::jsonb)::text,'UTF8')),'hex') FROM (
       SELECT jsonb_build_array('function',n.nspname,p.proname,pg_get_function_identity_arguments(p.oid),pg_get_functiondef(p.oid)) v
         FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname !~ '^pg_' AND n.nspname <> 'information_schema' AND p.prokind IN ('f','p')
@@ -65,7 +65,27 @@ BEGIN
       UNION ALL SELECT jsonb_build_array('membership',to_jsonb(m)) FROM pg_auth_members m
     ) definitions));
 END $ct$;
-`;
+`; }
+
+// Post-restore checks retain the strict source/history contract byte-for-byte.
+export const ATOMIC_FINGERPRINT_SETUP_SQL = fingerprintSetupSql(`(${BACKUP_SOURCE_STATE_SQL}) - 'rowCounts'`);
+
+// A fresh managed destination has no application migration-history table yet.
+// Bind existing rows and catalog security without inventing that table or
+// substituting empty history into the strict post-restore source observation.
+export const ATOMIC_BASELINE_FINGERPRINT_SETUP_SQL = fingerprintSetupSql(`(
+ WITH namespaces AS (SELECT * FROM pg_namespace WHERE nspname !~ '^pg_' AND nspname <> 'information_schema'),
+ relations AS (SELECT c.*, n.nspname FROM pg_class c JOIN namespaces n ON n.oid=c.relnamespace),
+ security AS (
+  SELECT jsonb_build_array('schema',nspname,nspowner,nspacl) v FROM namespaces
+  UNION ALL SELECT jsonb_build_array('relation',nspname,relname,relkind,relowner,relacl,relrowsecurity,relforcerowsecurity,reloptions) FROM relations
+  UNION ALL SELECT jsonb_build_array('column',r.nspname,r.relname,a.attname,a.attacl) FROM relations r JOIN pg_attribute a ON a.attrelid=r.oid WHERE a.attnum>0 AND NOT a.attisdropped
+  UNION ALL SELECT jsonb_build_array('policy',r.nspname,r.relname,to_jsonb(p)) FROM relations r JOIN pg_policy p ON p.polrelid=r.oid
+  UNION ALL SELECT jsonb_build_array('function',n.nspname,p.proname,pg_get_function_identity_arguments(p.oid),p.proowner,p.proacl) FROM pg_proc p JOIN namespaces n ON n.oid=p.pronamespace
+  UNION ALL SELECT jsonb_build_array('default',to_jsonb(d)) FROM pg_default_acl d WHERE d.defaclnamespace=0 OR d.defaclnamespace IN (SELECT oid FROM namespaces)
+  UNION ALL SELECT jsonb_build_array('extension',to_jsonb(e)) FROM pg_extension e
+ ) SELECT encode(sha256(convert_to(coalesce(jsonb_agg(v ORDER BY v::text COLLATE "C"),'[]'::jsonb)::text,'UTF8')),'hex') FROM security
+)`);
 
 const guardSql = `
 DO $ct$ BEGIN

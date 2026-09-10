@@ -1,5 +1,18 @@
 # Paid Core v1 Gate 1 — Production Supabase readiness
 
+## 2026-09-10 Post-PR824 empty managed baseline repair
+
+PR824 is merged into the Preview integration branch at 805fadee3c3038582d544750faf735870255d549. Before editing, the actual protected retained-data reader verified the historical13 capture producers, all20 published executor files and all six original backup files. No source guard was bypassed; native executions of the retained files remain zero.
+
+An empty, owned network=none PostgreSQL17.6.1.140 destination initialized with cached Auth v2.192.0 and the previously selected Storage initializer matched the retained initialized managed catalog and Storage migration history. Auth users were zero and the application migration-history table did not exist. The published baseline query failed with42P01 because it reused the strict post-restore source-state query, which necessarily reads supabase_migrations.schema_migrations. The synthetic fixture had previously hidden this gap by creating history before baseline inspection.
+
+The local repair separates baseline security collection from post-restore source/history verification. Both paths retain full ordinary-table/sequence fingerprints and definition/role/membership fingerprints. Baseline security explicitly covers schema/relation/column/function ACLs and owners, RLS/policies, default privileges and extensions without fabricating history. Strict post-restore fingerprint SQL is byte-identical to the pre-repair export; original backup bytes, fixed reset, whole-state delta and independent readback remain unchanged. Full target/source compatibility is still required before real-data execution; a matching managed catalog alone does not establish that authority.
+
+The new native regression accepts an empty image without history, checks stable repeated readback, detects eight row/catalog/ACL/RLS/history changes and rejects missing Auth. The full cached managed initializer now passes the baseline query. Related24 Node tests, three-file ESLint and operator contract pass. All four ordinary-postgres native adapter scenarios also pass on the repair (SQL failure, connection loss, committed-readback mismatch and success), with no owned container/volume remaining. These are local checks of the unpublished repair, not retained-data execution or Hosted isolation evidence. Only owned fixture resources are removed; older unowned volumes and persistent attempt claims remain preserved.
+
+Remaining: publish this repair before any operational retained-data call; attest the complete target profile and perform real six-file atomic restore/reset/readback within the existing budget. Hosted HTTPS isolation, reopening and target-specific external authority remain open. No new backup, production mutation, commit/push/PR or deployment was performed in this continuation. Gate1 NO-GO.
+
+
 ## 2026-09-10 Approved disposable-target policy implemented locally
 
 Status: LOCAL_DISPOSABLE_TARGET_VERIFIED / REAL_REPLAY_AND_HOSTED_UNACCEPTED. The user approved the design revision after the sequence-ownership finding. The earlier approval-pending and managed-sequence-blocked paragraphs below are historical checkpoints. No ownership grant, SET ROLE expansion, original-backup rewrite, remote deletion or production change was made.

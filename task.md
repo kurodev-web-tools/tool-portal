@@ -1,3 +1,5 @@
+- 2026-09-10 Post-PR828 readiness修正: Preview32924b6へ追従。実バイト照合4/7→CRLFのみの3件と判明し、producer7pathのLF属性固定・新規autocrlf checkout7/7一致を確認。その後Preview read-onlyで公開REST判定がhint文字列を拒否すると判明、null/textの非権威metadataだけ許容する局所修正。元NOT_ACCEPTED記録を保全。修正未公開のためnative source一致は再公開後に必要、再pause/本番/Recovery操作0、単独/Gate1 NO-GO。
+
 - 2026-09-10 承認済oracleローカル実装: publicProbe公開キー/対象binding、限定表401/42501＋Auth200＋native権限/TLSを事前確認。当該runで検証した全IP拒否と前後INACTIVE/両503を必須化。DNS不明単独・新IP・部分接続・期限超過・遅延応答は受入れ拒否。単独差分レビュー、watchdog37tests/scoped lint PASS。外部変更・公開0、Hosted実証未実施/Gate1 NO-GO。
 
 - 2026-09-10 Hosted oracle候補具体化: 公式OpenAPI公開キー制限を確認。Preview read-onlyでAuth200・表401/42501＋anon権限照合、固定IP＋元hostのnative PG17/TLS成功、誤host証明書拒否。root401本文は未分類で診断全体NOT_ACCEPTED維持。公開キー付き限定表経路＋当該runで検証した全IPの明示拒否を候補として記録、既存受入条件変更は未承認。製品source変更/再pause/本番アクセス/外部変更/公開0、Gate1 NO-GO。

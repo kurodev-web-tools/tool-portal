@@ -299,6 +299,21 @@ test('native baseline binds public key and validates every resolved address with
   }
 });
 
+test('native table permission baseline accepts advisory text without treating it as authority', async () => {
+  const permission = { code: '42501', message: 'permission denied for table comment_translator_paid_entitlements',
+    details: null, hint: 'Synthetic operator guidance; not an authorization result.' };
+  const f = nativeFixture({ restBody: permission }), transport = createGate1WatchdogTransport(f.context, f.seams);
+  const signal = new AbortController().signal;
+  assert.equal((await transport.preflight({ signal })).status, 'WATCHDOG_TRANSPORT_READY');
+  for (const delta of [{ hint: {} }, { hint: [] }, { hint: true }, { hint: 1 }, { hint: undefined },
+    { code: 'PGRST301' }, { message: 'permission denied for table unrelated' }, { details: 'unexpected detail' }]) {
+    f.settings.restBody = { ...permission, ...delta };
+    await assert.rejects(transport.preflight({ signal }), /WATCHDOG_PREFLIGHT_FAILED/);
+    await assert.rejects(transport.requestPause({ signal }), /WATCHDOG_TRANSPORT_NOT_READY/);
+  }
+  assert.equal(f.calls.filter(c => c.kind === 'https' && c.config.method === 'POST').length, 0);
+});
+
 test('native preflight rejects malformed backend evidence and incomplete address validation without pause', async () => {
   for (const options of [{ authBody: { name: 'other' } }, { restBody: { code: '42501', message: 'permission denied for schema public' } },
     { restBody: { code: 'PGRST301', message: 'invalid JWT' } }, { rawBody: '{' }, { rawBody: 'x'.repeat(65537) },

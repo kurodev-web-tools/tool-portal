@@ -1,0 +1,8 @@
+# Keep the watchdog's exact-commit producer bytes stable on Windows checkouts.
+/scripts/comment-translator-paid-core-v1-gate1-watchdog-runner.mjs text eol=lf
+/scripts/lib/comment-translator-paid-core-v1-gate1-watchdog.mjs text eol=lf
+/scripts/lib/comment-translator-paid-core-v1-gate1-watchdog-transport.mjs text eol=lf
+/scripts/lib/comment-translator-paid-core-v1-gate1-backup-artifacts.mjs text eol=lf
+/scripts/lib/comment-translator-paid-core-v1-gate1-evidence.mjs text eol=lf
+/scripts/lib/comment-translator-paid-core-v1-gate1-catalog.mjs text eol=lf
+/scripts/comment-translator-paid-core-v1-gate1-preflight-readonly.mjs text eol=lf

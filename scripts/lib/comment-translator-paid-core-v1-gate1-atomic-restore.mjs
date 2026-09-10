@@ -92,7 +92,24 @@ export const ATOMIC_BASELINE_FINGERPRINT_SETUP_SQL = fingerprintSetupSql(`(
  ) SELECT encode(sha256(convert_to(coalesce(jsonb_agg(v ORDER BY v::text COLLATE "C"),'[]'::jsonb)::text,'UTF8')),'hex') FROM security
 )`);
 
-const guardSql = `
+// Reuse the exact full-state computation in an anonymous block. Creating even a
+// temporary function fires pg_graphql's DDL event trigger and advances its
+// nontransactional schema sequence. Observation must not create any objects.
+// The original retained-restore builder above/below keeps its SQL bytes intact.
+export function atomicBaselineFingerprintBlock(projectReset) {
+  if(typeof projectReset!=='boolean')throw Error('ATOMIC_FINGERPRINT_BLOCK_REJECTED');
+  let sql=ATOMIC_BASELINE_FINGERPRINT_SETUP_SQL;
+  const replacements=[
+    ['CREATE FUNCTION pg_temp.ct_atomic_fingerprint(project_reset boolean) RETURNS jsonb LANGUAGE plpgsql SET search_path=pg_catalog,public AS $ct$', 'DO $ct$'],
+    ['DECLARE atomic_relation record;', `DECLARE project_reset boolean := ${projectReset}; atomic_relation record;`],
+    ['  RETURN jsonb_build_object(', "  PERFORM pg_catalog.set_config('ct_rehearsal.fingerprint', (jsonb_build_object("],
+    ['    ) definitions));\nEND $ct$;', '    ) definitions)))::text,true);\nEND $ct$;'],
+  ];
+  for(const [from,to]of replacements){if(sql.split(from).length!==2)throw Error('ATOMIC_FINGERPRINT_BLOCK_REJECTED');sql=sql.replace(from,to);}
+  return sql;
+}
+
+export const ATOMIC_CREDENTIAL_GUARD_SQL = `
 DO $ct$ BEGIN
   IF current_setting('server_version_num')::integer / 10000 <> 17 THEN RAISE EXCEPTION 'ATOMIC_VERSION_UNSUPPORTED'; END IF;
   IF ${ATOMIC_MANAGED_SHAPE_SQL} NOT IN ('2c7ef5df6baeae47ac2dd21b566e77177578cc2aa7c36d5921866434f4bc2d4c','8358275c2842cfe35ab42bc5280bcfa95f253435da9363f998dcfcfde7b68b4a') THEN RAISE EXCEPTION 'ATOMIC_MANAGED_SHAPE_UNSUPPORTED'; END IF;
@@ -107,6 +124,14 @@ DO $ct$ BEGIN
     confdeltype='c' AND ((confrelid='auth.sessions'::regclass AND conrelid IN ('auth.refresh_tokens'::regclass,'auth.mfa_amr_claims'::regclass)) OR (confrelid='auth.flow_state'::regclass AND conrelid='auth.saml_relay_states'::regclass)))) THEN RAISE EXCEPTION 'ATOMIC_DEPENDENCY_UNSUPPORTED'; END IF;
 END $ct$;
 `;
+
+// Shared by the full retained restore and the separate synthetic-only transfer.
+// Neither caller can substitute a reset policy or broaden the credential set.
+export const ATOMIC_CREDENTIAL_RESET_SQL = `DELETE FROM auth.refresh_tokens;
+DELETE FROM auth.sessions;
+DELETE FROM auth.one_time_tokens WHERE token_type IN (${list(tokens)});
+${tokens.map(c => `UPDATE auth.users SET ${c}='' WHERE ${c} <> '';`).join('\n')}
+DELETE FROM auth.flow_state WHERE ${emailFlowSql};`;
 
 // Internal SQL construction seam, not source provenance or hosted authority.
 // Native callers must bind published producers, managed-baseline identity and
@@ -149,14 +174,10 @@ SET LOCAL row_security=off;
 SET LOCAL session_replication_role=origin;
 SET LOCAL search_path=pg_catalog,public;
 DO $ct$ BEGIN IF (${BACKUP_SOURCE_STATE_SQL}) IS DISTINCT FROM '${sourceLiteral}'::jsonb THEN RAISE EXCEPTION 'ATOMIC_SOURCE_STATE_MISMATCH'; END IF; END $ct$;
-${guardSql}
+${ATOMIC_CREDENTIAL_GUARD_SQL}
 ${ATOMIC_FINGERPRINT_SETUP_SQL}
 CREATE TEMP TABLE ct_atomic_expected ON COMMIT DROP AS SELECT pg_temp.ct_atomic_fingerprint(true) AS value;
-DELETE FROM auth.refresh_tokens;
-DELETE FROM auth.sessions;
-DELETE FROM auth.one_time_tokens WHERE token_type IN (${list(tokens)});
-${tokens.map(c => `UPDATE auth.users SET ${c}='' WHERE ${c} <> '';`).join('\n')}
-DELETE FROM auth.flow_state WHERE ${emailFlowSql};
+${ATOMIC_CREDENTIAL_RESET_SQL}
 DO $ct$ BEGIN IF pg_temp.ct_atomic_fingerprint(false) IS DISTINCT FROM (SELECT value FROM ct_atomic_expected) THEN RAISE EXCEPTION 'ATOMIC_DELTA_MISMATCH'; END IF; END $ct$;
 SELECT jsonb_build_object('kind','atomic-precommit-v1','fingerprint',(SELECT value FROM ct_atomic_expected));
 COMMIT;

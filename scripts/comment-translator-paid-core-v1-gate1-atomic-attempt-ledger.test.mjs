@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import { test } from 'node:test';
+import fs from 'node:fs';
+import path from 'node:path';
+import { spawnSync } from 'node:child_process';
+import { createAtomicAttemptLedger } from './lib/comment-translator-paid-core-v1-gate1-atomic-attempt-ledger.mjs';
+const input = () => ({containerId:'a'.repeat(64),owner:'ct-atomic-'+'b'.repeat(24),imageId:'sha256:'+'c'.repeat(64),volumes:['fixture-volume']});
+test('attempt survives a fresh ledger instance and replacement container cannot reuse its volume',t=>{
+  const parent=path.resolve('.tmp');fs.mkdirSync(parent,{recursive:true});const directory=fs.mkdtempSync(path.join(parent,'atomic-ledger-test-'));
+  t.after(()=>{if(path.dirname(path.resolve(directory))!==parent||!path.basename(directory).startsWith('atomic-ledger-test-'))throw Error('UNSAFE_TEST_CLEANUP');fs.rmSync(directory,{recursive:true});});
+  const first=createAtomicAttemptLedger(directory);assert.equal(first.claim(input()),true);
+  assert.throws(()=>createAtomicAttemptLedger(directory).claim(input()),/ATOMIC_TARGET_ALREADY_ATTEMPTED/);
+  assert.throws(()=>createAtomicAttemptLedger(directory).claim({...input(),containerId:'d'.repeat(64)}),/ATOMIC_TARGET_ALREADY_ATTEMPTED/);
+  assert.equal(createAtomicAttemptLedger(directory).claim({...input(),containerId:'e'.repeat(64),volumes:['new-volume']}),true);
+  const moduleUrl=new URL('./lib/comment-translator-paid-core-v1-gate1-atomic-attempt-ledger.mjs',import.meta.url).href;
+  const code=`import {createAtomicAttemptLedger} from ${JSON.stringify(moduleUrl)}; const [directory,input]=JSON.parse(process.argv[1]);try{createAtomicAttemptLedger(directory).claim(input);process.exitCode=2;}catch(e){if(e.message!=='ATOMIC_TARGET_ALREADY_ATTEMPTED')process.exitCode=3;}`;
+  const child=spawnSync(process.execPath,['--input-type=module','-e',code,JSON.stringify([directory,input()])],{encoding:'utf8',windowsHide:true,timeout:10000});
+  assert.equal(child.status,0);assert.equal(child.stderr,'');
+  const crashedInput={...input(),containerId:'f'.repeat(64),volumes:['crashed-volume']};
+  const crashCode=`import {createAtomicAttemptLedger} from ${JSON.stringify(moduleUrl)}; const [directory,input]=JSON.parse(process.argv[1]);createAtomicAttemptLedger(directory).claim(input);process.kill(process.pid,'SIGKILL');`;
+  const crash=spawnSync(process.execPath,['--input-type=module','-e',crashCode,JSON.stringify([directory,crashedInput])],{encoding:'utf8',windowsHide:true,timeout:10000});
+  assert.notEqual(crash.status,0);assert.equal(crash.error,undefined);
+  assert.throws(()=>createAtomicAttemptLedger(directory).claim(crashedInput),/ATOMIC_TARGET_ALREADY_ATTEMPTED/);
+});
+test('incomplete or corrupt marker still denies reuse',t=>{
+  const parent=path.resolve('.tmp'),directory=fs.mkdtempSync(path.join(parent,'atomic-ledger-test-'));
+  t.after(()=>{if(path.dirname(path.resolve(directory))!==parent||!path.basename(directory).startsWith('atomic-ledger-test-'))throw Error('UNSAFE_TEST_CLEANUP');fs.rmSync(directory,{recursive:true});});
+  const ledger=createAtomicAttemptLedger(directory);ledger.claim(input());
+  for(const name of fs.readdirSync(directory))fs.writeFileSync(path.join(directory,name),'');
+  assert.throws(()=>createAtomicAttemptLedger(directory).claim(input()),/ATOMIC_TARGET_ALREADY_ATTEMPTED/);
+});

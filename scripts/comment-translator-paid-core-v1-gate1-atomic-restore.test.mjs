@@ -82,3 +82,15 @@ test('reviewed no-change artifact may contain only comments; COPY alone is a com
   const copy='COPY public.t (v) FROM stdin;\na\n\\.\n';
   assert.equal(parseRestoreSql(copy,{allowCopyText:true})[0].kind,'copy');
 });
+
+test('discard policy preserves the managed setter but does not promise its rollback', () => {
+  const request=input(),sql="SELECT pg_catalog.setval('auth.refresh_tokens_id_seq',42,true);\nSELECT pg_catalog.setval('public.owned_seq',8,false);";
+  request.artifacts[3]={name:names[3],sql,bytes:Buffer.byteLength(sql),sha256:hash(sql)};
+  const strict=atomic.buildAtomicRestore(request);
+  assert.ok(strict.sql.includes('ALTER SEQUENCE "auth"."refresh_tokens_id_seq" RESTART;'));
+  const discard=atomic.buildAtomicRestore(request,{failurePolicy:'discard-target-v1'});
+  assert.ok(discard.sql.includes(sql));assert.ok(!discard.sql.includes('ALTER SEQUENCE "auth"."refresh_tokens_id_seq" RESTART;'));
+  assert.ok(discard.sql.includes('ALTER SEQUENCE "public"."owned_seq" RESTART;'));
+  assert.equal(discard.failurePolicy,'discard-target-v1');assert.equal(discard.wholeStateRollbackGuaranteed,false);
+  assert.throws(()=>atomic.buildAtomicRestore(request,{failurePolicy:'skip-all-guards'}),/ATOMIC_RESTORE_INPUT_REJECTED/);
+});

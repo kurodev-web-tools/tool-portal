@@ -1,5 +1,27 @@
 # Comment Translator Paid Core v1 Gate 1 Production Supabase Readiness Implementation Plan
 
+## 2026-09-10 Approved disposable-target failure policy
+
+The user approved replacing complete sequence rollback with permanent quarantine and disposal/recreation of a failed recovery target. Implement and verify locally; Hosted deletion still needs an exact target and separate authority. Keep source publication, original bytes, successful-state/reset checks, P2 before real data and the existing overall deadline.
+
+- [x] Add an explicit discard-target-v1 builder policy. Keep the default strict sequence guard; only the known Auth refresh sequence may execute its original setter without transactional guarding under the new policy.
+- [x] Persist a one-attempt claim for each immutable container and mounted data volume before SQL. Share the ledger across this repository's worktrees. Never clear it on failure, success or ordinary resource cleanup; refuse reuse in another process or a replacement container using old volumes.
+- [x] Use the new policy only in the isolated ordinary-postgres adapter. Failure/uncertain outcome requires disposal and reports stopping separately from deletion; successful restoration remains quarantined. Preserve original source checks and total deadline.
+- [x] Verify native Auth setter success, intentional row rollback with possible sequence residue on failure, persistent retry rejection and a fresh-destination attempt. Retain synthetic/strict regression coverage and update readiness. Do not claim Hosted isolation or execute the real retained backup with unpublished code.
+
+
+## 2026-09-10 Approved Stage3 adapter continuation
+
+Local implementation/contract checks completed. Real retained replay remains blocked both by unpublished executor files and by the Auth sequence ownership requirement. See active readiness for the unapproved failed-destination disposal alternative; do not relax rollback semantics or execute real data under this implementation approval.
+
+Goal: connect the retained capture to an ordinary-postgres atomic local rehearsal without relabeling the acquisition commit or bypassing executor publication. The user approved continuation after the Stage3/4 preflight. Existing single-agent, no external mutation and publication gates apply.
+
+- [x] Add separate historical producer validation (record hashes against the acquisition commit, ancestry under the accepted preview commit) and loaded/current executor validation against the accepted commit. Preserve original receipts and hashes; do not execute historical JavaScript.
+- [x] Join restricted persisted process/acquisition/manifest inputs before loading SQL. Check run/source/binding/native completion/snapshot and file agreement. Return a one-use in-process verified input, not a caller PASS flag.
+- [x] Add an owned local Docker adapter using only postgres, immutable container ID, exact image/baseline, non-superuser check and no externally exposed target. Use one bounded restore transaction and independent committed readback; retain failure/cancel/unknown-exit rejection. Keep the synthetic adapter and original six-transaction path intact.
+- [x] Test wrong historical hash, current-source changes, unrelated commit, record/file mixing, unpublished executor, wrong role/target, rollback and committed readback. Complete scoped lint/contracts and direct review. Real backup execution waits for publication of the changed executor; Gate1/Hosted isolation remain unaccepted.
+
+
 ## 2026-09-10 Approved continuation through PR creation
 
 The user requested a goal ending at PR creation (not merge). Reuse this worktree and the approved atomic-restore design. The verified base is `codex/comment-translator-paid-v1-preview` at the same f1959bee tree as the current branch. Commit/push/PR of the cohesive implementation, tests and Gate1 records are authorized; Hosted operations and merge are excluded.

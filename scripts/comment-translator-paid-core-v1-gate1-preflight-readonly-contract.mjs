@@ -28,6 +28,7 @@ import {
   canonicalBindingJson,
   computeBindingSha256,
   createPsqlTransport,
+  parseRecoveryTargetBinding,
   parseSanitizedEvidence,
   parseTargetBinding,
   runPreflight
@@ -621,6 +622,27 @@ assert.equal(canonicalBindingJson({ z: 1, a: { y: 2, b: 3 } }), '{"a":{"b":3,"y"
 const reorderedBinding = JSON.parse(`{"user":"postgres","target":"production","caSha256":"${binding.caSha256}","schemaVersion":1,"host":"${binding.host}","port":5432,"database":"postgres","connectionMode":"direct","projectRef":"${binding.projectRef}","sslMode":"verify-full"}`);
 assert.equal(computeBindingSha256(reorderedBinding), computeBindingSha256(binding), "binding digest is independent of input key order");
 assert.deepEqual(Object.keys(parseTargetBinding(JSON.stringify(binding)).binding).sort(), [...TARGET_BINDING_KEYS].sort(), "valid binding uses only amendment keys");
+
+const recoveryBinding = { ...binding, target: "recovery" };
+const recoveryBindingJson = JSON.stringify(recoveryBinding);
+assert.deepEqual(parseRecoveryTargetBinding(recoveryBindingJson), { ok: true, binding: recoveryBinding }, "Recovery binding retains its actual target kind");
+assert.equal(parseTargetBinding(recoveryBindingJson).ok, false, "ordinary Preview/Production parsing does not accept Recovery");
+for (const target of ["preview", "production"]) {
+  const raw = JSON.stringify({ ...binding, target });
+  assert.equal(parseTargetBinding(raw).ok, true, `${target} remains valid for ordinary preflight`);
+  assert.equal(parseRecoveryTargetBinding(raw).ok, false, `${target} cannot enter the Recovery parser`);
+}
+for (const [label, raw] of [
+  ["duplicate target", recoveryBindingJson.replace('"target":"recovery"', '"target":"recovery","target":"recovery"')],
+  ["unknown credential field", JSON.stringify({ ...recoveryBinding, password: "synthetic" })],
+  ["wrong host", JSON.stringify({ ...recoveryBinding, host: "different.invalid" })],
+  ["pooler port", JSON.stringify({ ...recoveryBinding, port: 6543 })],
+  ["weaker TLS", JSON.stringify({ ...recoveryBinding, sslMode: "require" })],
+  ["privileged role", JSON.stringify({ ...recoveryBinding, user: "supabase_admin" })],
+  ["missing CA digest", JSON.stringify({ ...recoveryBinding, caSha256: undefined })]
+]) {
+  assert.deepEqual(parseRecoveryTargetBinding(raw), { ok: false, reason: "TARGET_BINDING_INVALID" }, `${label} fails the shared strict validation`);
+}
 
 const validTransport = fakeTransport();
 const validResult = runPreflight({ target: "production", env: baseEnv, fsApi: fixtureFs, transport: validTransport });

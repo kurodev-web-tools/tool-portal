@@ -4,7 +4,7 @@ import {fileURLToPath} from 'node:url';
 import {spawn,spawnSync} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {isDeepStrictEqual} from 'node:util';
-import {parseTargetBinding,buildPsqlInvocation} from '../comment-translator-paid-core-v1-gate1-preflight-readonly.mjs';
+import {parseRecoveryTargetBinding,buildPsqlInvocation} from '../comment-translator-paid-core-v1-gate1-preflight-readonly.mjs';
 import {parseStrictJson} from './comment-translator-paid-core-v1-gate1-evidence.mjs';
 import {buildSyntheticRehearsalTransfer,REHEARSAL_READBACK_SQL} from './comment-translator-paid-core-v1-gate1-rehearsal-transfer.mjs';
 const hash=v=>createHash('sha256').update(v).digest('hex');
@@ -57,8 +57,8 @@ export function nativeRehearsalAttemptLedger(){
 // Unlike the existing preflight builder this controlled transfer needs writable
 // transactions. The existing read-only builder and its contracts are unchanged.
 export function prepareManagedRehearsalInvocation({bindingJson,env,approvedRecoveryRef,protectedProjectRefs,fsApi=fs}){
- const parsed=parseTargetBinding(bindingJson);
- if(!parsed.ok||parsed.binding.target!=='preview'||!/^[a-z]{20}$/.test(approvedRecoveryRef)||parsed.binding.projectRef!==approvedRecoveryRef||
+ const parsed=parseRecoveryTargetBinding(bindingJson);
+ if(!parsed.ok||parsed.binding.target!=='recovery'||!/^[a-z]{20}$/.test(approvedRecoveryRef)||parsed.binding.projectRef!==approvedRecoveryRef||
  !Array.isArray(protectedProjectRefs)||protectedProjectRefs.length!==2||new Set(protectedProjectRefs).size!==2||protectedProjectRefs.some(ref=>!/^[a-z]{20}$/.test(ref)||ref===approvedRecoveryRef))reject();
  const invocation=buildPsqlInvocation(parsed.binding,env,fsApi);if(!invocation.ok)reject();
  return {command:invocation.command,args:['--no-psqlrc','--no-password','--quiet','--tuples-only','--no-align','--set=ON_ERROR_STOP=1','--dbname=postgres','--file=-'],

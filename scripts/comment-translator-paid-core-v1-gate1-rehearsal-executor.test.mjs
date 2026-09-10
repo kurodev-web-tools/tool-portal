@@ -25,9 +25,9 @@ test('persistent target claim survives a new ledger instance and a corrupt recei
 });
 test('managed invocation is bound to the approved recovery, TLS and normal postgres',()=>{
  const ref='abcdefghijklmnopqrst',ca='synthetic certificate';
- const binding={schemaVersion:1,target:'preview',connectionMode:'direct',projectRef:ref,host:'db.'+ref+'.supabase.co',port:5432,database:'postgres',user:'postgres',sslMode:'verify-full',caSha256:hash(ca)};
+ const binding={schemaVersion:1,target:'recovery',connectionMode:'direct',projectRef:ref,host:'db.'+ref+'.supabase.co',port:5432,database:'postgres',user:'postgres',sslMode:'verify-full',caSha256:hash(ca)};
  const env={PATH:process.env.PATH,PGHOST:binding.host,PGPORT:'5432',PGDATABASE:'postgres',PGUSER:'postgres',PGSSLMODE:'verify-full',PGSSLROOTCERT:'synthetic-ca',PGPASSWORD:'synthetic'};
  const options={bindingJson:JSON.stringify(binding),env,approvedRecoveryRef:ref,protectedProjectRefs:['bbbbbbbbbbbbbbbbbbbb','cccccccccccccccccccc'],fsApi:{lstatSync:()=>({isFile:()=>true}),readFileSync:()=>Buffer.from(ca)}};
  const r=prepareManagedRehearsalInvocation(options);assert.equal(r.env.PGSSLMODE,'verify-full');assert.match(r.env.PGOPTIONS,/default_transaction_read_only=off/);assert.equal(r.args.includes('--no-psqlrc'),true);assert.equal(r.args.includes('--file=-'),true);
- for(const changed of [{approvedRecoveryRef:'bbbbbbbbbbbbbbbbbbbb'},{protectedProjectRefs:[ref,'cccccccccccccccccccc']},{env:{...env,PGHOSTADDR:'127.0.0.1'}},{env:{...env,PGSSLMODE:'require'}},{bindingJson:JSON.stringify({...binding,target:'production'})}])assert.throws(()=>prepareManagedRehearsalInvocation({...options,...changed}));
+ for(const changed of [{approvedRecoveryRef:'bbbbbbbbbbbbbbbbbbbb'},{protectedProjectRefs:[ref,'cccccccccccccccccccc']},{env:{...env,PGHOSTADDR:'127.0.0.1'}},{env:{...env,PGSSLMODE:'require'}},{bindingJson:JSON.stringify({...binding,target:'preview'})},{bindingJson:JSON.stringify({...binding,target:'production'})}])assert.throws(()=>prepareManagedRehearsalInvocation({...options,...changed}));
 });

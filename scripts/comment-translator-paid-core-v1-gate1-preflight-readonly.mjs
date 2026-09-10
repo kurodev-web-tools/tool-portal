@@ -1123,7 +1123,7 @@ function hasDuplicateBindingKeys(rawJson) {
   });
 }
 
-export function parseTargetBinding(rawJson) {
+function parseBindingForTargets(rawJson, targets) {
   if (typeof rawJson !== "string" || rawJson.length === 0 || Buffer.byteLength(rawJson, "utf8") > MAX_OUTPUT_BYTES) {
     return invalidBinding();
   }
@@ -1138,7 +1138,7 @@ export function parseTargetBinding(rawJson) {
   }
 
   if (!exactKeys(binding, TARGET_BINDING_KEYS)) return invalidBinding();
-  if (binding.schemaVersion !== 1 || !["preview", "production"].includes(binding.target)) return invalidBinding();
+  if (binding.schemaVersion !== 1 || !targets.includes(binding.target)) return invalidBinding();
   if (binding.connectionMode !== "direct" || binding.port !== 5432) return invalidBinding();
   if (binding.database !== "postgres" || binding.user !== "postgres" || binding.sslMode !== "verify-full") return invalidBinding();
   if (![binding.projectRef, binding.host, binding.database, binding.user, binding.sslMode, binding.caSha256].every(isStrictAscii)) {
@@ -1149,6 +1149,15 @@ export function parseTargetBinding(rawJson) {
   if (!DIGEST_PATTERN.test(binding.caSha256)) return invalidBinding();
 
   return { ok: true, binding };
+}
+
+export function parseTargetBinding(rawJson) {
+  return parseBindingForTargets(rawJson, ["preview", "production"]);
+}
+
+// Recovery has a separate entry point; ordinary preflight keeps its two targets.
+export function parseRecoveryTargetBinding(rawJson) {
+  return parseBindingForTargets(rawJson, ["recovery"]);
 }
 
 function digestMatches(binding, expectedDigest) {

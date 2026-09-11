@@ -6,6 +6,21 @@ const json = (value, status = 200) => Response.json(value, { status, headers: { 
 const samePolicy = (a, b) => Object.keys(a).every(key => a[key] === b[key]);
 const ARM_VALIDATION_DIAGNOSTICS = new Set(['ARM_INPUT_INVALID', 'ARM_SOURCE_MISMATCH', 'ARM_PRESERVATION_IN_FUTURE', 'ARM_PRESERVATION_STALE', 'ARM_DEADLINE_INVALID', 'ARM_ACKNOWLEDGEMENT_REQUIRED']);
 const ARM_DIAGNOSTICS = new Set([...ARM_VALIDATION_DIAGNOSTICS, 'ARM_CONFIGURATION', 'ARM_VALIDATION', 'ARM_STORAGE', 'ARM_ALARM', 'ARM_INITIAL_OBSERVATION']);
+const STATE_DIAGNOSTICS = new Set(['STATE_INITIALIZATION', 'STATE_CONFIGURATION', 'STATE_STORAGE', 'STATE_POLICY', 'STATE_PROJECTION']);
+function stateFailure(env, error, diagnostic) {
+  // A disabled object can be reached by a valid simulation caller during mode
+  // mismatch. Visibility still belongs to the authenticated HTTP boundary.
+  if (env.CONTROLLER_MODE === 'live') return error;
+  return Object.assign(Error('CONTROLLER_REJECTED'), { controllerDiagnostic: diagnostic });
+}
+function stateRpcDiagnostic(error) {
+  if (STATE_DIAGNOSTICS.has(error?.controllerDiagnostic)) return error.controllerDiagnostic;
+  // These flags describe the exception; they never authorize another attempt.
+  if (error?.overloaded === true) return 'STATE_RPC_OVERLOADED';
+  if (error?.retryable === true) return 'STATE_RPC_RETRYABLE';
+  if (error?.remote === true) return 'STATE_RPC_REMOTE';
+  return 'STATE_RPC';
+}
 function configuration(env) {
   const policy = validatePolicy(parseCanonicalJson(env.CONTROLLER_POLICY_JSON));
   requireThat(policy.mode === env.CONTROLLER_MODE);
@@ -33,6 +48,7 @@ const controllerWorker = {
   async fetch(request, env) {
     if (!['simulation', 'live'].includes(env.CONTROLLER_MODE)) return json({ error: 'DISABLED' }, 503);
     let diagnosticStage = null;
+    let stateDiagnosticStage = null;
     try {
       const policy = configuration(env);
       if (!authorized(request, env.CONTROLLER_OPERATOR_TOKEN)) return json({ error: 'UNAUTHORIZED' }, 401);
@@ -40,19 +56,27 @@ const controllerWorker = {
       const method = { '/v1/state': 'GET', '/v1/arm': 'POST', '/v1/command': 'POST' }[url.pathname];
       if (!method || url.search || url.hash || request.method !== method) return json({ error: 'NOT_FOUND' }, 404);
       if (policy.mode === 'simulation' && url.pathname === '/v1/arm') diagnosticStage = 'ARM_RPC';
+      if (policy.mode === 'simulation' && url.pathname === '/v1/state') stateDiagnosticStage = 'STATE_BINDING';
       // Role swaps still address the same owner. No caller-selected object/run namespace.
       const pair = [policy.previewRef, policy.recoveryRef].sort().join(':');
       const id = env.GUARDIAN.idFromName(policy.mode + ':' + pair);
       const object = env.GUARDIAN.get(id);
-      if (url.pathname === '/v1/state') return json(await object.state());
+      if (url.pathname === '/v1/state') {
+        if (stateDiagnosticStage) stateDiagnosticStage = 'STATE_RPC';
+        const state = await object.state();
+        if (stateDiagnosticStage) stateDiagnosticStage = 'STATE_RESPONSE';
+        return json(state);
+      }
       if (diagnosticStage) diagnosticStage = 'ARM_PACKET';
       const input = await packet(request);
       if (diagnosticStage) diagnosticStage = 'ARM_RPC';
       return json(url.pathname === '/v1/arm' ? await object.arm(input) : await object.accept(input));
     } catch (error) {
-      // Only authenticated simulation arm errors expose a fixed code. Never
+      // Only authenticated simulation arm/state errors expose a fixed code. Never
       // return an RPC message, stack, target, timestamp or arbitrary property.
-      const diagnostic = diagnosticStage && (ARM_DIAGNOSTICS.has(error?.controllerDiagnostic) ? error.controllerDiagnostic : diagnosticStage);
+      const armDiagnostic = diagnosticStage && (ARM_DIAGNOSTICS.has(error?.controllerDiagnostic) ? error.controllerDiagnostic : diagnosticStage);
+      const stateDiagnostic = stateDiagnosticStage && (stateDiagnosticStage === 'STATE_RPC' ? stateRpcDiagnostic(error) : stateDiagnosticStage);
+      const diagnostic = armDiagnostic || stateDiagnostic;
       return json({ error: 'CONTROLLER_REJECTED', ...(diagnostic ? { diagnostic } : {}) }, 400);
     }
   },
@@ -64,9 +88,14 @@ export class Gate1RecoveryController extends DurableObject {
     super(ctx, env);
     this.sql = ctx.storage.sql;
     ctx.blockConcurrencyWhile(async () => {
-      this.sql.exec('CREATE TABLE IF NOT EXISTS controller_state (slot INTEGER PRIMARY KEY CHECK(slot=1), value TEXT NOT NULL)');
-      this.sql.exec('CREATE TABLE IF NOT EXISTS used_runs (run_id TEXT PRIMARY KEY, value TEXT NOT NULL)');
-      this.sql.exec('CREATE TABLE IF NOT EXISTS simulation (role TEXT PRIMARY KEY, status TEXT NOT NULL)');
+      try {
+        this.sql.exec('CREATE TABLE IF NOT EXISTS controller_state (slot INTEGER PRIMARY KEY CHECK(slot=1), value TEXT NOT NULL)');
+        this.sql.exec('CREATE TABLE IF NOT EXISTS used_runs (run_id TEXT PRIMARY KEY, value TEXT NOT NULL)');
+        this.sql.exec('CREATE TABLE IF NOT EXISTS simulation (role TEXT PRIMARY KEY, status TEXT NOT NULL)');
+      } catch (error) {
+        // Rethrow: initialization must still fail and the runtime must reset.
+        throw stateFailure(env, error, 'STATE_INITIALIZATION');
+      }
     });
   }
 
@@ -145,9 +174,18 @@ export class Gate1RecoveryController extends DurableObject {
     await this.schedule();
   }
   async state() {
-    const policy = configuration(this.env), state = this.read();
-    requireThat(!state || samePolicy(state.policy, policy));
-    return state ? publicState(state) : { phase: 'UNARMED', gate: 'NO-GO', formalStopAccepted: false };
+    let stage = 'STATE_CONFIGURATION';
+    try {
+      const policy = configuration(this.env);
+      stage = 'STATE_STORAGE';
+      const state = this.read();
+      stage = 'STATE_POLICY';
+      requireThat(!state || samePolicy(state.policy, policy));
+      stage = 'STATE_PROJECTION';
+      return state ? publicState(state) : { phase: 'UNARMED', gate: 'NO-GO', formalStopAccepted: false };
+    } catch (error) {
+      throw stateFailure(this.env, error, stage);
+    }
   }
   async arm(input) {
     let stage = 'ARM_CONFIGURATION';

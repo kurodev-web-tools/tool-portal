@@ -5,6 +5,7 @@ const OPS=['previewPause','recoveryResume','recoveryPause','previewResume'];
 const FINAL=['RESTORED','ENDED_NO_MUTATION','NEEDS_OPERATOR'];
 export const exact=(value,keys)=>value!==null&&typeof value==='object'&&!Array.isArray(value)&&Object.keys(value).sort().join(',')===[...keys].sort().join(',');
 export function requireThat(value){if(!value)throw Error('CONTROLLER_REJECTED');}
+const requireArm=(value,armDiagnostic)=>{if(!value)throw Object.assign(Error('CONTROLLER_REJECTED'),{armDiagnostic});};
 const millis=n=>Number.isSafeInteger(n)&&n>=0;
 export function validatePolicy(p){
   requireThat(exact(p,['mode','previewRef','recoveryRef','productionRef','organizationId','sourceCommit','emergencyPreviewResume']));
@@ -15,9 +16,13 @@ export function validatePolicy(p){
 }
 export function createRun(policy,p,now){
   policy=validatePolicy(policy);
-  requireThat(exact(p,['runId','sourceCommit','hardEndAt','preservationSha256','preservationVerifiedAt','acknowledgeEmergencyContainment']));
-  requireThat(millis(now)&&typeof p.runId==='string'&&SHA.test(p.runId)&&p.sourceCommit===policy.sourceCommit&&typeof p.preservationSha256==='string'&&SHA.test(p.preservationSha256)&&millis(p.preservationVerifiedAt)&&p.preservationVerifiedAt<=now&&now-p.preservationVerifiedAt<=300000);
-  requireThat(millis(p.hardEndAt)&&p.hardEndAt>now&&p.hardEndAt<=now+MAX_RUN_MS&&p.acknowledgeEmergencyContainment===true);
+  requireArm(exact(p,['runId','sourceCommit','hardEndAt','preservationSha256','preservationVerifiedAt','acknowledgeEmergencyContainment']),'ARM_INPUT_INVALID');
+  requireArm(millis(now)&&typeof p.runId==='string'&&SHA.test(p.runId)&&typeof p.preservationSha256==='string'&&SHA.test(p.preservationSha256)&&millis(p.preservationVerifiedAt),'ARM_INPUT_INVALID');
+  requireArm(p.sourceCommit===policy.sourceCommit,'ARM_SOURCE_MISMATCH');
+  requireArm(p.preservationVerifiedAt<=now,'ARM_PRESERVATION_IN_FUTURE');
+  requireArm(now-p.preservationVerifiedAt<=300000,'ARM_PRESERVATION_STALE');
+  requireArm(millis(p.hardEndAt)&&p.hardEndAt>now&&p.hardEndAt<=now+MAX_RUN_MS,'ARM_DEADLINE_INVALID');
+  requireArm(p.acknowledgeEmergencyContainment===true,'ARM_ACKNOWLEDGEMENT_REQUIRED');
   return {schemaVersion:1,policy,runId:p.runId,sourceCommit:p.sourceCommit,createdAt:now,lastNow:now,hardEndAt:p.hardEndAt,leaseEnd:Math.min(now+LEASE_MS,p.hardEndAt),cleanupEnd:null,phase:'ARMED',reason:'WAITING_FOR_OPERATOR',sequence:0,preservationSha256:p.preservationSha256,preservationVerifiedAt:p.preservationVerifiedAt,
     operations:Object.fromEntries(OPS.map(op=>[op,null])),observed:{preview:null,recovery:null},previewSeenInactive:false,recoverySeenActive:false,recoveryInactiveFirst:null,recoveryInactivePair:false,requested:null,evidence:[]};
 }

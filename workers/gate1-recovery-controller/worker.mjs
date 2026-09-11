@@ -231,6 +231,11 @@ export class Gate1RecoveryController extends DurableObject {
     if (state.requested && state.phase === 'ARMED') {
       await this.refresh(state.runId, provider);
       await this.perform(state.runId, state.requested, provider);
+    } else if (state.phase === 'ARMED' && input.type === 'progress') {
+      // A genuine new evidence stage may observe a provider transition that
+      // completed after its one-use mutation. State polling remains passive.
+      await this.refresh(state.runId, provider);
+      await this.schedule();
     } else if (state.phase === 'CLOSING') await this.cleanup(state.runId, provider);
     return publicState(this.read());
   }

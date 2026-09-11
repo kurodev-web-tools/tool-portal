@@ -55,12 +55,32 @@ Codes are selected from an allowlist at both the Durable Object and HTTP boundar
 
 A diagnostic does not prove that a run or operation allowance is unused. Preserve its original request/response receipt and independently read state; never retry an uncertain arm or command automatically. A client must save the allowlisted diagnostic before rejecting the non-200 response. In particular, local and deployed [timer behavior differs](https://developers.cloudflare.com/workers/runtime-apis/performance/), and an HTTP Date rounded to whole seconds cannot identify a past controller execution timestamp. A future-preservation code identifies the rejected comparison, not the cause of the clocks' disagreement. It does not authorize freshness relaxation, timestamp backdating or an additional trial.
 
+### Simulation state diagnostics
+
+An authenticated `GET /v1/state` in a valid simulation Worker configuration may also add one fixed `diagnostic` to HTTP400. For example, `{"error":"CONTROLLER_REJECTED","diagnostic":"STATE_STORAGE"}` identifies a failed object-state read without returning the SQL error or stored content. HTTP status, successful state shape, authentication and route checks are unchanged. Worker configuration failures before authentication, live/disabled/unauthenticated requests and command failures expose no state diagnostic. No diagnostic log, binding, state write, lease refresh or automatic retry is added.
+
+| Diagnostic | Meaning |
+| --- | --- |
+| `STATE_BINDING` | Object ID/stub acquisition failed before the state RPC. |
+| `STATE_INITIALIZATION` | The existing object schema-initialization callback threw. The exception is rethrown and runtime reset behavior is retained. |
+| `STATE_CONFIGURATION` | The object rejected its own configuration, including a disabled object reached by a valid simulation caller. This does not identify which setting differs. |
+| `STATE_STORAGE` | Reading or parsing the stored controller state failed. |
+| `STATE_POLICY` | Stored policy comparison failed. |
+| `STATE_PROJECTION` | Constructing the public representation of stored state failed. |
+| `STATE_RPC_OVERLOADED`, `STATE_RPC_RETRYABLE`, `STATE_RPC_REMOTE` | No recognized object stage arrived, but the corresponding RPC exception flag was exactly `true`. Overload takes precedence over the other flags. |
+| `STATE_RPC` | The RPC failed without a recognized object stage or flag. This can include startup, transport or response-transfer errors. |
+| `STATE_RESPONSE` | JSON response construction failed after the state RPC returned. |
+
+The non-live object emits only a fixed internal code; the caller exposes it only after its valid simulation configuration and authentication checks. This allows configuration drift between caller and object to remain distinguishable while preserving the public disabled/live behavior. Internal arm and state code sets are separate. Unknown messages, error properties and non-boolean flags cannot become response text. A failure to transfer the internal code falls back to an RPC classification.
+
+Cloudflare documents [RPC exception flags](https://developers.cloudflare.com/durable-objects/best-practices/error-handling/) and [initialization reset behavior](https://developers.cloudflare.com/durable-objects/api/state/#blockconcurrencywhile). `remote` can describe application or infrastructure errors; `retryable` is metadata, not permission to retry this controller's bounded attempt. These labels do not prove a specific platform outage or that an operation allowance is unused. Preserve the failed response before any client assertion, keep the original one-use claim, and apply only the independently authorized state-observation and closure procedure. An initial400 followed by UNARMED can be produced by several distinct failure paths and is not sufficient to select a root cause.
+
 ## Local verification
 
 Use the repository's installed dependencies from the feature worktree root:
 
 ```powershell
-node --test workers/gate1-recovery-controller/core.test.mjs workers/gate1-recovery-controller/provider.test.mjs workers/gate1-recovery-controller/worker.test.mjs workers/gate1-recovery-controller/arm-diagnostics.test.mjs
+node --test workers/gate1-recovery-controller/core.test.mjs workers/gate1-recovery-controller/provider.test.mjs workers/gate1-recovery-controller/worker.test.mjs workers/gate1-recovery-controller/arm-diagnostics.test.mjs workers/gate1-recovery-controller/state-diagnostics.test.mjs
 node node_modules/eslint/bin/eslint.js workers/gate1-recovery-controller/*.mjs --max-warnings 0
 node scripts/comment-translator-paid-core-v1-gate1-operator-contract.mjs
 $env:CLOUDFLARE_SEND_METRICS='false'
@@ -68,7 +88,7 @@ node node_modules/wrangler/bin/wrangler.js deploy --dry-run --config workers/gat
 git diff --check
 ```
 
-Miniflare uses real local workerd, SQLite persistence, object reload and scheduled alarms. The simulation cases reject all outbound traffic. The live adapter integration uses synthetic identities and a local outbound-service fixture; it never contacts Supabase. Test-only subclasses induce real SQLite errors and post-registration alarm/observation failures. Diagnostic tests cover RPC propagation, exact freshness boundaries, state retention and sensitive/unknown error suppression. Temporary test databases contain synthetic data only. No dependency/lockfile change is required.
+Miniflare uses real local workerd, SQLite persistence, object reload and scheduled alarms. The simulation cases reject all outbound traffic. The live adapter integration uses synthetic identities and a local outbound-service fixture; it never contacts Supabase. Test-only subclasses induce real SQLite errors and post-registration alarm/observation failures. Diagnostic tests cover RPC propagation, schema-initialization/read failures, caller/object configuration drift, exact freshness boundaries, state retention and sensitive/unknown error suppression. Temporary test databases contain synthetic data only. No dependency/lockfile change is required.
 
 ## Initial external execution workflow
 

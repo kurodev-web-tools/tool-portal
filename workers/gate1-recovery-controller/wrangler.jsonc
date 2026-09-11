@@ -1,0 +1,25 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "v-streamer-tools-gate1-recovery-controller",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-05-27",
+  "workers_dev": false,
+  "preview_urls": false,
+  "vars": { "CONTROLLER_MODE": "disabled" },
+  "durable_objects": {
+    "bindings": [{ "name": "GUARDIAN", "class_name": "Gate1RecoveryController" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["Gate1RecoveryController"] }],
+  "observability": { "enabled": false },
+  "env": {
+    "simulation": {
+      "name": "v-streamer-tools-gate1-recovery-controller-sim",
+      "workers_dev": true,
+      "preview_urls": false,
+      "vars": { "CONTROLLER_MODE": "disabled" },
+      "durable_objects": {
+        "bindings": [{ "name": "GUARDIAN", "class_name": "Gate1RecoveryController" }]
+      }
+    }
+  }
+}

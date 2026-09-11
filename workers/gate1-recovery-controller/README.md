@@ -36,12 +36,31 @@ Simulation accepts only `p` repeated20, `r` repeated20 and `x` repeated20 as its
 
 The policy is immutable once stored in this namespace. Do not change targets, source pin, mode or namespace to bypass a consumed claim. A future policy/namespace migration needs a separately reviewed lifecycle transition after all pending actions are reconciled. Do not disable, delete, redeploy or rotate away a valid management secret during an active/closing run. Doing so can prevent containment. Retain the original run ledger and provider evidence even after an operator intervenes.
 
+### Simulation arm diagnostics
+
+Only an authenticated `POST /v1/arm` in a valid simulation configuration may add a fixed `diagnostic` string to an HTTP400 response. For example, `{"error":"CONTROLLER_REJECTED","diagnostic":"ARM_PRESERVATION_IN_FUTURE"}` identifies the failed comparison without returning the submitted timestamp. Successful responses and live, disabled, unauthenticated, invalid-route, configuration-before-authentication and command failures keep their existing response contract. No diagnostic logs, new bindings or additional state writes are introduced.
+
+| Diagnostic | Meaning |
+| --- | --- |
+| `ARM_PACKET` | Content type, body reading or compact/duplicate-free JSON parsing failed before the arm RPC. |
+| `ARM_RPC` | Object binding/RPC failed without a recognized internal stage. It is not a specific server exception diagnosis. |
+| `ARM_CONFIGURATION`, `ARM_VALIDATION` | The Durable Object rejected configuration or input without a more specific recognized code. |
+| `ARM_INPUT_INVALID`, `ARM_SOURCE_MISMATCH` | Exact input shape/types/digests or the source binding were rejected. |
+| `ARM_PRESERVATION_IN_FUTURE`, `ARM_PRESERVATION_STALE` | Preservation was later than the controller's arm time, or more than300000ms old. The strict comparisons are unchanged. |
+| `ARM_DEADLINE_INVALID`, `ARM_ACKNOWLEDGEMENT_REQUIRED` | The original finite deadline or explicit acknowledgement requirement failed. |
+| `ARM_STORAGE` | Registration transaction failed. This also includes a conflicting existing run or a consumed run ID; it does not by itself prove a SQLite outage. |
+| `ARM_ALARM`, `ARM_INITIAL_OBSERVATION` | Failure occurred after registration, during alarm setup or initial observation/acceptance. |
+
+Codes are selected from an allowlist at both the Durable Object and HTTP boundary. Raw RPC errors, stacks, targets, credentials, payloads and arbitrary error properties are never returned. Error fields cross the existing RPC boundary using the configured compatibility date's [error serialization](https://developers.cloudflare.com/workers/runtime-apis/rpc/error-handling/); unknown details degrade to `ARM_RPC`.
+
+A diagnostic does not prove that a run or operation allowance is unused. Preserve its original request/response receipt and independently read state; never retry an uncertain arm or command automatically. A client must save the allowlisted diagnostic before rejecting the non-200 response. In particular, local and deployed [timer behavior differs](https://developers.cloudflare.com/workers/runtime-apis/performance/), and an HTTP Date rounded to whole seconds cannot identify a past controller execution timestamp. A future-preservation code identifies the rejected comparison, not the cause of the clocks' disagreement. It does not authorize freshness relaxation, timestamp backdating or an additional trial.
+
 ## Local verification
 
 Use the repository's installed dependencies from the feature worktree root:
 
 ```powershell
-node --test workers/gate1-recovery-controller/core.test.mjs workers/gate1-recovery-controller/provider.test.mjs workers/gate1-recovery-controller/worker.test.mjs
+node --test workers/gate1-recovery-controller/core.test.mjs workers/gate1-recovery-controller/provider.test.mjs workers/gate1-recovery-controller/worker.test.mjs workers/gate1-recovery-controller/arm-diagnostics.test.mjs
 node node_modules/eslint/bin/eslint.js workers/gate1-recovery-controller/*.mjs --max-warnings 0
 node scripts/comment-translator-paid-core-v1-gate1-operator-contract.mjs
 $env:CLOUDFLARE_SEND_METRICS='false'
@@ -49,9 +68,11 @@ node node_modules/wrangler/bin/wrangler.js deploy --dry-run --config workers/gat
 git diff --check
 ```
 
-Miniflare uses real local workerd, SQLite persistence, object reload and scheduled alarms. The simulation cases reject all outbound traffic. The live adapter integration uses synthetic identities and a local outbound-service fixture; it never contacts Supabase. A test-only subclass induces a real SQLite error before the first claim. Temporary test databases contain synthetic data only. No dependency/lockfile change is required.
+Miniflare uses real local workerd, SQLite persistence, object reload and scheduled alarms. The simulation cases reject all outbound traffic. The live adapter integration uses synthetic identities and a local outbound-service fixture; it never contacts Supabase. Test-only subclasses induce real SQLite errors and post-registration alarm/observation failures. Diagnostic tests cover RPC propagation, exact freshness boundaries, state retention and sensitive/unknown error suppression. Temporary test databases contain synthetic data only. No dependency/lockfile change is required.
 
-## Concrete external execution packet — not yet executed
+## Initial external execution workflow
+
+Current attempt results and the next approved scope belong in the [operational readiness record](../../docs/active/COMMENT_TRANSLATOR_PAID_V1_GATE1_PRODUCTION_SUPABASE_READINESS.md). The initial provisioning workflow below does not authorize recreating an existing Worker/namespace, replacing its policy or repeating a consumed trial. Diagnostic source publication, deployment and a new external trial each require their applicable authorization.
 
 1. Publish the reviewed component and operational-record changes through the existing Preview-targeted Git review workflow when authorized. Record the accepted full commit and built Worker digest. Source review/merge is independent of Cloudflare deployment.
 2. Read-only verify the intended Cloudflare account, applicable Free allowance/current quota and the absence of a conflicting controller. Paid plan changes are excluded. The current account's zero-cost condition remains UNKNOWN. Initially deploy only the separately named `v-streamer-tools-gate1-recovery-controller-sim` environment, with its own namespace and mode disabled. Its `workers.dev` endpoint is separate from the application Worker; preview URLs remain off. Use the explicit `--env simulation` target. Top-level live deployment has `workers_dev: false` and no route by default.

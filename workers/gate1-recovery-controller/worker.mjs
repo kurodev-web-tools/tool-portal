@@ -4,6 +4,8 @@ import { createProvider, parseCanonicalJson, readBody } from './provider.mjs';
 
 const json = (value, status = 200) => Response.json(value, { status, headers: { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } });
 const samePolicy = (a, b) => Object.keys(a).every(key => a[key] === b[key]);
+const ARM_VALIDATION_DIAGNOSTICS = new Set(['ARM_INPUT_INVALID', 'ARM_SOURCE_MISMATCH', 'ARM_PRESERVATION_IN_FUTURE', 'ARM_PRESERVATION_STALE', 'ARM_DEADLINE_INVALID', 'ARM_ACKNOWLEDGEMENT_REQUIRED']);
+const ARM_DIAGNOSTICS = new Set([...ARM_VALIDATION_DIAGNOSTICS, 'ARM_CONFIGURATION', 'ARM_VALIDATION', 'ARM_STORAGE', 'ARM_ALARM', 'ARM_INITIAL_OBSERVATION']);
 function configuration(env) {
   const policy = validatePolicy(parseCanonicalJson(env.CONTROLLER_POLICY_JSON));
   requireThat(policy.mode === env.CONTROLLER_MODE);
@@ -30,20 +32,29 @@ async function packet(request) {
 const controllerWorker = {
   async fetch(request, env) {
     if (!['simulation', 'live'].includes(env.CONTROLLER_MODE)) return json({ error: 'DISABLED' }, 503);
+    let diagnosticStage = null;
     try {
       const policy = configuration(env);
       if (!authorized(request, env.CONTROLLER_OPERATOR_TOKEN)) return json({ error: 'UNAUTHORIZED' }, 401);
       const url = new URL(request.url);
       const method = { '/v1/state': 'GET', '/v1/arm': 'POST', '/v1/command': 'POST' }[url.pathname];
       if (!method || url.search || url.hash || request.method !== method) return json({ error: 'NOT_FOUND' }, 404);
+      if (policy.mode === 'simulation' && url.pathname === '/v1/arm') diagnosticStage = 'ARM_RPC';
       // Role swaps still address the same owner. No caller-selected object/run namespace.
       const pair = [policy.previewRef, policy.recoveryRef].sort().join(':');
       const id = env.GUARDIAN.idFromName(policy.mode + ':' + pair);
       const object = env.GUARDIAN.get(id);
       if (url.pathname === '/v1/state') return json(await object.state());
+      if (diagnosticStage) diagnosticStage = 'ARM_PACKET';
       const input = await packet(request);
+      if (diagnosticStage) diagnosticStage = 'ARM_RPC';
       return json(url.pathname === '/v1/arm' ? await object.arm(input) : await object.accept(input));
-    } catch { return json({ error: 'CONTROLLER_REJECTED' }, 400); }
+    } catch (error) {
+      // Only authenticated simulation arm errors expose a fixed code. Never
+      // return an RPC message, stack, target, timestamp or arbitrary property.
+      const diagnostic = diagnosticStage && (ARM_DIAGNOSTICS.has(error?.controllerDiagnostic) ? error.controllerDiagnostic : diagnosticStage);
+      return json({ error: 'CONTROLLER_REJECTED', ...(diagnostic ? { diagnostic } : {}) }, 400);
+    }
   },
 };
 export default controllerWorker;
@@ -139,25 +150,36 @@ export class Gate1RecoveryController extends DurableObject {
     return state ? publicState(state) : { phase: 'UNARMED', gate: 'NO-GO', formalStopAccepted: false };
   }
   async arm(input) {
-    const policy = configuration(this.env);
-    const state = createRun(policy, input, Date.now());
-    this.ctx.storage.transactionSync(() => {
-      const previous = this.read();
-      requireThat(!previous || (samePolicy(previous.policy, policy) && ['RESTORED', 'ENDED_NO_MUTATION'].includes(previous.phase)));
-      requireThat(this.sql.exec('SELECT run_id FROM used_runs WHERE run_id=?', state.runId).toArray().length === 0);
-      this.sql.exec('INSERT INTO used_runs(run_id,value) VALUES(?,?)', state.runId, JSON.stringify(state));
-      if (policy.mode === 'simulation' && !previous) {
-        this.sql.exec("INSERT INTO simulation(role,status) VALUES('preview','ACTIVE_HEALTHY'),('recovery','INACTIVE')");
+    let stage = 'ARM_CONFIGURATION';
+    try {
+      const policy = configuration(this.env);
+      stage = 'ARM_VALIDATION';
+      const state = createRun(policy, input, Date.now());
+      stage = 'ARM_STORAGE';
+      this.ctx.storage.transactionSync(() => {
+        const previous = this.read();
+        requireThat(!previous || (samePolicy(previous.policy, policy) && ['RESTORED', 'ENDED_NO_MUTATION'].includes(previous.phase)));
+        requireThat(this.sql.exec('SELECT run_id FROM used_runs WHERE run_id=?', state.runId).toArray().length === 0);
+        this.sql.exec('INSERT INTO used_runs(run_id,value) VALUES(?,?)', state.runId, JSON.stringify(state));
+        if (policy.mode === 'simulation' && !previous) {
+          this.sql.exec("INSERT INTO simulation(role,status) VALUES('preview','ACTIVE_HEALTHY'),('recovery','INACTIVE')");
+        }
+        this.write(state);
+      });
+      stage = 'ARM_ALARM';
+      await this.schedule();
+      stage = 'ARM_INITIAL_OBSERVATION';
+      const checked = await this.refresh(state.runId, this.provider(policy));
+      if (checked.observed.preview?.status !== 'ACTIVE_HEALTHY' || checked.observed.recovery?.status !== 'INACTIVE') {
+        this.change(state.runId, s => { command(s, { runId: s.runId, sequence: s.sequence + 1, type: 'abort' }, Date.now()); tick(s, Date.now()); });
+        throw Error('INITIAL_STATE_REJECTED');
       }
-      this.write(state);
-    });
-    await this.schedule();
-    const checked = await this.refresh(state.runId, this.provider(policy));
-    if (checked.observed.preview?.status !== 'ACTIVE_HEALTHY' || checked.observed.recovery?.status !== 'INACTIVE') {
-      this.change(state.runId, s => { command(s, { runId: s.runId, sequence: s.sequence + 1, type: 'abort' }, Date.now()); tick(s, Date.now()); });
-      throw Error('INITIAL_STATE_REJECTED');
+      return publicState(this.read());
+    } catch (error) {
+      if (this.env.CONTROLLER_MODE !== 'simulation') throw error;
+      const controllerDiagnostic = stage === 'ARM_VALIDATION' && ARM_VALIDATION_DIAGNOSTICS.has(error?.armDiagnostic) ? error.armDiagnostic : stage;
+      throw Object.assign(Error('CONTROLLER_REJECTED'), { controllerDiagnostic });
     }
-    return publicState(this.read());
   }
   async accept(input) {
     const policy = configuration(this.env), original = this.read();

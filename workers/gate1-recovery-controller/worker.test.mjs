@@ -110,3 +110,48 @@ export class Gate1RecoveryController extends Base {write(state){
   const state=await (await f.request('/v1/state')).json();assert.equal(state.operations.previewPause.attempts,0);assert.equal(state.projects.preview,'ACTIVE_HEALTHY');
   assert.equal((await f.command(2,'abort')).status,200);
 });
+
+test('accepted progress observes asynchronous live transitions without replaying a mutation',async t=>{
+  const livePolicy={...policy,mode:'live'},projects={preview:'ACTIVE_HEALTHY',recovery:'INACTIVE'},mutations=[];let reads=0,unknown=false;
+  const f=await setup(t,{CONTROLLER_MODE:'live',CONTROLLER_POLICY_JSON:JSON.stringify(livePolicy),SUPABASE_SCOPED_TOKEN:'sbp_fc'+'z'.repeat(50)},{
+    outboundService:async request=>{
+      const url=new URL(request.url);assert.equal(url.origin,'https://api.supabase.com');
+      const match=/^\/v1\/projects\/([a-z]{20})(\/pause|\/restore)?$/.exec(url.pathname);assert.ok(match);
+      const role=match[1]===policy.previewRef?'preview':match[1]===policy.recoveryRef?'recovery':null;assert.ok(role);
+      if(request.method==='GET'){
+        reads++;if(unknown)return new Response('unavailable',{status:503});
+        return Response.json({id:policy[role+'Ref'],organization_id:policy.organizationId,region:'ap-northeast-1',status:projects[role],database:{host:'db.'+policy[role+'Ref']+'.supabase.co',postgres_engine:'17'}});
+      }
+      assert.equal(request.method,'POST');mutations.push(role+match[2]);
+      projects[role]=match[2]==='/pause'?'PAUSING':'COMING_UP';return Response.json({});
+    },
+  });
+  assert.equal((await f.arm()).status,200);assert.equal((await f.command(1,'pause-preview')).status,200);
+  const paused=await (await f.request('/v1/state')).json();assert.equal(paused.projects.preview,'PAUSING');
+  const beforeReads=reads;projects.preview='INACTIVE';
+  const polled=await (await f.request('/v1/state')).json();assert.equal(reads,beforeReads);assert.equal(polled.leaseEnd,paused.leaseEnd);assert.equal(polled.projects.preview,'PAUSING');
+  // A completed independent stopping-evidence stage supplies a fresh digest.
+  assert.equal((await f.command(2,'progress',{evidenceSha256:'d'.repeat(64)})).status,200);
+  let state=await (await f.request('/v1/state')).json();assert.equal(state.projects.preview,'INACTIVE');assert.equal(reads,beforeReads+2);
+  assert.deepEqual(mutations,['preview/pause']);assert.equal(state.hardEndAt,paused.hardEndAt);
+  const acceptedReads=reads;
+  assert.equal((await f.command(2,'progress',{evidenceSha256:'d'.repeat(64)})).status,400);
+  assert.equal((await f.command(3,'progress',{evidenceSha256:'d'.repeat(64)})).status,400);assert.equal(reads,acceptedReads);
+  assert.equal((await f.command(3,'resume-recovery',{evidenceSha256:'e'.repeat(64)})).status,200);
+  state=await (await f.request('/v1/state')).json();assert.equal(state.projects.recovery,'COMING_UP');
+  projects.recovery='ACTIVE_HEALTHY';unknown=true;
+  assert.equal((await f.command(4,'progress',{evidenceSha256:'f'.repeat(64)})).status,200);
+  state=await (await f.request('/v1/state')).json();assert.equal(state.projects.recovery,'UNKNOWN');assert.deepEqual(mutations,['preview/pause','recovery/restore']);
+  unknown=false;
+  assert.equal((await f.command(5,'progress',{evidenceSha256:'1'.repeat(64)})).status,200);
+  state=await (await f.request('/v1/state')).json();assert.equal(state.projects.recovery,'ACTIVE_HEALTHY');
+  assert.equal(state.hardEndAt,paused.hardEndAt);assert.deepEqual(Object.values(state.operations).map(x=>x.attempts),[1,1,0,0]);
+  assert.equal(state.gate,'NO-GO');assert.equal(state.formalStopAccepted,false);
+  assert.equal((await f.command(6,'finish')).status,200);assert.deepEqual(mutations,['preview/pause','recovery/restore','recovery/pause']);
+  projects.recovery='INACTIVE';
+  await eventually(async()=> (await f.request('/v1/state')).json(),s=>s.operations.previewResume.attempts===1);
+  projects.preview='ACTIVE_HEALTHY';
+  state=await eventually(async()=> (await f.request('/v1/state')).json(),s=>s.phase==='RESTORED');
+  assert.deepEqual(mutations,['preview/pause','recovery/restore','recovery/pause','preview/restore']);
+  assert.deepEqual(Object.values(state.operations).map(x=>x.attempts),[1,1,1,1]);assert.equal(state.formalStopAccepted,false);
+});

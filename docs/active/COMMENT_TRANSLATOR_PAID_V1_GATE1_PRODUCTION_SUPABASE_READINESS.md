@@ -1,6 +1,6 @@
 # Paid Core v1 Gate 1 — Production Supabase readiness
 
-## 2026-09-12 JST provider void-response repair — locally accepted, unpublished
+## 2026-09-12 JST provider void-response repair — locally accepted, PR840 open
 
 The user requested diagnosis and repair of retry2's `UNKNOWN`. Work continues in the same task with one primary, using `D:/V_streamer_tools/.worktrees/gate1-controller-provider-repair-20260912` / `codex/gate1-controller-provider-repair-20260912` from `fb1152d`. The clock-repair worktree and its closed retry2 packet are preserved; its two unpublished operational records were carried into this worktree. Existing dependencies are reused without installation or lockfile changes.
 
@@ -8,7 +8,9 @@ The official OpenAPI at [upstream commit26585dd](https://github.com/supabase/sup
 
 The local fix accepts only complete HTTP200 zero-byte mutation responses or the existing JSON empty-object form. Emptiness is based on received byte count, so a UTF-8 BOM-only body is not accepted as empty. Non-200 responses, malformed/unexpected JSON, unfinished/failed streams, size limits and the three-second deadline still fail closed. Metadata binding, one-use claims, liveness, cleanup, credentials, public-state/predecessor schemas and old `UNKNOWN` records are unchanged. The regression tests failed before repair and passed afterward, including native HTTP framing and a local workerd/SQLite four-operation cycle with persistence and duplicate rejection. Final acceptance passed all99 checks in eight related suites, Worker ESLint, changed-module syntax, operator contract, disabled simulation dry-run and root diff review. Evidence is under `.tmp/gate1-provider-repair-20260912/`; the dry-run bundle is retained under `workers/gate1-recovery-controller/.tmp/gate1-controller-build-simulation/`. The old153 evidence files/101 inputs and retry2's156 evidence files/five protected files/111 fixed inputs still match their sealed digests.
 
-This is local source repair only: no new PAT/OAuth, provider/project mutation, upload/deploy, trial, commit/push/PR or subagent. Hosted/formal-stop acceptance and the old UNKNOWN predecessor's eligibility remain unestablished; Gate1 is NO-GO.
+After explicit authorization, the six accepted files were committed as `50d31334f4669b40b05f8b5e15ffae2f4daec9f4`, pushed, and published in [PR840](https://github.com/kurodev-web-tools/tool-portal/pull/840) against `codex/comment-translator-paid-v1-preview` at `fb1152d`. Published Git content matched the accepted files with only checkout CRLF normalization; no product source changed after the99 passing checks. Initial PR readback confirmed the six paths, exact base/head, mergeability and no registered checks; this is not a CI pass. Publication evidence is in `.tmp/gate1-provider-publication-20260912/`.
+
+No merge, new PAT/OAuth, provider/project mutation, upload/deploy, trial or subagent occurred. The sealed actual retry2 terminal state still fails `predecessorStateText` because its Preview outcomes are `UNKNOWN`. Before a new external trial, an explicit transition design must retain those outcomes, consumed claims and evidence while binding independent safe-closure verification to the old run/source/state. This PR does not change that safety condition. Hosted/formal-stop acceptance remains unestablished; Gate1 is NO-GO.
 
 ## 2026-09-12 JST retry2 executed once — restored and closed; Hosted acceptance failed
 

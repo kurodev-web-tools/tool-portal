@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createServer } from 'node:http';
 import { createProvider, parseCanonicalJson } from './provider.mjs';
 const policy={mode:'live',previewRef:'p'.repeat(20),recoveryRef:'r'.repeat(20),productionRef:'x'.repeat(20),organizationId:'synthetic-org',sourceCommit:'a'.repeat(40),emergencyPreviewResume:true};
 const token='sbp_fc'+'z'.repeat(50);
@@ -33,7 +34,7 @@ test('mutation mapping is fixed, never accepts caller URLs/SQL and never retries
   let n=0;const unknown=createProvider(policy,token,{fetchImpl:async()=>{n++;throw Error('secret failure body');}});assert.equal(await unknown.mutate('previewPause'),'UNKNOWN');assert.equal(n,1);
 });
 test('successful headers with an invalid or interrupted body do not establish request acceptance',async()=>{
-  for(const response of [()=>new Response('{'),()=>Response.json({unexpected:true}),()=>new Response(new ReadableStream({start(c){c.enqueue(new TextEncoder().encode('{'));c.error(Error('broken'));}}))]){
+  for(const response of [()=>new Response('{'),()=>new Response('null'),()=>new Response(' '),()=>Response.json([]),()=>Response.json({unexpected:true}),()=>new Response(new ReadableStream({start(c){c.enqueue(new TextEncoder().encode('{'));c.error(Error('broken'));}}))]){
     const p=createProvider(policy,token,{fetchImpl:async()=>response()});assert.equal(await p.mutate('previewPause'),'UNKNOWN');
   }
 });
@@ -42,4 +43,66 @@ test('a stalled response body reaches the request deadline and is never retried'
   let calls=0,cancelled=false;
   const p=createProvider(policy,token,{fetchImpl:async()=>{calls++;return new Response(new ReadableStream({start(c){c.enqueue(new TextEncoder().encode('{'));},cancel(){cancelled=true;}}));}});
   assert.equal(await p.mutate('recoveryResume'),'UNKNOWN');assert.equal(calls,1);assert.equal(cancelled,true);
+});
+
+test('pause and restore accept complete HTTP 200 void responses without requiring JSON',async()=>{
+  // The official OpenAPI success responses have no content/schema declaration.
+  for(const operation of ['previewPause','recoveryResume','recoveryPause','previewResume']){
+    for(const makeResponse of [()=>new Response(null,{status:200}),()=>new Response('',{status:200})]){
+      let calls=0;const p=createProvider(policy,token,{fetchImpl:async()=>{calls++;return makeResponse();}});
+      assert.equal(await p.mutate(operation),'ACCEPTED',operation);assert.equal(calls,1);
+    }
+  }
+});
+
+test('an empty stream must reach EOF before a mutation is accepted',async()=>{
+  let stream,settled=false;
+  const p=createProvider(policy,token,{fetchImpl:async()=>new Response(new ReadableStream({start(controller){stream=controller;}}))});
+  const result=p.mutate('previewPause').then(value=>{settled=true;return value;});
+  await new Promise(setImmediate);assert.equal(settled,false);
+  stream.close();assert.equal(await result,'ACCEPTED');
+});
+
+test('a UTF-8 BOM body is not a zero-byte response',async()=>{
+  const p=createProvider(policy,token,{fetchImpl:async()=>new Response(new Uint8Array([0xef,0xbb,0xbf]))});
+  assert.equal(await p.mutate('previewPause'),'UNKNOWN');
+});
+
+test('zero received bytes do not turn a stalled or failed stream into an empty success',async()=>{
+  let calls=0,cancelled=false;
+  const stalled=createProvider(policy,token,{fetchImpl:async()=>{calls++;return new Response(new ReadableStream({cancel(){cancelled=true;}}));}});
+  assert.equal(await stalled.mutate('previewPause'),'UNKNOWN');assert.equal(calls,1);assert.equal(cancelled,true);
+  const failed=createProvider(policy,token,{fetchImpl:async()=>new Response(new ReadableStream({start(c){c.error(Error('private failure'));}}))});
+  assert.equal(await failed.mutate('previewResume'),'UNKNOWN');
+});
+
+test('void acceptance is limited to HTTP 200 mutation replies; metadata still requires bound JSON',async()=>{
+  for(const status of [201,202,204,302,401,403,429,500]){
+    let calls=0;const p=createProvider(policy,token,{fetchImpl:async()=>{calls++;return new Response(null,{status});}});
+    assert.equal(await p.mutate('previewPause'),'UNKNOWN');assert.equal(calls,1);
+  }
+  for(const body of [null,'','{}','null']){
+    const p=createProvider(policy,token,{fetchImpl:async()=>new Response(body,{status:200})});
+    await assert.rejects(p.read('preview'));
+  }
+});
+
+test('native HTTP void framing succeeds, while an interrupted declared body remains unknown',async t=>{
+  let requests=0;
+  const server=createServer((request,response)=>{
+    requests++;assert.equal(request.method,'POST');
+    if(request.url==='/complete'){response.writeHead(200,{'Content-Length':'0'});response.end();}
+    else{assert.equal(request.url,'/truncated');response.writeHead(200,{'Content-Length':'2'});response.flushHeaders();response.destroy();}
+  });
+  await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+  t.after(()=>new Promise(resolve=>{server.close(resolve);server.closeAllConnections();}));
+  const origin='http://127.0.0.1:'+server.address().port;
+  for(const [route,expected]of [['/complete','ACCEPTED'],['/truncated','UNKNOWN']]){
+    const p=createProvider(policy,token,{fetchImpl:async(url,options)=>{
+      assert.equal(url,'https://api.supabase.com/v1/projects/'+policy.previewRef+'/pause');
+      return fetch(origin+route,options);
+    }});
+    assert.equal(await p.mutate('previewPause'),expected);
+  }
+  assert.equal(requests,2);
 });

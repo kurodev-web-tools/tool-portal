@@ -26,7 +26,7 @@ export function parseCanonicalJson(source){
   const value=parseBoundedJson(source);
   requireThat(value!==null&&typeof value==='object'&&!Array.isArray(value)&&JSON.stringify(value)===source);return value;
 }
-export async function readBody(response,limit,signal){
+async function readBodyResult(response,limit,signal){
   const reader=response.body?.getReader();requireThat(reader);
   const parts=[];let bytes=0;
   const abort=()=>{void reader.cancel().catch(()=>{});};signal?.addEventListener('abort',abort,{once:true});
@@ -34,8 +34,11 @@ export async function readBody(response,limit,signal){
     while(true){requireThat(!signal?.aborted);const next=await reader.read();if(next.done)break;bytes+=next.value.byteLength;requireThat(bytes<=limit);parts.push(next.value);}
     requireThat(!signal?.aborted);
     const combined=new Uint8Array(bytes);let offset=0;for(const part of parts){combined.set(part,offset);offset+=part.byteLength;}
-    return new TextDecoder('utf-8',{fatal:true}).decode(combined);
+    return {source:new TextDecoder('utf-8',{fatal:true}).decode(combined),byteLength:bytes};
   }finally{signal?.removeEventListener('abort',abort);void reader.cancel().catch(()=>{});}
+}
+export async function readBody(response,limit,signal){
+  return (await readBodyResult(response,limit,signal)).source;
 }
 export function createProvider(policy,token,{fetchImpl=fetch,now=Date.now}={}){
   const p=validatePolicy(policy);requireThat(p.mode==='live'&&/^sbp_fc[A-Za-z0-9_-]{20,512}$/.test(token??''));
@@ -46,9 +49,13 @@ export function createProvider(policy,token,{fetchImpl=fetch,now=Date.now}={}){
       return await Promise.race([(async()=>{
         const response=await fetchImpl('https://api.supabase.com/v1/projects/'+p[role+'Ref']+suffix,{method:suffix?'POST':'GET',redirect:'manual',headers:{Authorization:'Bearer '+token,Accept:'application/json'},signal:ctrl.signal});
         requireThat(!response.redirected&&response.status===200);
-        const body=parseBoundedJson(await readBody(response,65536,ctrl.signal)),completedAt=now();
+        // Pause/restore declare HTTP 200 without a response body in the OpenAPI.
+        // A present stream must still finish within the unchanged size/time bounds.
+        const {source,byteLength}=suffix!==''&&response.body===null?{source:'',byteLength:0}:await readBodyResult(response,65536,ctrl.signal);
+        const emptyBody=suffix!==''&&byteLength===0;
+        const body=emptyBody?null:parseBoundedJson(source),completedAt=now();
         requireThat(completedAt>=startedAt&&completedAt-startedAt<=3000&&!ctrl.signal.aborted);
-        return {body,startedAt,completedAt};
+        return {body,emptyBody,startedAt,completedAt};
       })(),new Promise((_,reject)=>{timer=setTimeout(()=>{ctrl.abort();reject(Error('PROVIDER_UNKNOWN'));},3000);})]);
     }finally{clearTimeout(timer);ctrl.abort();}
   }
@@ -61,7 +68,7 @@ export function createProvider(policy,token,{fetchImpl=fetch,now=Date.now}={}){
     async mutate(operation){
       const mapping={previewPause:['preview','/pause'],recoveryResume:['recovery','/restore'],recoveryPause:['recovery','/pause'],previewResume:['preview','/restore']};
       requireThat(Object.hasOwn(mapping,operation));
-      try{const {body}=await request(...mapping[operation]);return exact(body,[])?'ACCEPTED':'UNKNOWN';}catch{return 'UNKNOWN';}
+      try{const {body,emptyBody}=await request(...mapping[operation]);return emptyBody||exact(body,[])?'ACCEPTED':'UNKNOWN';}catch{return 'UNKNOWN';}
     },
   };
 }

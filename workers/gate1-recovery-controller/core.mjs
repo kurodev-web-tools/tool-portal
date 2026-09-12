@@ -41,8 +41,9 @@ export function compatiblePredecessor(state,policy){
 }
 export function createRun(policy,p,now){
   policy=validatePolicy(policy);
-  const hasPredecessor=p&&Object.hasOwn(p,'predecessor');let predecessor;
-  requireArm(exact(p,['runId','sourceCommit','hardEndAt','preservationSha256','preservationVerifiedAt','acknowledgeEmergencyContainment',...(hasPredecessor?['predecessor']:[])]),'ARM_INPUT_INVALID');
+  const hasPredecessor=p&&Object.hasOwn(p,'predecessor'),hasClosure=p&&Object.hasOwn(p,'safeClosure');let predecessor;
+  requireArm(exact(p,['runId','sourceCommit','hardEndAt','preservationSha256','preservationVerifiedAt','acknowledgeEmergencyContainment',...(hasPredecessor?['predecessor']:[]),...(hasClosure?['safeClosure']:[])]),'ARM_INPUT_INVALID');
+  if(hasClosure)requireArm(hasPredecessor&&exact(p.safeClosure,['grantSha256','manifestSha256'])&&Object.values(p.safeClosure).every(v=>typeof v==='string'&&SHA.test(v)),'ARM_INPUT_INVALID');
   if(hasPredecessor){try{predecessor=validatePredecessor(p.predecessor);requireThat(predecessor.runId!==p.runId);}catch{requireArm(false,'ARM_INPUT_INVALID');}}
   requireArm(millis(now)&&typeof p.runId==='string'&&SHA.test(p.runId)&&typeof p.preservationSha256==='string'&&SHA.test(p.preservationSha256)&&millis(p.preservationVerifiedAt),'ARM_INPUT_INVALID');
   requireArm(p.sourceCommit===policy.sourceCommit,'ARM_SOURCE_MISMATCH');

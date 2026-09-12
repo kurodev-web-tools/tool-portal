@@ -14,16 +14,43 @@ export function validatePolicy(p){
   if(p.mode==='simulation')requireThat(p.previewRef==='p'.repeat(20)&&p.recoveryRef==='r'.repeat(20)&&p.productionRef==='x'.repeat(20)&&p.organizationId==='synthetic-org');
   return structuredClone(p);
 }
+export function validatePredecessor(p){
+  requireThat(exact(p,['runId','sourceCommit','stateSha256'])&&typeof p.runId==='string'&&SHA.test(p.runId)&&typeof p.sourceCommit==='string'&&COMMIT.test(p.sourceCommit)&&typeof p.stateSha256==='string'&&SHA.test(p.stateSha256));
+  return structuredClone(p);
+}
+// This exact, closed projection is also the cross-runtime digest input. Validate
+// before sorting so arbitrary nested input can never enter the canonicalizer.
+export function predecessorStateText(s){
+  requireThat(exact(s,['runId','phase','reason','sequence','hardEndAt','leaseEnd','cleanupEnd','operations','projects','projectObservedAt','gate','formalStopAccepted']));
+  requireThat(typeof s.runId==='string'&&SHA.test(s.runId)&&['ENDED_NO_MUTATION','RESTORED'].includes(s.phase)&&s.gate==='NO-GO'&&s.formalStopAccepted===false);
+  requireThat(['OPERATOR_ABORT','OPERATOR_FINISH','CLOCK_REGRESSION','ABSOLUTE_DEADLINE','CLIENT_LIVENESS_EXPIRED','MUTATION_OUTCOME_UNKNOWN','CLEANUP_UNCONFIRMED'].includes(s.reason)&&Number.isSafeInteger(s.sequence)&&s.sequence>=0&&s.sequence<=256);
+  requireThat([s.hardEndAt,s.leaseEnd,s.cleanupEnd].every(millis)&&s.leaseEnd<=s.hardEndAt);
+  requireThat(exact(s.projects,['preview','recovery'])&&s.projects.preview==='ACTIVE_HEALTHY'&&s.projects.recovery==='INACTIVE'&&exact(s.projectObservedAt,['preview','recovery'])&&Object.values(s.projectObservedAt).every(millis));
+  requireThat(exact(s.operations,OPS)&&Object.values(s.operations).every(o=>exact(o,['attempts','outcome'])&&[0,1].includes(o.attempts)&&(o.attempts===0?o.outcome===null:o.outcome==='ACCEPTED')));
+  if(s.phase==='ENDED_NO_MUTATION')requireThat(Object.values(s.operations).every(o=>o.attempts===0));
+  else requireThat(s.operations.previewPause.attempts===1&&s.operations.previewResume.attempts===1&&s.operations.recoveryResume.attempts===s.operations.recoveryPause.attempts);
+  const sorted=v=>v!==null&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,sorted(v[k])])):v;
+  return JSON.stringify(sorted(s));
+}
+export function compatiblePredecessor(state,policy){
+  try{
+    const previous=validatePolicy(state.policy),current=validatePolicy(policy);
+    requireThat(state.schemaVersion===1&&state.sourceCommit===previous.sourceCommit&&Object.keys(previous).every(k=>k==='sourceCommit'||previous[k]===current[k]));
+    predecessorStateText(publicState(state));return true;
+  }catch{return false;}
+}
 export function createRun(policy,p,now){
   policy=validatePolicy(policy);
-  requireArm(exact(p,['runId','sourceCommit','hardEndAt','preservationSha256','preservationVerifiedAt','acknowledgeEmergencyContainment']),'ARM_INPUT_INVALID');
+  const hasPredecessor=p&&Object.hasOwn(p,'predecessor');let predecessor;
+  requireArm(exact(p,['runId','sourceCommit','hardEndAt','preservationSha256','preservationVerifiedAt','acknowledgeEmergencyContainment',...(hasPredecessor?['predecessor']:[])]),'ARM_INPUT_INVALID');
+  if(hasPredecessor){try{predecessor=validatePredecessor(p.predecessor);requireThat(predecessor.runId!==p.runId);}catch{requireArm(false,'ARM_INPUT_INVALID');}}
   requireArm(millis(now)&&typeof p.runId==='string'&&SHA.test(p.runId)&&typeof p.preservationSha256==='string'&&SHA.test(p.preservationSha256)&&millis(p.preservationVerifiedAt),'ARM_INPUT_INVALID');
   requireArm(p.sourceCommit===policy.sourceCommit,'ARM_SOURCE_MISMATCH');
   requireArm(p.preservationVerifiedAt<=now,'ARM_PRESERVATION_IN_FUTURE');
   requireArm(now-p.preservationVerifiedAt<=300000,'ARM_PRESERVATION_STALE');
   requireArm(millis(p.hardEndAt)&&p.hardEndAt>now&&p.hardEndAt<=now+MAX_RUN_MS,'ARM_DEADLINE_INVALID');
   requireArm(p.acknowledgeEmergencyContainment===true,'ARM_ACKNOWLEDGEMENT_REQUIRED');
-  return {schemaVersion:1,policy,runId:p.runId,sourceCommit:p.sourceCommit,createdAt:now,lastNow:now,hardEndAt:p.hardEndAt,leaseEnd:Math.min(now+LEASE_MS,p.hardEndAt),cleanupEnd:null,phase:'ARMED',reason:'WAITING_FOR_OPERATOR',sequence:0,preservationSha256:p.preservationSha256,preservationVerifiedAt:p.preservationVerifiedAt,
+  return {schemaVersion:1,policy,runId:p.runId,sourceCommit:p.sourceCommit,...(predecessor?{predecessor}:{}),createdAt:now,lastNow:now,hardEndAt:p.hardEndAt,leaseEnd:Math.min(now+LEASE_MS,p.hardEndAt),cleanupEnd:null,phase:'ARMED',reason:'WAITING_FOR_OPERATOR',sequence:0,preservationSha256:p.preservationSha256,preservationVerifiedAt:p.preservationVerifiedAt,
     operations:Object.fromEntries(OPS.map(op=>[op,null])),observed:{preview:null,recovery:null},previewSeenInactive:false,recoverySeenActive:false,recoveryInactiveFirst:null,recoveryInactivePair:false,requested:null,evidence:[]};
 }
 export function terminal(s){return FINAL.includes(s.phase);}

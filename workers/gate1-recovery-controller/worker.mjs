@@ -1,8 +1,10 @@
 import { DurableObject } from 'cloudflare:workers';
-import { claim, command, compatiblePredecessor, confirmDispatch, createRun, nextAction, nextAlarm, observe, predecessorStateText, publicState, requireThat, settle, terminal, tick, validatePolicy } from './core.mjs';
+import { claim, command, compatiblePredecessor, confirmDispatch, createRun, exact, nextAction, nextAlarm, observe, predecessorStateText, publicState, requireThat, settle, terminal, tick, validatePolicy } from './core.mjs';
 import { createProvider, parseCanonicalJson, readBody } from './provider.mjs';
+import { GRANT_HEADER, grantSha256, parseSafeClosureGrant, policySha256, sha256Text, validateClosureBinding, validateWorkerClosureTime } from './safe-closure.mjs';
 
-const json = (value, status = 200) => Response.json(value, { status, headers: { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } });
+const json = (value, status = 200, headers = {}) => Response.json(value, { status, headers: { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...headers } });
+const CLOSURE_TABLE = 'CREATE TABLE safe_closure_transitions (grant_id TEXT PRIMARY KEY NOT NULL, prior_run_id TEXT NOT NULL UNIQUE, successor_run_id TEXT NOT NULL UNIQUE, grant_sha256 TEXT NOT NULL UNIQUE, grant_json TEXT NOT NULL, prior_state_json TEXT NOT NULL, closure_evidence_sha256 TEXT NOT NULL, registered_at INTEGER NOT NULL)';
 const samePolicy = (a, b) => Object.keys(a).every(key => a[key] === b[key]);
 const ARM_VALIDATION_DIAGNOSTICS = new Set(['ARM_INPUT_INVALID', 'ARM_SOURCE_MISMATCH', 'ARM_PRESERVATION_IN_FUTURE', 'ARM_PRESERVATION_STALE', 'ARM_DEADLINE_INVALID', 'ARM_ACKNOWLEDGEMENT_REQUIRED']);
 const ARM_DIAGNOSTICS = new Set([...ARM_VALIDATION_DIAGNOSTICS, 'ARM_CONFIGURATION', 'ARM_VALIDATION', 'ARM_STORAGE', 'ARM_ALARM', 'ARM_INITIAL_OBSERVATION']);
@@ -63,9 +65,16 @@ const controllerWorker = {
       const object = env.GUARDIAN.get(id);
       if (url.pathname === '/v1/state') {
         if (stateDiagnosticStage) stateDiagnosticStage = 'STATE_RPC';
-        const state = await object.state();
+        const result = await object.state(true);
         if (stateDiagnosticStage) stateDiagnosticStage = 'STATE_RESPONSE';
-        return json(state);
+        // Legacy internal callers still receive the original projection. The
+        // HTTP caller requests an envelope from the same DO snapshot; an older
+        // object cannot accidentally supply a grant digest from outer env.
+        if (exact(result, ['state', 'safeClosureGrantSha256'])) {
+          requireThat(result.safeClosureGrantSha256 === null || typeof result.safeClosureGrantSha256 === 'string' && /^[a-f0-9]{64}$/.test(result.safeClosureGrantSha256));
+          return json(result.state, 200, result.safeClosureGrantSha256 ? { [GRANT_HEADER]: result.safeClosureGrantSha256 } : {});
+        }
+        return json(result);
       }
       if (diagnosticStage) diagnosticStage = 'ARM_PACKET';
       const input = await packet(request);
@@ -92,6 +101,10 @@ export class Gate1RecoveryController extends DurableObject {
         this.sql.exec('CREATE TABLE IF NOT EXISTS controller_state (slot INTEGER PRIMARY KEY CHECK(slot=1), value TEXT NOT NULL)');
         this.sql.exec('CREATE TABLE IF NOT EXISTS used_runs (run_id TEXT PRIMARY KEY, value TEXT NOT NULL)');
         this.sql.exec('CREATE TABLE IF NOT EXISTS simulation (role TEXT PRIMARY KEY, status TEXT NOT NULL)');
+        this.sql.exec(CLOSURE_TABLE.replace('CREATE TABLE ', 'CREATE TABLE IF NOT EXISTS '));
+        // Do not silently adopt an unknown existing audit-table contract.
+        const schema = this.sql.exec("SELECT sql FROM sqlite_master WHERE type='table' AND name='safe_closure_transitions'").toArray();
+        requireThat(schema.length === 1 && schema[0].sql === CLOSURE_TABLE);
       } catch (error) {
         // Rethrow: initialization must still fail and the runtime must reset.
         throw stateFailure(env, error, 'STATE_INITIALIZATION');
@@ -173,16 +186,46 @@ export class Gate1RecoveryController extends DurableObject {
     await this.refresh(runId, provider);
     await this.schedule();
   }
-  async state() {
+  async closureSnapshot(previous, policy) {
+    const previousText = JSON.stringify(previous), grantText = this.env.CONTROLLER_SAFE_CLOSURE_GRANT_JSON;
+    const grant = parseSafeClosureGrant(grantText), priorStateText = validateClosureBinding(previous, policy, grant);
+    const rows = this.sql.exec('SELECT value FROM used_runs WHERE run_id=?', previous.runId).toArray();
+    requireThat(rows.length === 1 && rows[0].value === previousText);
+    const [stateDigest, grantDigest, policyDigest] = await Promise.all([sha256Text(priorStateText), grantSha256(grantText), policySha256(policy)]);
+    requireThat(stateDigest === grant.predecessor.stateSha256 && policyDigest === grant.policySha256);
+    return { previous, previousText, priorRowText: rows[0].value, priorStateText, grantText, grant, grantDigest };
+  }
+  checkClosureSnapshot(snapshot) {
+    requireThat(JSON.stringify(this.read()) === snapshot.previousText && this.env.CONTROLLER_SAFE_CLOSURE_GRANT_JSON === snapshot.grantText);
+    const rows = this.sql.exec('SELECT value FROM used_runs WHERE run_id=?', snapshot.previous.runId).toArray();
+    requireThat(rows.length === 1 && rows[0].value === snapshot.priorRowText);
+  }
+  checkClosureMetadata(observations, now) {
+    for (const [role, result] of observations) {
+      requireThat(exact(result, ['status', 'startedAt', 'completedAt']) && result.status === (role === 'preview' ? 'ACTIVE_HEALTHY' : 'INACTIVE'));
+      requireThat([now, result.startedAt, result.completedAt].every(t => Number.isSafeInteger(t) && t >= 0));
+      requireThat(result.startedAt <= result.completedAt && result.completedAt <= now && result.completedAt - result.startedAt <= 3000 && now - result.startedAt <= 10000);
+    }
+  }
+  async state(envelope = false) {
     let stage = 'STATE_CONFIGURATION';
     try {
       const policy = configuration(this.env);
       stage = 'STATE_STORAGE';
       const state = this.read();
       stage = 'STATE_POLICY';
-      requireThat(!state || samePolicy(state.policy, policy) || compatiblePredecessor(state, policy));
+      let closure = null;
+      // Optional settings are irrelevant to active/closing/ordinary runs. A bad
+      // setting must never prevent their existing GET or recovery operations.
+      if (state?.phase === 'RESTORED' && state.reason === 'MUTATION_OUTCOME_UNKNOWN' && state.operations?.previewPause?.outcome === 'UNKNOWN') {
+        try { closure = await this.closureSnapshot(state, policy); }
+        catch (error) { if (!samePolicy(state.policy, policy)) throw error; }
+      }
+      if (closure) this.checkClosureSnapshot(closure);
+      requireThat(!state || samePolicy(state.policy, policy) || compatiblePredecessor(state, policy) || closure);
       stage = 'STATE_PROJECTION';
-      return state ? publicState(state) : { phase: 'UNARMED', gate: 'NO-GO', formalStopAccepted: false };
+      const projection = state ? publicState(state) : { phase: 'UNARMED', gate: 'NO-GO', formalStopAccepted: false };
+      return envelope ? { state: projection, safeClosureGrantSha256: closure?.grantDigest ?? null } : projection;
     } catch (error) {
       throw stateFailure(this.env, error, stage);
     }
@@ -195,7 +238,21 @@ export class Gate1RecoveryController extends DurableObject {
       createRun(policy, input, Date.now());
       stage = 'ARM_STORAGE';
       const previous = this.read(), previousText = JSON.stringify(previous);
-      if (previous) {
+      let closure = null, closureObservations = null;
+      if (Object.hasOwn(input, 'safeClosure')) {
+        requireThat(previous);
+        closure = await this.closureSnapshot(previous, policy);
+        const { grant, grantDigest } = closure;
+        requireThat(input.safeClosure.grantSha256 === grantDigest && input.safeClosure.manifestSha256 === grant.successor.manifestSha256);
+        requireThat(input.runId === grant.successor.runId && input.sourceCommit === grant.successor.sourceCommit && input.hardEndAt === grant.successor.hardEndAt);
+        requireThat(Object.keys(grant.predecessor).every(key => input.predecessor[key] === grant.predecessor[key]));
+        this.checkClosureSnapshot(closure);
+        validateWorkerClosureTime(previous, grant, Date.now());
+        requireThat(this.sql.exec('SELECT grant_id FROM safe_closure_transitions WHERE grant_id=? OR prior_run_id=? OR successor_run_id=? OR grant_sha256=?', grant.grantId, previous.runId, input.runId, grantDigest).toArray().length === 0);
+        const provider = this.provider(policy);
+        closureObservations = await Promise.all(['preview', 'recovery'].map(async role => [role, await provider.read(role)]));
+        this.checkClosureMetadata(closureObservations, Date.now());
+      } else if (previous) {
         requireThat(compatiblePredecessor(previous, policy) && input.predecessor?.runId === previous.runId && input.predecessor.sourceCommit === previous.sourceCommit);
         const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(predecessorStateText(publicState(previous))));
         requireThat(input.predecessor.stateSha256 === Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join(''));
@@ -210,6 +267,16 @@ export class Gate1RecoveryController extends DurableObject {
         }
         const state = createRun(policy, input, Date.now());
         requireThat(this.sql.exec('SELECT run_id FROM used_runs WHERE run_id=?', state.runId).toArray().length === 0);
+        if (closure) {
+          this.checkClosureSnapshot(closure);
+          validateWorkerClosureTime(previous, closure.grant, Date.now());
+          this.checkClosureMetadata(closureObservations, Date.now());
+          const { grant, grantDigest } = closure;
+          // UNIQUE constraints repeat the unused-grant checks atomically. The
+          // audit insert, new ledger and current-slot writes roll back together.
+          this.sql.exec('INSERT INTO safe_closure_transitions(grant_id,prior_run_id,successor_run_id,grant_sha256,grant_json,prior_state_json,closure_evidence_sha256,registered_at) VALUES(?,?,?,?,?,?,?,?)', grant.grantId, previous.runId, state.runId, grantDigest, closure.grantText, closure.priorStateText, grant.closureEvidenceSha256, Date.now());
+          state.safeClosureTransition = { grantId: grant.grantId, grantSha256: grantDigest, manifestSha256: grant.successor.manifestSha256, closureEvidenceSha256: grant.closureEvidenceSha256 };
+        }
         this.sql.exec('INSERT INTO used_runs(run_id,value) VALUES(?,?)', state.runId, JSON.stringify(state));
         if (policy.mode === 'simulation' && !previous) {
           this.sql.exec("INSERT INTO simulation(role,status) VALUES('preview','ACTIVE_HEALTHY'),('recovery','INACTIVE')");

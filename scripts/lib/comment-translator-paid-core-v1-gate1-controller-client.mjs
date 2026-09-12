@@ -7,6 +7,7 @@ import {assertControllerStopProof} from './comment-translator-paid-core-v1-gate1
 import {createManagedRehearsalExecutor} from './comment-translator-paid-core-v1-gate1-rehearsal-executor.mjs';
 import {createManagedRehearsalConfiguration} from './comment-translator-paid-core-v1-gate1-rehearsal-configuration-executor.mjs';
 import {LEASE_MS,predecessorStateText,validatePredecessor} from '../../workers/gate1-recovery-controller/core.mjs';
+import {GRANT_HEADER,GRANT_PREFIX,parseSafeClosureGrant,previewUnknownClosureStateText} from '../../workers/gate1-recovery-controller/safe-closure.mjs';
 
 const SHA=/^[a-f0-9]{64}$/,COMMIT=/^[a-f0-9]{40}$/;
 const final=s=>['RESTORED','ENDED_NO_MUTATION','NEEDS_OPERATOR'].includes(s?.phase);
@@ -39,7 +40,7 @@ export function createControllerHttpsTransport({origin,operatorToken}){
    try{const postData=body===undefined?undefined:JSON.stringify(body);check(postData===undefined||Buffer.byteLength(postData)<=8192);
     request=https.request(origin+route,{method:postData===undefined?'GET':'POST',rejectUnauthorized:true,headers:{Authorization:'Bearer '+operatorToken,'Content-Type':'application/json',...(postData?{'Content-Length':Buffer.byteLength(postData)}:{})}},response=>{
      response.on('data',b=>{if(done)return;size+=b.length;if(size>16384){response.destroy();abort();}else chunks.push(b);});response.on('error',abort);
-     response.on('end',()=>{if(!response.complete){abort();return;}finish(true,{status:response.statusCode,body:Buffer.concat(chunks).toString('utf8')});});
+     response.on('end',()=>{if(!response.complete){abort();return;}finish(true,{status:response.statusCode,body:Buffer.concat(chunks).toString('utf8'),safeClosureGrantSha256:response.headers?.[GRANT_HEADER.toLowerCase()]??null});});
     });request.on('error',abort);timer=setTimeout(abort,body===undefined?5000:25000);signal?.addEventListener('abort',abort,{once:true});if(signal?.aborted){abort();return;}request.end(postData);
    }catch{abort();}
   });
@@ -49,23 +50,28 @@ export function createControllerHttpsTransport({origin,operatorToken}){
 // Internal transport/clock seams support local workerd acceptance. Approval and
 // stage verifiers come from a frozen operator entrypoint, not HTTP input. This
 // client never infers user authorization or issues a provider mutation itself.
-export function createControllerClient({runId,sourceCommit,predecessor=null,hardEndAt,manifestSha256,approvedManifestSha256,transport,journal,observeRecoveryStop,observerBindings,stagePlan,now=Date.now,timers={setTimeout,clearTimeout}}){
- check(SHA.test(runId)&&COMMIT.test(sourceCommit)&&SHA.test(manifestSha256)&&manifestSha256===approvedManifestSha256&&millis(hardEndAt)&&hardEndAt>now()&&hardEndAt<=now()+1200000);
+export function createControllerClient({runId,sourceCommit,predecessor=null,safeClosureGrant=null,hardEndAt,manifestSha256,approvedManifestSha256,transport,journal,observeRecoveryStop,observerBindings,stagePlan,now=Date.now,timers={setTimeout,clearTimeout}}){
+ const initialNow=now();
+ check(millis(initialNow)&&SHA.test(runId)&&COMMIT.test(sourceCommit)&&SHA.test(manifestSha256)&&manifestSha256===approvedManifestSha256&&millis(hardEndAt)&&hardEndAt>initialNow&&hardEndAt<=initialNow+1200000);
  check(typeof transport==='function'&&typeof journal?.append==='function'&&typeof observeRecoveryStop==='function'&&stagePlan&&typeof stagePlan==='object');
  const prior=predecessor===null?null:Object.freeze(validatePredecessor(predecessor));if(prior)check(prior.runId!==runId);
+ const freeze=value=>{if(value&&typeof value==='object'){Object.values(value).forEach(freeze);Object.freeze(value);}return value;};
+ const closure=safeClosureGrant===null?null:freeze(parseSafeClosureGrant(safeClosureGrant)),closureDigest=closure?hash(GRANT_PREFIX+safeClosureGrant):null;
+ const closureTime=at=>{if(closure)check(at>=closure.issuedAt&&at<closure.expiresAt);};
+ if(closure){check(prior&&Object.keys(prior).every(k=>prior[k]===closure.predecessor[k]));check(closure.successor.runId===runId&&closure.successor.sourceCommit===sourceCommit&&closure.successor.hardEndAt===hardEndAt&&closure.successor.manifestSha256===manifestSha256);closureTime(initialNow);}
  const stages=Object.freeze({...stagePlan});for(const [name,verify] of Object.entries(stages))check(/^[a-z][a-z0-9-]{0,63}$/.test(name)&&typeof verify==='function');
  check(exact(observerBindings,['preview','recovery']));
  const observers=structuredClone(observerBindings);for(const binding of Object.values(observers))check(exact(binding,['sourceBindingSha256','observerSha256','bridgeSha256'])&&Object.values(binding).every(v=>typeof v==='string'&&SHA.test(v)));
- let state=null,postCount=0,getCount=0,normalGets=0,sequence=0,started=false,uncertain=false,closed=false,closeAttempted=false,ioBusy=false,working=false,pauseAt=null,stopPromise=null,monitorTimer,edgeTimer,lastNow=now();
+ let state=null,postCount=0,getCount=0,normalGets=0,sequence=0,started=false,uncertain=false,closed=false,closeAttempted=false,ioBusy=false,working=false,pauseAt=null,stopPromise=null,monitorTimer,edgeTimer,lastNow=initialNow;
  let active=null,ioIdle=Promise.resolve(),pendingSequence=null,localLeaseEnd=null;const usedStages=new Set(),usedDigests=new Set();
  const stamp=()=>{const value=now();if(!millis(value)||value<lastNow){uncertain=true;active?.abort();reject();}lastNow=value;return value;};
  const record=value=>journal.append({schemaVersion:1,runId,sourceCommit,at:stamp(),...value});
  function block(){closed=true;active?.abort();timers.clearTimeout(monitorTimer);timers.clearTimeout(edgeTimer);}
  const leaseDeadline=()=>Math.min(state.leaseEnd,localLeaseEnd,hardEndAt);
  function requireOpen(){check(started&&!closed&&!uncertain&&state?.phase==='ARMED'&&stamp()<leaseDeadline());}
- function acceptState(value,{unarmed=false,post=false,cleanup=false,requestStartedAt}={}){
+ function acceptState(value,{unarmed=false,post=false,cleanup=false,requestStartedAt,safeClosureGrantSha256}={}){
   if(unarmed){
-   if(prior){check(value?.runId===prior.runId&&hash(predecessorStateText(value))===prior.stateSha256);record({event:'PREDECESSOR_ACCEPTED',predecessor:prior});return value;}
+   if(prior){if(closure)check(safeClosureGrantSha256===closureDigest);check(value?.runId===prior.runId&&hash((closure?previewUnknownClosureStateText:predecessorStateText)(value))===prior.stateSha256);record({event:closure?'SAFE_CLOSURE_PREDECESSOR_MATCHED':'PREDECESSOR_ACCEPTED',predecessor:prior,...(closure?{grantSha256:closureDigest}:{})});return value;}
    check(exact(value,['phase','gate','formalStopAccepted'])&&value.phase==='UNARMED'&&value.gate==='NO-GO'&&value.formalStopAccepted===false);return value;
   }
   check(exact(value,['runId','phase','reason','sequence','hardEndAt','leaseEnd','cleanupEnd','operations','projects','projectObservedAt','gate','formalStopAccepted']));
@@ -88,11 +94,11 @@ export function createControllerClient({runId,sourceCommit,predecessor=null,hard
   check(!ioBusy);const post=body!==undefined;
   if(post){check(postCount<(cleanup?32:31));postCount++;}else{check(getCount<96&&(cleanup||normalGets<64));getCount++;if(!cleanup)normalGets++;}
   // The fsync'd attempt survives response loss. A failure always stops work.
-  const requestStartedAt=stamp();record({event:'HTTP_ATTEMPT',method:post?'POST':'GET',route,postCount,getCount,requestSha256:hash(body===undefined?'':JSON.stringify(body))});ioBusy=true;
+  const requestStartedAt=stamp();record({event:'HTTP_ATTEMPT',method:post?'POST':'GET',route,postCount,getCount,requestSha256:hash(body===undefined?'':JSON.stringify(body)),...(closure&&route==='/v1/arm'?{grantSha256:closureDigest}:{})});ioBusy=true;
   if(post)pendingSequence=route==='/v1/arm'?0:body.sequence;
   let resolveIdle,timer;ioIdle=new Promise(resolve=>{resolveIdle=resolve;});const controller=new AbortController();
   try{const response=await Promise.race([transport(route,body,{signal:controller.signal}),new Promise((_,rejectPromise)=>{timer=timers.setTimeout(()=>{controller.abort();rejectPromise(Error('CONTROLLER_HTTP_TIMEOUT'));},post?25000:5000);})]);check(Number.isInteger(response?.status)&&typeof response.body==='string'&&Buffer.byteLength(response.body)<=16384);
-   record({event:'HTTP_RECEIPT',status:response.status,bodySha256:hash(response.body)});check(response.status===200);return acceptState(parseStrictJson(response.body),{unarmed,post,cleanup,requestStartedAt});
+   record({event:'HTTP_RECEIPT',status:response.status,bodySha256:hash(response.body)});check(response.status===200);return acceptState(parseStrictJson(response.body),{unarmed,post,cleanup,requestStartedAt,safeClosureGrantSha256:response.safeClosureGrantSha256});
   }catch{uncertain=true;active?.abort();record({event:'HTTP_UNCONFIRMED',method:post?'POST':'GET',route});reject();}
   finally{timers.clearTimeout(timer);controller.abort();ioBusy=false;resolveIdle();}
  }
@@ -112,9 +118,10 @@ export function createControllerClient({runId,sourceCommit,predecessor=null,hard
  }
  async function start(preservation){
   check(!started&&!closed);check(exact(preservation,['sha256','verifiedAt'])&&SHA.test(preservation.sha256)&&millis(preservation.verifiedAt)&&preservation.verifiedAt<=stamp()&&stamp()-preservation.verifiedAt<=300000);
-  started=true;record({event:'CLIENT_STARTED',manifestSha256,hardEndAt});
+  closureTime(stamp());started=true;record({event:'CLIENT_STARTED',manifestSha256,hardEndAt,...(closure?{grantSha256:closureDigest}:{})});
   await request('/v1/state',undefined,{unarmed:true});
-  const result=await request('/v1/arm',{runId,sourceCommit,hardEndAt,preservationSha256:preservation.sha256,preservationVerifiedAt:preservation.verifiedAt,acknowledgeEmergencyContainment:true,...(prior?{predecessor:prior}:{})});
+  closureTime(stamp());
+  const result=await request('/v1/arm',{runId,sourceCommit,hardEndAt,preservationSha256:preservation.sha256,preservationVerifiedAt:preservation.verifiedAt,acknowledgeEmergencyContainment:true,...(prior?{predecessor:prior}:{}),...(closure?{safeClosure:{grantSha256:closureDigest,manifestSha256}}:{})});
   check(result.sequence===0&&result.projects.preview==='ACTIVE_HEALTHY'&&result.projects.recovery==='INACTIVE'&&Object.values(result.operations).every(o=>o.attempts===0));requireOpen();schedule();return result;
  }
  async function pausePreview(){requireOpen();check(pauseAt===null);await refresh();requireOpen();pauseAt=stamp();return send('pause-preview');}

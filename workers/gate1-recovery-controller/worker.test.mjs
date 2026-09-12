@@ -99,6 +99,33 @@ test('a lost provider reply consumes its claim and cleanup never retries it',asy
   const readsBefore=reads;assert.equal((await f.arm('f'.repeat(64))).status,400);assert.equal(reads,readsBefore);assert.equal(mutations.length,2);
 });
 
+test('actual provider accepts void lifecycle replies through SQLite and preserves one claim per operation',async t=>{
+  const livePolicy={...policy,mode:'live'},projects={preview:'ACTIVE_HEALTHY',recovery:'INACTIVE'},mutations=[];
+  const f=await setup(t,{CONTROLLER_MODE:'live',CONTROLLER_POLICY_JSON:JSON.stringify(livePolicy),SUPABASE_SCOPED_TOKEN:'sbp_fc'+'z'.repeat(50)},{
+    outboundService:async request=>{
+      const url=new URL(request.url);assert.equal(url.origin,'https://api.supabase.com');
+      const match=/^\/v1\/projects\/([a-z]{20})(\/pause|\/restore)?$/.exec(url.pathname);assert.ok(match);
+      const role=match[1]===policy.previewRef?'preview':match[1]===policy.recoveryRef?'recovery':null;assert.ok(role);
+      if(request.method==='GET')return Response.json({id:policy[role+'Ref'],organization_id:policy.organizationId,region:'ap-northeast-1',status:projects[role],database:{host:'db.'+policy[role+'Ref']+'.supabase.co',postgres_engine:'17'}});
+      assert.equal(request.method,'POST');assert.ok(match[2]);mutations.push(role+match[2]);
+      projects[role]=match[2]==='/pause'?'INACTIVE':'ACTIVE_HEALTHY';
+      return new Response(mutations.length%2===0?'':null,{status:200});
+    },
+  });
+  assert.equal((await f.arm()).status,200);
+  const paused=await (await f.command(1,'pause-preview')).json();
+  assert.equal(paused.phase,'ARMED');assert.equal(paused.operations.previewPause.outcome,'ACCEPTED');
+  assert.equal((await f.command(2,'resume-recovery',{evidenceSha256:'d'.repeat(64)})).status,200);
+  assert.equal((await f.command(3,'abort')).status,200);
+  const state=await eventually(async()=> (await f.request('/v1/state')).json(),s=>s.phase==='RESTORED');
+  assert.deepEqual(Object.values(state.operations),Array.from({length:4},()=>({attempts:1,outcome:'ACCEPTED'})));
+  assert.deepEqual(mutations,['preview/pause','recovery/restore','recovery/pause','preview/restore']);
+  assert.equal(state.gate,'NO-GO');assert.equal(state.formalStopAccepted,false);
+  await f.mf.setOptions({...f.options,bindings:{...f.options.bindings,RELOAD_MARKER:'void-response'}});
+  assert.deepEqual(await (await f.request('/v1/state')).json(),state);
+  assert.equal((await f.command(4,'pause-preview')).status,400);assert.equal(mutations.length,4);
+});
+
 test('a real SQLite write failure prevents any mutation attempt',async t=>{
   await fs.mkdir('.tmp',{recursive:true});
   const folder=await fs.mkdtemp(path.resolve('.tmp/gate1-storage-fault-')),fixture=path.join(folder,'worker.mjs');

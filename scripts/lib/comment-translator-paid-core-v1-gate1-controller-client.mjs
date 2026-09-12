@@ -6,6 +6,7 @@ import {parseStrictJson} from './comment-translator-paid-core-v1-gate1-evidence.
 import {assertControllerStopProof} from './comment-translator-paid-core-v1-gate1-controller-proof.mjs';
 import {createManagedRehearsalExecutor} from './comment-translator-paid-core-v1-gate1-rehearsal-executor.mjs';
 import {createManagedRehearsalConfiguration} from './comment-translator-paid-core-v1-gate1-rehearsal-configuration-executor.mjs';
+import {LEASE_MS,predecessorStateText,validatePredecessor} from '../../workers/gate1-recovery-controller/core.mjs';
 
 const SHA=/^[a-f0-9]{64}$/,COMMIT=/^[a-f0-9]{40}$/;
 const final=s=>['RESTORED','ENDED_NO_MUTATION','NEEDS_OPERATOR'].includes(s?.phase);
@@ -48,20 +49,25 @@ export function createControllerHttpsTransport({origin,operatorToken}){
 // Internal transport/clock seams support local workerd acceptance. Approval and
 // stage verifiers come from a frozen operator entrypoint, not HTTP input. This
 // client never infers user authorization or issues a provider mutation itself.
-export function createControllerClient({runId,sourceCommit,hardEndAt,manifestSha256,approvedManifestSha256,transport,journal,observeRecoveryStop,observerBindings,stagePlan,now=Date.now,timers={setTimeout,clearTimeout}}){
+export function createControllerClient({runId,sourceCommit,predecessor=null,hardEndAt,manifestSha256,approvedManifestSha256,transport,journal,observeRecoveryStop,observerBindings,stagePlan,now=Date.now,timers={setTimeout,clearTimeout}}){
  check(SHA.test(runId)&&COMMIT.test(sourceCommit)&&SHA.test(manifestSha256)&&manifestSha256===approvedManifestSha256&&millis(hardEndAt)&&hardEndAt>now()&&hardEndAt<=now()+1200000);
  check(typeof transport==='function'&&typeof journal?.append==='function'&&typeof observeRecoveryStop==='function'&&stagePlan&&typeof stagePlan==='object');
+ const prior=predecessor===null?null:Object.freeze(validatePredecessor(predecessor));if(prior)check(prior.runId!==runId);
  const stages=Object.freeze({...stagePlan});for(const [name,verify] of Object.entries(stages))check(/^[a-z][a-z0-9-]{0,63}$/.test(name)&&typeof verify==='function');
  check(exact(observerBindings,['preview','recovery']));
  const observers=structuredClone(observerBindings);for(const binding of Object.values(observers))check(exact(binding,['sourceBindingSha256','observerSha256','bridgeSha256'])&&Object.values(binding).every(v=>typeof v==='string'&&SHA.test(v)));
  let state=null,postCount=0,getCount=0,normalGets=0,sequence=0,started=false,uncertain=false,closed=false,closeAttempted=false,ioBusy=false,working=false,pauseAt=null,stopPromise=null,monitorTimer,edgeTimer,lastNow=now();
- let active=null,ioIdle=Promise.resolve(),pendingSequence=null;const usedStages=new Set(),usedDigests=new Set();
+ let active=null,ioIdle=Promise.resolve(),pendingSequence=null,localLeaseEnd=null;const usedStages=new Set(),usedDigests=new Set();
  const stamp=()=>{const value=now();if(!millis(value)||value<lastNow){uncertain=true;active?.abort();reject();}lastNow=value;return value;};
  const record=value=>journal.append({schemaVersion:1,runId,sourceCommit,at:stamp(),...value});
  function block(){closed=true;active?.abort();timers.clearTimeout(monitorTimer);timers.clearTimeout(edgeTimer);}
- function requireOpen(){check(started&&!closed&&!uncertain&&state?.phase==='ARMED'&&stamp()<Math.min(state.leaseEnd,hardEndAt));}
- function acceptState(value,{unarmed=false,post=false,cleanup=false}={}){
-  if(unarmed&&exact(value,['phase','gate','formalStopAccepted'])&&value.phase==='UNARMED'&&value.gate==='NO-GO'&&value.formalStopAccepted===false)return value;
+ const leaseDeadline=()=>Math.min(state.leaseEnd,localLeaseEnd,hardEndAt);
+ function requireOpen(){check(started&&!closed&&!uncertain&&state?.phase==='ARMED'&&stamp()<leaseDeadline());}
+ function acceptState(value,{unarmed=false,post=false,cleanup=false,requestStartedAt}={}){
+  if(unarmed){
+   if(prior){check(value?.runId===prior.runId&&hash(predecessorStateText(value))===prior.stateSha256);record({event:'PREDECESSOR_ACCEPTED',predecessor:prior});return value;}
+   check(exact(value,['phase','gate','formalStopAccepted'])&&value.phase==='UNARMED'&&value.gate==='NO-GO'&&value.formalStopAccepted===false);return value;
+  }
   check(exact(value,['runId','phase','reason','sequence','hardEndAt','leaseEnd','cleanupEnd','operations','projects','projectObservedAt','gate','formalStopAccepted']));
   check(value.runId===runId&&value.hardEndAt===hardEndAt&&millis(value.leaseEnd)&&value.leaseEnd<=hardEndAt&&Number.isSafeInteger(value.sequence)&&value.sequence>=sequence&&value.sequence<=sequence+1&&['ARMED','CLOSING','RESTORED','ENDED_NO_MUTATION','NEEDS_OPERATOR'].includes(value.phase)&&value.gate==='NO-GO'&&value.formalStopAccepted===false);
   check(value.cleanupEnd===null||millis(value.cleanupEnd));
@@ -69,26 +75,31 @@ export function createControllerClient({runId,sourceCommit,hardEndAt,manifestSha
   check(post?value.sequence===pendingSequence:value.sequence===sequence||cleanup&&pendingSequence!==null&&value.sequence===pendingSequence);
   if(state&&!post&&value.sequence===sequence)check(value.leaseEnd===state.leaseEnd);
   check(exact(value.operations,['previewPause','recoveryResume','recoveryPause','previewResume'])&&Object.values(value.operations).every(o=>exact(o,['attempts','outcome'])&&[0,1].includes(o.attempts)&&(o.attempts===0?o.outcome===null:['PENDING','ACCEPTED','UNKNOWN'].includes(o.outcome))));
-  check(exact(value.projects,['preview','recovery'])&&Object.values(value.projects).every(s=>typeof s==='string'&&/^[A-Z_]{3,64}$/.test(s))&&exact(value.projectObservedAt,['preview','recovery'])&&Object.values(value.projectObservedAt).every(t=>t===null||millis(t)&&t<=stamp()));
+  // Observation timestamps use the controller clock. Its own freshness checks
+  // and the independent stop proof supply authority, not a local-clock comparison.
+  check(exact(value.projects,['preview','recovery'])&&Object.values(value.projects).every(s=>typeof s==='string'&&/^[A-Z_]{3,64}$/.test(s))&&exact(value.projectObservedAt,['preview','recovery'])&&Object.values(value.projectObservedAt).every(t=>t===null||millis(t)));
   if(state){check(value.leaseEnd>=state.leaseEnd);for(const op of Object.keys(value.operations))check(value.operations[op].attempts>=state.operations[op].attempts);}
-  sequence=value.sequence;pendingSequence=null;state=value;if(state.phase!=='ARMED'||stamp()>=Math.min(state.leaseEnd,hardEndAt))block();return structuredClone(value);
+  // An acknowledged command grants at most one lease from local dispatch time.
+  // Reply latency and passive GETs cannot extend this conservative local bound.
+  if(post)localLeaseEnd=Math.min(value.leaseEnd,requestStartedAt+LEASE_MS,hardEndAt);
+  sequence=value.sequence;pendingSequence=null;state=value;if(state.phase!=='ARMED'||stamp()>=leaseDeadline())block();return structuredClone(value);
  }
  async function request(route,body,{cleanup=false,unarmed=false}={}){
   check(!ioBusy);const post=body!==undefined;
   if(post){check(postCount<(cleanup?32:31));postCount++;}else{check(getCount<96&&(cleanup||normalGets<64));getCount++;if(!cleanup)normalGets++;}
   // The fsync'd attempt survives response loss. A failure always stops work.
-  record({event:'HTTP_ATTEMPT',method:post?'POST':'GET',route,postCount,getCount,requestSha256:hash(body===undefined?'':JSON.stringify(body))});ioBusy=true;
+  const requestStartedAt=stamp();record({event:'HTTP_ATTEMPT',method:post?'POST':'GET',route,postCount,getCount,requestSha256:hash(body===undefined?'':JSON.stringify(body))});ioBusy=true;
   if(post)pendingSequence=route==='/v1/arm'?0:body.sequence;
   let resolveIdle,timer;ioIdle=new Promise(resolve=>{resolveIdle=resolve;});const controller=new AbortController();
   try{const response=await Promise.race([transport(route,body,{signal:controller.signal}),new Promise((_,rejectPromise)=>{timer=timers.setTimeout(()=>{controller.abort();rejectPromise(Error('CONTROLLER_HTTP_TIMEOUT'));},post?25000:5000);})]);check(Number.isInteger(response?.status)&&typeof response.body==='string'&&Buffer.byteLength(response.body)<=16384);
-   record({event:'HTTP_RECEIPT',status:response.status,bodySha256:hash(response.body)});check(response.status===200);return acceptState(parseStrictJson(response.body),{unarmed,post,cleanup});
+   record({event:'HTTP_RECEIPT',status:response.status,bodySha256:hash(response.body)});check(response.status===200);return acceptState(parseStrictJson(response.body),{unarmed,post,cleanup,requestStartedAt});
   }catch{uncertain=true;active?.abort();record({event:'HTTP_UNCONFIRMED',method:post?'POST':'GET',route});reject();}
   finally{timers.clearTimeout(timer);controller.abort();ioBusy=false;resolveIdle();}
  }
  async function refresh(cleanup=false){return request('/v1/state',undefined,{cleanup});}
  function schedule(){
   timers.clearTimeout(edgeTimer);timers.clearTimeout(monitorTimer);if(closed||!state)return;
-  edgeTimer=timers.setTimeout(block,Math.max(1,Math.min(state.leaseEnd,hardEndAt)-stamp()));
+  edgeTimer=timers.setTimeout(block,Math.max(1,leaseDeadline()-stamp()));
   monitorTimer=timers.setTimeout(async()=>{try{if(!ioBusy)await refresh();if(!closed)schedule();}catch{block();}},20000);
  }
  async function send(type,evidenceSha256,cleanup=false){
@@ -102,8 +113,8 @@ export function createControllerClient({runId,sourceCommit,hardEndAt,manifestSha
  async function start(preservation){
   check(!started&&!closed);check(exact(preservation,['sha256','verifiedAt'])&&SHA.test(preservation.sha256)&&millis(preservation.verifiedAt)&&preservation.verifiedAt<=stamp()&&stamp()-preservation.verifiedAt<=300000);
   started=true;record({event:'CLIENT_STARTED',manifestSha256,hardEndAt});
-  const before=await request('/v1/state',undefined,{unarmed:true});check(before.phase==='UNARMED');
-  const result=await request('/v1/arm',{runId,sourceCommit,hardEndAt,preservationSha256:preservation.sha256,preservationVerifiedAt:preservation.verifiedAt,acknowledgeEmergencyContainment:true});
+  await request('/v1/state',undefined,{unarmed:true});
+  const result=await request('/v1/arm',{runId,sourceCommit,hardEndAt,preservationSha256:preservation.sha256,preservationVerifiedAt:preservation.verifiedAt,acknowledgeEmergencyContainment:true,...(prior?{predecessor:prior}:{})});
   check(result.sequence===0&&result.projects.preview==='ACTIVE_HEALTHY'&&result.projects.recovery==='INACTIVE'&&Object.values(result.operations).every(o=>o.attempts===0));requireOpen();schedule();return result;
  }
  async function pausePreview(){requireOpen();check(pauseAt===null);await refresh();requireOpen();pauseAt=stamp();return send('pause-preview');}
@@ -120,7 +131,7 @@ export function createControllerClient({runId,sourceCommit,hardEndAt,manifestSha
   requireOpen();check(!working&&!usedStages.has(name)&&Object.hasOwn(stages,name)&&typeof execute==='function'&&state.operations.recoveryResume.attempts===1);working=true;
   let timer;
   try{await refresh();requireOpen();active=new AbortController();const signal=active.signal;
-   const limit=Math.min(60000,state.leaseEnd-stamp(),hardEndAt-stamp());check(limit>0);
+   const limit=Math.min(60000,leaseDeadline()-stamp());check(limit>0);
    const raw=await Promise.race([Promise.resolve().then(()=>execute({signal,timeoutMs:limit,stop})),new Promise((_,rejectPromise)=>{
     signal.addEventListener('abort',()=>rejectPromise(Error('STAGE_ABORTED')),{once:true});timer=timers.setTimeout(()=>active?.abort(),limit);
    })]);requireOpen();check(!signal.aborted&&stages[name](raw)===true);

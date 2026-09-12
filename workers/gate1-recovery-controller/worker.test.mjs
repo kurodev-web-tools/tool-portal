@@ -4,6 +4,8 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {Miniflare} from 'miniflare';
+import {createHash} from 'node:crypto';
+import {predecessorStateText} from './core.mjs';
 
 const policy={mode:'simulation',previewRef:'p'.repeat(20),recoveryRef:'r'.repeat(20),productionRef:'x'.repeat(20),organizationId:'synthetic-org',sourceCommit:'a'.repeat(40),emergencyPreviewResume:true};
 const TOKEN='s'.repeat(64),workerPath=fileURLToPath(new URL('./worker.mjs',import.meta.url));
@@ -15,7 +17,7 @@ async function setup(t,extra={},runtime={}){
     outboundService:runtime.outboundService??(()=>{outbound++;throw Error('UNEXPECTED_EXTERNAL_REQUEST');}),...(runtime.scriptPath?{scriptPath:runtime.scriptPath}:{})};
   const mf=new Miniflare(options);t.after(async()=>{await mf.dispose();assert.equal(outbound,0);});await mf.ready;
   async function request(route,body,token=TOKEN){return mf.dispatchFetch('https://controller.invalid'+route,{method:body===undefined?'GET':'POST',headers:{Authorization:'Bearer '+token,'Content-Type':'application/json'},...(body===undefined?{}:{body:typeof body==='string'?body:JSON.stringify(body)})});}
-  const arm=(run='b'.repeat(64),duration=300000)=>request('/v1/arm',{runId:run,sourceCommit:policy.sourceCommit,hardEndAt:Date.now()+duration,preservationSha256:'c'.repeat(64),preservationVerifiedAt:Date.now(),acknowledgeEmergencyContainment:true});
+  const arm=(run='b'.repeat(64),duration=300000,predecessor)=>request('/v1/arm',{runId:run,sourceCommit:policy.sourceCommit,hardEndAt:Date.now()+duration,preservationSha256:'c'.repeat(64),preservationVerifiedAt:Date.now(),acknowledgeEmergencyContainment:true,...(predecessor?{predecessor}:{})});
   const command=(sequence,type,extra={})=>request('/v1/command',{runId:'b'.repeat(64),sequence,type,...extra});
   return {mf,options,request,arm,command};
 }
@@ -61,7 +63,8 @@ test('read-only state polling does not refresh the lease or authorize wrong runs
   const after=await (await f.request('/v1/state')).json();assert.equal(after.leaseEnd,before.leaseEnd);assert.equal(after.sequence,0);
   await f.command(1,'abort');
   assert.equal((await f.arm()).status,400);
-  assert.equal((await f.arm('f'.repeat(64))).status,200);
+  const prior=await (await f.request('/v1/state')).json(),predecessor={runId:prior.runId,sourceCommit:policy.sourceCommit,stateSha256:createHash('sha256').update(predecessorStateText(prior)).digest('hex')};
+  assert.equal((await f.arm('f'.repeat(64),300000,predecessor)).status,200);
 });
 
 test('simulation rejects live credentials and policy drift cannot create a second owner',async t=>{

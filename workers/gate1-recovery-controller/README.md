@@ -20,7 +20,7 @@ All routes require `Authorization: Bearer <operator token>`. There is no CORS su
 
 | Route | Input |
 | --- | --- |
-| `POST /v1/arm` | `runId`, `sourceCommit`, `hardEndAt`, `preservationSha256`, `preservationVerifiedAt`, `acknowledgeEmergencyContainment: true` |
+| `POST /v1/arm` | `runId`, `sourceCommit`, `hardEndAt`, `preservationSha256`, `preservationVerifiedAt`, `acknowledgeEmergencyContainment: true`; additionally `predecessor` when history exists |
 | `POST /v1/command` | `runId`, consecutive `sequence` starting at 1, `type` |
 | `GET /v1/state` | No input; no lease refresh or project mutation |
 
@@ -36,7 +36,19 @@ Command types are `pause-preview`, `resume-recovery`, `progress`, `abort` and `f
 
 Simulation accepts only `p` repeated20, `r` repeated20 and `x` repeated20 as its three references, with organization `synthetic-org`. It has no outbound fetch path. Live validates exact project identity, organization, Tokyo region, database host and PostgreSQL17 before using metadata. Its only network paths are the two bound project GETs and POST `/pause` or `/restore` on `https://api.supabase.com/v1/projects/`. Redirects, non-200 replies, duplicate JSON keys, oversized/partial bodies and responses outside three seconds are rejected; no request is automatically retried.
 
-The policy is immutable once stored in this namespace. Do not change targets, source pin, mode or namespace to bypass a consumed claim. A future policy/namespace migration needs a separately reviewed lifecycle transition after all pending actions are reconciled. Do not disable, delete, redeploy or rotate away a valid management secret during an active/closing run. Doing so can prevent containment. Retain the original run ledger and provider evidence even after an operator intervenes.
+Targets, organization, mode and emergency-containment policy remain fixed. Only the source commit can transition through the explicit closed-predecessor protocol below. Do not change policy or namespace to bypass a consumed claim. Do not disable, delete, redeploy or rotate away a valid management secret during an active/closing run. Doing so can prevent containment. Retain the original run ledger and provider evidence even after an operator intervenes.
+
+### Explicit predecessor and source transition
+
+An empty namespace requires omission of `predecessor`. Once a run exists, every new arm requires an exact `predecessor: {runId, sourceCommit, stateSha256}` binding, even if the source is unchanged. The new run ID must be distinct and unused. Old clients that arm over terminal history without this binding now fail closed; no request field can select a new namespace or erase history.
+
+The predecessor must be `ENDED_NO_MUTATION` with all four attempts zero, or `RESTORED` with accepted Preview pause/resume and balanced Recovery resume/pause attempts. Every attempted operation must have `ACCEPTED` outcome; `PENDING` or `UNKNOWN` remains ineligible even if metadata containment reached `RESTORED`. Its stored observations must say Preview `ACTIVE_HEALTHY` and Recovery `INACTIVE`, with valid timestamps. `ARMED`, `CLOSING`, `NEEDS_OPERATOR`, unknown observations and malformed state are rejected. These historical predicates do not establish current provider health or formal stopping acceptance.
+
+`stateSha256` is SHA-256 over the UTF-8 text returned by `predecessorStateText` in `core.mjs`: validate the exact public state, recursively sort object keys lexicographically, then `JSON.stringify` without whitespace. The digest covers all public fields, including sequence, deadlines, operations and observation timestamps. Bind the old full source commit separately; the Worker compares it with the retained internal source/policy. A new reviewed execution manifest must fix this entire tuple, new source, run ID, deadline and fresh preservation evidence. The client freezes the supplied tuple, validates the initial GET against it and sends it once in arm; it never adopts the predecessor's sequence or lease.
+
+After a separately authorized source-policy update, read-only GET can return an eligible predecessor under the new source when every other policy field matches. GET changes no stored state. Arm checks the tuple/digest, then rechecks the entire captured internal state and its retained `used_runs` row in the same [synchronous SQLite transaction](https://developers.cloudflare.com/durable-objects/api/sqlite-storage-api/#transactionsync) that registers the successor. A race, missing/mismatched old row, reused ID or failed write rejects registration. The old row's bytes and claims remain intact; the successor stores the predecessor tuple. New preservation/deadline validation runs again inside the transaction, and initial project reads remain fresh. Subsequent commands require the current source policy and new run identity.
+
+This protocol supplies a local implementation boundary, not permission for policy replacement, deployment or another trial. Source publication, a verified built artifact, the existing namespace, fresh execution inputs and separate external authorization remain required. Two-minute leases, finite deadlines, one-use claims, independent formal proofs and no automatic retry remain unchanged.
 
 ### Simulation arm diagnostics
 
@@ -82,7 +94,7 @@ Cloudflare documents [RPC exception flags](https://developers.cloudflare.com/dur
 Use the repository's installed dependencies from the feature worktree root:
 
 ```powershell
-node --test workers/gate1-recovery-controller/core.test.mjs workers/gate1-recovery-controller/provider.test.mjs workers/gate1-recovery-controller/worker.test.mjs workers/gate1-recovery-controller/arm-diagnostics.test.mjs workers/gate1-recovery-controller/state-diagnostics.test.mjs
+node --test --test-concurrency=1 scripts/comment-translator-paid-core-v1-gate1-controller-client.test.mjs scripts/comment-translator-paid-core-v1-gate1-controller-proof.test.mjs workers/gate1-recovery-controller/core.test.mjs workers/gate1-recovery-controller/provider.test.mjs workers/gate1-recovery-controller/worker.test.mjs workers/gate1-recovery-controller/arm-diagnostics.test.mjs workers/gate1-recovery-controller/state-diagnostics.test.mjs workers/gate1-recovery-controller/predecessor.test.mjs
 node node_modules/eslint/bin/eslint.js workers/gate1-recovery-controller/*.mjs --max-warnings 0
 node scripts/comment-translator-paid-core-v1-gate1-operator-contract.mjs
 $env:CLOUDFLARE_SEND_METRICS='false'
@@ -90,7 +102,7 @@ node node_modules/wrangler/bin/wrangler.js deploy --dry-run --config workers/gat
 git diff --check
 ```
 
-Miniflare uses real local workerd, SQLite persistence, object reload and scheduled alarms. The simulation cases reject all outbound traffic. The live adapter integration uses synthetic identities and a local outbound-service fixture; it never contacts Supabase. Test-only subclasses induce real SQLite errors and post-registration alarm/observation failures. Diagnostic tests cover RPC propagation, schema-initialization/read failures, caller/object configuration drift, exact freshness boundaries, state retention and sensitive/unknown error suppression. Temporary test databases contain synthetic data only. No dependency/lockfile change is required.
+Miniflare uses real local workerd, SQLite persistence, object reload and scheduled alarms. The simulation cases reject all outbound traffic. The live adapter integration uses synthetic identities and a local outbound-service fixture; it never contacts Supabase. Test-only subclasses induce real SQLite errors and post-registration alarm/observation failures. Diagnostic tests cover RPC propagation, schema-initialization/read failures, caller/object configuration drift, exact freshness boundaries, state retention and sensitive/unknown error suppression. Predecessor tests cover source transition from both eligible phases, byte-preserved old rows, reload/reused IDs, identity/digest mismatch, concurrent arms, snapshot drift, ledger mismatch and rollback after both registration and current-slot writes. Temporary test databases contain synthetic data only. No dependency/lockfile change is required.
 
 ## Initial external execution workflow
 

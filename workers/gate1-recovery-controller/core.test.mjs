@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { validatePolicy, createRun, command, observe, claim, confirmDispatch, settle, tick, nextAction, publicState, LEASE_MS, CLEANUP_MS } from './core.mjs';
+import { validatePolicy, createRun, command, observe, claim, confirmDispatch, settle, tick, nextAction, publicState, predecessorStateText, compatiblePredecessor, LEASE_MS, CLEANUP_MS } from './core.mjs';
 
 const NOW=1800000000000;
 const policy=()=>({mode:'simulation',previewRef:'p'.repeat(20),recoveryRef:'r'.repeat(20),productionRef:'x'.repeat(20),organizationId:'synthetic-org',sourceCommit:'a'.repeat(40),emergencyPreviewResume:true});
@@ -21,6 +21,32 @@ test('rejects protected, duplicate and unbound target policies',()=>{
 test('arm requires fresh preservation, exact commit and a finite new window',()=>{
   for(const change of [{sourceCommit:'e'.repeat(40)},{runId:['b'.repeat(64)]},{preservationVerifiedAt:NOW-300001},{hardEndAt:NOW+1800001},{hardEndAt:NOW-1},{acknowledgeEmergencyContainment:false}])assert.throws(()=>createRun(policy(),{...packet(),...change},NOW));
   assert.equal(make().phase,'ARMED');
+});
+test('arm retains an exact distinct predecessor binding without aliasing caller input',()=>{
+ const predecessor={runId:'e'.repeat(64),sourceCommit:'f'.repeat(40),stateSha256:'d'.repeat(64)},p={...packet(),predecessor};
+ const state=createRun(policy(),p,NOW);assert.deepEqual(state.predecessor,predecessor);predecessor.runId='0'.repeat(64);assert.equal(state.predecessor.runId,'e'.repeat(64));
+ for(const value of [null,{}, {...state.predecessor,extra:true},{...state.predecessor,runId:packet().runId},{...state.predecessor,stateSha256:'bad'}])assert.throws(()=>createRun(policy(),{...packet(),predecessor:value},NOW));
+});
+
+function ended(){const s=make();seen(s,'preview','ACTIVE_HEALTHY');seen(s,'recovery','INACTIVE');cmd(s,'abort');tick(s,NOW);return s;}
+test('predecessor digest canonicalization ignores key order and covers every public value',()=>{
+ const s=publicState(ended()),reversed=v=>v&&typeof v==='object'?Object.fromEntries(Object.keys(v).reverse().map(k=>[k,reversed(v[k])])):v;
+ const text=predecessorStateText(s);assert.equal(predecessorStateText(reversed(s)),text);
+ for(const change of [v=>v.sequence++,v=>v.reason='OPERATOR_FINISH',v=>v.hardEndAt++,v=>v.leaseEnd--,v=>v.cleanupEnd++,v=>v.projectObservedAt.recovery++,v=>v.runId='d'.repeat(64)]){const next=structuredClone(s);change(next);assert.notEqual(predecessorStateText(next),text);}
+});
+test('predecessor eligibility rejects unsafe phase, unresolved claims and malformed projections',()=>{
+ const s=publicState(ended());
+ const invalid=[v=>v.extra=true,v=>v.phase='ARMED',v=>v.phase='CLOSING',v=>v.phase='NEEDS_OPERATOR',v=>v.reason='WAITING_FOR_OPERATOR',v=>v.reason='UNRECOGNIZED',v=>v.sequence=-1,v=>v.sequence=257,v=>v.cleanupEnd=null,v=>v.leaseEnd=v.hardEndAt+1,v=>v.projects.recovery='UNKNOWN',v=>v.projects.preview='INACTIVE',v=>v.projectObservedAt.preview=null,v=>v.projectObservedAt.preview=-1,v=>v.projectObservedAt.preview=1.5,v=>v.projectObservedAt.preview=Number.MAX_SAFE_INTEGER+1,v=>v.operations.previewPause={attempts:1,outcome:'PENDING'},v=>v.operations.previewPause={attempts:1,outcome:'UNKNOWN'},v=>v.operations.previewPause={attempts:1,outcome:'ACCEPTED'},v=>v.operations.previewPause.extra=true,v=>v.formalStopAccepted=true,v=>v.gate='GO'];
+ for(const change of invalid){const next=structuredClone(s);change(next);assert.throws(()=>predecessorStateText(next));}
+ const restored=paused();cmd(restored,'abort',{},NOW+1000);claim(restored,'previewResume',NOW+1000);settle(restored,'previewResume','ACCEPTED',NOW+1000);seen(restored,'preview','ACTIVE_HEALTHY',NOW+2000);tick(restored,NOW+2000);
+ assert.equal(restored.phase,'RESTORED');const projection=publicState(restored);assert.doesNotThrow(()=>predecessorStateText(projection));
+ projection.operations.recoveryResume={attempts:1,outcome:'ACCEPTED'};assert.throws(()=>predecessorStateText(projection));projection.operations.recoveryPause={attempts:1,outcome:'ACCEPTED'};assert.doesNotThrow(()=>predecessorStateText(projection));
+ for(const op of Object.keys(projection.operations)){const next=structuredClone(projection);next.operations[op].outcome='UNKNOWN';assert.throws(()=>predecessorStateText(next));next.operations[op].outcome='PENDING';assert.throws(()=>predecessorStateText(next));}
+});
+test('a predecessor permits only source changes with every other valid policy field fixed',()=>{
+ const s=ended();s.policy.mode='live';const current={...s.policy,sourceCommit:'f'.repeat(40)};assert.equal(compatiblePredecessor(s,current),true);
+ for(const change of [{mode:'simulation'},{previewRef:'q'.repeat(20)},{recoveryRef:'q'.repeat(20)},{productionRef:'q'.repeat(20)},{organizationId:'another-org'},{emergencyPreviewResume:false},{previewRef:s.policy.recoveryRef,recoveryRef:s.policy.previewRef}])assert.equal(compatiblePredecessor(s,{...current,...change}),false);
+ for(const change of [{sourceCommit:'e'.repeat(40)},{schemaVersion:2},{phase:'CLOSING'},{policy:{...s.policy,extra:true}}])assert.equal(compatiblePredecessor({...s,...change},current),false);
 });
 test('pause needs fresh original-state metadata and claims once before I/O',()=>{
   const s=make();cmd(s,'pause-preview');assert.throws(()=>claim(s,'previewPause',NOW));

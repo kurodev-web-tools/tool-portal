@@ -1,5 +1,5 @@
 import { DurableObject } from 'cloudflare:workers';
-import { claim, command, confirmDispatch, createRun, nextAction, nextAlarm, observe, publicState, requireThat, settle, terminal, tick, validatePolicy } from './core.mjs';
+import { claim, command, compatiblePredecessor, confirmDispatch, createRun, nextAction, nextAlarm, observe, predecessorStateText, publicState, requireThat, settle, terminal, tick, validatePolicy } from './core.mjs';
 import { createProvider, parseCanonicalJson, readBody } from './provider.mjs';
 
 const json = (value, status = 200) => Response.json(value, { status, headers: { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' } });
@@ -180,7 +180,7 @@ export class Gate1RecoveryController extends DurableObject {
       stage = 'STATE_STORAGE';
       const state = this.read();
       stage = 'STATE_POLICY';
-      requireThat(!state || samePolicy(state.policy, policy));
+      requireThat(!state || samePolicy(state.policy, policy) || compatiblePredecessor(state, policy));
       stage = 'STATE_PROJECTION';
       return state ? publicState(state) : { phase: 'UNARMED', gate: 'NO-GO', formalStopAccepted: false };
     } catch (error) {
@@ -192,17 +192,30 @@ export class Gate1RecoveryController extends DurableObject {
     try {
       const policy = configuration(this.env);
       stage = 'ARM_VALIDATION';
-      const state = createRun(policy, input, Date.now());
+      createRun(policy, input, Date.now());
       stage = 'ARM_STORAGE';
-      this.ctx.storage.transactionSync(() => {
-        const previous = this.read();
-        requireThat(!previous || (samePolicy(previous.policy, policy) && ['RESTORED', 'ENDED_NO_MUTATION'].includes(previous.phase)));
+      const previous = this.read(), previousText = JSON.stringify(previous);
+      if (previous) {
+        requireThat(compatiblePredecessor(previous, policy) && input.predecessor?.runId === previous.runId && input.predecessor.sourceCommit === previous.sourceCommit);
+        const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(predecessorStateText(publicState(previous))));
+        requireThat(input.predecessor.stateSha256 === Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, '0')).join(''));
+      } else requireThat(!Object.hasOwn(input, 'predecessor'));
+      const state = this.ctx.storage.transactionSync(() => {
+        // Hashing yields. Recheck the entire prior snapshot atomically with new
+        // registration; retain its used-run row byte for byte, including claims.
+        requireThat(JSON.stringify(this.read()) === previousText);
+        if (previous) {
+          const rows = this.sql.exec('SELECT value FROM used_runs WHERE run_id=?', previous.runId).toArray();
+          requireThat(rows.length === 1 && rows[0].value === previousText);
+        }
+        const state = createRun(policy, input, Date.now());
         requireThat(this.sql.exec('SELECT run_id FROM used_runs WHERE run_id=?', state.runId).toArray().length === 0);
         this.sql.exec('INSERT INTO used_runs(run_id,value) VALUES(?,?)', state.runId, JSON.stringify(state));
         if (policy.mode === 'simulation' && !previous) {
           this.sql.exec("INSERT INTO simulation(role,status) VALUES('preview','ACTIVE_HEALTHY'),('recovery','INACTIVE')");
         }
         this.write(state);
+        return state;
       });
       stage = 'ARM_ALARM';
       await this.schedule();

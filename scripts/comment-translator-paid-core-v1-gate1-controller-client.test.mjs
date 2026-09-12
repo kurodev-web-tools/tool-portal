@@ -15,17 +15,18 @@ import {createRehearsalExecutor,REHEARSAL_IDENTITY_SQL} from './lib/comment-tran
 import {REHEARSAL_TRANSFER_TABLES,REHEARSAL_READBACK_SQL} from './lib/comment-translator-paid-core-v1-gate1-rehearsal-transfer.mjs';
 const observerBindings=Object.fromEntries(['preview','recovery'].map(role=>[role,{sourceBindingSha256:'c'.repeat(64),observerSha256:'d'.repeat(64),bridgeSha256:'e'.repeat(64)}]));
 const policy={mode:'live',previewRef:'p'.repeat(20),recoveryRef:'r'.repeat(20),productionRef:'x'.repeat(20),organizationId:'synthetic-org',sourceCommit:'a'.repeat(40),emergencyPreviewResume:true};
-function fixture(t,overrides={}){
+function fixture(t,overrides={},serverOffsetMs=0){
  let clock=Date.now(),remote=null,proofs=0;const calls=[],rows=[],projects={preview:'ACTIVE_HEALTHY',recovery:'INACTIVE'},scheduled=new Map();let nextTimer=0;
  const timers={setTimeout(fn,ms){const id=++nextTimer;scheduled.set(id,{fn,ms});return id;},clearTimeout(id){scheduled.delete(id);}};
- const manage=()=>{for(const role of ['preview','recovery'])observe(remote,role,{status:projects[role],startedAt:clock,completedAt:clock},clock);};
+ const serverClock=()=>clock+serverOffsetMs;
+ const manage=()=>{for(const role of ['preview','recovery'])observe(remote,role,{status:projects[role],startedAt:serverClock(),completedAt:serverClock()},serverClock());};
  const transport=async(route,body)=>{
-  calls.push({route,body});if(route==='/v1/arm'){remote=createRun(policy,body,clock);manage();}
+  calls.push({route,body});if(route==='/v1/arm'){remote=createRun(policy,body,serverClock());manage();}
   if(route==='/v1/command'){
-   command(remote,body,clock);manage();const op=remote.requested??nextAction(remote,clock);
-   if(op){claim(remote,op,clock);projects[op.startsWith('preview')?'preview':'recovery']=op.endsWith('Pause')?'INACTIVE':'ACTIVE_HEALTHY';settle(remote,op,'ACCEPTED',clock);manage();}
+   command(remote,body,serverClock());manage();const op=remote.requested??nextAction(remote,serverClock());
+   if(op){claim(remote,op,serverClock());projects[op.startsWith('preview')?'preview':'recovery']=op.endsWith('Pause')?'INACTIVE':'ACTIVE_HEALTHY';settle(remote,op,'ACCEPTED',serverClock());manage();}
   }
-  if(remote)tick(remote,clock);return {status:200,body:JSON.stringify(remote?publicState(remote):{phase:'UNARMED',gate:'NO-GO',formalStopAccepted:false})};
+  if(remote)tick(remote,serverClock());return {status:200,body:JSON.stringify(remote?publicState(remote):{phase:'UNARMED',gate:'NO-GO',formalStopAccepted:false})};
  };
  const options={runId:'b'.repeat(64),sourceCommit:policy.sourceCommit,hardEndAt:clock+1200000,observerBindings,manifestSha256:'c'.repeat(64),approvedManifestSha256:'c'.repeat(64),transport,journal:{append:r=>rows.push(r)},observeRecoveryStop:async()=>{proofs++;clock+=10000;return verifyControllerStopProof(proofFixture('recovery',clock).encode());},stagePlan:{'synthetic-transfer':r=>r?.status==='SYNTHETIC_TRANSFER_VERIFIED','configuration-closed':r=>r?.status==='CONFIGURATION_READBACK_MATCHED'},now:()=>clock,timers,...overrides};
  const client=createControllerClient(options);t.after(()=>client.dispose());
@@ -37,6 +38,69 @@ function fixture(t,overrides={}){
 test('requires exact explicit manifest approval before any I/O',t=>{
  let calls=0;assert.throws(()=>fixture(t,{approvedManifestSha256:null,transport:()=>{calls++;}}));assert.equal(calls,0);
  for(const origin of ['http://v-streamer-tools-gate1-recovery-controller-live.example.workers.dev','https://other.example.workers.dev','https://v-streamer-tools-gate1-recovery-controller-live.example.workers.dev/','https://v-streamer-tools-gate1-recovery-controller-live.example.workers.dev@evil.test'])assert.throws(()=>createControllerHttpsTransport({origin,operatorToken:'s'.repeat(64)}));
+});
+test('controller observation clocks can lead the local receipt without granting extra lease time',async t=>{
+ const f=fixture(t,{},283);const startedAt=f.clock();const state=await f.start();
+ assert.equal(state.phase,'ARMED');assert.equal(state.projectObservedAt.preview,startedAt+283);
+ assert.equal(f.rows.some(r=>r.event==='HTTP_UNCONFIRMED'),false);
+ assert.ok([...f.scheduled.values()].some(timer=>timer.ms===120000));
+ const calls=f.calls.length;f.advance(120000);await assert.rejects(f.client.pausePreview());assert.equal(f.calls.length,calls);
+});
+test('lease time is bounded from POST dispatch, including reply delay and a newly accepted command',async t=>{
+ const f=fixture(t,{},283);
+ const client=createControllerClient({...f.options,transport:async(route,body)=>{const response=await f.transport(route,body);if(body!==undefined)f.advance(1500);return response;}});t.after(()=>client.dispose());
+ await client.start({sha256:'d'.repeat(64),verifiedAt:f.clock()});
+ assert.ok([...f.scheduled.values()].some(timer=>timer.ms===118500));
+ f.advance(1000);await client.pausePreview();
+ assert.ok([...f.scheduled.values()].some(timer=>timer.ms===118500));
+ f.advance(118499);await client.observeClosure();
+ const calls=f.calls.length;f.advance(1);const proof=verifyControllerStopProof(proofFixture('preview',f.clock()).encode());await assert.rejects(client.resumeRecovery(proof));assert.equal(f.calls.length,calls);
+ assert.ok([...f.scheduled.values()].every(timer=>timer.ms!==120283));
+});
+test('an earlier remote lease and the absolute local deadline remain conservative bounds',async t=>{
+ const behind=fixture(t,{},-283);await behind.client.start({sha256:'d'.repeat(64),verifiedAt:behind.clock()-1000});
+ assert.ok([...behind.scheduled.values()].some(timer=>timer.ms===119717));
+ let calls=behind.calls.length;behind.advance(119717);await assert.rejects(behind.client.pausePreview());assert.equal(behind.calls.length,calls);
+ const bounded=fixture(t,{},283),client=createControllerClient({...bounded.options,hardEndAt:bounded.clock()+1000});t.after(()=>client.dispose());
+ await client.start({sha256:'d'.repeat(64),verifiedAt:bounded.clock()});assert.ok([...bounded.scheduled.values()].some(timer=>timer.ms===1000));
+ calls=bounded.calls.length;bounded.advance(1000);await assert.rejects(client.pausePreview());assert.equal(bounded.calls.length,calls);
+});
+test('observation timestamp shape and local clock regression still fail closed',async t=>{
+ for(const invalid of [-1,1.5,Number.MAX_SAFE_INTEGER+1,'283']){
+  const f=fixture(t),client=createControllerClient({...f.options,transport:async(route,body)=>{const response=await f.transport(route,body);if(body!==undefined){const state=JSON.parse(response.body);state.projectObservedAt.preview=invalid;response.body=JSON.stringify(state);}return response;}});t.after(()=>client.dispose());
+  await assert.rejects(client.start({sha256:'d'.repeat(64),verifiedAt:f.clock()}));assert.equal(f.calls.length,2);assert.equal(f.calls.filter(c=>c.body?.type).length,0);
+ }
+ const f=fixture(t,{},283);await f.start();const calls=f.calls.length;f.advance(-1);await assert.rejects(f.client.pausePreview());assert.equal(f.calls.length,calls);
+});
+const canonicalState=value=>value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonicalState(value[key])])):value;
+const predecessorPin=state=>({runId:state.runId,sourceCommit:policy.sourceCommit,stateSha256:createHash('sha256').update(JSON.stringify(canonicalState(state))).digest('hex')});
+async function endedFixture(t){const f=fixture(t);await f.start();await f.transport('/v1/command',{runId:f.options.runId,sequence:1,type:'abort'});f.client.dispose();return f;}
+test('an explicitly pinned predecessor starts a distinct run without adopting its sequence or lease',async t=>{
+ const f=await endedFixture(t),prior=publicState(f.remote()),pin=predecessorPin(prior),expected=structuredClone(pin);let client;
+ client=createControllerClient({...f.options,runId:'f'.repeat(64),predecessor:pin,transport:async(route,body)=>{if(body){assert.equal(client.state(),null);assert.deepEqual(body.predecessor,expected);}return f.transport(route,body);}});t.after(()=>client.dispose());
+ pin.runId='e'.repeat(64);pin.stateSha256='0'.repeat(64);
+ const result=await client.start({sha256:'d'.repeat(64),verifiedAt:f.clock()});
+ assert.equal(result.runId,'f'.repeat(64));assert.equal(result.sequence,0);assert.equal(result.phase,'ARMED');assert.equal(client.budget().postCount,1);
+ assert.deepEqual(f.remote().predecessor,expected);assert.equal(f.rows.filter(r=>r.event==='PREDECESSOR_ACCEPTED').length,1);
+});
+test('missing, stale or unsafe predecessor state cannot reach a new arm',async t=>{
+ for(const mode of ['missing','wrong-digest','wrong-run','armed','closing','needs-operator','unknown-project','pending-operation']){
+  const f=await endedFixture(t),prior=publicState(f.remote());
+  if(mode==='armed')f.remote().phase='ARMED';
+  if(mode==='closing')f.remote().phase='CLOSING';
+  if(mode==='needs-operator')f.remote().phase='NEEDS_OPERATOR';
+  if(mode==='unknown-project')f.remote().observed.recovery.status='UNKNOWN';
+  if(mode==='pending-operation')f.remote().operations.previewPause={attemptedAt:f.clock(),outcome:'PENDING'};
+  const pin=predecessorPin(publicState(f.remote()));if(mode==='wrong-digest')pin.stateSha256='0'.repeat(64);if(mode==='wrong-run')pin.runId='e'.repeat(64);
+  const client=createControllerClient({...f.options,runId:'f'.repeat(64),...(mode==='missing'?{}:{predecessor:pin})});t.after(()=>client.dispose());
+  const count=f.calls.filter(c=>c.route==='/v1/arm').length;await assert.rejects(client.start({sha256:'d'.repeat(64),verifiedAt:f.clock()}));
+  assert.equal(f.calls.filter(c=>c.route==='/v1/arm').length,count);assert.equal(client.state(),null);assert.equal(prior.phase,'ENDED_NO_MUTATION');
+ }
+});
+test('a predecessor cannot be silently ignored on empty history or reuse the new run identity',async t=>{
+ const f=fixture(t),pin={runId:'f'.repeat(64),sourceCommit:policy.sourceCommit,stateSha256:'d'.repeat(64)};
+ for(const value of [{...pin,runId:f.options.runId},{...pin,extra:true},{...pin,sourceCommit:'bad'},{}])assert.throws(()=>createControllerClient({...f.options,predecessor:value}));
+ const client=createControllerClient({...f.options,predecessor:pin});t.after(()=>client.dispose());await assert.rejects(client.start({sha256:'d'.repeat(64),verifiedAt:f.clock()}));assert.equal(f.calls.length,1);
 });
 test('native HTTPS uses one bound request, keeps redirects unaccepted and cancels partial or oversized responses',async t=>{
  for(const mode of ['complete','redirect','partial','oversized','cancel'])await t.test(mode,async t=>{

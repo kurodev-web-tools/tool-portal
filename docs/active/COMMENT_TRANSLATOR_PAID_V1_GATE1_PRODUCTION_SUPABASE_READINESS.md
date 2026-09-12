@@ -1,5 +1,13 @@
 # Paid Core v1 Gate 1 — Production Supabase readiness
 
+## 2026-09-12 JST safe-closure transition — PR841 open
+
+After explicit approval to commit, push and create the Preview PR, the single primary rechecked the accepted15 files, verification logs, bundle and immutable design bytes in `D:/V_streamer_tools/.worktrees/gate1-controller-provider-repair-20260912` / `codex/gate1-safe-closure-transition-20260912`. Current Preview still matched base `d33aeec41d4f3922a4e171a12454ac608767fe80`; there was no existing head PR or other open Preview PR. All15 staged Git blobs matched the accepted content with only Git text normalization. No product or test change invalidated the existing131-check local acceptance.
+
+Implementation commit `7e28088afa97cbc642540a0a215fea406c46179f` was pushed and [PR841](https://github.com/kurodev-web-tools/tool-portal/pull/841) opened against `codex/comment-translator-paid-v1-preview`. Initial independent readback confirmed its exact head/base and15 paths, OPEN and MERGEABLE, with zero registered checks; this is not a CI pass. This section and the task-board publication entry record the result without changing implementation, tests, the adopted design or local acceptance evidence. The plan's earlier unpublished status remains a historical acceptance checkpoint.
+
+Publication evidence is under `.tmp/gate1-safe-closure-publication-20260912/`. Merge, deployment, credentials, fresh external collection, real grant provisioning, Hosted trial and namespace operations were not performed. Single primary, no new task/subagent/model change. Repository publication does not establish deployed artifact identity, formal stopping or Hosted acceptance. Gate1 remains NO-GO.
+
 ## 2026-09-12 JST safe-closure transition — locally accepted, unpublished
 
 The user adopted the design and authorized local implementation in the same task. The single primary implemented, reviewed and verified the change in `D:/V_streamer_tools/.worktrees/gate1-controller-provider-repair-20260912` / `codex/gate1-safe-closure-transition-20260912`, based on Preview merge `d33aeec41d4f3922a4e171a12454ac608767fe80`. The adopted design's original SHA256 `34e4461a7d63e8466e1f5eab03c3ea79a3a852054d0b94a3153829068ec5e7a6` is unchanged; its historical design-stage status is superseded by the adoption and acceptance recorded in the [implementation plan and A01–A16 results](COMMENT_TRANSLATOR_PAID_V1_GATE1_SAFE_CLOSURE_IMPLEMENTATION_PLAN.md).

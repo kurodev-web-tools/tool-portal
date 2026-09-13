@@ -1,65 +1,33 @@
-# AGENTS.md
+# V_streamer_tools
 
-## Scope
+This file applies to this repository and all its checkouts and worktrees. Global user preferences apply unless a more specific current user instruction changes them.
 
-- This file applies to this repository and all checkouts and worktrees derived from it.
-- Keep tool-specific details in `task.md` and `docs/*`. Keep this file focused on project-wide operating rules.
+## Current work
 
-## Execution Baseline
+- For implementation, read the relevant row of `task.md` and its linked active authority. Follow the current user request when selecting scope; do not read the historical ledger or unrelated tools by default.
+- After meaningful implementation, update the relevant operational status and its active authority. Keep detailed history and superseded notes in `docs/archive`; avoid duplicating them in `task.md`.
+- The primary agent implements and accepts the work directly. Older mandatory delegation or Luna-specific plans do not change the current single-agent policy. Preserve their functional requirements and action-specific approval boundaries.
+- Use the model and reasoning settings in the applicable `.codex/config.toml`; a different model, higher effort, or subagent use requires explicit user approval.
 
-- The root thread must review `task.md` before implementation and prioritize the immediate tasks defined there.
-- After meaningful implementation work, the root thread must update `task.md` in the same cycle when the repository workflow expects it.
-- Add documentation only when needed and avoid creating overlapping documents.
-- Keep small, low-risk, obvious changes lightweight. Use delegated implementation for work that is multi-file, multi-module, long-running, or materially risky.
+## Repository boundaries
 
-## Delegated Implementation
+- Use a feature branch and a suitable worktree. Do not edit directly on `main`, push directly to it, or mix unrelated work in one PR. Preserve existing dirty and untracked work.
+- Refresh remote refs when selecting or reusing a branch, preparing a PR, or checking a merge. Recheck the relevant base and current task authority before choosing a post-merge implementation slice.
+- Do not access outside the project without explicit user authorization; keep any authorized external access scoped to the task. Repository worktrees are part of the project.
+- Keep provider metadata, liveChatId, owner identifiers, service-role keys, credentials, and authorization material out of user-facing output, docs, PR bodies, and browser storage. Preserve required server-only boundaries.
+- Remote database/provider changes, deployment, activation, and release retain the exact approval and stop conditions in the applicable active authority. Local checks and merged code do not establish their completion.
 
-- Use `$bounded-autonomous-implementation` for multi-file, multi-module, long-running, or materially risky implementation when the required custom agents are available.
-- The root thread owns requirement interpretation, architecture within the approved design, task decomposition, agent routing, Git and worktree operations, `task.md` updates, diff inspection, verification, and final acceptance.
-- Delegate implementation to the least expensive adequate configured lane according to the skill. Do not silently substitute another agent role, model, or reasoning effort.
-- Every delegated writer must receive an explicit objective, exact file or module ownership, interfaces, constraints, and verification requirements.
-- Delegated agents may modify only the files or modules explicitly assigned to them. They must preserve unrelated and concurrent user changes.
-- Delegated agents must not modify `task.md`, project documentation, `AGENTS.md`, `.codex/*`, branch or worktree state, commits, pushes, or pull requests unless that work is explicitly included in their ownership.
-- Do not run more than one writer in the same worktree. Parallel writers require separate branches or worktrees and non-overlapping ownership.
-- While a delegated writer is active in the current worktree, the root thread must not edit tracked files in that worktree.
-- Read-only exploration, auditing, debugging, or review may run alongside one writer when it is necessary and does not duplicate work.
-- Treat delegated reports as claims, not proof. The root thread must inspect the actual diff, confirm scope discipline, and rerun the relevant verification before reporting completion.
+## Verification
 
-## Access Boundary
+- Keep implementation and tests proportional to the requested change. Prefer existing patterns and focused regression coverage over speculative architecture, new test infrastructure, or unrelated cleanup; retain the active authority's required checks.
+- Run the relevant project checks for the change. Inspect commands with unclear effects before treating them as local verification, especially scripts that can access providers or live data.
+- For rendered UI changes, retain results at the relevant widths; the project baseline is `390 / 820 / 1024 / 1280 / 1366px`. Follow narrower or additional requirements in the active task.
+- Keep passing evidence for unchanged inputs; report setup blockers and unchecked scope explicitly.
 
-- Do not perform read, write, or execute actions outside this project unless the user explicitly instructs it.
-- Even with explicit permission, limit external access to the minimum required scope.
-- All delegated agents inherit the same access, approval, and prohibited-operation boundaries as the root task.
+## Documentation locations
 
-## Git Workflow
-
-- Do not work directly on `main` and do not push direct changes to `main`.
-- Use feature branches and merge through pull requests.
-- Do not mix unrelated changes in the same pull request.
-- The root thread owns branch, worktree, commit, push, and pull-request operations unless the user explicitly assigns otherwise.
-- Never overwrite, revert, or discard unrelated user changes.
-
-## Verification Rule
-
-- Run the smallest meaningful verification for the changed scope, then expand based on risk.
-- If verification cannot be run, record the reason and the exact unchecked scope.
-- For UI changes, retain width-based verification results.
-- Do not accept completion solely from a delegated agent's report; inspect the diff and verification evidence directly.
-
-## Docs Retention Policy
-
-- `docs/active`: place currently referenced, operational documents.
-- `docs/archive`: place superseded versions, in-progress drafts, and session-specific artifacts.
-- `docs/prompts`: keep only final, currently used prompts. Move older prompt variants to `docs/archive`.
-- `docs/mockups`: keep at most one final image and one comparison image per screen. Move others to `docs/archive`.
-
-### Retention Decision Rules
-
-- Keep: `PLAN.md`, design documents, tool READMEs, and operational evidence such as stability checks.
-- Archive: replaced mockups, session-specific prompts, and old review drafts.
-- Delete: duplicate, empty, or unreferenced files with no reuse value.
-
-## Priority
-
-- System, developer, and user instructions override this file.
-- The most local applicable repository instruction overrides a broader instruction when they conflict.
+- `docs/active`: current operational authority, design, and reusable evidence.
+- `docs/archive`: superseded versions, drafts, historical notes, and session-specific artifacts.
+- `docs/prompts`: final prompts still in use.
+- `docs/mockups`: at most one final image and one comparison image per screen; archive replaced variants.
+- Preserve plans, design documents, tool READMEs, and operational evidence. Archive replaced material; remove duplicate, empty, or unreferenced files only within an authorized cleanup.

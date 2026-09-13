@@ -9,6 +9,7 @@
 | P0 | Comment Translator Free public beta | Google OAuth verification, edge readiness reconciliation, final public release declaration, and final production/main-domain smoke are complete; `public_release_capable=yes`. | `docs/active/COMMENT_TRANSLATOR_PUBLIC_LAUNCH_REMAINING_TASK_BOARD.md` and `docs/active/COMMENT_TRANSLATOR_FREE_BETA_PL_G6_PUBLIC_ACCESS_CHANGE_PREFLIGHT.md` |
 | P1 | 配信カンペボード | MVPはPR #660で`main`へpromotion済み。post-promotion follow-upとして、配信プラン/カンペ削除のbrowser-native confirmをJA/EN対応のapp-owned dialogへ置き換えるfixを本番相当QAまで再検証済み。`main`反映用PRを現在のhandoffとする。 | `docs/active/VIEWER_ENGAGEMENT_PROMPT_BOARD_MVP.md` |
 | Workflow | New-tool preview development | Task PRs target a tool-specific preview branch; promotion to `main` occurs only after MVP readiness. | `docs/active/TOOL_PREVIEW_DEVELOPMENT_WORKFLOW.md` |
+| Workflow | Codex instruction simplification | 2026-09-13: Astra Light / single-agent guidance, proportional implementation/testing, and scoped document intake verified locally. Delivery approved: commit/push the isolated settings branch now; carry its three-file change into the next Gate1 PR to `codex/comment-translator-paid-v1-preview`, preserving current task status; include the same settings in the release-stage PR to `main`. This step creates no PR, merge, or deployment. | `AGENTS.md`, `.codex/config.toml`, and branch `codex/astra-instructions-simplify-20260913` |
 
 - Comment Translator branch authority: Cloudflare production control remains `codex/comment-translator-free-public-beta-integration`. Synchronization from current `main` is deferred until Comment Translator work resumes and requires separate approval because it may trigger automatic deployment. The legacy `codex/comment-translator-preview` line is frozen for retirement, with exact tip `1a30609376c0573685463cbd4a4a2e8c2c190620` preserved by annotated tag `archive/comment-translator-preview-2026-07-21`. This authority cleanup performs no integration update, Cloudflare mutation, deploy, or preview-branch deletion.
 - Comment Translator preview-retirement contract cleanup: historical changed-file scans now use `archive/comment-translator-preview-2026-07-21` as the immutable comparison base instead of the deletable remote preview ref. The tag peels to the same exact preview tip, and both refs produce an identical 539-file comparison set with SHA-256 `ea664bc4ae7e797dbef59ce8503c3bdbf9e6cd06724d8c1d60ef276a958b06e8`, so scan scope is unchanged. All 26 scripts pass Node syntax checks; runtime execution reaches only pre-existing historical scope/task assertions on current `main`, which remain outside this bounded ref cleanup. Remote preview-branch deletion remains a separate post-merge action.
@@ -23,8 +24,8 @@
 ## Current Premises
 
 - 作業は `main` 直ではなく feature branch / worktree で行う。
-- 作業前に `git fetch origin --prune`、`AGENTS.md`、このファイルを確認する。
-- 意味のある実装後は、このファイルに実装内容、検証、未確認範囲、残リスク、必要な幅別確認を残す。
+- branchの選択・再利用、PR準備、merge確認では `git fetch origin --prune` で参照を更新する。通常作業は適用される `AGENTS.md` と、このindexの該当行・参照authorityを確認する。
+- 意味のある実装後は、このindexに短い状態と参照先を残す。実装内容、検証、未確認範囲、残リスク、必要な幅別確認の詳細は該当するactive authorityへ記録し、履歴台帳へ重複追記しない。
 - UI 変更時の確認幅は `390 / 820 / 1024 / 1280 / 1366px` を基本にする。
 - 1 feature / 1 fix / 1 cleanup を 1 branch / 1 PR に閉じる。公開版の緊急修正と次期機能追加は混ぜない。
 - secret / service_role key / private credential / OAuth token / authorization code / owner id / provider target metadata / liveChatId は表示・要求・保存しない。

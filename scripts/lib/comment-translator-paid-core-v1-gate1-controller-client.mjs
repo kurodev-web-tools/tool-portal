@@ -8,6 +8,7 @@ import {createManagedRehearsalExecutor} from './comment-translator-paid-core-v1-
 import {createManagedRehearsalConfiguration} from './comment-translator-paid-core-v1-gate1-rehearsal-configuration-executor.mjs';
 import {LEASE_MS,predecessorStateText,validatePredecessor} from '../../workers/gate1-recovery-controller/core.mjs';
 import {GRANT_HEADER,GRANT_PREFIX,parseSafeClosureGrant,previewUnknownClosureStateText} from '../../workers/gate1-recovery-controller/safe-closure.mjs';
+import {MUTATION_DIAGNOSTICS_HEADER,parseMutationDiagnosticsHeader} from '../../workers/gate1-recovery-controller/mutation-diagnostics.mjs';
 
 const SHA=/^[a-f0-9]{64}$/,COMMIT=/^[a-f0-9]{40}$/;
 const final=s=>['RESTORED','ENDED_NO_MUTATION','NEEDS_OPERATOR'].includes(s?.phase);
@@ -40,7 +41,7 @@ export function createControllerHttpsTransport({origin,operatorToken}){
    try{const postData=body===undefined?undefined:JSON.stringify(body);check(postData===undefined||Buffer.byteLength(postData)<=8192);
     request=https.request(origin+route,{method:postData===undefined?'GET':'POST',rejectUnauthorized:true,headers:{Authorization:'Bearer '+operatorToken,'Content-Type':'application/json',...(postData?{'Content-Length':Buffer.byteLength(postData)}:{})}},response=>{
      response.on('data',b=>{if(done)return;size+=b.length;if(size>16384){response.destroy();abort();}else chunks.push(b);});response.on('error',abort);
-     response.on('end',()=>{if(!response.complete){abort();return;}finish(true,{status:response.statusCode,body:Buffer.concat(chunks).toString('utf8'),safeClosureGrantSha256:response.headers?.[GRANT_HEADER.toLowerCase()]??null});});
+     response.on('end',()=>{if(!response.complete){abort();return;}finish(true,{status:response.statusCode,body:Buffer.concat(chunks).toString('utf8'),safeClosureGrantSha256:response.headers?.[GRANT_HEADER.toLowerCase()]??null,mutationDiagnostics:response.headers?.[MUTATION_DIAGNOSTICS_HEADER.toLowerCase()]??null});});
     });request.on('error',abort);timer=setTimeout(abort,body===undefined?5000:25000);signal?.addEventListener('abort',abort,{once:true});if(signal?.aborted){abort();return;}request.end(postData);
    }catch{abort();}
   });
@@ -98,7 +99,8 @@ export function createControllerClient({runId,sourceCommit,predecessor=null,safe
   if(post)pendingSequence=route==='/v1/arm'?0:body.sequence;
   let resolveIdle,timer;ioIdle=new Promise(resolve=>{resolveIdle=resolve;});const controller=new AbortController();
   try{const response=await Promise.race([transport(route,body,{signal:controller.signal}),new Promise((_,rejectPromise)=>{timer=timers.setTimeout(()=>{controller.abort();rejectPromise(Error('CONTROLLER_HTTP_TIMEOUT'));},post?25000:5000);})]);check(Number.isInteger(response?.status)&&typeof response.body==='string'&&Buffer.byteLength(response.body)<=16384);
-   record({event:'HTTP_RECEIPT',status:response.status,bodySha256:hash(response.body)});check(response.status===200);return acceptState(parseStrictJson(response.body),{unarmed,post,cleanup,requestStartedAt,safeClosureGrantSha256:response.safeClosureGrantSha256});
+   const mutationDiagnostics=parseMutationDiagnosticsHeader(response.mutationDiagnostics);
+   record({event:'HTTP_RECEIPT',status:response.status,bodySha256:hash(response.body),...(response.status===200&&mutationDiagnostics?.runId===runId?{mutationDiagnostics}:{})});check(response.status===200);return acceptState(parseStrictJson(response.body),{unarmed,post,cleanup,requestStartedAt,safeClosureGrantSha256:response.safeClosureGrantSha256});
   }catch{uncertain=true;active?.abort();record({event:'HTTP_UNCONFIRMED',method:post?'POST':'GET',route});reject();}
   finally{timers.clearTimeout(timer);controller.abort();ioBusy=false;resolveIdle();}
  }

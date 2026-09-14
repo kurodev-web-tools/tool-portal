@@ -121,6 +121,14 @@ The non-live object emits only a fixed internal code; the caller exposes it only
 
 Cloudflare documents [RPC exception flags](https://developers.cloudflare.com/durable-objects/best-practices/error-handling/) and [initialization reset behavior](https://developers.cloudflare.com/durable-objects/api/state/#blockconcurrencywhile). `remote` can describe application or infrastructure errors; `retryable` is metadata, not permission to retry this controller's bounded attempt. These labels do not prove a specific platform outage or that an operation allowance is unused. Preserve the failed response before any client assertion, keep the original one-use claim, and apply only the independently authorized state-observation and closure procedure. An initial400 followed by UNARMED can be produced by several distinct failure paths and is not sufficient to select a root cause.
 
+### Live mutation diagnostics
+
+Live pause/restore requests retain a bounded observation alongside the existing operation outcome, in the same SQLite settlement transaction. The record distinguishes a pre-dispatch guard rejection (no provider POST), fetch failure, redirect/non-200 status, body read/size/decode/JSON failure, unexpected body shape, clock-window rejection and the original three-second deadline. It contains only allowlisted stage/code values, HTTP status, capped byte count, EOF flag and bounded elapsed milliseconds. It never contains exception text, response content, URLs, project references or credentials. A process interruption before settlement can still leave no observation; absence is not proof of any particular failure.
+
+Authenticated `GET /v1/state` carries these observations in the optional `X-Controller-Mutation-Diagnostics` header from the same Durable Object snapshot. Its canonical JSON has `schemaVersion: 1`, the run ID and up to four operation/outcome/observation entries, bounded to 4096 characters. The client copies only validated diagnostics for its own run from HTTP200 into the existing hash-chained, fsynced receipt journal. Invalid, missing or other-run headers are ignored; disabled and unauthenticated responses expose none. The original public state body, predecessor hashes and formal-stop proof remain unchanged. This requires no extra provider/Controller request, endpoint, table, binding or logging service.
+
+Diagnostics are never acceptance evidence or retry authority. HTTP200 with complete zero-byte body or exact `{}` remains the only mutation acceptance; the three-second deadline, 65536-byte body limit, one-use claims and automatic closing on UNKNOWN are unchanged. An old UNKNOWN without saved provider diagnostics cannot be retroactively classified as a timeout or an accepted mutation. Safe closure, formal stopping, synthetic Hosted rehearsal and Production recovery readiness remain separate results.
+
 ## Local verification
 
 Use the repository's installed dependencies from the feature worktree root:
@@ -128,6 +136,7 @@ Use the repository's installed dependencies from the feature worktree root:
 ```powershell
 node --test --test-concurrency=1 scripts/comment-translator-paid-core-v1-gate1-controller-client.test.mjs scripts/comment-translator-paid-core-v1-gate1-controller-proof.test.mjs workers/gate1-recovery-controller/core.test.mjs workers/gate1-recovery-controller/provider.test.mjs workers/gate1-recovery-controller/worker.test.mjs workers/gate1-recovery-controller/arm-diagnostics.test.mjs workers/gate1-recovery-controller/state-diagnostics.test.mjs workers/gate1-recovery-controller/predecessor.test.mjs
 node --test --test-concurrency=1 workers/gate1-recovery-controller/safe-closure.test.mjs workers/gate1-recovery-controller/safe-closure-worker.test.mjs scripts/comment-translator-paid-core-v1-gate1-safe-closure-client.test.mjs scripts/comment-translator-paid-core-v1-gate1-safe-closure.test.mjs
+node --test --test-concurrency=1 workers/gate1-recovery-controller/mutation-diagnostics.test.mjs workers/gate1-recovery-controller/mutation-diagnostics-worker.test.mjs scripts/comment-translator-paid-core-v1-gate1-controller-client.test.mjs
 node node_modules/eslint/bin/eslint.js workers/gate1-recovery-controller/*.mjs scripts/lib/comment-translator-paid-core-v1-gate1-controller-client.mjs scripts/lib/comment-translator-paid-core-v1-gate1-safe-closure.mjs scripts/comment-translator-paid-core-v1-gate1-safe-closure*.test.mjs scripts/fixtures/gate1-safe-closure.mjs --max-warnings 0
 node scripts/comment-translator-paid-core-v1-gate1-operator-contract.mjs
 $env:CLOUDFLARE_SEND_METRICS='false'

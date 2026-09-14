@@ -1,6 +1,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { claim, command, compatiblePredecessor, confirmDispatch, createRun, exact, nextAction, nextAlarm, observe, predecessorStateText, publicState, requireThat, settle, terminal, tick, validatePolicy } from './core.mjs';
 import { createProvider, parseCanonicalJson, readBody } from './provider.mjs';
+import { MUTATION_DIAGNOSTICS_HEADER, mutationDiagnosticsHeader, parseMutationDiagnosticsHeader, validMutationObservation } from './mutation-diagnostics.mjs';
 import { GRANT_HEADER, grantSha256, parseSafeClosureGrant, policySha256, sha256Text, validateClosureBinding, validateWorkerClosureTime } from './safe-closure.mjs';
 
 const json = (value, status = 200, headers = {}) => Response.json(value, { status, headers: { 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', ...headers } });
@@ -70,9 +71,11 @@ const controllerWorker = {
         // Legacy internal callers still receive the original projection. The
         // HTTP caller requests an envelope from the same DO snapshot; an older
         // object cannot accidentally supply a grant digest from outer env.
-        if (exact(result, ['state', 'safeClosureGrantSha256'])) {
+        if (exact(result, ['state', 'safeClosureGrantSha256']) || exact(result, ['state', 'safeClosureGrantSha256', 'mutationDiagnostics'])) {
           requireThat(result.safeClosureGrantSha256 === null || typeof result.safeClosureGrantSha256 === 'string' && /^[a-f0-9]{64}$/.test(result.safeClosureGrantSha256));
-          return json(result.state, 200, result.safeClosureGrantSha256 ? { [GRANT_HEADER]: result.safeClosureGrantSha256 } : {});
+          const headers=result.safeClosureGrantSha256 ? { [GRANT_HEADER]: result.safeClosureGrantSha256 } : {};
+          if(parseMutationDiagnosticsHeader(result.mutationDiagnostics))headers[MUTATION_DIAGNOSTICS_HEADER]=result.mutationDiagnostics;
+          return json(result.state, 200, headers);
         }
         return json(result);
       }
@@ -177,12 +180,12 @@ export class Gate1RecoveryController extends DurableObject {
       requireThat(current?.runId === runId);
       confirmDispatch(current, operation, Date.now());
     } catch {
-      this.change(runId, state => { settle(state, operation, 'UNKNOWN', Date.now()); tick(state, Date.now()); });
+      this.change(runId, state => { settle(state, operation, 'UNKNOWN', Date.now()); state.operations[operation].observation={stage:'DISPATCH',code:'DISPATCH_GUARD',httpStatus:null,bodyBytes:0,bodyComplete:false,elapsedMs:null}; tick(state, Date.now()); });
       await this.schedule();
       return;
     }
-    const outcome = await provider.mutate(operation);
-    this.change(runId, state => { settle(state, operation, outcome, Date.now()); tick(state, Date.now()); });
+    const {outcome,observation}=typeof provider.mutateObserved==='function'?await provider.mutateObserved(operation):{outcome:await provider.mutate(operation),observation:null};
+    this.change(runId, state => { settle(state, operation, outcome, Date.now()); if(validMutationObservation(observation))state.operations[operation].observation={...observation}; tick(state, Date.now()); });
     await this.refresh(runId, provider);
     await this.schedule();
   }
@@ -225,7 +228,7 @@ export class Gate1RecoveryController extends DurableObject {
       requireThat(!state || samePolicy(state.policy, policy) || compatiblePredecessor(state, policy) || closure);
       stage = 'STATE_PROJECTION';
       const projection = state ? publicState(state) : { phase: 'UNARMED', gate: 'NO-GO', formalStopAccepted: false };
-      return envelope ? { state: projection, safeClosureGrantSha256: closure?.grantDigest ?? null } : projection;
+      return envelope ? { state: projection, safeClosureGrantSha256: closure?.grantDigest ?? null, mutationDiagnostics: mutationDiagnosticsHeader(state) } : projection;
     } catch (error) {
       throw stateFailure(this.env, error, stage);
     }

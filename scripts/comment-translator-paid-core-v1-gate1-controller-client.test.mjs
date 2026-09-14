@@ -13,6 +13,7 @@ import {proofFixture} from './fixtures/gate1-controller-proof.mjs';
 import {createRun,command,observe,claim,settle,publicState,tick,nextAction} from '../workers/gate1-recovery-controller/core.mjs';
 import {createRehearsalExecutor,REHEARSAL_IDENTITY_SQL} from './lib/comment-translator-paid-core-v1-gate1-rehearsal-executor.mjs';
 import {REHEARSAL_TRANSFER_TABLES,REHEARSAL_READBACK_SQL} from './lib/comment-translator-paid-core-v1-gate1-rehearsal-transfer.mjs';
+import {MUTATION_DIAGNOSTICS_HEADER,mutationDiagnosticsHeader} from '../workers/gate1-recovery-controller/mutation-diagnostics.mjs';
 const observerBindings=Object.fromEntries(['preview','recovery'].map(role=>[role,{sourceBindingSha256:'c'.repeat(64),observerSha256:'d'.repeat(64),bridgeSha256:'e'.repeat(64)}]));
 const policy={mode:'live',previewRef:'p'.repeat(20),recoveryRef:'r'.repeat(20),productionRef:'x'.repeat(20),organizationId:'synthetic-org',sourceCommit:'a'.repeat(40),emergencyPreviewResume:true};
 function fixture(t,overrides={},serverOffsetMs=0){
@@ -109,15 +110,24 @@ test('native HTTPS uses one bound request, keeps redirects unaccepted and cancel
    requests++;assert.equal(url,'https://v-streamer-tools-gate1-recovery-controller-live.fixture.workers.dev/v1/state');assert.equal(options.method,'GET');assert.equal(options.rejectUnauthorized,true);assert.equal(options.headers.Authorization,'Bearer '+'s'.repeat(64));
    const request=new EventEmitter();request.destroy=()=>{destroyed++;};request.end=()=>queueMicrotask(()=>{
     if(mode==='cancel'){controller.abort();return;}
-    const response=new EventEmitter();response.statusCode=mode==='redirect'?302:200;response.complete=mode!=='partial';response.destroy=()=>{};callback(response);response.emit('data',Buffer.from(mode==='oversized'?'x'.repeat(16385):'{}'));response.emit('end');
+    const response=new EventEmitter();response.statusCode=mode==='redirect'?302:200;response.headers={[MUTATION_DIAGNOSTICS_HEADER.toLowerCase()]:'diagnostic-transport-fixture'};response.complete=mode!=='partial';response.destroy=()=>{};callback(response);response.emit('data',Buffer.from(mode==='oversized'?'x'.repeat(16385):'{}'));response.emit('end');
    });return request;
   });
   const transport=createControllerHttpsTransport({origin:'https://v-streamer-tools-gate1-recovery-controller-live.fixture.workers.dev',operatorToken:'s'.repeat(64)});
   const operation=transport('/v1/state',undefined,{signal:controller.signal});
-  if(['complete','redirect'].includes(mode)){const result=await operation;assert.equal(result.status,mode==='redirect'?302:200);assert.equal(destroyed,0);}else{await assert.rejects(operation,/CONTROLLER_HTTP_REJECTED/);assert.equal(destroyed,1);}
+  if(['complete','redirect'].includes(mode)){const result=await operation;assert.equal(result.status,mode==='redirect'?302:200);assert.equal(result.mutationDiagnostics,'diagnostic-transport-fixture');assert.equal(destroyed,0);}else{await assert.rejects(operation,/CONTROLLER_HTTP_REJECTED/);assert.equal(destroyed,1);}
   assert.equal(requests,1);
  });
 });
+test('client journals only bounded diagnostics for its run without changing acceptance',async t=>{
+ const header=mutationDiagnosticsHeader({runId:'b'.repeat(64),operations:{previewPause:{outcome:'UNKNOWN',observation:{stage:'HEADERS',code:'HTTP_STATUS',httpStatus:403,bodyBytes:0,bodyComplete:false,elapsedMs:2}}}});
+ for(const source of [header,header.replace('"runId":"'+'b'.repeat(64),'"runId":"'+'f'.repeat(64)),JSON.stringify({...JSON.parse(header),private:'PRIVATE_SENTINEL'}),null]){
+  const f=fixture(t),client=createControllerClient({...f.options,transport:async(...args)=>({...await f.transport(...args),mutationDiagnostics:source})});t.after(()=>client.dispose());
+  const state=await client.start({sha256:'d'.repeat(64),verifiedAt:f.clock()});assert.equal(state.phase,'ARMED');assert.equal(Object.hasOwn(state,'mutationDiagnostics'),false);assert.equal(f.calls.length,2);
+  const rows=f.rows.filter(r=>r.mutationDiagnostics);assert.equal(rows.length,source===header?2:0);assert.equal(JSON.stringify(f.rows).includes('PRIVATE_SENTINEL'),false);
+ }
+});
+
 test('formal Preview proof is required before progress and a distinct resume authority digest',async t=>{
  const f=fixture(t);await f.start();await f.client.pausePreview();
  await assert.rejects(f.client.resumeRecovery({formalStopAccepted:true}),/CONTROLLER_.*REJECTED/);

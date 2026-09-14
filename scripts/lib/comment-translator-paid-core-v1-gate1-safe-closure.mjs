@@ -227,6 +227,62 @@ export async function verifyClosedDeploymentTransition(input){return guarded(asy
  deploymentProofs.set(proof,freeze({retained,proof,policy,closedAt:r.at,unusedRunId:historicalManifest.runId}));return proof;
 });}
 
+// This registration accepts one reviewed, immutable closure only. retry9 started
+// a client and later sent a local abort, but never armed or sent client HTTP.
+// Neither the retry4 adapter nor the original UNKNOWN proof is reinterpreted.
+export async function verifyRetry9ClosedDeploymentTransition(input){return guarded(async()=>{
+ const retained=input.retained,old=retainedProofs.get(retained),previous=deploymentProofs.get(input.previousDeployment);
+ check(old&&previous?.retained===retained,'retry9-proof-brand');
+ check(previous.proof.receiptSha256==='9ec45257472b9e45622e89b00036816d4a108e4cd0838928187d5068f467456d','retry9-prior-deployment');
+ const p=structuredClone(input.packet),prefix='.tmp/gate1-live-execution-20260914-retry9';
+ check(exact(p,['schemaVersion','format','prefix','receipt','index'])&&p.schemaVersion===1&&p.format==='GATE1_RETRY9_CLIENT_PREARM_20260914_V1'&&p.prefix===prefix,'retry9-format');
+ check(p.receipt.file===prefix+'/control/final-receipt.json'&&p.receipt.sha256==='6cebbcb9384cd9aaa8c96ace7f7cce6f0ff0ed2db37b3646737a77268c163550'&&p.index.file===prefix+'/control/closure-evidence.json'&&p.index.sha256==='5d4fbd6d784c6e8e2e0494308b4e9911905402560412bf76254c0705f18a4a87','retry9-registration-pin');
+ const root=await directory(input.root),staticRoot=await directory(input.staticRoot),backupRoot=await directory(input.backupRoot),budget={bytes:0};
+ check(path.resolve(backupRoot)===path.resolve('D:/Gate1Backups/preview-prepause-20260914040422567'),'retry9-backup-root');
+ const r=await readFile(root,p.receipt,budget,{json:true}),index=await readFile(root,p.index,budget,{json:true}),pins=[];
+ check(r.schemaVersion===1&&r.allocation==='SAFE_CLOSURE_RETRY_9'&&r.status==='PREARM_CLIENT_START_REJECTED_SAFE_CLOSED'&&r.scopeClosed===true&&r.closureEvidenceSha256===p.index.sha256,'retry9-closed');
+ check(index.files.length===293&&index.primaryFiles.length===7&&index.protectedBackupFiles.length===4&&index.priorEvidenceUnchanged===true,'retry9-coverage');
+ unique(index.files,d=>relative(d.file).toLowerCase(),'retry9-duplicate');const files=new Map();
+ for(const d of index.files){check(relative(d.file).startsWith(prefix+'/')&&d.file!==p.receipt.file&&d.file!==p.index.file,'retry9-reference');await readFile(root,d,budget);files.set(d.file.slice(prefix.length+1),d);pins.push({root:'packet',...d});}
+ const get=async name=>{check(files.has(name),'retry9-required-receipt');return readFile(root,files.get(name),{bytes:0},{json:true});};
+ const expected=[...index.files.map(d=>d.file),p.receipt.file,p.index.file],dirs=new Set([prefix+'/.wrangler',prefix+'/.wrangler/tmp']);
+ for(const file of expected){let dir=path.posix.dirname(file);while(dir!==prefix){dirs.add(dir);dir=path.posix.dirname(dir);}}
+ const inventory=[];let visited=0;
+ async function walk(dir,rel){for(const e of await fs.readdir(dir,{withFileTypes:true})){check(++visited<=ENTRY_LIMIT&&!e.isSymbolicLink(),'retry9-inventory-bound');const name=rel+'/'+e.name;if(e.isDirectory()){check(dirs.has(name),'retry9-unexpected-directory');await walk(path.join(dir,e.name),name);}else{check(e.isFile(),'retry9-file-kind');inventory.push(name);}}}
+ await walk(path.join(root,prefix),prefix);check(same(inventory.sort(),expected.sort()),'retry9-inventory');
+ const primaryPrefix='.tmp/gate1-retry9-execution-20260914/';
+ check(same(index.primaryFiles.map(d=>d.file).sort(),['accept-safe-closure.mjs','audit-closure.mjs','authorize.mjs','record-closing-ui.mjs','record-pat-ui.mjs','seal-closure.mjs','update-docs.mjs'].map(n=>primaryPrefix+n).sort()),'retry9-primary-coverage');
+ for(const d of index.primaryFiles){await readFile(root,d,budget);pins.push({root:'primary',...d});}
+ const manifest=await get('manifest.json'),baseline=await get('existing-worker-baseline.json'),prior=await get('closed-deployment.json');
+ check(manifest.files.length===193&&files.get('manifest.json').sha256===r.manifestSha256&&manifest.sourceCommit===r.sourceCommit&&prior.evidenceSha256===previous.proof.evidenceSha256&&prior.packet.receipt.sha256===previous.proof.receiptSha256&&sha(baseline.version)===previous.proof.closedVersionSha256&&baseline.namespaceSha256===old.packet.namespaceSha256&&baseline.retainedEvidenceSha256===retained.evidenceSha256&&baseline.predecessorStateSha256===old.packet.predecessor.stateSha256,'retry9-static-binding');
+ unique(manifest.files,d=>d.file.toLowerCase(),'retry9-static-duplicate');
+ for(const d of manifest.files){await readFile(staticRoot,{...d,file:d.sha256},budget);pins.push({root:'static',...d});if(d.file.startsWith(prefix+'/'))check(same(files.get(d.file.slice(prefix.length+1)),d),'retry9-static-packet');}
+ const backups=new Map();unique(index.protectedBackupFiles,d=>path.basename(d.file).toLowerCase(),'retry9-backup-duplicate');
+ check(same(index.protectedBackupFiles.map(d=>path.basename(d.file)).sort(),['before-state.json','live-synthetic-source-context.json','preservation-query.sql','preview.dump'].sort()),'retry9-backup-coverage');
+ for(const d of index.protectedBackupFiles){check(path.isAbsolute(d.file)&&path.resolve(path.dirname(d.file))===backupRoot,'retry9-backup-location');const pin={...d,file:path.basename(d.file)};await readFile(backupRoot,pin,budget);backups.set(pin.file,pin);pins.push({root:'backup',...pin});}
+ const before=contentState(await readFile(backupRoot,backups.get('before-state.json'),{bytes:0},{json:true}));check(same(before,old.before),'retry9-preview-preserved');
+ const policy=validatePolicy({...await get('policy.targets.private.json'),sourceCommit:r.sourceCommit}),closed=await get('control/final-worker-closed.json'),ui=await get('control/primary-closing-worker-ui.json'),audit=await get('control/primary-final-audit.json'),safe=await get('control/safe-closure.json');
+ check(Object.keys(old.packet.policy).every(k=>k==='sourceCommit'||policy[k]===old.packet.policy[k]),'retry9-targets');
+ check(closed.status==='FINAL_WORKER_DISABLED_AND_CREDENTIALS_REMOVED'&&closed.mode==='disabled'&&closed.httpStatus===503&&closed.activeVersionConfirmed===true&&closed.trafficPercentage===100&&closed.remainingSecrets===1&&closed.policyRetained===true&&closed.namespacePreserved===true&&sha(closed.version)===r.closure.finalWorkerVersionSha256&&sha(closed.version)!==previous.proof.closedVersionSha256,'retry9-final-version');
+ check(ui.versionSha256===sha(closed.version)&&ui.namespaceSha256===old.packet.namespaceSha256&&ui.source==='PRIMARY_OBSERVED_CURRENT_UI'&&ui.mode==='disabled'&&same(ui.remainingSecretNames,['CONTROLLER_POLICY_JSON']),'retry9-ui');
+ check(audit.status==='PRIMARY_PREARM_CLIENT_FAILURE_CLOSURE_AUDIT_PASS'&&audit.finalWorkerVersionSha256===sha(closed.version)&&audit.namespaceSha256===old.packet.namespaceSha256&&audit.retainedEvidenceSha256===retained.evidenceSha256&&audit.oldEvidencePreserved===true&&['processes','listeners','containers','volumes'].every(k=>audit.owned[k]===0),'retry9-independent-audit');
+ check(safe.status==='PRIMARY_PREARM_NO_HTTP_SAFE_CLOSURE_ACCEPTED'&&safe.safeToDisable===true&&safe.clientHttpAttempts===0&&safe.armSent===false&&safe.hostedLifecycleRequested===false&&safe.formalStopAccepted===false&&safe.ownedProcesses===0&&safe.ownedListeners===0,'retry9-safe-closure');
+ const terminal=await get('control/closing-state-initial.json');check(terminal.httpStatus===200&&sha(previewUnknownClosureStateText(terminal.state))===old.packet.predecessor.stateSha256,'retry9-original-unknown');
+ const executed=r.executed;for(const [k,n] of Object.entries({helperStarts:17,helperSuccessReceipts:17,verifiedStages:16,grantsIssued:1,secretBatches:1,codeUploads:2,clientStartClaims:1,clientHttpAttempts:0,localAbortCommands:1,abortHttpPosts:0,observerStarts:0,armPosts:0,hostedConfigurationWrites:0,hostedTransfers:0,productionSqlOrConfig:0}))check(executed[k]===n,'retry9-execution');
+ check(Object.values(executed.hostedLifecycleClaims).every(n=>n===0)&&same(executed.controllerHttp,{posts:0,gets:4,clientGets:0,independentGets:4,total:4}),'retry9-no-http');
+ const abort=await get('runtime/command-1.receipt.json');check(abort.sequence===1&&abort.type==='abort'&&abort.state===null&&abort.formalRecoveryStopAccepted===false,'retry9-local-abort');
+ check(![...files.keys()].some(n=>/^control\/timed-runner\/(stage-(17|18)-|helper-(observer|arm)-)/.test(n)),'retry9-no-arm-claim');
+ check(r.acceptance.gate1==='NO_GO'&&r.acceptance.formalStopAccepted===false&&r.acceptance.hostedAccepted===false&&r.acceptance.artifactIdentity==='UNKNOWN'&&r.preserved.priorUnknownOutcome===true&&r.closure.patRevocationComplete401===3&&r.closure.oauthRevokeHttpStatus===200&&r.closure.cliLoggedIn===false&&r.closure.runtimeSecretsDeleted===3&&r.closure.recoveryState==='INACTIVE'&&r.limits.allowanceReusable===false&&r.limits.grantRenewed===false,'retry9-outcomes');
+ const historical=await get('fresh/verification.json'),historicalManifest=await get('fresh/manifest.json'),approval=await get('approval.json');
+ const verified=await verifySafeClosureEvidence({retained,closedDeployment:input.previousDeployment,root,producerRoot:root,manifest:files.get('fresh/manifest.json'),approval:files.get('fresh/approval.json'),index:files.get('fresh/index.json'),now:()=>historical.verifiedAt});
+ const grantText=await readFile(root,files.get('fresh/grant.json'),{bytes:0},{text:true}),grant=parseSafeClosureGrant(grantText);
+ check(historical.evidenceSha256===verified.evidenceSha256&&grant.closureEvidenceSha256===verified.evidenceSha256&&historical.grantSha256===sha(GRANT_PREFIX+grantText)&&same(grant.predecessor,old.packet.predecessor)&&grant.successor.runId===historicalManifest.runId&&grant.policySha256===policyDigest(policy),'retry9-historical-grant');
+ const closedAt=date(r.closedAt);check(closedAt>=closed.at&&closedAt>=ui.at&&closedAt>=audit.at&&approval.authorizedAt>previous.closedAt&&closedAt>approval.authorizedAt,'retry9-time');
+ const evidenceSha256=sha(canonicalJson({schemaVersion:1,format:p.format,retainedEvidenceSha256:retained.evidenceSha256,previousDeploymentEvidenceSha256:previous.proof.evidenceSha256,receipt:p.receipt,index:p.index,files:pins}));
+ const proof=freeze({schemaVersion:1,kind:'GATE1_CLOSED_DEPLOYMENT_VERIFIED_V1',evidenceSha256,retainedEvidenceSha256:retained.evidenceSha256,receiptSha256:p.receipt.sha256,closedVersionSha256:sha(closed.version),policySha256:policyDigest(policy),namespaceSha256:old.packet.namespaceSha256,closedAt});
+ deploymentProofs.set(proof,freeze({retained,proof,policy,closedAt,unusedRunId:historicalManifest.runId}));return proof;
+});}
+
 function revokedPreviousAllocation(rows){check(Array.isArray(rows)&&rows.length===3,'previous-pat-coverage');unique(rows,r=>r.role,'previous-pat-duplicate');check(rows.every(r=>['controllerPat','configurationToken','metadataReadPat'].includes(r.role)&&r.httpStatus===401&&r.complete===true&&r.revoked===true),'previous-pat-revocation');}
 
 function metadataFresh(m,policy){

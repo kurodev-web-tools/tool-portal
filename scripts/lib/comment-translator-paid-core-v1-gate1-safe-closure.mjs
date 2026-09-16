@@ -49,12 +49,19 @@ async function readFile(root,d,budget,{json=false,text=false}={}){
   if(json||text){const decoded=new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(chunks));return json?parseStrictJson(decoded):decoded;}
  }finally{await handle.close();}
 }
+
+// Shared bounded reader for the adopted fixed-checkpoint execution path. The
+// caller must supply reviewed expected digests; this never generates authority.
+export async function readPinnedSafeClosureJson({root,descriptor:pin}){
+ return guarded(async()=>structuredClone(await readFile(await directory(root),structuredClone(pin),{bytes:0},{json:true})));
+}
 function contentState(s){
  check(s&&s.serverMajor===17&&s.readOnly==='on'&&s.tls===true&&s.historyCount===56&&s.vaultCount===2&&s.storageCount===0&&s.cronActive===0&&s.otherActiveClients===0,'preview-state');
  check(Array.isArray(s.relations)&&s.relations.length===77,'relation-coverage');
  for(const r of s.relations)check(exact(r,['owner','relacl','nspname','relkind','relname','contents','relrowsecurity','relforcerowsecurity'])&&typeof r.owner==='string'&&r.owner.length>0&&(r.relacl===null||Array.isArray(r.relacl)&&r.relacl.every(x=>typeof x==='string'))&&typeof r.nspname==='string'&&r.nspname.length>0&&typeof r.relname==='string'&&r.relname.length>0&&r.relkind==='r'&&hash(r.contents)&&typeof r.relrowsecurity==='boolean'&&typeof r.relforcerowsecurity==='boolean','relation-schema');
  unique(s.relations,r=>JSON.stringify([r.nspname,r.relname]),'duplicate-relation');return s;
 }
+export {contentState as validateGate1PreviewContent};
 function revoked(rows){check(Array.isArray(rows)&&rows.length===2,'pat-coverage');unique(rows,r=>r.role,'pat-duplicate');check(rows.every(r=>['controllerPat','configurationToken'].includes(r.role)&&r.httpStatus===401&&r.complete===true&&r.revoked===true),'pat-revocation');}
 function metadataLegacy(m){
  check(m.source==='SUPABASE_INDEPENDENT_CONNECTED_MCP_METADATA'&&m.plan==='free'&&m.additionalChargeCeilingUSD===0&&m.projectOperationsPerformed===0&&m.productionSQLPerformed===false,'legacy-metadata');

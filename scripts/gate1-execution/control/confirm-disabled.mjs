@@ -1,0 +1,10 @@
+import {verifyClosingEnvironment} from '../run-closure.mjs';
+import fs from 'node:fs';
+import {ROOT} from '../execution-inputs.mjs';
+import {guard,CONTROL,json,save,check,readCredentials} from './common.mjs';
+import {createControllerHttpsTransport} from '../../lib/comment-translator-paid-core-v1-gate1-controller-client.mjs';
+import {controllerBudget} from '../http-budget.mjs';
+const a=guard({closure:true});await verifyClosingEnvironment(a);if(fs.existsSync(CONTROL+'/deploy-live-claimed.json'))check(json(CONTROL+'/version-close.json').mode==='disabled');else {check(!fs.existsSync(CONTROL+'/initial-secrets-claimed.json'));const retained=json(CONTROL+'/closing-state-terminal.json');check(retained.httpStatus===503&&retained.error==='DISABLED');}const before=json(CONTROL+'/safe-closure.json').controllerApplicationRequests;check(Number.isSafeInteger(before)&&before>=0&&before<=126);const gets=json(CONTROL+'/safe-closure.json').controllerGets;check(Number.isSafeInteger(gets)&&gets>=0&&gets<=94);
+check(controllerBudget({reserve:2}).gets===gets);save('disabled-get-claimed.json',{at:Date.now(),method:'GET',route:'/v1/state',applicationGetNumber:gets+1,applicationGetMaximum:96});
+const r=await createControllerHttpsTransport({origin:a.manifest.controllerOrigin,operatorToken:readCredentials().operatorToken})('/v1/state');const ok=r.status===503&&JSON.parse(r.body).error==='DISABLED';
+save('disabled-confirmed.json',{at:Date.now(),status:ok?'DISABLED_CONFIRMED':'DISABLED_UNCONFIRMED',httpStatus:r.status,applicationRequests:before+1,error:ok?'DISABLED':null});check(ok);console.log(JSON.stringify({status:'DISABLED_CONFIRMED',httpStatus:503,applicationRequests:before+1}));

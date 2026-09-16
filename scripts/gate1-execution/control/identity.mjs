@@ -1,0 +1,3 @@
+import {guard,cli,check,json,save,CONTROL,config,scopes} from './common.mjs';
+guard();check(json(CONTROL+'/oauth-login-result.json').exitCode===0);const result=cli(['whoami','--json']);let v;try{v=JSON.parse(result.stdout)}catch{}check(result.status===0&&v?.loggedIn===true,'OAUTH_IDENTITY_FAILED');
+const r={at:Date.now(),loggedIn:true,authType:v.authType,accountCount:v.accounts?.length??0,expectedAccountMatch:v.accounts?.some(x=>x.id===json(config).account_id)===true,tokenPermissions:v.tokenPermissions??[]};check(r.accountCount===1&&r.expectedAccountMatch&&JSON.stringify([...r.tokenPermissions].sort())===JSON.stringify(scopes),'OAUTH_SCOPE_ACCOUNT_MISMATCH');save('oauth-identity.json',r);console.log(JSON.stringify(r));

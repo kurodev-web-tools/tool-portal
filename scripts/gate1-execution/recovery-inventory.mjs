@@ -1,0 +1,21 @@
+import {nativeBinding} from './execution-inputs.mjs';
+import {ROOT} from './execution-inputs.mjs';
+import {requireLiveAuthorization} from './execution-inputs.mjs';
+requireLiveAuthorization();
+import fs from 'node:fs';import path from 'node:path';import assert from 'node:assert/strict';import {spawnSync} from 'node:child_process';import {createHash} from 'node:crypto';
+import {parseRecoveryTargetBinding,buildPsqlInvocation} from '../comment-translator-paid-core-v1-gate1-preflight-readonly.mjs';
+import {ATOMIC_MANAGED_SHAPE_SQL} from '../lib/comment-translator-paid-core-v1-gate1-atomic-restore.mjs';
+import {REHEARSAL_TRANSFER_TABLES} from '../lib/comment-translator-paid-core-v1-gate1-rehearsal-transfer.mjs';
+const root=ROOT+'/',s=nativeBinding('recovery'),bin=s.postgresBin;const invocation=buildPsqlInvocation(s.binding,{PATH:bin+path.delimiter+process.env.PATH,SystemRoot:process.env.SystemRoot,PGHOST:s.binding.host,PGPORT:'5432',PGDATABASE:'postgres',PGUSER:'postgres',PGSSLMODE:'verify-full',PGSSLROOTCERT:s.caFile,PGPASSWORD:fs.readFileSync(s.credentialFile,'utf8').replace(/^\uFEFF/,'').replace(/\r?\n$/,'')});assert.equal(invocation.ok,true);
+const tableValues=REHEARSAL_TRANSFER_TABLES.map(t=>"('"+t+"')").join(',');
+const query=`BEGIN READ ONLY; SET LOCAL statement_timeout='5000ms';
+WITH listed(name) AS (VALUES ${tableValues}), counts AS (SELECT name, to_regclass(name) IS NOT NULL AS present, CASE WHEN to_regclass(name) IS NOT NULL THEN ((xpath('/table/row/count/text()',query_to_xml(format('SELECT count(*) AS count FROM %s',to_regclass(name)),false,false,'')))[1]::text)::bigint END AS rows FROM listed)
+SELECT json_build_object('serverMajor',current_setting('server_version_num')::int/10000,'readOnly',current_setting('transaction_read_only'),'role',current_user,'superuser',(SELECT rolsuper FROM pg_roles WHERE rolname=current_user),'tls',(SELECT ssl FROM pg_stat_ssl WHERE pid=pg_backend_pid()),'managedShapeSha256',${ATOMIC_MANAGED_SHAPE_SQL},'tables',(SELECT json_agg(counts) FROM counts),'storageBuckets',(SELECT count(*) FROM storage.buckets),'storageObjects',(SELECT count(*) FROM storage.objects),'ssoProviders',(SELECT count(*) FROM auth.sso_providers),'publicRelations',(SELECT json_agg(c.relname ORDER BY c.relname) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind IN ('r','p')),'storageRelations',(SELECT json_agg(c.relname ORDER BY c.relname) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='storage' AND c.relkind IN ('r','p')),'publications',(SELECT json_agg(json_build_object('schema',schemaname,'table',tablename) ORDER BY schemaname,tablename) FROM pg_publication_tables WHERE pubname='supabase_realtime')); ROLLBACK;`;
+const r=spawnSync(path.join(bin,'psql.exe'),invocation.args,{env:invocation.env,input:query,encoding:'utf8',windowsHide:true,timeout:10000,maxBuffer:65536});
+let report={status:'NOT_ACCEPTED',target:'recovery',dbWrites:0,checkedAt:new Date().toISOString()};
+try{assert.equal(r.status,0);assert.equal(r.stderr,'');const value=JSON.parse(r.stdout);assert.equal(value.serverMajor,17);assert.equal(value.role,'postgres');assert.equal(value.superuser,false);assert.equal(value.tls,true);assert.equal(value.readOnly,'on');assert.ok(value.tables.every(t=>!t.present||t.rows===0));assert.equal(value.storageBuckets,0);assert.equal(value.storageObjects,0);assert.equal(value.ssoProviders,0);
+ const managedShapeAccepted=['2c7ef5df6baeae47ac2dd21b566e77177578cc2aa7c36d5921866434f4bc2d4c','8358275c2842cfe35ab42bc5280bcfa95f253435da9363f998dcfcfde7b68b4a'].includes(value.managedShapeSha256);
+ report={...report,status:'READONLY_INVENTORY',managedShapeAccepted,value};
+}catch{process.exitCode=1;}
+fs.writeFileSync(root+'recovery-inventory.json',JSON.stringify(report,null,2),{flag:'wx'});
+console.log(JSON.stringify({...report,value:report.value?{managedShapeSha256:report.value.managedShapeSha256,tableCount:report.value.tables.length,presentTables:report.value.tables.filter(t=>t.present).length,allPresentTablesEmpty:report.value.tables.every(t=>!t.present||t.rows===0),storageBuckets:report.value.storageBuckets,storageObjects:report.value.storageObjects,ssoProviders:report.value.ssoProviders}:undefined}));

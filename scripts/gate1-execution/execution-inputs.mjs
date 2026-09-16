@@ -42,6 +42,9 @@ export function validateApproval(a,now){
 // still come from the approved source manifest, never from this discovery.
 export function requiredSources(){
  const found=new Set(fs.readdirSync(SOURCE_ROOT,{recursive:true}).filter(f=>f.endsWith('.mjs')).map(f=>'scripts/gate1-execution/'+f.replaceAll('\\','/')));
+ // Native synthetic generation executes this unchanged local foundation SQL.
+ // Pin its published bytes as source, not just the importing JavaScript.
+ found.add('supabase/migrations/20260527000000_account_preferences_foundation.sql');
  for(const file of found){const text=fs.readFileSync(safeFile(REPOSITORY,file),'utf8');
   for(const m of text.matchAll(/(?:from\s*|import\s*\(\s*|import\s*)['"]([^'"]+\.mjs)['"]/g)){
    if(!m[1].startsWith('.'))continue;const absolute=path.resolve(REPOSITORY,path.dirname(file),m[1]);assert.ok(absolute.startsWith(REPOSITORY+path.sep));found.add(path.relative(REPOSITORY,absolute).replaceAll('\\','/'));

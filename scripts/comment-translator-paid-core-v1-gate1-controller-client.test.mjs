@@ -233,3 +233,35 @@ test('real workerd live adapter closes after client stage failure with four prov
  const deadline=Date.now()+16000;let state;do{state=await client.observeClosure();if(state.phase==='RESTORED')break;await new Promise(r=>setTimeout(r,250));}while(Date.now()<deadline);
  assert.equal(state.phase,'RESTORED');assert.deepEqual(mutations,['preview/pause','recovery/restore','recovery/pause','preview/restore']);assert.equal(state.sequence,4);assert.equal(state.formalStopAccepted,false);assert.equal(rows.filter(r=>r.event==='CLOSE_ATTEMPT').length,1);
 });
+
+// The new producer boundary uses the existing client stop path; no provider I/O.
+test('synthetic input boundary stops on missing input or generation failure without transfer',async t=>{
+ const {prepareSyntheticStage,transferSyntheticStage}=await import('./gate1-execution/synthetic-inputs.mjs');
+ const f=fixture(t,{stagePlan:{'fixtures-ready':r=>r.status==='LOCAL_FIXTURES_READY','synthetic-transfer':r=>r.status==='SYNTHETIC_TRANSFER_VERIFIED'}});await f.resumed();let generated=0;
+ await assert.rejects(prepareSyntheticStage(f.client,{local:true},{},{source:{},collectTarget:async()=>{throw Error('INVENTORY_UNCONFIRMED');},freezeSource:()=>generated++}));
+ assert.equal(generated,0);assert.equal(f.calls.filter(c=>c.body?.type==='abort').length,1);
+ const g=fixture(t,{stagePlan:{'synthetic-transfer':()=>true}});await g.resumed();let transfers=0;
+ await assert.rejects(transferSyntheticStage(g.client,{local:true,root:'Z:/absent-gate1-local-input'},{runId:'b'.repeat(64)},()=>{transfers++;}));
+ assert.equal(transfers,0);assert.equal(g.calls.filter(c=>c.body?.type==='abort').length,1);
+});
+test('synthetic input boundary honours existing stage cancellation without consuming fixture data',async t=>{
+ const {prepareSyntheticStage}=await import('./gate1-execution/synthetic-inputs.mjs');
+ const f=fixture(t,{stagePlan:{'fixtures-ready':()=>true}});await f.resumed();let calls=0;
+ const result=prepareSyntheticStage(f.client,{local:true},{},{source:{},collectTarget:()=>new Promise(()=>{}),freezeSource:()=>calls++});
+ const rejected=assert.rejects(result);await new Promise(r=>setImmediate(r));
+ const timer=[...f.scheduled.values()].find(x=>x.ms===60000);assert.ok(timer);timer.fn();await rejected;
+ assert.equal(calls,0);assert.equal(f.calls.filter(c=>c.body?.type==='abort').length,1);
+});
+
+test('native input missing recipe and in-flight cancellation use one existing abort and no generation',async t=>{
+ const {prepareNativeSyntheticStage,SIGNING_LIMITS}=await import('./gate1-execution/native-synthetic-inputs.mjs');
+ for(const pending of [false,true]){
+  const f=fixture(t,{stagePlan:{'fixtures-ready':()=>true}});await f.resumed();
+  const base=path.resolve('.tmp/gate1-local-acceptance');fs.mkdirSync(base,{recursive:true});const root=fs.mkdtempSync(path.join(base,'native-boundary-'));fs.mkdirSync(root+'/runtime');
+  const context={local:true,root,manifestSha256:'c'.repeat(64)},identity={runId:f.options.runId,manifestSha256:context.manifestSha256,projectRef:policy.recoveryRef};let generation=0,http=0,aborted=false;
+  const recipe={kind:'GATE1_NATIVE_SYNTHETIC_INPUT_V1',projectRef:policy.recoveryRef,legacyAnonKeyId:'anon',signingEvidence:'ADMIN_ROUTE_SIGNATURE_REJECTION_V1',signingLimits:SIGNING_LIMITS};
+  const promise=prepareNativeSyntheticStage(f.client,context,identity,{recipe:pending?recipe:null,apiInput:{projectRef:policy.recoveryRef,key:'sb_publishable_synthetic_only'},configurationToken:'fixture',makeSource:()=>({oldKey:'s'.repeat(64),verify(){},api(){generation++;}}),collectTarget:()=>{generation++;},request:({signal})=>{http++;return new Promise(resolve=>signal.addEventListener('abort',()=>{aborted=true;resolve({status:null,complete:false});},{once:true}));}});
+  const rejection=assert.rejects(promise);await new Promise(r=>setImmediate(r));if(pending){const timer=[...f.scheduled.values()].find(x=>x.ms===60000);assert.ok(timer);timer.fn();}
+  await rejection;assert.equal(generation,0);assert.equal(http,pending?1:0);assert.equal(aborted,pending);assert.equal(f.calls.filter(c=>c.body?.type==='abort').length,1);
+ }
+});

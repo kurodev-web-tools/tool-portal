@@ -1,3 +1,4 @@
+import {generateSyntheticInputs} from './gate1-execution/synthetic-inputs.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
@@ -49,14 +50,7 @@ async function startAuth(suffix,key,closure={}){const id=run(suffix,'public.ecr.
  for(let i=0;i<60;i++){try{if(api('/health').status===200)return id;}catch{}await wait(500);}throw Error('AUTH_TIMEOUT');}
 const requireSession=(r,user)=>{assert.equal(r.status,200);assert.equal(r.data.user.id,user.id);assert.ok(r.data.access_token);assert.equal(api('/user',null,r.data.access_token).status,200);return r.data;};
 const aliases=['magiclink','recovery','email_change'];
-async function issue(type,user){const verifier=randomBytes(32).toString('base64url'),challenge=createHash('sha256').update(verifier).digest('base64url');
- const body={code_challenge:challenge,code_challenge_method:'s256',email:type==='email_change'?randomBytes(8).toString('hex')+'@example.test':user.email};
- const r=type==='email_change'?api('/user',body,user.accessToken,'PUT'):api(type==='recovery'?'/recover':'/magiclink',body);
- assert.equal(r.status,200);
- const row=JSON.parse(sql('SELECT to_jsonb(f) FROM auth.flow_state f WHERE user_id='+lit(user.id)+' AND authentication_method='+lit(type)+' ORDER BY created_at DESC LIMIT 1;'));
- assert.equal(row.provider_type,type);assert.equal(row.code_challenge,challenge);assert.ok(row.auth_code);
- return {body:{auth_code:row.auth_code,code_verifier:verifier},expiresAt:Date.parse(row.created_at)+300000};
-}
+
 try{
  for(const image of ['public.ecr.aws/supabase/postgres:17.6.1.140','public.ecr.aws/supabase/gotrue:v2.192.0','public.ecr.aws/supabase/mailpit:v1.30.2','public.ecr.aws/supabase/postgrest:v14.14',nodeImage])docker(['image','inspect',image]);
  phase='database';db=run('db','public.ecr.aws/supabase/postgres:17.6.1.140',{POSTGRES_PASSWORD:password});
@@ -67,44 +61,8 @@ try{
  client=run('client',nodeImage,{},['--entrypoint','node'],['-e','setInterval(()=>{},100000);']);
  run('smtp','public.ecr.aws/supabase/mailpit:v1.30.2');
  const oldKey=randomBytes(32).toString('hex'),newKey=randomBytes(32).toString('hex');auth=await startAuth('auth',oldKey);
- phase='api_emitted_flows';const users=[],oldFlows=[],oldLinks=[],preparedUsers=[];
- const preparedAt=Date.now();
- for(const type of aliases){
-  const user={email:type+'@example.test',password:randomBytes(20).toString('hex')};
-  const created=api('/admin/users',{...user,email_confirm:true},adminToken(oldKey));assert.equal(created.status,200);user.id=created.data.id;
-  const session=requireSession(api('/token?grant_type=password',user),user);
-  const refreshed=requireSession(api('/token?grant_type=refresh_token',{refresh_token:session.refresh_token}),user);
-  user.accessToken=refreshed.access_token;user.refreshToken=refreshed.refresh_token;
-  const claims=JSON.parse(Buffer.from(user.accessToken.split('.')[1],'base64url'));assert.equal(claims.sub,user.id);
-  preparedUsers.push({id:user.id,passwordVerified:true,accessVerified:true,refreshVerified:true,accessExpiresAt:claims.exp*1000});
-  requireSession(api('/token?grant_type=pkce',(await issue(type,user)).body),user);
-  const pending=await issue(type,user);oldFlows.push({type,...pending});users.push(user);
- }
- phase='verify_links';
- for(const [index,type]of ['magiclink','recovery'].entries()){
-  const user=users[index];
-  const generate=()=>{const r=api('/admin/generate_link',{type,email:user.email},adminToken(oldKey));assert.equal(r.status,200);assert.ok(r.data.hashed_token&&r.data.action_link);return r.data;};
-  const get=generate(),url=new URL(get.action_link);assert.equal(url.pathname,'/verify');assert.equal(url.hostname,'localhost');
-  const verifiedGet=api(url.pathname+url.search,null,null,'GET');assert.equal(verifiedGet.status,303);
-  const token=new URLSearchParams(new URL(verifiedGet.location).hash.slice(1)).get('access_token');assert.ok(token);assert.equal(api('/user',null,token).data.id,user.id);
-  const post=generate();requireSession(api('/verify',{type,token_hash:post.hashed_token}),user);
-  const generationStarted=Date.now(),pending=generate();assert.equal(sql("SELECT count(*) FROM auth.users WHERE id="+lit(user.id)+" AND (confirmation_token="+lit(pending.hashed_token)+" OR recovery_token="+lit(pending.hashed_token)+");"),'1');
-  oldLinks.push({type,hash:pending.hashed_token,getPath:new URL(pending.action_link).pathname+new URL(pending.action_link).search,getPositive:true,postPositive:true,expiresAt:generationStarted+3600000});
- }
- phase='business_fixture';
- sql(fs.readFileSync('supabase/migrations/20260527000000_account_preferences_foundation.sql','utf8'));
- for(const [i,u]of users.entries())sql("INSERT INTO public.user_profiles(user_id,display_name) VALUES("+lit(u.id)+","+lit('Synthetic '+i)+"); INSERT INTO public.usage_quotas(user_id,quota_key,plan_id,period_start,period_end,used_count,limit_count) VALUES("+lit(u.id)+",'synthetic-comment-translator','free','2026-09-01','2026-10-01',3,100);");
- const business=()=>JSON.parse(sql("SELECT json_agg(json_build_object('userId',p.user_id,'planId',q.plan_id,'usedCount',q.used_count,'limitCount',q.limit_count) ORDER BY p.user_id) FROM public.user_profiles p JOIN public.usage_quotas q ON p.user_id=q.user_id;"));
- const businessBefore=business();assert.equal(businessBefore.length,3);
- const businessRows=()=>sql("SELECT jsonb_build_object('profiles',(SELECT jsonb_agg(to_jsonb(p) ORDER BY p.user_id) FROM public.user_profiles p),'quotas',(SELECT jsonb_agg(to_jsonb(q) ORDER BY q.user_id,q.quota_key,q.period_start) FROM public.usage_quotas q));");
- const businessRowsBefore=businessRows();
- const mailCount=()=>{const code="fetch('http://127.0.0.1:8025/api/v1/messages',{signal:AbortSignal.timeout(5000)}).then(async r=>{if(!r.ok)throw Error();const j=await r.json();if(!Number.isSafeInteger(j.total))throw Error();process.stdout.write(String(j.total));}).catch(()=>process.exit(2));";return Number(docker(['exec',client,'node','-e',code]).stdout);};
- assert.ok(mailCount()>0);
- const inspected=inspect(db);assert.equal(inspected.HostConfig.NetworkMode,'none');assert.equal(Object.keys(inspected.HostConfig.PortBindings??{}).length,0);
- const fixture={schemaVersion:1,scope:'LOCAL_SYNTHETIC_ONLY',preparedAt,expiresAt:Math.min(...oldFlows.map(f=>f.expiresAt),...preparedUsers.map(u=>u.accessExpiresAt)),sourceSigningSha256:hash(oldKey),targetSigningSha256:hash(newKey),users:preparedUsers,
-  pkce:oldFlows.map(f=>({type:f.type,positiveControl:true,pendingUnconsumed:true,challengeMatched:true,expiresAt:f.expiresAt})),
-  links:oldLinks.map(l=>({type:l.type,getPositive:l.getPositive,postPositive:l.postPositive,pendingUnconsumed:true,expiresAt:l.expiresAt})),business:businessBefore,delivery:{network:'none',hostPorts:0,externalRecipients:0,localSinkObserved:true}};
- for(const flow of oldFlows)assert.equal(sql("SELECT count(*) FROM auth.flow_state WHERE auth_code="+lit(flow.body.auth_code)+" AND code_challenge="+lit(createHash('sha256').update(flow.body.code_verifier).digest('base64url'))+";"),'1');
+ phase='api_emitted_flows';
+ const {fixture,users,oldFlows,oldLinks,business,businessBefore,businessRows,businessRowsBefore,mailCount}=await generateSyntheticInputs({api,sql,docker,inspect,db,client,oldKey,targetSigningSha256:hash(newKey),adminToken,foundationSql:fs.readFileSync('supabase/migrations/20260527000000_account_preferences_foundation.sql','utf8')});
  report.preparation=validateRehearsalPreparation(fixture);report.preparedBeforeClosure=true;
  requireBusinessClosed();
  const selectedConfig=readAuthConfiguration(auth,{disable_signup:false,external_email_enabled:true,external_phone_enabled:false,external_anonymous_users_enabled:false,security_manual_linking_enabled:false},oldKey);

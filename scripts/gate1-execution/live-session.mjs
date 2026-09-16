@@ -7,13 +7,13 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {fileURLToPath} from 'node:url';
 import {parseStrictJson} from '../lib/comment-translator-paid-core-v1-gate1-evidence.mjs';
-import {ROOT,sha,json,verifyCandidate,requireLiveAuthorization,recoveryOptions,readDpapi,readCredentials} from './execution-inputs.mjs';
+import {ROOT,sha,json,pinned,nativeApiInput,verifyCandidate,requireLiveAuthorization,recoveryOptions,readCredentials} from './execution-inputs.mjs';
 import {loadGrantForAdmission} from './safe-closure-inputs.mjs';
 import {controllerBudget} from './http-budget.mjs';
 import {createControllerClient,createControllerHttpsTransport,openControllerClientJournal,runControllerConfiguration,runControllerTransfer} from '../lib/comment-translator-paid-core-v1-gate1-controller-client.mjs';
 import {verifyControllerStopProof} from '../lib/comment-translator-paid-core-v1-gate1-controller-proof.mjs';
 import {buildRehearsalServiceChange} from '../lib/comment-translator-paid-core-v1-gate1-rehearsal-configuration.mjs';
-import {validateRehearsalPreparation} from '../lib/comment-translator-paid-core-v1-gate1-rehearsal-preparation.mjs';
+import {createNativeInputProducer,validateNativeRecipe} from './native-synthetic-inputs.mjs';
 const runtime=ROOT+'/runtime',sleep=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const configured=r=>r?.status==='CONFIGURATION_READBACK_MATCHED'&&r.stageAuthority===false&&r.hostedReady===false;
 const stagePlan=Object.fromEntries(['setup-auth','setup-postgrest','setup-realtime','close-auth','close-postgrest','close-realtime','reopen-auth','reopen-postgrest','reopen-realtime'].map(name=>[name,configured]));
@@ -57,6 +57,7 @@ export async function readFormalProof(role,identity,notBeforeAt,signal){
 // pause. Parent/controller closing cancels all owned native mutation stages.
 export function createLiveSession(credentials){
  const authorized=requireLiveAuthorization(),{policy,sourceCommit}=authorized;
+ validateNativeRecipe(json(pinned(ROOT,authorized.manifest.syntheticRecipe)),policy.recoveryRef);nativeApiInput('recovery');
  assert.equal(fs.existsSync(runtime),false);assert.match(credentials.operatorToken,/^[A-Za-z0-9_-]{64,256}$/);assert.match(credentials.configurationToken,/^sbp_fc[A-Za-z0-9._-]{20,512}$/);
  const deployment=json(ROOT+'/deployment-receipt.json');assert.equal(deployment.mode,'live');assert.equal(deployment.sourceCommit,sourceCommit);assert.equal(deployment.bundleSha256,authorized.manifest.controllerBundleSha256);assert.equal(deployment.policySha256,sha(JSON.stringify(policy)));assert.equal(deployment.workerName,'v-streamer-tools-gate1-recovery-controller-live');
  assert.equal(deployment.origin,authorized.manifest.controllerOrigin);
@@ -78,6 +79,7 @@ export function createLiveSession(credentials){
   },
  }});
  fs.writeFileSync(runtime+'/identity.json',JSON.stringify({schemaVersion:1,runId,sourceCommit,hardEndAt,manifestSha256:admitted.manifestSha256,packetManifestSha256:authorized.manifestSha256,grantSha256:admitted.sha256,predecessor:authorized.predecessor,identities})+'\n',{flag:'wx'});
+ const inputs=createNativeInputProducer(client,{runId,sourceCommit},options,credentials.configurationToken);
  return Object.freeze({client,runId,sourceCommit,
   async arm(){
    readObserverBaseline('preview',identities.preview);
@@ -93,13 +95,18 @@ export function createLiveSession(credentials){
   async resumeRecovery(){assert.ok(pausedAt!==null);const proof=await readFormalProof('preview',identities.preview,pausedAt);return client.resumeRecovery(proof);},
   async verifyRecoveryBaseline(){const result=await client.runStage('recovery-baseline',()=>readObserverBaseline('recovery',identities.recovery));assert.equal(client.state().projects.recovery,'ACTIVE_HEALTHY');recoveryReady=true;return result;},
   configure(name){assert.ok(Object.hasOwn(stagePlan,name)&&/^(setup|close|reopen)-/.test(name));if(!name.startsWith('setup-'))assert.equal(recoveryReady,true);const payload=json(runtime+'/'+name+'.json');assert.equal(payload.runId,runId);assert.equal(payload.sourceCommit,sourceCommit);const service=name.split('-').at(-1);const change=buildRehearsalServiceChange(service,payload.before,payload.patch);return runControllerConfiguration(client,name,change,{approvedRecoveryRef:policy.recoveryRef,protectedProjectRefs:options.protectedProjectRefs,managementToken:credentials.configurationToken});},
-  verifyFixtures(){return client.runStage('fixtures-ready',()=>validateRehearsalPreparation(readDpapi(runtime+'/fixtures.dpapi')));},
-  transfer(){assert.equal(recoveryReady,true);const packet=readDpapi(runtime+'/transfer.dpapi');return runControllerTransfer(client,packet,options,{assertFreshFixtures:()=>{validateRehearsalPreparation(readDpapi(runtime+'/fixtures.dpapi'));return true;}});},
+  verifyFixtures(){assert.equal(recoveryReady,true);return inputs.prepare();},
+  transfer(){assert.equal(recoveryReady,true);const {packet}=inputs.read();return runControllerTransfer(client,packet,options,{assertFreshFixtures:()=>{inputs.read();return true;}});},
   close(){client.dispose();ledger.close();},
  });
 }
 async function main(){
  assert.equal(process.argv.length,3);
+ if(['--local-synthetic-acceptance','--local-native-synthetic-acceptance'].includes(process.argv[2])){
+  const {authorizePacket}=await import('./execution-inputs.mjs');
+  const c=authorizePacket(ROOT);assert.equal(c.local,true);
+  await import('../fixtures/gate1-synthetic-services.mjs');return;
+ }
  if(process.argv[2]==='--check-only'){
   const result=verifyCandidate();recoveryOptions(json(ROOT+'/policy.targets.private.json'));
   console.log(JSON.stringify({status:'LOCAL_INPUTS_MATCHED',files:result.manifest.files.length,manifestSha256:result.manifestSha256,publicationReady:fs.existsSync(ROOT+'/publication.json'),approvalPresent:fs.existsSync(ROOT+'/approval.json'),runtimeUnused:!fs.existsSync(runtime),remoteCalls:0}));return;

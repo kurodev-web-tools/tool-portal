@@ -24,16 +24,18 @@ export function finishProducer(context,result){
 }
 // Full EOF, exact byte cap and a wall deadline are recorded by this transport;
 // MCP success or a caller boolean never stands in for an HTTP receipt.
-export async function getJson({hostname,route,headers={},limit=8192,request=https.request,now=Date.now,timeoutMs=3000}){
+export async function getJson({hostname,route,headers={},limit=8192,request=https.request,now=Date.now,timeoutMs=3000,signal}){
  assert.equal(process.env.NODE_TLS_REJECT_UNAUTHORIZED==='0',false);
  const startedAt=now();
  return new Promise(resolve=>{
   let req,res,timer,done=false,bodyBytes=0;const parts=[];
-  const finish=(complete,error)=>{if(done)return;done=true;clearTimeout(timer);const completedAt=now();let value;
+  const abort=()=>finish(false,'ABORTED');
+  const finish=(complete,error)=>{if(done)return;done=true;clearTimeout(timer);signal?.removeEventListener('abort',abort);const completedAt=now();let value;
    if(complete&&completedAt>=startedAt&&completedAt-startedAt<=timeoutMs&&bodyBytes<=limit){try{value=parseBoundedJson(new TextDecoder('utf-8',{fatal:true}).decode(Buffer.concat(parts)));}catch{complete=false;error='INVALID_JSON';}}
    else complete=false;
    resolve({status:res?.statusCode??null,complete,value,bodyBytes,elapsedMs:completedAt-startedAt,startedAt,completedAt,error:error??null});res?.destroy();req?.destroy();
   };
+  if(signal?.aborted){abort();return;}signal?.addEventListener('abort',abort,{once:true});
   try{req=request({hostname,path:route,method:'GET',agent:false,rejectUnauthorized:true,headers:{Accept:'application/json',...headers}},r=>{
    res=r;r.on('data',b=>{bodyBytes+=b.length;if(bodyBytes>limit)finish(false,'BODY_LIMIT');else parts.push(b);});
    r.on('aborted',()=>finish(false,'ABORTED'));r.on('error',()=>finish(false,'STREAM_ERROR'));

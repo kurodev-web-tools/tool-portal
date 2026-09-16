@@ -64,7 +64,7 @@ export function prepareManagedRehearsalInvocation({bindingJson,env,approvedRecov
  return {command:invocation.command,args:['--no-psqlrc','--no-password','--quiet','--tuples-only','--no-align','--set=ON_ERROR_STOP=1','--dbname=postgres','--file=-'],
   env:{...invocation.env,PGCONNECT_TIMEOUT:'5',PGOPTIONS:'-c default_transaction_read_only=off -c statement_timeout=60000 -c lock_timeout=3000 -c client_min_messages=warning'},shell:false};
 }
-function nativeExecute(invocation,sql,{timeoutMs,signal}){
+export function nativeExecute(invocation,sql,{timeoutMs,signal}){
  return new Promise((resolve,rejectPromise)=>{
   let child,done=false,timer,size=0;const chunks=[];
   const finish=ok=>{if(done)return;done=true;clearTimeout(timer);signal?.removeEventListener('abort',abort);if(ok)resolve(Buffer.concat(chunks).toString('utf8'));else{chunks.length=0;try{child?.stdin.destroy();child?.stdout.destroy();child?.stderr.destroy();child?.kill();child?.unref();}catch{}rejectPromise(Error('REHEARSAL_NATIVE_REJECTED'));}};

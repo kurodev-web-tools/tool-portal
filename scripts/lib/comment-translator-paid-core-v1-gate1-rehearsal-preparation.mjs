@@ -1,18 +1,28 @@
 // Local synthetic preparation only. These summaries are not authenticated Hosted
 // evidence and cannot authorize a pause, restore, configuration change or reopen.
+import {validateAdminSigningEvidence} from './comment-translator-paid-core-v1-gate1-signing-evidence.mjs';
 const shape=(v,keys)=>v!==null&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).sort().join(',')===[...keys].sort().join(',');
 const uuid=v=>typeof v==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/i.test(v);
 const digest=v=>typeof v==='string'&&/^[a-f0-9]{64}$/.test(v);
 const readyFail=()=>{throw Error('REHEARSAL_PREPARATION_REJECTED');};
 export function validateRehearsalPreparation(f,now=Date.now()){
+ return validatePreparation(f,now,false);
+}
+export function validateSyntheticPreparation(f,expected,now=Date.now()){
+ if(f?.schemaVersion===1)return validateRehearsalPreparation(f,now);
+ if(!expected)readyFail();
+ validateAdminSigningEvidence(f.signingEvidence,{...expected,sourceSigningSha256:f.sourceSigningSha256},now);
+ return validatePreparation(f,now,true);
+}
+function validatePreparation(f,now,limited){
  // PKCE has a five-minute default in the pinned Auth version. Require a
  // minute for immediate local restore/probes, then recheck before each use.
  // The independent stop observer keeps its own unchanged twenty-minute bound.
  const remaining=t=>Number.isSafeInteger(t)&&t-now>=60000;
- if(!shape(f,['schemaVersion','scope','preparedAt','expiresAt','sourceSigningSha256','targetSigningSha256','users','pkce','links','business','delivery'])||
- f.schemaVersion!==1||f.scope!=='LOCAL_SYNTHETIC_ONLY'||!Number.isSafeInteger(now)||
+ if(!shape(f,['schemaVersion','scope','preparedAt','expiresAt','sourceSigningSha256',limited?'signingEvidence':'targetSigningSha256','users','pkce','links','business','delivery'])||
+ f.schemaVersion!==(limited?2:1)||f.scope!=='LOCAL_SYNTHETIC_ONLY'||!Number.isSafeInteger(now)||
  !Number.isSafeInteger(f.preparedAt)||now<f.preparedAt||now-f.preparedAt>300000||!remaining(f.expiresAt)||
- !digest(f.sourceSigningSha256)||!digest(f.targetSigningSha256)||f.sourceSigningSha256===f.targetSigningSha256)readyFail();
+ !digest(f.sourceSigningSha256)||!limited&&(!digest(f.targetSigningSha256)||f.sourceSigningSha256===f.targetSigningSha256))readyFail();
  if(!Array.isArray(f.users)||f.users.length!==3||new Set(f.users.map(u=>u?.id)).size!==3||
  f.users.some(u=>!shape(u,['id','passwordVerified','accessVerified','refreshVerified','accessExpiresAt'])||!uuid(u.id)||u.passwordVerified!==true||u.accessVerified!==true||u.refreshVerified!==true||!remaining(u.accessExpiresAt)||u.accessExpiresAt<f.expiresAt))readyFail();
  const types=['magiclink','recovery','email_change'];

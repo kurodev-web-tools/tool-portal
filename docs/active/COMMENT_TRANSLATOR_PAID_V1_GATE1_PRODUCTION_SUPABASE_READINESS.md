@@ -1,5 +1,26 @@
 # Paid Core v1 Gate 1 — Production Supabase readiness
 
+## 2026-09-17 waitlist前方修正・57件candidateのローカル受入れ（未公開）
+
+- 原因: 公開20260705000000は4 CHECKをCREATE TABLE IF NOT EXISTS内に定義する。Production観測22件には未登録だがtableは既存のため、旧34候補をそのまま実行してもCREATEがskipされ4 CHECKは補完されない。元tableの作成経緯は未確定。foundation以降に4 CHECKの直接依存SQLはない。Previewは2026-09-14保存dump/receiptのhashを照合し、完全history56・対象履歴・4 CHECKを確認（現在観測ではない）。
+- 旧56 SQL/fixture/receiptは不変。新20260917064823_comment_translator_waitlist_checks_forwardを追加候補とし、final57/Production候補35/Preview追加1。単一DOで構造・同名CHECK定義・validatedを照合し不足だけ追加。データDML・修正・削除0、既存違反/型違い/未検証constraintは拒否。lock5秒、呼出側statement30秒を拡張しない。
+- 正式catalog-acquire-readonly.ps1にProduction/pre22専用ReadbackKind=WaitlistChecksを追加。実CHECKと同じ式のIS FALSEで総行数・4違反件数・重複除外anyViolationのみ取得。NULLはCHECK通過/NOT NULLは別条件、trimは元SQLどおり空白のみ、lengthは文字数。binding/CA/verify-full/private stdin/RO-RR1/ROLLBACK/retry0/秘匿保存を維持。SQL60秒・lock5秒・psql子処理300秒・connect15秒・出力1MiB・終了待ち10秒は既存上限。取得・形式受理と適用前提成立を分離する。
+- 実PG17の15条件（4単独違反/同時違反/NULL/空文字・空白/Unicode境界/既存4/fresh/異定義/NOT VALID/構造違い）で追加/拒否・データ不変を確認。実Windows正式readerは適合/違反集計、異常7応答・対象不一致で拒否/再試行0。関連40件PASS、最終postapply固定history強化は該当2入口を再検証。57正式catalog→業務行ありbackup実取得→ACL保護6file→隔離復元→独立data/structure/security/history完全一致、ACL drift拒否・所有container撤去PASS。実サービス接続0。途中の2失敗記録は保持（試験NULL集約、旧56固定判定を修正）。
+- final57はversion/name完全固定、4 CHECKのvalidated/正確な定義をcatalog/backup profileで別照合。pre22/post56旧期待値は保持、同件数別履歴/部分適用/未知混在は拒否。backup producer closureは17入力＋57 SQL=74。旧公開85file配置は変更せず、今回候補を公開source扱いにしない。合成ローカルPASSは現Production完全backup/Hosted復旧の証拠ではない。
+
+| backup対象 | 今回のローカル比較・適用範囲 | 残件 |
+| --- | --- | --- |
+| 業務行、Auth行、履歴、構造/ACL/RLS、archive | pre22/post56既存証拠保持、post57の業務行増加を含む保護保存・復元・独立digest確認PASS | 現在の全writer停止と最終snapshotは別承認 |
+| managed Auth/Storage | 旧受入れ595metadataは現在666の中で全件完全一致。追加71=Auth4表(mfa_recovery_code_sets/mfa_recovery_codes/scim_tokens/scim_users)・31列・16制約・20索引。旧表の追加列はauth.one_time_tokens.expires_at。削除/既存定義変更0。依存795→919はraw件数、現在identity結合の一致は未主張 | 通常schema dumpがAuth/Storageを除外し、旧auth_storage_changes.sqlはDDLなし。旧baselineでは4表/列を再構築できない。現在の公式managed baseline/差分とreviewed profileを固定する必要がある。今回の旧baseline合成57PASSでは代用しない |
+| Vault secret | schema/dataは除外、0 guard維持。03:17観測0は過去時点、14:48catalogでは行数未取得 | scheduler用secret投入等で非0となる前に別の秘密保全・復元方式が必要。現35 migration自体はVault書込み/job作成を行わない |
+| Storage object | 実体blobを保全しないため0 guard維持 | upload/機能利用を始める前にblob/metadata整合保全が必要。今回未使用前提を現在状態の証明へ変換しない |
+| vector | storage.buckets_vectors/vector_indexesは除外＋0 guard。利用者schemaのvector列一般を一律除外している意味ではない | 対象vector bucket/index作成前に対応。未対応を除外して成功にしない |
+
+- backup運用の既存案: owner担当、日次・変更前・migration直後、アクセス制限された主保存先＋別媒体、hash/readback、失敗時は公開再開禁止。保持世代の正式採用と顧客向け約束の整合は残件。追加固定費0を維持し常時backup/有料DRを再導入しない。
+- Supabase API/GraphQL、Cloudflare完全version/全入口停止制御/外部scheduler/Paid設定/Stripe secret有無、Stripe Live endpointと未処理/決済一覧は利用者へ一括読取り案内済み・回答待ち。Computer use/追加サービス観測なし。以前の画面結果をwriter停止証拠にしない。
+- 次の限定承認案（まだ未承認）: 候補公開・merge後に公開blob/依存bytesを固定し、既存Free本番v-streamer-tools-prodだけへ既存保護接続・binding/CAを再確認、正式入口のWaitlistChecksを1接続/1固定RO-RR txn実行、ROLLBACK/接続終了、再試行0。上記既存上限、追加費用0、新PAT0、DML/DDL0。違反0でも現在managed profile/画面未確認/writer停止/最終backup/35候補固定・別変更承認は必要。違反ありなら件数とデータ保全条件に基づく別判断とし自動補正/削除しない。
+- 受入れ・対象一覧・hash: .tmp/gate1-waitlist-forward-20260917/local-result.json。managed-backup-comparison.json、retained-preview-checks.json、native-cb3a4288193153d2ed609d33/result.jsonを参照。Git候補17file＋本記録/taskの今回追記のみ、旧3file/旧差分/backup/封印証拠は保持・公開対象外。初期公開条件は進行、旧Gate1 NO-GO/UNKNOWN/retry12は不変。
+
 ## 2026-09-17 初期公開: ローカル入口・移行後backup受入れ、画面結果待ち
 
 今回の対象は初期公開のローカル準備。追加固定費0/計画メンテナンス/管理者対応を維持し、有料Recovery・延期DRは再開しない。本番DB/API/backup/変更/Git公開なし。旧Gate1 NO-GO・旧UNKNOWN/retry12は別状態。

@@ -1,3 +1,4 @@
+import { WAITLIST_FORWARD } from './lib/comment-translator-paid-core-v1-gate1-waitlist-checks.mjs';
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -601,7 +602,7 @@ function validateInventory() {
   const expected = [...baselineMigrations, ...markerSpecs.map(({ version, name }) => `${version}_${name}`), "20260811000000_comment_translator_paid_v1_legacy_schema_bridge", "20260814105000_comment_translator_paid_pg_net_extension", forwardConvergenceMigration];
   assert.equal(new Set(expected).size, 56, "expected final migration inventory has 56 unique entries");
   assertForwardConvergenceMigrationPresent();
-  assert.deepEqual(migrationNames(), [...expected].sort(), "repository migration inventory equals final 56");
+  assert.deepEqual(migrationNames(), [...expected, WAITLIST_FORWARD.version+'_'+WAITLIST_FORWARD.name].sort(), "repository inventory is historical56 plus waitlist forward");
   return expected;
 }
 
@@ -724,7 +725,7 @@ function run() {
   if (missing.length > 0) {
     throw new Error(`MISSING_SANITIZED_CATALOG_FIXTURES:${missing.length}`);
   }
-  console.log(`markers=${markers} migrations=56 bridge-states=4 legacy-mutation-tables=3 legacy-mutation-functions=3 source-era-mutations=0`);
+  console.log(`markers=${markers} migrations=57 historical-final=56 waitlist-forward=1 bridge-states=4 legacy-mutation-tables=3 legacy-mutation-functions=3 source-era-mutations=0`);
 }
 
 const invokedPath = process.argv[1] ? path.resolve(process.argv[1]) : null;

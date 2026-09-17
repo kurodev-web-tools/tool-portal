@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "migration": {
+    "version": "20260917064823",
+    "name": "comment_translator_waitlist_checks_forward"
+  },
+  "historicalFinalPhase": "post56",
+  "candidateFinalPhase": "post57",
+  "checks": [
+    {
+      "name": "comment_translator_creator_waitlist_campaign_nonempty",
+      "expression": "length(trim(campaign)) > 0",
+      "canonical": "(length(TRIM(BOTH FROM campaign)) > 0)",
+      "key": "campaign"
+    },
+    {
+      "name": "comment_translator_creator_waitlist_discount_intent_check",
+      "expression": "discount_intent = 'first_month_discount'",
+      "canonical": "(discount_intent = 'first_month_discount'::text)",
+      "key": "discountIntent"
+    },
+    {
+      "name": "comment_translator_creator_waitlist_account_email_length",
+      "expression": "account_email is null or length(account_email) <= 320",
+      "canonical": "((account_email IS NULL) OR (length(account_email) <= 320))",
+      "key": "email"
+    },
+    {
+      "name": "comment_translator_creator_waitlist_display_name_length",
+      "expression": "account_display_name is null or length(account_display_name) <= 160",
+      "canonical": "((account_display_name IS NULL) OR (length(account_display_name) <= 160))",
+      "key": "displayName"
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import { BACKUP_HISTORIES } from './comment-translator-paid-core-v1-gate1-backup-profile.mjs';
 import {
   CANONICAL_TABLE_NAMES,
   assertCanonicalPaidRpcSecurityBoundary,
@@ -166,7 +167,7 @@ function assertReadOnly(value) {
 }
 
 function assertHistory(value) {
-  if (!exactKeys(value, HISTORY_KEYS) || !Array.isArray(value.rows) || value.rows.length !== 56) {
+  if (!exactKeys(value, HISTORY_KEYS) || !Array.isArray(value.rows) || ![56,57].includes(value.rows.length)) {
     fail("history-mismatch");
   }
   let previous = null;
@@ -183,6 +184,9 @@ function assertHistory(value) {
     }
     seen.add(row.version + "\u0000" + row.name);
     previous = row.version;
+  }
+  if (value.rows.length === 57 && !sameValue(value.rows, BACKUP_HISTORIES.post57)) {
+    fail("history-mismatch");
   }
 }
 

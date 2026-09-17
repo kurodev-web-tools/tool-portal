@@ -6,6 +6,7 @@ import {
   CANONICAL_TABLE_NAMES
 } from "./lib/comment-translator-paid-core-v1-gate1-catalog.mjs";
 import { comparePostApplyCatalog, inspectPostApplyCatalogArtifact } from "./lib/comment-translator-paid-core-v1-gate1-postapply-catalog.mjs";
+import { BACKUP_HISTORIES } from "./lib/comment-translator-paid-core-v1-gate1-backup-profile.mjs";
 
 const ROOT = process.cwd();
 const ARCHIVE_SCHEMA = "comment_translator_paid_legacy_archive";
@@ -612,4 +613,18 @@ function runProductionCases() {
 
 runPreviewCases();
 runProductionCases();
+// Preserve historical 56 cases above; candidate 57 is an explicit exact history.
+for (const target of ['production', 'preview']) {
+  const candidate = makeFixture(target);
+  candidate.artifact.history.rows = clone(BACKUP_HISTORIES.post57);
+  candidate.expectations.history.rows = clone(BACKUP_HISTORIES.post57);
+  assertMatch(candidate, 'candidate 57 '+target);
+  for (const change of [x=>x.history.rows.pop(), x=>x.history.rows[56].name='same_count_unknown']) {
+    assertMismatch(mutate(candidate,'artifact',change), 'candidate history mismatch', 'history-mismatch');
+  }
+  const unknown=clone(candidate);
+  unknown.artifact.history.rows[56].name='same_count_unknown';
+  unknown.expectations.history.rows[56].name='same_count_unknown';
+  assertMismatch(unknown,'matching unknown histories cannot self-approve','history-mismatch');
+}
 console.log("postapply catalog contract passed (preview=match, production=match, rowCount_observation=retained, drift_cases=covered, edge_cases=covered, io=0)");

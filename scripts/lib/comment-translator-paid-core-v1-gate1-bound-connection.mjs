@@ -1,3 +1,5 @@
+import { WAITLIST_READONLY_SQL, WAITLIST_CHECKS } from './comment-translator-paid-core-v1-gate1-waitlist-checks.mjs';
+import { BACKUP_HISTORIES } from './comment-translator-paid-core-v1-gate1-backup-profile.mjs';
 import { CATALOG_SUPPLEMENT_SQL } from './comment-translator-paid-core-v1-gate1-catalog-supplement.mjs';
 import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
@@ -52,6 +54,6 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       bytes += part.length; if (bytes > 1048576) throw Error(); input += part;
     }
     const request=JSON.parse(input);const { invocation } = boundConnection(request); clearTimeout(timer);
-    process.stdout.write(JSON.stringify({env:invocation.env,bindingSha256:request.expectedBindingSha256,supplementSql:CATALOG_SUPPLEMENT_SQL+fs.readFileSync(new URL('../fixtures/comment-translator-paid-core-v1-gate1-managed-catalog.sql',import.meta.url),'utf8')}));
+    process.stdout.write(JSON.stringify({env:invocation.env,bindingSha256:request.expectedBindingSha256,waitlistSql:WAITLIST_READONLY_SQL,waitlistChecks:WAITLIST_CHECKS,backupHistories:BACKUP_HISTORIES,supplementSql:CATALOG_SUPPLEMENT_SQL+fs.readFileSync(new URL('../fixtures/comment-translator-paid-core-v1-gate1-managed-catalog.sql',import.meta.url),'utf8')}));
   } catch { process.stderr.write('BOUND_CONNECTION_REJECTED'); process.exitCode = 1; }
 }

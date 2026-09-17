@@ -134,7 +134,7 @@ function validateCurrentBackupState(state) {
     state.history.some(x=>Object.keys(x).sort().join()!=='name,version') ||
     JSON.stringify(identities(state.history))!==JSON.stringify(identities(expected)) ||
     !['structureSha256','sequencesSha256'].every(k=>/^[a-f0-9]{64}$/.test(state[k])) ||
-    state.archiveSchemaCount!==(state.phase==='post56'?1:0) || state.archiveUnsafeCount!==0 ||
+    state.archiveSchemaCount!==(state.phase==='pre22'?0:1) || state.archiveUnsafeCount!==0 ||
     state.archiveActiveTriggers!==0 || state.archiveRows!==0 ||
     (state.phase==='pre22'&&state.legacyRows!==0) || !Number.isSafeInteger(state.legacyRows) || state.legacyRows<0 ||
     !Array.isArray(state.rowDigests) || state.rowDigests.length!==state.rowCounts.length) throw Error('BACKUP_SOURCE_STATE_INVALID');

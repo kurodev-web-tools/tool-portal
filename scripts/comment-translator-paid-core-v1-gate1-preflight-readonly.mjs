@@ -1205,6 +1205,7 @@ export function buildChildEnvironment(binding, env) {
   childEnv.PGSSLMODE = "verify-full";
   childEnv.PGSSLROOTCERT = env.PGSSLROOTCERT;
   childEnv.PGGSSENCMODE = "disable";
+  childEnv.PGCONNECT_TIMEOUT = "15";
   childEnv.PGOPTIONS = READONLY_PGOPTIONS;
   if (nonEmptyString(env.PGPASSWORD)) childEnv.PGPASSWORD = env.PGPASSWORD;
   if (nonEmptyString(env.PGPASSFILE)) childEnv.PGPASSFILE = env.PGPASSFILE;

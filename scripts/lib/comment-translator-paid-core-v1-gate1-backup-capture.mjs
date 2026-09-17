@@ -1,3 +1,4 @@
+import { validateBackupProfile, verifyReviewedBackupCatalog, backupProfileReference } from './comment-translator-paid-core-v1-gate1-backup-profile.mjs';
 import { prepareBackupSchemaWithDefaults } from './comment-translator-paid-core-v1-gate1-backup-default-acl.mjs';
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -80,7 +81,8 @@ export function createBackupCapture({ spawnImpl = spawn, spawnSyncImpl = spawnSy
   }
   return {
     async run(input = {}) {
-      const { target, bindingJson, expectedBindingSha256, env, signal, authStorageSql, authStorageSha256, preconditions } = input;
+      const { target, bindingJson, expectedBindingSha256, env, signal, authStorageSql, authStorageSha256, preconditions, backupProfile } = input;
+      try { validateBackupProfile(backupProfile); verifyReviewedBackupCatalog(backupProfile, expectedBindingSha256, fsApi); } catch { throw error('BACKUP_CONTEXT_INVALID'); }
       const parsed = parseTargetBinding(bindingJson);
       if ((persistWhileHeld !== undefined && typeof persistWhileHeld !== 'function') || !parsed.ok || parsed.binding.target !== target || !/^[a-f0-9]{64}$/.test(expectedBindingSha256 ?? '') ||
           computeBindingSha256(parsed.binding) !== expectedBindingSha256 ||
@@ -118,7 +120,7 @@ export function createBackupCapture({ spawnImpl = spawn, spawnSyncImpl = spawnSy
         const dumps = [{ name: 'roles', snapshotSha256: null, ...rolesCapture.observation }];
         // Transform before holding the snapshot; unsupported roles stop early.
         const roles = transformRestoreRoles(raw.roles).sql;
-        session = await snapshotTransport.open({ target, bindingJson, expectedBindingSha256, env, signal: controller.signal, requireEmptyVectorTables: true, requireSourceState: true });
+        session = await snapshotTransport.open({ target, bindingJson, expectedBindingSha256, env, signal: controller.signal, requireEmptyVectorTables: true, requireSourceState: true, backupProfile });
         session.closed.then(result => { sessionClosed = result; if (!result.ok) controller.abort(); });
         const recipes = [ ['schema', '--schema-only', schemaArgs], ['data', '--data-only', dataArgs],
           ['historySchema', '--schema-only', ['--schema=supabase_migrations']], ['historyData', '--data-only', ['--schema=supabase_migrations']] ];
@@ -163,7 +165,7 @@ export function createBackupCapture({ spawnImpl = spawn, spawnSyncImpl = spawnSy
         return { artifacts, evidence: { status: persistence ? 'CAPTURED_PERSISTED_NOT_AUTHORITY' : 'CAPTURED_NOT_PERSISTED',
           snapshotDumpCount: 4, elapsedMs, exporterClosed: true, rawHashes,
           vectorExclusion: { snapshotSha256, counts: session.vectorCounts },
-          sourceState: session.sourceState,
+          sourceState: session.sourceState, backupProfile: backupProfileReference(backupProfile),
           ...(persistence ? { persistence } : {}),
           // Local observations only: any persistence result, source/run binding
           // and outer native receipt still require independent stage acceptance.

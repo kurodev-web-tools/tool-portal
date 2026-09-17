@@ -1,5 +1,28 @@
 # Paid Core v1 Gate 1 — Production Supabase readiness
 
+## 2026-09-17 初期公開: ローカル入口・移行後backup受入れ、画面結果待ち
+
+今回の対象は初期公開のローカル準備。追加固定費0/計画メンテナンス/管理者対応を維持し、有料Recovery・延期DRは再開しない。本番DB/API/backup/変更/Git公開なし。旧Gate1 NO-GO・旧UNKNOWN/retry12は別状態。
+
+| 対応 | 確認結果・境界 |
+|---|---|
+| catalog / 適用接続 | 既存PS catalog入口にProtectedStdin、既存Direct target binding/CA hash/verify-full、子env限定を接続。旧3関数の本文/ACL/依存、archive schema、feed/timezone/waitlist、timezone不適合件数、managed Auth/Storage metadataを固定SQLへ追加。取得/形式受理と適用前提NOT_EVALUATEDを分離し、旧postapply条件は不変。既存CLI runner用list/plan/apply接続configはpasswordなし明示db-url＋CA、秘密はenv/private stdin。SQL本文/順序は不変。list/planはRO、applyは別の変更承認が必要。 |
+| 公開bytes | 公開5c6b47dの旧13 producer＋実読込み56 SQLを既存.tmp配下published-sourceへGit blobそのまま配置、fresh processの旧公開verifier PASS。候補は未公開。候補producerは71file（既存13＋profile/inventory＋56 SQL）へsource照合を拡張。作業場所の改行修正も旧13pathだけに限定し、hash時正規化はしない。将来の公開後は当該commitの同じbytes配置を作り直して照合し、今回のcandidateを旧公開版として使わない。 |
+| pre22 / post56 backup | 完全version/name＋対象結合済みreview済catalogの固定hash＋構造/owner/ACL/RLS/依存/archive/source-eraをprofileへ結合。現在取得した値を自動で期待値へ昇格しない。新形式は全保持表のsnapshot内件数/行digest、sequence、履歴を記録し、canonical業務行増加を許容。archive空/閉鎖条件は保持。同件数別履歴・部分適用・未知混在・内容/権限差は拒否。v1のSQL文字列・意味・旧receiptは不変。 |
+| 実ローカル受入れ | native-cd1e22ea0bf9e2422dfc0e4b: 元22から既存34 SQLを適用した56、合成Auth/Customer/Lifecycle/Entitlementあり。実acquisition/capture→Windows ACL保護6artifact→実restore→別接続の全行/履歴/構造/権限readback PASS、後からSELECT権限を付与した対照は差を検出。capture33.676秒、snapshotからreceipt保存33.392秒（ローカル値、実本番時間保証ではない）。既存CLI list/dry-run＋同じCAの実TLS接続/終了PASS、実apply CLIは未実行。 |
+| 模擬との境界 | 接続先だけは固定binding検査後のテストseamでloopbackへ置換、credential/CA/業務行は合成。公開source照合はcandidate bytesのテストseamであり公開受入れではない。Auth基本DDLは既存image、Vault/Storage objects/vectorの空テーブルはfixture。Authサービス/Hosted managed全体や本番復旧を証明しない。catalog補完SQLは実PG、PS正式入口の対象拒否と実private IPC/子process期限終了を確認。続くnative-afcc39646d3b34ccc026e27eでは、正式PS入口→実helper/TLS→実固定SQL→形式判定→保護保存をpre22/post56で通過。PsqlPathだけは今回所有loopbackへの限定native relay（秘密なしのテストfixture）を挟む。Entitlement/public 1行とarchive 0行を別OIDで照合。移行後分類漏れ・同名表の件数二重結合を取得器だけで修正し、先行失敗2件を保持した。migration SQL/順序/既存postapply条件は不変。 |
+
+関連60件相当=不変55件をrelated-final.txtから再利用＋最終入口5件PASS。native結合・lint PASS。native受入れ後のproducer差はCRLF→LFのみで別mapping保存、PSの累積300秒/close10秒は入口5件、managed出力形式と移行前後の全取得経路は正式PS実入口2状態で確認。NULL ACLはPostgreSQL acldefaultと照合するv2の実効権限表現であり、付与者/付与先/権限を除外しない。旧v1 SQLは公開版と完全一致。アプリ中断runのFAIL/cleanup UNKNOWNは保持し、再起動後の所有container撤去を別receiptで確認。最終の今回所有container0。
+
+公開後の次のDB案（未承認/未実行）: 同じ既存Free本番・同じ正規Direct接続/CA/protected入力、公開配置のcatalog-acquire-readonly.ps1 -Environment Production -ProtectedStdin -BackupPhase pre22を1回、新しいrestricted保存先へ。接続/RO-RR transaction各1、SQL60秒/lock5秒・process累積300秒/終了確認10秒・stdout1MiB・retry0。既存SQLの4結果を固定順に取得し、上記不足を比較する。未知/欠落/不一致では終了し、先にmigrationを実行しない。必要catalogのhashはreview後に固定し、pre22 backup開始条件へ結合。適用後は別承認のpost56 catalogと行保全独立確認を行い、そのreview済profileで以後のbackupを運用する。現在の22/34観測を最終保全や適用直前確認に代用しない。
+
+保全の未対応境界: Vault secret作成（scheduler用credentialを含む）、Storage upload、vector bucket/index作成で非zeroになればbackup拒否。鍵/実blob/vectorの保全は未対応で、除外成功にしない。DDL/権限/管理設定をbackup中に変えず、sequence等が並行変化して独立照合できない場合も未確認/失敗として保持。容量/時間上限内のsnapshot保全であり無制限の運用保証ではない。公開再開前にowner、変更前後＋日次等の頻度、restricted保存/別媒体、世代保持、失敗時連絡/停止判断を採用確定し、顧客約束を確認する。
+
+手動画面の回答は未受領: Supabase本番S1 Project/版・S2 Auth/provider/SMTP/hook・S3 Data API・S4 Realtime・S5接続元/保有者、Cloudflare本番C1配備identity・C2全hostname/alias・C3edge拒否/迂回・C4Cron/外部scheduler authority・C5kill/credential参照、Stripe LIVE T1account/endpoint/events・T2失敗/保留/再試行・T3open Checkout・T4非終了Subscription/未解決invoice/payment。各1巡/Stripe各一覧初回100件、対象/時刻/絞込み/分類件数/全件性を回答。見えない/超過/権限不足=未確認、秘密/宛先/payload不要、変更/再送なし。C5の非秘密flagはCOMMENT_TRANSLATOR_PAID_{TRANSLATION,OPENAI,AZURE_FALLBACK,CHECKOUT,US_CHECKOUT}_ENABLEDとCOMMENT_TRANSLATOR_PAID_SCHEDULER_AUTHORITYを確認し、STRIPE_SECRET_KEY/STRIPE_WEBHOOK_SECRET/SUPABASE_SERVICE_ROLE_KEY/COMMENT_TRANSLATOR_PAID_CRON_TOKENは設定有無だけ返す。この設定確認だけでwriter停止成功とはしない。既存の下表writer停止→最終backup→34固定apply→独立確認→課金無効dark deploy→Free再開判断へ具体値を結合し、課金はさらに別承認。
+
+証拠/公開候補: .tmp/gate1-initial-release-20260917/final-local-result.json。今回の14 code/config/SQL/test＋既存readiness/taskの本追記だけが公開候補。旧未公開3file・旧task/readiness差分・原本・保護入力・backup・packetは除外/保持。次の残件は公開承認、限定catalog実取得/前提比較、ownerの14群回答による停止/決済in-flight手順固定、運用backup/顧客約束、停止・保全・適用・配備の別承認。ローカル準備結果を本番適用/再開許可にしない。
+
+
 ## 2026-09-16 empty Recovery: local evaluation preparation, NOT adoption/execution authority
 
 Scope: one newly created empty `ct-gate1-recovery-v2`, dedicated new Pro organization, Tokyo/PG17/Micro. Existing Production, Preview, stopped Recovery and all old receipts remain untouched. This local change does not adopt the Gate1 assurance revision, authorize spend/creation/settings, or issue any live run/grant/clock. Task11/Preview/local results remain scoped; the additional21 SQL files are18 history markers+3 actual changes, not a current unapplied list. The three unpublished post-arm files and old task diff remain separate publication candidates. Gate1 NO-GO.

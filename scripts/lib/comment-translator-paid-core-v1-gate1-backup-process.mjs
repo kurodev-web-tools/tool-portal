@@ -7,6 +7,7 @@ import { parseStrictJson } from './comment-translator-paid-core-v1-gate1-evidenc
 import { createBackupArtifactStore } from './comment-translator-paid-core-v1-gate1-backup-artifacts.mjs';
 import { verifyBackupAcquisitionSource, assertDistinctBackupDirectories, BACKUP_ACQUISITION_PRODUCERS } from './comment-translator-paid-core-v1-gate1-backup-acquisition.mjs';
 import { validateBackupSourceState } from './comment-translator-paid-core-v1-gate1-backup-state.mjs';
+import { backupProfileReference, validateProfileState } from './comment-translator-paid-core-v1-gate1-backup-profile.mjs';
 
 const repository = fileURLToPath(new URL('../..', import.meta.url));
 const entry = path.join(repository, 'scripts/comment-translator-paid-core-v1-gate1-backup-acquire.mjs');
@@ -154,8 +155,9 @@ export function createBackupProcessReceipt({ store = createBackupArtifactStore()
           file.bytes >= (i === 2 ? 0 : 1) && file.bytes <= 32 * 1024 * 1024));
         const c = record.capture;
         require(exact(c, ['startedAt', 'completedAt', 't0', 'sourceBindingSha256', 'snapshotSha256', 'exporterClosedObservedAt',
-          'dumps', 'checksumCompletedAt', 'vectorExclusion', 'sourceState']) && c.sourceBindingSha256 === record.sourceBindingSha256 && isHash(c.snapshotSha256));
+          'dumps', 'checksumCompletedAt', 'vectorExclusion', 'sourceState', ...(c.sourceState?.schemaVersion===2?['backupProfile']:[])]) && c.sourceBindingSha256 === record.sourceBindingSha256 && isHash(c.snapshotSha256));
         validateBackupSourceState(c.sourceState);
+        if(c.sourceState.schemaVersion===2){validateProfileState(c.sourceState,acquisition.captureInput.backupProfile);require(same(c.backupProfile,backupProfileReference(acquisition.captureInput.backupProfile)));}
         require(time(observed.startedAt) <= time(c.startedAt) && time(c.startedAt) <= time(c.t0) + 1000 &&
           time(c.t0) - 1000 <= time(c.checksumCompletedAt) && time(c.checksumCompletedAt) <= time(c.exporterClosedObservedAt) &&
           time(c.exporterClosedObservedAt) <= time(c.completedAt) && time(c.completedAt) <= time(record.createdAt));

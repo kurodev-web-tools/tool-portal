@@ -7,7 +7,7 @@ import { createBackupCapture } from './comment-translator-paid-core-v1-gate1-bac
 import { validBackupDumpTransport } from './comment-translator-paid-core-v1-gate1-backup-dump-transport.mjs';
 import { createBackupArtifactStore } from './comment-translator-paid-core-v1-gate1-backup-artifacts.mjs';
 import { validateBackupSourceState } from './comment-translator-paid-core-v1-gate1-backup-state.mjs';
-import { backupProfileReference, validateProfileState } from './comment-translator-paid-core-v1-gate1-backup-profile.mjs';
+import { BACKUP_HISTORIES, backupProfileReference, validateProfileState } from './comment-translator-paid-core-v1-gate1-backup-profile.mjs';
 
 const repository = fileURLToPath(new URL('../..', import.meta.url));
 const hash = value => createHash('sha256').update(value).digest('hex');
@@ -29,6 +29,8 @@ export const BACKUP_ACQUISITION_PRODUCERS = Object.freeze([
   'scripts/lib/comment-translator-paid-core-v1-gate1-backup-snapshot.mjs',
   'scripts/lib/comment-translator-paid-core-v1-gate1-backup-state.mjs',
   'scripts/lib/comment-translator-paid-core-v1-gate1-backup-profile.mjs',
+  'scripts/lib/comment-translator-paid-core-v1-gate1-waitlist-checks.mjs',
+  'scripts/fixtures/comment-translator-paid-core-v1-gate1-waitlist-forward.json',
   'scripts/fixtures/comment-translator-paid-core-v1-gate1-environment-inventories.json',
   'scripts/lib/comment-translator-paid-core-v1-gate1-backup-default-acl.mjs',
   'scripts/lib/comment-translator-paid-core-v1-gate1-backup-artifacts.mjs',
@@ -36,7 +38,7 @@ export const BACKUP_ACQUISITION_PRODUCERS = Object.freeze([
   'scripts/lib/comment-translator-paid-core-v1-gate1-evidence.mjs',
   'scripts/lib/comment-translator-paid-core-v1-gate1-catalog.mjs',
   'scripts/comment-translator-paid-core-v1-gate1-preflight-readonly.mjs',
-  ...JSON.parse(fs.readFileSync(new URL('../fixtures/comment-translator-paid-core-v1-gate1-environment-inventories.json',import.meta.url),'utf8')).final56.map(({version,name})=>'supabase/migrations/'+version+'_'+name+'.sql'),
+  ...BACKUP_HISTORIES.post57.map(({version,name})=>'supabase/migrations/'+version+'_'+name+'.sql'),
 ]);
 // Bind the loaded producer set as well as checking the current files. The
 // operational entry must run in a fresh process from the accepted commit.

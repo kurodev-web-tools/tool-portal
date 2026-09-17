@@ -45,7 +45,7 @@ test('restore refuses same-count changed content at independent readback',async(
 test('reader keeps fixed read-only query and private IPC; postapply policy unchanged',()=>{
  const s=fs.readFileSync(new URL('./comment-translator-paid-core-v1-gate1-catalog-acquire-readonly.ps1',import.meta.url),'utf8');
  assert.match(s,/Environment.Clear\(\)/);assert.match(s,/--no-password/);assert.match(s,/TARGET_TLS_CONTEXT_REJECTED/);assert.doesNotMatch(s,/PGSSLMODE = "require"/);
- const post=fs.readFileSync(new URL('./lib/comment-translator-paid-core-v1-gate1-postapply-catalog.mjs',import.meta.url),'utf8');assert.match(post,/value.rows.length !== 56/);assert.match(post,/row.rowCount !== 0/);
+ const post=fs.readFileSync(new URL('./lib/comment-translator-paid-core-v1-gate1-postapply-catalog.mjs',import.meta.url),'utf8');assert.match(post,/\[56,57\]\.includes\(value.rows.length\)/);assert.match(post,/row.rowCount !== 0/);
 });
 
 test('actual Windows reader process helper: private bound input, environment isolation, timeout and child close', {skip:process.platform!=='win32'},()=>{

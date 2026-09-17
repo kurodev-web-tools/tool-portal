@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { WAITLIST_FORWARD, assertWaitlistConstraints } from './comment-translator-paid-core-v1-gate1-waitlist-checks.mjs';
 import { createHash } from 'node:crypto';
 
 const inventory = JSON.parse(fs.readFileSync(new URL('../fixtures/comment-translator-paid-core-v1-gate1-environment-inventories.json', import.meta.url), 'utf8'));
@@ -6,6 +7,7 @@ const pending = new Set(inventory.production.pending34.map(x => x.version + ':' 
 export const BACKUP_HISTORIES = Object.freeze({
   pre22: inventory.final56.filter(x => !pending.has(x.version + ':' + x.name)),
   post56: inventory.final56,
+  post57: [...inventory.final56, WAITLIST_FORWARD],
 });
 const sha = x => typeof x === 'string' && /^[a-f0-9]{64}$/.test(x);
 const exact = (v, keys) => v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).sort().join() === [...keys].sort().join();
@@ -29,6 +31,7 @@ export function verifyReviewedBackupCatalog(profile, targetBindingSha256, fsApi=
     catalog.readOnly?.transactionReadOnly!=='on'||catalog.readOnly?.transactionIsolation!=='repeatable read') throw Error('BACKUP_CATALOG_REJECTED');
   const rows=catalog.history?.rows,expected=BACKUP_HISTORIES[profile.phase];
   if(!Array.isArray(rows)||rows.length!==expected.length||rows.some((r,i)=>r.version!==expected[i].version||r.name!==expected[i].name))throw Error('BACKUP_CATALOG_REJECTED');
+  if(profile.phase==='post57')assertWaitlistConstraints(catalog.initialReleaseSupplement);
   return profile;
 }
 // A reviewed, target-bound catalog fixes this row-free fingerprint before the

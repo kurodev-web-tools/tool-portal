@@ -19,3 +19,8 @@
 /scripts/lib/comment-translator-paid-core-v1-gate1-restore-sql.mjs text eol=lf
 /scripts/lib/comment-translator-paid-core-v1-gate1-backup-profile.mjs text eol=lf
 /scripts/fixtures/comment-translator-paid-core-v1-gate1-environment-inventories.json text eol=lf
+
+# New forward-history inputs used by exact-byte backup producer verification.
+/scripts/lib/comment-translator-paid-core-v1-gate1-waitlist-checks.mjs text eol=lf
+/scripts/fixtures/comment-translator-paid-core-v1-gate1-waitlist-forward.json text eol=lf
+/supabase/migrations/20260917064823_comment_translator_waitlist_checks_forward.sql text eol=lf

@@ -1,3 +1,4 @@
+import { WAITLIST_FORWARD } from './lib/comment-translator-paid-core-v1-gate1-waitlist-checks.mjs';
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import fs from "node:fs";
@@ -2039,7 +2040,7 @@ for (const [label, mutate] of inventoryMutationCases) {
   mutate(mutatedFixture);
   assert.throws(() => expectedLiveRepositoryMigrationNames(mutatedFixture), label);
 }
-assert.deepEqual(liveRepositoryMigrations, approvedLiveRepositoryMigrations, "current source inventory matches the approved final56 live repository inventory");
+assert.deepEqual(liveRepositoryMigrations, [...approvedLiveRepositoryMigrations, WAITLIST_FORWARD.version+'_'+WAITLIST_FORWARD.name].sort(), "current source is historical56 plus waitlist forward");
 
 assert.equal(localBaselineMigrations.length, 33, "observed local baseline has 33 migrations");
 assert.equal(historicalSourceEraLocalMigrations.length, 34, "historical source-era local inventory has 34 migrations");

@@ -10,8 +10,11 @@ param(
   [Parameter(Mandatory = $true)]
   [switch]$ProtectedStdin,
 
-  [ValidateSet("pre22", "post56")]
+  [ValidateSet("pre22", "post56", "post57")]
   [string]$BackupPhase = "pre22",
+
+  [ValidateSet("Catalog", "WaitlistChecks")]
+  [string]$ReadbackKind = "Catalog",
 
   [string]$PsqlPath = "C:/Users/taka/AppData/Local/Programs/PostgreSQL/17-client-17.11/bin/psql.exe"
 )
@@ -20,7 +23,8 @@ $ErrorActionPreference = "Stop"
 $target = $Environment.ToLowerInvariant()
 $readbackRoot = [IO.Path]::GetFullPath($DestinationRoot)
 $artifactDirectory = Join-Path $readbackRoot $target
-$artifactPath = Join-Path $artifactDirectory "$target-catalog-readback.json"
+$artifactName = if ($ReadbackKind -eq "WaitlistChecks") { "$target-waitlist-checks.json" } else { "$target-catalog-readback.json" }
+$artifactPath = Join-Path $artifactDirectory $artifactName
 $maxOutputBytes = 1024 * 1024
 $processTimeoutMilliseconds = 5 * 60 * 1000
 $secureValues = @()
@@ -466,10 +470,14 @@ function Assert-ReadbackShape {
   Assert-CatalogState -State $Canonical -Label "CANONICAL_STATE"
   Assert-CatalogState -State $Scoped.paidLegacy -Label "PAID_LEGACY_STATE"
   Assert-CatalogState -State $Scoped.sourceEra -Label "SOURCE_ERA_STATE"
-  if ($target -eq "production" -and $BackupPhase -eq "post56") {
-    if ([int]$Common.history.count -ne 56 -or @($Canonical.tables).Count -ne 33 -or @($Canonical.functions).Count -ne 81 -or @($Scoped.sourceEra.tables).Count -ne 6 -or @($Scoped.sourceEra.functions).Count -ne 7 -or @($Scoped.paidLegacy.tables).Count -ne 3 -or @($Scoped.paidLegacy.functions).Count -ne 3) {
+  if ($target -eq "production" -and $BackupPhase -in @("post56", "post57")) {
+    $expectedHistory = @($connection.backupHistories.$BackupPhase)
+    if ([int]$Common.history.count -ne $expectedHistory.Count -or @($Canonical.tables).Count -ne 33 -or @($Canonical.functions).Count -ne 81 -or @($Scoped.sourceEra.tables).Count -ne 6 -or @($Scoped.sourceEra.functions).Count -ne 7 -or @($Scoped.paidLegacy.tables).Count -ne 3 -or @($Scoped.paidLegacy.functions).Count -ne 3) {
       $script:failureDetails = [ordered]@{ history = $Common.history.count; canonicalTables = @($Canonical.tables).Count; canonicalFunctions = @($Canonical.functions).Count; archiveTables = @($Scoped.paidLegacy.tables).Count; archiveFunctions = @($Scoped.paidLegacy.functions).Count }
       throw "POST56_COLLECTION_SHAPE_MISMATCH"
+    }
+    for ($i = 0; $i -lt $expectedHistory.Count; $i++) {
+      if ($Common.history.rows[$i].version -cne $expectedHistory[$i].version -or $Common.history.rows[$i].name -cne $expectedHistory[$i].name) { throw "POSTAPPLY_HISTORY_MISMATCH" }
     }
     return
   }
@@ -714,7 +722,7 @@ table_scope as (
     ('comment_translator_paid_stripe_event_receipts'),
     ('comment_translator_paid_subscription_bindings')
   ) as names(name)
-  where '__TARGET__' = 'preview' or '__BACKUP_PHASE__' = 'post56' or name not in (
+  where '__TARGET__' = 'preview' or '__BACKUP_PHASE__' IN ('post56','post57') or name not in (
     'comment_translator_paid_entitlements',
     'comment_translator_paid_usage_counters',
     'comment_translator_paid_usage_events'
@@ -745,7 +753,7 @@ table_catalog as (
   from table_scope as ts
   join pg_catalog.pg_class as c on c.relname = ts.table_name
   join pg_catalog.pg_namespace as n on n.oid = c.relnamespace and n.nspname =
-    case when ts.scope_name = 'paidLegacy' and '__BACKUP_PHASE__' = 'post56' then 'comment_translator_paid_legacy_archive' else 'public' end
+    case when ts.scope_name = 'paidLegacy' and '__BACKUP_PHASE__' IN ('post56','post57') then 'comment_translator_paid_legacy_archive' else 'public' end
   where c.relkind in ('r', 'p')
 ),
 exact_counts as (
@@ -892,7 +900,7 @@ function_catalog as (
     on sefs.function_name = p.proname
   where (n.nspname = 'public' and (p.proname like 'ct_paid_%'
      or ('__TARGET__' = 'production' and (lfs.function_name is not null or sefs.function_name is not null))))
-     or ('__TARGET__' = 'production' and '__BACKUP_PHASE__' = 'post56' and n.nspname = 'comment_translator_paid_legacy_archive' and lfs.function_name is not null)
+     or ('__TARGET__' = 'production' and '__BACKUP_PHASE__' IN ('post56','post57') and n.nspname = 'comment_translator_paid_legacy_archive' and lfs.function_name is not null)
 ),
 function_rows as (
   select fc.scope_name, fc.schema_name, fc.function_name, fc.identity_arguments,
@@ -1072,6 +1080,7 @@ try {
   if (-not (Test-Path -LiteralPath $PsqlPath -PathType Leaf)) {
     throw "PSQL_MISSING"
   }
+  if ($ReadbackKind -eq "WaitlistChecks" -and ($target -ne "production" -or $BackupPhase -ne "pre22")) { throw "WAITLIST_TARGET_OR_PHASE_REJECTED" }
   Ensure-ReadbackDirectory
   $psqlVersion = Get-PsqlVersion
   if (-not $ProtectedStdin) { throw "PROTECTED_STDIN_REQUIRED" }
@@ -1098,6 +1107,7 @@ try {
   $sql += [Environment]::NewLine + $supplementSql
   $sql += [Environment]::NewLine + "rollback;" + [Environment]::NewLine
 
+  if ($ReadbackKind -eq "WaitlistChecks") { $sql = $connection.waitlistSql }
   $result = Invoke-CapturedProcess -FilePath $PsqlPath -Arguments @(
     "--no-psqlrc",
     "--no-password",
@@ -1122,6 +1132,33 @@ try {
   if ($raw -match "(?i)(postgres(?:ql)?://|sb_(?:secret|publishable)_|eyJ[A-Za-z0-9_-]{20,}\\.|password\\s*[:=]|authorization\\s*:|bearer\\s+)") {
     throw "UNSAFE_OUTPUT_SHAPE"
   }
+  if ($ReadbackKind -eq "WaitlistChecks") {
+    $observation = $raw | ConvertFrom-Json -Depth 20
+    Assert-ExactPropertyNames -Value $observation -Expected @("kind", "readOnly", "counts") -Label "WAITLIST"
+    if ($observation.kind -ne "waitlistChecks") { throw "WAITLIST_SHAPE_REJECTED" }
+    Assert-ExactPropertyNames -Value $observation.readOnly -Expected @("serverVersionMajor", "transactionReadOnly", "defaultTransactionReadOnly", "transactionIsolation") -Label "WAITLIST_READONLY"
+    if ($observation.readOnly.serverVersionMajor -ne 17 -or $observation.readOnly.transactionReadOnly -ne "on" -or $observation.readOnly.defaultTransactionReadOnly -ne "on" -or $observation.readOnly.transactionIsolation -ne "repeatable read") { throw "WAITLIST_READONLY_REJECTED" }
+    $names = @("total", "campaign", "discountIntent", "email", "displayName", "anyViolation")
+    Assert-ExactPropertyNames -Value $observation.counts -Expected $names -Label "WAITLIST_COUNTS"
+    foreach ($name in $names) {
+      $n = $observation.counts.$name
+      if (($n -isnot [long] -and $n -isnot [int]) -or $n -lt 0 -or $n -gt 9007199254740991 -or $n -gt $observation.counts.total) { throw "WAITLIST_COUNTS_REJECTED" }
+    }
+    $sum = [decimal]0
+    foreach ($name in @("campaign", "discountIntent", "email", "displayName")) {
+      $n = $observation.counts.$name; $sum += $n
+      if ($n -gt $observation.counts.anyViolation) { throw "WAITLIST_COUNTS_REJECTED" }
+    }
+    if ($observation.counts.anyViolation -gt $sum) { throw "WAITLIST_COUNTS_REJECTED" }
+    $artifact = [ordered]@{ schemaVersion=1; target=$target; targetBindingSha256=$connection.bindingSha256; observation=$observation }
+    [IO.File]::WriteAllText($artifactPath, ($artifact | ConvertTo-Json -Depth 20 -Compress) + [Environment]::NewLine, [Text.UTF8Encoding]::new($false))
+    Assert-NoReparse -Path $artifactPath
+    if (@(Get-ChildItem -LiteralPath $artifactDirectory -Force).Count -ne 1) { throw "FINAL_DIRECTORY_SHAPE_INVALID" }
+    [ordered]@{ schemaVersion=1; target=$target; status="WAITLIST_COUNTS_ACQUIRED"; applicationPrerequisites="NOT_EVALUATED";
+      counts=$observation.counts; readOnly=$observation.readOnly; metadataSha256=(Get-FileHash -LiteralPath $artifactPath -Algorithm SHA256).Hash.ToLowerInvariant();
+      artifactFileName=$artifactName; mutationCounts=[ordered]@{ddl=0;dml=0;rpc=0;remote=0;total=0} } | ConvertTo-Json -Depth 20 -Compress
+    return
+  }
   $lines = @($raw -split "\r?\n" | Where-Object { $_.Trim().Length -gt 0 })
   if ($lines.Count -ne 4) {
     throw "PSQL_JSON_LINE_COUNT"
@@ -1143,6 +1180,12 @@ try {
   }
   Assert-ReadbackShape -Common $common -Scoped $scoped -Canonical ([pscustomobject]$canonical)
 
+  if ($BackupPhase -eq "post57") {
+    foreach ($check in $connection.waitlistChecks) {
+      $found = @($supplement.objects | Where-Object { $_[0] -eq "constraint" -and $_[1] -eq "public" -and $_[2] -eq "comment_translator_creator_waitlist_registrations" -and $_[3] -eq $check.name })
+      if ($found.Count -ne 1 -or $found[0][4] -ne $true -or $found[0][5] -cne ("CHECK (" + $check.canonical + ")")) { throw "WAITLIST_CHECK_MISMATCH" }
+    }
+  }
   $artifactObject = [ordered]@{
     schemaVersion = 1
     target = $target

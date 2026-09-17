@@ -1,15 +1,16 @@
+import { validateBackupProfile, validateProfileState } from './comment-translator-paid-core-v1-gate1-backup-profile.mjs';
 import { BACKUP_TABLE_DEFAULTS_SQL, validateBackupTableDefaults } from './comment-translator-paid-core-v1-gate1-backup-default-acl.mjs';
 import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import { buildPsqlInvocation, computeBindingSha256, parseTargetBinding } from '../comment-translator-paid-core-v1-gate1-preflight-readonly.mjs';
 import { parseStrictJson } from './comment-translator-paid-core-v1-gate1-evidence.mjs';
-import { BACKUP_SOURCE_STATE_SQL, validateBackupSourceState } from './comment-translator-paid-core-v1-gate1-backup-state.mjs';
+import { BACKUP_SOURCE_STATE_SQL, CURRENT_BACKUP_STATE_SQL, validateBackupSourceState } from './comment-translator-paid-core-v1-gate1-backup-state.mjs';
 
 const MAX_BYTES = 64 * 1024;
 const LIFETIME_MS = 300_000;
 export const BACKUP_CLOCK_SKEW_MS = 1_000;
 const ARGS = Object.freeze(['--no-psqlrc', '--no-password', '--set=ON_ERROR_STOP=1', '--tuples-only', '--no-align', '--quiet']);
-const SQL = (requireEmptyVectorTables, requireSourceState) => `BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;
+const SQL = (requireEmptyVectorTables, requireSourceState, profile) => `BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY;
 SET LOCAL idle_in_transaction_session_timeout = '300000ms';
 SET LOCAL search_path = pg_catalog, public;
 ${requireEmptyVectorTables ? "SET LOCAL statement_timeout = '10000ms';\nSET LOCAL row_security = off;\n" : ''}SELECT json_build_object('serverMajor', current_setting('server_version_num')::int / 10000,
@@ -19,7 +20,7 @@ ${requireEmptyVectorTables ? "SET LOCAL statement_timeout = '10000ms';\nSET LOCA
   'vectorCounts', json_build_object(
     'storage.buckets_vectors', (SELECT count(*) FROM storage.buckets_vectors),
     'storage.vector_indexes', (SELECT count(*) FROM storage.vector_indexes))` : ''}${requireSourceState ? `,
-  'sourceState', ${BACKUP_SOURCE_STATE_SQL}, 'tableDefaults', ${BACKUP_TABLE_DEFAULTS_SQL}` : ''});
+  'sourceState', ${profile ? `(${CURRENT_BACKUP_STATE_SQL} || jsonb_build_object('phase','${profile.phase}'))` : BACKUP_SOURCE_STATE_SQL}, 'tableDefaults', ${BACKUP_TABLE_DEFAULTS_SQL}` : ''});
 `;
 const safeError = (reason, cleanupConfirmed = true) => Object.assign(new Error(reason), { cleanupConfirmed });
 
@@ -30,10 +31,11 @@ export function createBackupSnapshotTransport({
   now = Date.now, monotonicNow = () => performance.now(), setTimeoutImpl = setTimeout, clearTimeoutImpl = clearTimeout,
 } = {}) {
   return {
-    async open({ target, bindingJson, expectedBindingSha256, env, signal, requireEmptyVectorTables = false, requireSourceState = false } = {}) {
+    async open({ target, bindingJson, expectedBindingSha256, env, signal, requireEmptyVectorTables = false, requireSourceState = false, backupProfile } = {}) {
       if (signal !== undefined && !(signal instanceof AbortSignal)) throw safeError('SNAPSHOT_CONTEXT_INVALID');
       if (typeof requireEmptyVectorTables !== 'boolean') throw safeError('SNAPSHOT_CONTEXT_INVALID');
       if (typeof requireSourceState !== 'boolean' || (requireSourceState && !requireEmptyVectorTables)) throw safeError('SNAPSHOT_CONTEXT_INVALID');
+      if (backupProfile !== undefined) validateBackupProfile(backupProfile);
       const parsed = parseTargetBinding(bindingJson);
       if (!parsed.ok || parsed.binding.target !== target ||
           !/^[a-f0-9]{64}$/.test(expectedBindingSha256 ?? '') ||
@@ -117,6 +119,7 @@ export function createBackupSnapshotTransport({
           }
           if (requireSourceState) {
             validateBackupSourceState(value.sourceState);
+            if (backupProfile) validateProfileState(value.sourceState, backupProfile);
             validateBackupTableDefaults(value.tableDefaults);
             value.tableDefaults.forEach(Object.freeze); Object.freeze(value.tableDefaults);
             value.sourceState.rowCounts.forEach(Object.freeze);
@@ -178,7 +181,7 @@ export function createBackupSnapshotTransport({
       startupTimer = setTimeoutImpl(() => fail('SNAPSHOT_START_TIMEOUT'), 10_000);
       signal?.addEventListener('abort', onAbort, { once: true });
       if (signal?.aborted) onAbort();
-      try { if (!failure) child.stdin.write(SQL(requireEmptyVectorTables, requireSourceState)); }
+      try { if (!failure) child.stdin.write(SQL(requireEmptyVectorTables, requireSourceState, backupProfile)); }
       catch { fail('SNAPSHOT_PROCESS_FAILED'); }
       try {
         await ready;

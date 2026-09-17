@@ -1,0 +1,19 @@
+SET LOCAL search_path=pg_catalog,public;
+WITH namespaces AS (SELECT oid,nspname,nspowner,nspacl FROM pg_namespace WHERE nspname IN ('auth','storage')),
+relations AS (SELECT c.*,n.nspname FROM pg_class c JOIN namespaces n ON n.oid=c.relnamespace WHERE c.relkind IN ('r','p','v','m','S','f')),
+objects AS (
+SELECT jsonb_build_array('schema',nspname,pg_get_userbyid(nspowner),(SELECT jsonb_agg(a::text ORDER BY a::text COLLATE "C") FROM unnest(nspacl)a)) AS row FROM namespaces
+UNION ALL SELECT jsonb_build_array('relation',nspname,relname,relkind,pg_get_userbyid(relowner),relrowsecurity,relforcerowsecurity,(SELECT jsonb_agg(a::text ORDER BY a::text COLLATE "C") FROM unnest(relacl)a)) FROM relations
+UNION ALL SELECT jsonb_build_array('column',r.nspname,r.relname,a.attname,a.attnum,format_type(a.atttypid,a.atttypmod),a.attnotnull,a.attidentity,a.attgenerated,pg_get_expr(d.adbin,d.adrelid),(SELECT jsonb_agg(x::text ORDER BY x::text COLLATE "C") FROM unnest(a.attacl)x)) FROM relations r JOIN pg_attribute a ON a.attrelid=r.oid LEFT JOIN pg_attrdef d ON d.adrelid=r.oid AND d.adnum=a.attnum WHERE a.attnum>0 AND NOT a.attisdropped
+UNION ALL SELECT jsonb_build_array('constraint',r.nspname,r.relname,c.conname,c.contype,c.convalidated,pg_get_constraintdef(c.oid,false)) FROM relations r JOIN pg_constraint c ON c.conrelid=r.oid
+UNION ALL SELECT jsonb_build_array('index',r.nspname,r.relname,ic.relname,pg_get_indexdef(i.indexrelid),i.indisvalid,i.indisready) FROM relations r JOIN pg_index i ON i.indrelid=r.oid JOIN pg_class ic ON ic.oid=i.indexrelid
+UNION ALL SELECT jsonb_build_array('function',n.nspname,p.proname,pg_get_function_identity_arguments(p.oid),pg_get_userbyid(p.proowner),pg_get_functiondef(p.oid),(SELECT jsonb_agg(a::text ORDER BY a::text COLLATE "C") FROM unnest(p.proacl)a)) FROM namespaces n JOIN pg_proc p ON p.pronamespace=n.oid WHERE p.prokind IN ('f','p')
+UNION ALL SELECT jsonb_build_array('trigger',r.nspname,r.relname,t.tgname,t.tgenabled,pg_get_triggerdef(t.oid,false)) FROM relations r JOIN pg_trigger t ON t.tgrelid=r.oid WHERE NOT t.tgisinternal
+UNION ALL SELECT jsonb_build_array('policy',r.nspname,r.relname,p.polname,p.polcmd,p.polpermissive,pg_get_expr(p.polqual,p.polrelid),pg_get_expr(p.polwithcheck,p.polrelid),(SELECT jsonb_agg(CASE WHEN roleid=0 THEN 'PUBLIC' ELSE pg_get_userbyid(roleid)::text END ORDER BY CASE WHEN roleid=0 THEN 'PUBLIC' ELSE pg_get_userbyid(roleid)::text END COLLATE "C") FROM unnest(p.polroles)roleid)) FROM relations r JOIN pg_policy p ON p.polrelid=r.oid
+), edges AS (
+SELECT jsonb_build_array(a.type,a.schema,a.identity,b.type,b.schema,b.identity,d.deptype) AS row FROM pg_depend d CROSS JOIN LATERAL pg_identify_object(d.classid,d.objid,d.objsubid)a CROSS JOIN LATERAL pg_identify_object(d.refclassid,d.refobjid,d.refobjsubid)b
+WHERE a.schema IN ('auth','storage') OR b.schema IN ('auth','storage') OR (d.refclassid='pg_namespace'::regclass AND d.refobjid IN (SELECT oid FROM namespaces))
+)
+SELECT json_build_object('objects',(SELECT jsonb_agg(row ORDER BY row::text COLLATE "C") FROM objects),'dependencies',(SELECT jsonb_agg(row ORDER BY row::text COLLATE "C") FROM edges),
+'internalTriggerIdentities',(SELECT jsonb_agg(jsonb_build_array(i.identity,jsonb_build_array(t.tgrelid::regclass::text,t.tgfoid::regproc::text,t.tgtype,t.tgenabled,t.tgdeferrable,t.tginitdeferred,t.tgconstrrelid::regclass::text,c.conname))) FROM pg_trigger t JOIN pg_constraint c ON c.oid=t.tgconstraint CROSS JOIN LATERAL pg_identify_object('pg_trigger'::regclass,t.oid,0)i WHERE t.tgisinternal AND (c.connamespace IN (SELECT oid FROM namespaces) OR c.confrelid IN (SELECT oid FROM relations))),
+'toastIdentities',(SELECT jsonb_agg(jsonb_build_array(i.identity,jsonb_build_array(r.nspname,r.relname))) FROM relations r CROSS JOIN LATERAL pg_identify_object('pg_class'::regclass,r.reltoastrelid,0)i WHERE r.reltoastrelid<>0));

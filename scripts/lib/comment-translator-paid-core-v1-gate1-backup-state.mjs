@@ -1,3 +1,4 @@
+import { BACKUP_STRUCTURE_SQL, BACKUP_HISTORIES } from './comment-translator-paid-core-v1-gate1-backup-profile.mjs';
 // Shared with the pinned data-dump recipe. History is captured separately.
 export const BACKUP_DATA_EXCLUDED_SCHEMAS = Object.freeze('information_schema pg_* graphql graphql_public pgsodium pgsodium_masks pgtle repack tiger tiger_data timescaledb_* _timescaledb_* topology vault etl extensions pgbouncer realtime supabase_migrations _analytics _realtime _supavisor'.split(' '));
 export const BACKUP_DATA_EXCLUDED_TABLES = Object.freeze(['auth.schema_migrations', 'storage.migrations', 'supabase_functions.migrations', 'storage.buckets_vectors', 'storage.vector_indexes']);
@@ -5,12 +6,12 @@ const excludedPattern = '^(' + BACKUP_DATA_EXCLUDED_SCHEMAS.map(s => s.replaceAl
 // Fixed aggregate-only readback. Execute inside the held RR/read-only exporter;
 // never accept a caller's SQL, table names, counts or digest as native evidence.
 const digest = sql => `encode(sha256(convert_to((${sql})::text, 'UTF8')), 'hex')`;
-export const BACKUP_SOURCE_STATE_SQL = `(
+function sourceStateSql(effectiveAcl = false) { return `(
 WITH schemas AS MATERIALIZED (
   SELECT * FROM pg_namespace WHERE nspname = 'supabase_migrations' OR nspname !~ '${excludedPattern}'
 ), relations AS MATERIALIZED (
   SELECT c.oid, n.nspname, c.relname, c.relkind, c.relrowsecurity, c.relforcerowsecurity,
-    pg_get_userbyid(c.relowner) AS owner, c.relacl
+    pg_get_userbyid(c.relowner) AS owner, ${effectiveAcl ? "coalesce(c.relacl,acldefault(CASE WHEN c.relkind='S' THEN 'S'::\"char\" ELSE 'r'::\"char\" END,c.relowner)) AS relacl" : 'c.relacl'}
   FROM pg_class c JOIN schemas n ON n.oid = c.relnamespace
   WHERE c.relkind IN ('r', 'p', 'S', 'v', 'm', 'f')
 ), counts AS MATERIALIZED (
@@ -43,11 +44,11 @@ WITH schemas AS MATERIALIZED (
   FROM relations r JOIN pg_policy p ON p.polrelid = r.oid
   UNION ALL
   SELECT jsonb_build_array('schema', n.nspname, pg_get_userbyid(n.nspowner),
-    (SELECT coalesce(jsonb_agg(a::text ORDER BY a::text COLLATE "C"), '[]'::jsonb) FROM unnest(n.nspacl) a))
+    (SELECT coalesce(jsonb_agg(a::text ORDER BY a::text COLLATE "C"), '[]'::jsonb) FROM unnest(${effectiveAcl ? "coalesce(n.nspacl,acldefault('n',n.nspowner))" : 'n.nspacl'}) a))
   FROM schemas n
   UNION ALL
   SELECT jsonb_build_array('function', n.nspname, p.proname, pg_get_function_identity_arguments(p.oid), pg_get_userbyid(p.proowner),
-    (SELECT coalesce(jsonb_agg(a::text ORDER BY a::text COLLATE "C"), '[]'::jsonb) FROM unnest(p.proacl) a))
+    (SELECT coalesce(jsonb_agg(a::text ORDER BY a::text COLLATE "C"), '[]'::jsonb) FROM unnest(${effectiveAcl ? "coalesce(p.proacl,acldefault('f',p.proowner))" : 'p.proacl'}) a))
   FROM pg_proc p JOIN schemas n ON n.oid = p.pronamespace
   UNION ALL
   SELECT jsonb_build_array('default', pg_get_userbyid(d.defaclrole), coalesce(n.nspname::text, ''), d.defaclobjtype,
@@ -66,7 +67,8 @@ SELECT jsonb_build_object(
   'vaultRows', (SELECT count(*) FROM vault.secrets), 'storageObjects', (SELECT count(*) FROM storage.objects),
   'vectorCounts', jsonb_build_object('storage.buckets_vectors', (SELECT count(*) FROM storage.buckets_vectors),
     'storage.vector_indexes', (SELECT count(*) FROM storage.vector_indexes)))
-)`;
+)`; }
+export const BACKUP_SOURCE_STATE_SQL = sourceStateSql(); // Preserve historical v1 bytes/semantics.
 
 function validateSourceState(state, expectedHistoryCount) {
   const exact = (v, keys) => v && typeof v === 'object' && !Array.isArray(v) &&
@@ -89,6 +91,53 @@ function validateSourceState(state, expectedHistoryCount) {
   return state;
 }
 
-export function validateBackupSourceState(state) { return validateSourceState(state, 22); }
+export function validateBackupSourceState(state) {
+  if (state?.schemaVersion === 2) return validateCurrentBackupState(state);
+  return validateSourceState(state, 22); // Historical receipts only.
+}
 // Internal local replay only; never used by Production capture or stage validation.
 export function validateLocalReplaySourceState(state) { return validateSourceState(state, 26); }
+
+// Same held snapshot, aggregate-only output. No business values leave in this
+// record; the actual rows remain in the existing restricted data.sql artifact.
+export const CURRENT_BACKUP_STATE_SQL = `(WITH base AS (SELECT ${sourceStateSql(true)} value),
+ retained AS (
+ SELECT c.oid,n.nspname,c.relname FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+ WHERE c.relkind IN ('r','p') AND (n.nspname='supabase_migrations' OR n.nspname !~ '${excludedPattern}')
+ AND (n.nspname||'.'||c.relname) NOT IN (${BACKUP_DATA_EXCLUDED_TABLES.map(s=>"'"+s+"'").join(',')})
+ ), contents AS (
+ SELECT encode(sha256(convert_to(jsonb_build_array(nspname,relname)::text,'UTF8')),'hex') identity,
+ ((xpath('/table/row/d/text()',query_to_xml(format(
+ 'SELECT encode(sha256(convert_to(coalesce(string_agg(h, '''' ORDER BY h COLLATE "C"), ''''), ''UTF8'')), ''hex'') AS d FROM (SELECT encode(sha256(convert_to(to_jsonb(t)::text,''UTF8'')),''hex'') h FROM ONLY %I.%I t) r',
+ nspname,relname),false,false,'')))[1]::text) digest FROM retained
+ ), history AS (SELECT coalesce(jsonb_agg(jsonb_build_object('version',version,'name',name) ORDER BY version COLLATE "C"),'[]') rows FROM supabase_migrations.schema_migrations)
+ SELECT value || jsonb_build_object('schemaVersion',2,'history',(SELECT rows FROM history),
+ 'structureSha256',${BACKUP_STRUCTURE_SQL},
+ 'sequencesSha256',(SELECT encode(sha256(convert_to(coalesce(jsonb_agg(jsonb_build_array(n.nspname,c.relname,query_to_xml(format('SELECT last_value,is_called FROM %I.%I',n.nspname,c.relname),false,false,'')::text) ORDER BY n.nspname COLLATE "C",c.relname COLLATE "C"),'[]')::text,'UTF8')),'hex') FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE c.relkind='S' AND n.nspname !~ '${excludedPattern}'),
+ 'archiveSchemaCount',(SELECT count(*) FROM pg_namespace WHERE nspname='comment_translator_paid_legacy_archive'),
+ 'archiveUnsafeCount',(SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+ WHERE n.nspname='comment_translator_paid_legacy_archive' AND c.relkind IN ('r','p') AND
+ (NOT c.relrowsecurity OR pg_get_userbyid(c.relowner)<>'postgres' OR EXISTS(SELECT 1 FROM aclexplode(c.relacl) a WHERE a.grantee=0 OR pg_get_userbyid(a.grantee) IN ('anon','authenticated','service_role')))),
+ 'archiveActiveTriggers',(SELECT count(*) FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='comment_translator_paid_legacy_archive' AND NOT t.tgisinternal AND t.tgenabled<>'D'),
+ 'archiveRows',coalesce((SELECT sum(((xpath('/table/row/n/text()',query_to_xml(format('SELECT count(*) n FROM ONLY %I.%I',n.nspname,c.relname),false,false,'')))[1]::text)::bigint) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='comment_translator_paid_legacy_archive' AND c.relkind IN ('r','p')),0),
+ 'rowDigests',(SELECT jsonb_agg(jsonb_build_object('identitySha256',identity,'sha256',digest) ORDER BY identity COLLATE "C") FROM contents)) FROM base)`;
+
+function validateCurrentBackupState(state) {
+  const keys=['schemaVersion','phase','history','structureSha256','sequencesSha256','archiveSchemaCount','archiveUnsafeCount','archiveActiveTriggers','archiveRows','rowDigests'];
+  if (!keys.every(k=>Object.hasOwn(state,k)) || !Object.hasOwn(BACKUP_HISTORIES,state.phase)) throw Error('BACKUP_SOURCE_STATE_INVALID');
+  const legacy=Object.fromEntries(Object.entries(state).filter(([k])=>!keys.includes(k)));
+  const expected=BACKUP_HISTORIES[state.phase];
+  // Canonical business rows may grow. Historic retired archive rows stay zero.
+  validateSourceState({...legacy,legacyRows:0,historyCount:22},22);
+  const identities=v=>v.map(x=>[x.version,x.name]);
+  if (state.historyCount!==expected.length || !Array.isArray(state.history) ||
+    state.history.some(x=>Object.keys(x).sort().join()!=='name,version') ||
+    JSON.stringify(identities(state.history))!==JSON.stringify(identities(expected)) ||
+    !['structureSha256','sequencesSha256'].every(k=>/^[a-f0-9]{64}$/.test(state[k])) ||
+    state.archiveSchemaCount!==(state.phase==='post56'?1:0) || state.archiveUnsafeCount!==0 ||
+    state.archiveActiveTriggers!==0 || state.archiveRows!==0 ||
+    (state.phase==='pre22'&&state.legacyRows!==0) || !Number.isSafeInteger(state.legacyRows) || state.legacyRows<0 ||
+    !Array.isArray(state.rowDigests) || state.rowDigests.length!==state.rowCounts.length) throw Error('BACKUP_SOURCE_STATE_INVALID');
+  state.rowDigests.forEach((r,i)=>{if(Object.keys(r).sort().join()!=='identitySha256,sha256'||r.identitySha256!==state.rowCounts[i].identitySha256||!/^[a-f0-9]{64}$/.test(r.sha256))throw Error('BACKUP_SOURCE_STATE_INVALID');});
+  return state;
+}

@@ -7,6 +7,7 @@ import { createBackupCapture } from './comment-translator-paid-core-v1-gate1-bac
 import { validBackupDumpTransport } from './comment-translator-paid-core-v1-gate1-backup-dump-transport.mjs';
 import { createBackupArtifactStore } from './comment-translator-paid-core-v1-gate1-backup-artifacts.mjs';
 import { validateBackupSourceState } from './comment-translator-paid-core-v1-gate1-backup-state.mjs';
+import { backupProfileReference, validateProfileState } from './comment-translator-paid-core-v1-gate1-backup-profile.mjs';
 
 const repository = fileURLToPath(new URL('../..', import.meta.url));
 const hash = value => createHash('sha256').update(value).digest('hex');
@@ -27,12 +28,15 @@ export const BACKUP_ACQUISITION_PRODUCERS = Object.freeze([
   'scripts/lib/comment-translator-paid-core-v1-gate1-backup-dump-transport.mjs',
   'scripts/lib/comment-translator-paid-core-v1-gate1-backup-snapshot.mjs',
   'scripts/lib/comment-translator-paid-core-v1-gate1-backup-state.mjs',
+  'scripts/lib/comment-translator-paid-core-v1-gate1-backup-profile.mjs',
+  'scripts/fixtures/comment-translator-paid-core-v1-gate1-environment-inventories.json',
   'scripts/lib/comment-translator-paid-core-v1-gate1-backup-default-acl.mjs',
   'scripts/lib/comment-translator-paid-core-v1-gate1-backup-artifacts.mjs',
   'scripts/lib/comment-translator-paid-core-v1-gate1-restore-sql.mjs',
   'scripts/lib/comment-translator-paid-core-v1-gate1-evidence.mjs',
   'scripts/lib/comment-translator-paid-core-v1-gate1-catalog.mjs',
   'scripts/comment-translator-paid-core-v1-gate1-preflight-readonly.mjs',
+  ...JSON.parse(fs.readFileSync(new URL('../fixtures/comment-translator-paid-core-v1-gate1-environment-inventories.json',import.meta.url),'utf8')).final56.map(({version,name})=>'supabase/migrations/'+version+'_'+name+'.sql'),
 ]);
 // Bind the loaded producer set as well as checking the current files. The
 // operational entry must run in a fresh process from the accepted commit.
@@ -68,7 +72,7 @@ function time(value) {
   require(typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d{1,6})?(?:Z|[+-]\d{2}:\d{2})$/.test(value));
   const result = Date.parse(value); require(Number.isFinite(result)); return result;
 }
-function validateCapture(result, binding, inspection) {
+function validateCapture(result, binding, inspection, profile) {
   const e = result?.evidence, o = e?.processObservations, p = e?.persistence;
   require(e?.status === 'CAPTURED_PERSISTED_NOT_AUTHORITY' && e.snapshotDumpCount === 4 && e.exporterClosed === true && inspection);
   require(exact(o, ['startedAt', 'completedAt', 't0', 'sourceBindingSha256', 'snapshotSha256', 'exporterClosedObservedAt', 'dumps']));
@@ -100,7 +104,10 @@ function validateCapture(result, binding, inspection) {
   require(exact(vector, ['snapshotSha256', 'counts']) && vector.snapshotSha256 === o.snapshotSha256 &&
     exact(vector.counts, ['storage.buckets_vectors', 'storage.vector_indexes']) && Object.values(vector.counts).every(value => value === 0));
   validateBackupSourceState(e.sourceState);
-  return { ...o, checksumCompletedAt: p.checksumCompletedAt, vectorExclusion: vector, sourceState: e.sourceState };
+  const current=e.sourceState.schemaVersion===2;
+  if(current){validateProfileState(e.sourceState,profile);require(same(e.backupProfile,backupProfileReference(profile)));}
+  return { ...o, checksumCompletedAt: p.checksumCompletedAt, vectorExclusion: vector, sourceState: e.sourceState,
+    ...(current?{backupProfile:e.backupProfile}:{}) };
 }
 
 // Factory seams are only for local tests. This creates a source/run-bound
@@ -140,7 +147,7 @@ export function createBackupAcquisition({ store = createBackupArtifactStore(), c
         const result = await capture.run(captureInput);
         cleanupConfirmed = result?.evidence?.exporterClosed === true;
         phase = 'capture-validation';
-        const observed = validateCapture(result, captureInput.expectedBindingSha256, inspection);
+        const observed = validateCapture(result, captureInput.expectedBindingSha256, inspection, captureInput.backupProfile);
         const checkpoint = () => {
           const value = now();
           require(Number.isFinite(value) && value >= time(observed.completedAt) && value <= time(observed.t0) + 299000);

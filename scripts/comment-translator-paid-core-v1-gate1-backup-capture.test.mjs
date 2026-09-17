@@ -1,4 +1,5 @@
-const sourceState = () => ({ historyCount: 22, historySha256: '1'.repeat(64), rowCounts: [{ identitySha256: '2'.repeat(64), rows: 0 }], authUsers: 0, authForeignKeysSha256: '3'.repeat(64), grantsRlsSha256: '4'.repeat(64), legacyRows: 0, vaultRows: 0, storageObjects: 0, vectorCounts: { 'storage.buckets_vectors': 0, 'storage.vector_indexes': 0 } });
+import { BACKUP_HISTORIES } from './lib/comment-translator-paid-core-v1-gate1-backup-profile.mjs';
+const sourceState = () => ({ schemaVersion:2,phase:'pre22',history:structuredClone(BACKUP_HISTORIES.pre22),structureSha256:'6'.repeat(64),sequencesSha256:'8'.repeat(64),archiveSchemaCount:0,archiveUnsafeCount:0,archiveActiveTriggers:0,archiveRows:0,rowDigests:[{identitySha256:'2'.repeat(64),sha256:'3'.repeat(64)}],historyCount: 22, historySha256: '1'.repeat(64), rowCounts: [{ identitySha256: '2'.repeat(64), rows: 0 }], authUsers: 0, authForeignKeysSha256: '3'.repeat(64), grantsRlsSha256: '4'.repeat(64), legacyRows: 0, vaultRows: 0, storageObjects: 0, vectorCounts: { 'storage.buckets_vectors': 0, 'storage.vector_indexes': 0 } });
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { EventEmitter } from 'node:events';
@@ -12,9 +13,11 @@ const hash = text => createHash('sha256').update(text).digest('hex');
 const ca = Buffer.from('synthetic-ca');
 const binding = { schemaVersion: 1, target: 'production', connectionMode: 'direct', projectRef: 'fixtureproject',
   host: 'db.fixtureproject.supabase.co', port: 5432, database: 'postgres', user: 'postgres', sslMode: 'verify-full', caSha256: hash(ca) };
+const reviewed=Buffer.from(JSON.stringify({target:'production',targetBindingSha256:computeBindingSha256(binding),readOnly:{transactionReadOnly:'on',transactionIsolation:'repeatable read'},history:{rows:BACKUP_HISTORIES.pre22},initialReleaseSupplement:{structureSha256:'6'.repeat(64)}}));
 const input = () => ({ target: 'production', bindingJson: JSON.stringify(binding), expectedBindingSha256: computeBindingSha256(binding),
   env: { PATH: 'synthetic', PGHOST: binding.host, PGPORT: '5432', PGDATABASE: 'postgres', PGUSER: 'postgres',
     PGSSLMODE: 'verify-full', PGSSLROOTCERT: 'synthetic-ca', PGPASSWORD: 'fixture-only', UNRELATED: 'excluded' },
+  backupProfile: {phase:'pre22',structureSha256:'6'.repeat(64),reviewedCatalogSha256:hash(reviewed),reviewedCatalogFile:'C:/fixture/review.json'},
   authStorageSql: '', authStorageSha256: hash(''), preconditions: { vaultTotal: 0, vaultReserved: 0, storageObjects: 0 } });
 const roles = "SET standard_conforming_strings = on;\nCREATE ROLE \"fixture_role\";\n";
 const schema = "SET standard_conforming_strings = on;\nCREATE SCHEMA \"fixture\";\n";
@@ -26,7 +29,7 @@ function fixture(options = {}) {
     ...(options.now ? { now: options.now } : {}),
     ...(options.monotonicNow ? { monotonicNow: options.monotonicNow } : {}),
     ...(options.persistWhileHeld ? { persistWhileHeld: options.persistWhileHeld } : {}),
-    fsApi: { lstatSync: () => ({ isFile: () => true }), readFileSync: () => ca },
+    fsApi: { lstatSync: () => ({ isFile: () => true,isSymbolicLink:()=>false,size:1 }), readFileSync: p => p==='C:/fixture/review.json'?reviewed:ca },
     setTimeoutImpl(fn, delay) { const id = ++next; timers.set(id, fn); if ((options.timeout && delay === 60000) || (options.killAbsent && delay === 2000)) queueMicrotask(fn); return id; },
     clearTimeoutImpl(id) { timers.delete(id); },
     spawnSyncImpl(command, args, config) {
@@ -80,6 +83,8 @@ test('input/context/preconditions reject before native calls', async () => {
   for (const mutate of [i => { i.authStorageSha256 = '0'.repeat(64); }, i => { i.authStorageSql = '\ud800'; },
     i => { i.preconditions.vaultTotal = 1; }, i => { i.preconditions.storageObjects = 1; },
     i => { i.expectedBindingSha256 = '0'.repeat(64); }, i => { i.env.PGSSLMODE = 'require'; },
+    i => { delete i.backupProfile; }, i => { i.backupProfile.reviewedCatalogSha256='0'.repeat(64); },
+    i => { i.backupProfile.phase='post56'; }, i => { i.backupProfile.structureSha256='0'.repeat(64); },
     i => { i.signal = {}; }, i => { i.signal = AbortSignal.abort(); }]) {
     const f = fixture(), i = input(); mutate(i);
     await assert.rejects(f.capture.run(i), /BACKUP_(CONTEXT_INVALID|ABORTED)/);

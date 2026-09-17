@@ -7,6 +7,12 @@ param(
   [Parameter(Mandatory = $true)]
   [string]$DestinationRoot,
 
+  [Parameter(Mandatory = $true)]
+  [switch]$ProtectedStdin,
+
+  [ValidateSet("pre22", "post56")]
+  [string]$BackupPhase = "pre22",
+
   [string]$PsqlPath = "C:/Users/taka/AppData/Local/Programs/PostgreSQL/17-client-17.11/bin/psql.exe"
 )
 
@@ -171,14 +177,22 @@ function Invoke-CapturedProcess {
   $info.RedirectStandardInput = $true
   $info.RedirectStandardOutput = $true
   $info.RedirectStandardError = $true
-  foreach ($key in @("PGSERVICE", "PGHOSTADDR", "DATABASE_URL")) {
-    [void]$info.Environment.Remove($key)
+  $info.Environment.Clear()
+  foreach ($key in @("SystemRoot", "WINDIR", "PATH", "TEMP", "TMP")) {
+    $value = [Environment]::GetEnvironmentVariable($key)
+    if ($value) { $info.Environment[$key] = $value }
   }
   foreach ($key in $EnvironmentVariables.Keys) {
     $info.Environment[$key] = [string]$EnvironmentVariables[$key]
   }
   $process = [Diagnostics.Process]::new()
   $started = $false
+  $elapsed = [Diagnostics.Stopwatch]::StartNew()
+  $remaining = {
+    $value = $processTimeoutMilliseconds - [int]$elapsed.ElapsedMilliseconds
+    if ($value -le 0) { throw "PROCESS_TIMEOUT" }
+    return $value
+  }
   try {
     $process.StartInfo = $info
     if (-not $process.Start()) {
@@ -188,17 +202,17 @@ function Invoke-CapturedProcess {
     $stdoutTask = $process.StandardOutput.ReadToEndAsync()
     $stderrTask = $process.StandardError.ReadToEndAsync()
     $inputTask = $process.StandardInput.WriteAsync($StandardInput)
-    if (-not $inputTask.Wait($processTimeoutMilliseconds)) {
+    if (-not $inputTask.Wait((& $remaining))) {
       throw "PROCESS_TIMEOUT"
     }
     $inputTask.GetAwaiter().GetResult()
     $flushTask = $process.StandardInput.FlushAsync()
-    if (-not $flushTask.Wait($processTimeoutMilliseconds)) {
+    if (-not $flushTask.Wait((& $remaining))) {
       throw "PROCESS_TIMEOUT"
     }
     $flushTask.GetAwaiter().GetResult()
     $process.StandardInput.Close()
-    $exited = $process.WaitForExit($processTimeoutMilliseconds)
+    $exited = $process.WaitForExit((& $remaining))
     if (-not $exited) {
       throw "PROCESS_TIMEOUT"
     }
@@ -217,7 +231,7 @@ function Invoke-CapturedProcess {
       try {
         $process.Kill($true)
       } finally {
-        [void]$process.WaitForExit()
+        if (-not $process.WaitForExit(10000)) { throw "PROCESS_CLOSE_UNCONFIRMED" }
       }
     }
     $process.Dispose()
@@ -452,6 +466,13 @@ function Assert-ReadbackShape {
   Assert-CatalogState -State $Canonical -Label "CANONICAL_STATE"
   Assert-CatalogState -State $Scoped.paidLegacy -Label "PAID_LEGACY_STATE"
   Assert-CatalogState -State $Scoped.sourceEra -Label "SOURCE_ERA_STATE"
+  if ($target -eq "production" -and $BackupPhase -eq "post56") {
+    if ([int]$Common.history.count -ne 56 -or @($Canonical.tables).Count -ne 33 -or @($Canonical.functions).Count -ne 81 -or @($Scoped.sourceEra.tables).Count -ne 6 -or @($Scoped.sourceEra.functions).Count -ne 7 -or @($Scoped.paidLegacy.tables).Count -ne 3 -or @($Scoped.paidLegacy.functions).Count -ne 3) {
+      $script:failureDetails = [ordered]@{ history = $Common.history.count; canonicalTables = @($Canonical.tables).Count; canonicalFunctions = @($Canonical.functions).Count; archiveTables = @($Scoped.paidLegacy.tables).Count; archiveFunctions = @($Scoped.paidLegacy.functions).Count }
+      throw "POST56_COLLECTION_SHAPE_MISMATCH"
+    }
+    return
+  }
   if ($target -eq "production") {
     if ([int]$Common.history.count -ne 22 -or
         [int]$Common.history.totalStatements -ne 221 -or
@@ -693,7 +714,7 @@ table_scope as (
     ('comment_translator_paid_stripe_event_receipts'),
     ('comment_translator_paid_subscription_bindings')
   ) as names(name)
-  where '__TARGET__' = 'preview' or name not in (
+  where '__TARGET__' = 'preview' or '__BACKUP_PHASE__' = 'post56' or name not in (
     'comment_translator_paid_entitlements',
     'comment_translator_paid_usage_counters',
     'comment_translator_paid_usage_events'
@@ -723,12 +744,13 @@ table_catalog as (
          c.relowner, c.relrowsecurity, c.relacl
   from table_scope as ts
   join pg_catalog.pg_class as c on c.relname = ts.table_name
-  join pg_catalog.pg_namespace as n on n.oid = c.relnamespace and n.nspname = 'public'
+  join pg_catalog.pg_namespace as n on n.oid = c.relnamespace and n.nspname =
+    case when ts.scope_name = 'paidLegacy' and '__BACKUP_PHASE__' = 'post56' then 'comment_translator_paid_legacy_archive' else 'public' end
   where c.relkind in ('r', 'p')
 ),
 exact_counts as (
   select
-    tc.table_name,
+    tc.oid,
     (
       (pg_catalog.xpath(
         '/table/row/row_count/text()',
@@ -825,7 +847,7 @@ table_rows as (
       ), '[]'::jsonb)
     ) as row_json
   from table_catalog as tc
-  join exact_counts as ec on ec.table_name = tc.table_name
+  join exact_counts as ec on ec.oid = tc.oid
 ),
 legacy_function_specs as (
   select * from (values
@@ -862,14 +884,15 @@ function_catalog as (
     p.proconfig as function_config,
     p.proacl as function_acl
   from pg_catalog.pg_proc as p
-  join pg_catalog.pg_namespace as n on n.oid = p.pronamespace and n.nspname = 'public'
+  join pg_catalog.pg_namespace as n on n.oid = p.pronamespace
   left join legacy_function_specs as lfs
     on lfs.function_name = p.proname
    and lfs.identity_arguments = pg_catalog.pg_get_function_identity_arguments(p.oid)
   left join source_era_function_specs as sefs
     on sefs.function_name = p.proname
-  where p.proname like 'ct_paid_%'
-     or ('__TARGET__' = 'production' and (lfs.function_name is not null or sefs.function_name is not null))
+  where (n.nspname = 'public' and (p.proname like 'ct_paid_%'
+     or ('__TARGET__' = 'production' and (lfs.function_name is not null or sefs.function_name is not null))))
+     or ('__TARGET__' = 'production' and '__BACKUP_PHASE__' = 'post56' and n.nspname = 'comment_translator_paid_legacy_archive' and lfs.function_name is not null)
 ),
 function_rows as (
   select fc.scope_name, fc.schema_name, fc.function_name, fc.identity_arguments,
@@ -1051,12 +1074,18 @@ try {
   }
   Ensure-ReadbackDirectory
   $psqlVersion = Get-PsqlVersion
-  $pgHost = Read-HiddenValue -Prompt "PGHOST (hidden input)"
-  $pgUser = Read-HiddenValue -Prompt "PGUSER (hidden input)"
-  $pgPassword = Read-HiddenValue -Prompt "PGPASSWORD (hidden input)"
-  if ($pgHost -match "://|[\r\n]" -or $pgUser -match "[\r\n]") {
-    throw "CONNECTION_VALUE_SHAPE_INVALID"
-  }
+  if (-not $ProtectedStdin) { throw "PROTECTED_STDIN_REQUIRED" }
+  $privateInput = [Console]::In.ReadToEnd()
+  if ([Text.Encoding]::UTF8.GetByteCount($privateInput) -gt 1048576) { throw "INPUT_LIMIT" }
+  $request = $privateInput | ConvertFrom-Json -Depth 30
+  if ($request.target -ne $target) { throw "TARGET_BINDING_MISMATCH" }
+  $helper = Join-Path $PSScriptRoot "lib/comment-translator-paid-core-v1-gate1-bound-connection.mjs"
+  $checked = Invoke-CapturedProcess -FilePath "node" -Arguments @($helper, "--private-stdin") -EnvironmentVariables @{} -StandardInput $privateInput
+  if ($checked.ExitCode -ne 0 -or $checked.StderrBytes -ne 0) { throw "TARGET_TLS_CONTEXT_REJECTED" }
+  $connection = $checked.Stdout | ConvertFrom-Json -AsHashtable
+  $environmentVariables = $connection.env
+  $supplementSql = $connection.supplementSql
+  $privateInput = $null; $checked = $null; $request = $null
 
   $sql = $sqlCommon + [Environment]::NewLine
   if ($target -eq "production") {
@@ -1065,20 +1094,13 @@ try {
     $sql += $sqlPreviewScoped
   }
   $sql = $sql.Replace("__TARGET__", $target)
+  $sql = $sql.Replace("__BACKUP_PHASE__", $BackupPhase)
+  $sql += [Environment]::NewLine + $supplementSql
   $sql += [Environment]::NewLine + "rollback;" + [Environment]::NewLine
 
-  $environmentVariables = @{
-    PGHOST = $pgHost
-    PGPORT = "5432"
-    PGUSER = $pgUser
-    PGPASSWORD = $pgPassword
-    PGDATABASE = "postgres"
-    PGSSLMODE = "require"
-    PGCONNECT_TIMEOUT = "15"
-    PGOPTIONS = "-c default_transaction_read_only=on"
-  }
   $result = Invoke-CapturedProcess -FilePath $PsqlPath -Arguments @(
     "--no-psqlrc",
+    "--no-password",
     "--quiet",
     "--no-align",
     "--tuples-only",
@@ -1101,7 +1123,7 @@ try {
     throw "UNSAFE_OUTPUT_SHAPE"
   }
   $lines = @($raw -split "\r?\n" | Where-Object { $_.Trim().Length -gt 0 })
-  if ($lines.Count -ne 2) {
+  if ($lines.Count -ne 4) {
     throw "PSQL_JSON_LINE_COUNT"
   }
   $objects = @($lines | ForEach-Object { $_ | ConvertFrom-Json -Depth 100 })
@@ -1110,6 +1132,9 @@ try {
   if (@($common).Count -ne 1 -or @($scoped).Count -ne 1) {
     throw "READBACK_OBJECT_COUNT"
   }
+  $supplement = $objects | Where-Object { $_.kind -eq "initialReleaseSupplement" }
+  if (@($supplement).Count -ne 1 -or $supplement.structureSha256 -notmatch "^[a-f0-9]{64}$") { throw "SUPPLEMENT_SHAPE_INVALID" }
+  if ($objects[3].objects -isnot [array] -or $objects[3].objects.Count -eq 0 -or $objects[3].dependencies -isnot [array]) { throw "MANAGED_CATALOG_SHAPE_INVALID" }
   $canonical = [ordered]@{
     tables = @($scoped.canonical.tables)
     functions = @($common.canonicalRpc.functions)
@@ -1122,6 +1147,7 @@ try {
     schemaVersion = 1
     target = $target
     targetFingerprint = [string]$common.targetFingerprint
+    targetBindingSha256 = $connection.bindingSha256
     readOnly = $common.readOnly
     history = $common.history
     canonicalRpc = $common.canonicalRpc
@@ -1129,6 +1155,8 @@ try {
     paidLegacy = $scoped.paidLegacy
     sourceEra = $scoped.sourceEra
     absence = $scoped.absence
+    initialReleaseSupplement = $supplement
+    managedCatalog = $objects[3]
   }
   $artifactJson = $artifactObject | ConvertTo-Json -Depth 100 -Compress
   $utf8NoBom = [Text.UTF8Encoding]::new($false)
@@ -1143,7 +1171,8 @@ try {
   [ordered]@{
     schemaVersion = 1
     target = $target
-    status = "PASS"
+    status = "CATALOG_ACQUIRED_SHAPE_ACCEPTED"
+    applicationPrerequisites = "NOT_EVALUATED"
     psqlMajor = 17
     transactionReadOnly = $common.readOnly.transactionReadOnly
     defaultTransactionReadOnly = $common.readOnly.defaultTransactionReadOnly

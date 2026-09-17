@@ -6,3 +6,16 @@
 /scripts/lib/comment-translator-paid-core-v1-gate1-evidence.mjs text eol=lf
 /scripts/lib/comment-translator-paid-core-v1-gate1-catalog.mjs text eol=lf
 /scripts/comment-translator-paid-core-v1-gate1-preflight-readonly.mjs text eol=lf
+
+# Exact-byte backup producers; no repository-wide newline policy change.
+/scripts/comment-translator-paid-core-v1-gate1-backup-acquire.mjs text eol=lf
+/scripts/lib/comment-translator-paid-core-v1-gate1-backup-process.mjs text eol=lf
+/scripts/lib/comment-translator-paid-core-v1-gate1-backup-acquisition.mjs text eol=lf
+/scripts/lib/comment-translator-paid-core-v1-gate1-backup-capture.mjs text eol=lf
+/scripts/lib/comment-translator-paid-core-v1-gate1-backup-dump-transport.mjs text eol=lf
+/scripts/lib/comment-translator-paid-core-v1-gate1-backup-snapshot.mjs text eol=lf
+/scripts/lib/comment-translator-paid-core-v1-gate1-backup-state.mjs text eol=lf
+/scripts/lib/comment-translator-paid-core-v1-gate1-backup-default-acl.mjs text eol=lf
+/scripts/lib/comment-translator-paid-core-v1-gate1-restore-sql.mjs text eol=lf
+/scripts/lib/comment-translator-paid-core-v1-gate1-backup-profile.mjs text eol=lf
+/scripts/fixtures/comment-translator-paid-core-v1-gate1-environment-inventories.json text eol=lf

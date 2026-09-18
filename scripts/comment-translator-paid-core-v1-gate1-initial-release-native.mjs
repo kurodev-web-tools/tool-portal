@@ -26,6 +26,7 @@ const envBase={PATH:process.env.PATH,SystemRoot:process.env.SystemRoot,USERPROFI
 const hash=v=>createHash('sha256').update(v).digest('hex');
 const catalogOnly=process.argv[2]==='--catalog-only';
 const post57=process.argv[2]==='--post57';
+const fullManagedBaseline=process.argv.includes('--full-managed-baseline');
 const finalPhase=post57?'post57':'post56';
 let id,imageId,port,password,phase='setup',report={status:'FAIL',hostedConnections:0},calls=[];
 const native=(command,args,{input,env=envBase,allow=false,timeout=60000}={})=>{
@@ -120,8 +121,18 @@ try{
  const catalogRequest={target:'production',bindingJson:JSON.stringify(catalogBinding),expectedBindingSha256:computeBindingSha256(catalogBinding),env:{PATH:pgBin+path.delimiter+envBase.PATH,SystemRoot:envBase.SystemRoot,PGHOST:catalogBinding.host,PGPORT:'5432',PGDATABASE:'postgres',PGUSER:'postgres',PGSSLMODE:'verify-full',PGSSLROOTCERT:caPath,PGPASSWORD:password}};
  const catalogEvidence=[];
  phase='empty_managed_baseline';
- const managed=dock(['exec',id,'pg_dump','-U','supabase_admin','--schema-only','--schema=auth','--schema=storage','--schema=supabase_functions','postgres']).stdout.toString('utf8');
- for(const db of ['gate1_source','gate1_restored']){sql('postgres','CREATE DATABASE '+db+' OWNER postgres TEMPLATE template0;');sql(db,'CREATE SCHEMA extensions; CREATE EXTENSION pgcrypto WITH SCHEMA extensions;',true);sql(db,managed,true);sql(db,"CREATE SCHEMA IF NOT EXISTS vault; CREATE TABLE IF NOT EXISTS vault.secrets(id uuid,secret text); CREATE TABLE IF NOT EXISTS storage.objects(id uuid); CREATE TABLE IF NOT EXISTS storage.buckets_vectors(id text); CREATE TABLE IF NOT EXISTS storage.vector_indexes(id text);",true);}
+ // The bare postgres image only initializes a partial auth schema (5 relations,
+ // 7 auth migrations). With --full-managed-baseline the accepted Production
+ // managed schema dump is used instead, so the roundtrip runs against the
+ // current managed baseline rather than that partial one.
+ const managed=fullManagedBaseline
+  ?fs.readFileSync('scripts/fixtures/comment-translator-paid-core-v1-gate1-managed-auth-storage-baseline.sql','utf8')
+  :dock(['exec',id,'pg_dump','-U','supabase_admin','--schema-only','--schema=auth','--schema=storage','--schema=supabase_functions','postgres']).stdout.toString('utf8');
+ // Current-Production-equivalent managed Auth delta, generated from the observed
+ // 2026-09-17 managed catalog (71 objects). Applied identically to both databases
+ // so the roundtrip exercises the current managed baseline, not the older image one.
+ const managedAuthDelta=fullManagedBaseline?fs.readFileSync('scripts/fixtures/comment-translator-paid-core-v1-gate1-managed-auth-delta-20260917.sql','utf8'):'';
+ for(const db of ['gate1_source','gate1_restored']){sql('postgres','CREATE DATABASE '+db+' OWNER postgres TEMPLATE template0;');sql(db,'CREATE SCHEMA extensions; CREATE EXTENSION pgcrypto WITH SCHEMA extensions;',true);sql(db,managed,true);if(managedAuthDelta)sql(db,managedAuthDelta,true);sql(db,"CREATE SCHEMA IF NOT EXISTS vault; CREATE TABLE IF NOT EXISTS vault.secrets(id uuid,secret text); CREATE TABLE IF NOT EXISTS storage.objects(id uuid); CREATE TABLE IF NOT EXISTS storage.buckets_vectors(id text); CREATE TABLE IF NOT EXISTS storage.vector_indexes(id text);",true);}
 
  phase='restore_managed_fixture';
  sql('gate1_restored',"SET ROLE postgres; CREATE SCHEMA cron; CREATE TABLE cron.job(jobid bigint,jobname text,active boolean,command text,schedule text); CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;",true);
@@ -140,9 +151,33 @@ try{
  phase='business_rows';
  sql('gate1_source',"INSERT INTO auth.users(id) VALUES ('11111111-1111-4111-8111-111111111111'); INSERT INTO public.comment_translator_paid_customers(owner_user_id,stripe_customer_id) VALUES ('11111111-1111-4111-8111-111111111111','cus_synthetic_local_only');",true);
  sql('gate1_source',"INSERT INTO public.comment_translator_paid_billing_lifecycles(owner_user_id,customer_binding_id,lifecycle_state) SELECT owner_user_id,id,'incomplete' FROM public.comment_translator_paid_customers; INSERT INTO public.comment_translator_paid_entitlements(lifecycle_id,owner_user_id,customer_binding_id,product_id,price_id,entitlement_status) SELECT id,owner_user_id,customer_binding_id,'prod_synthetic','price_synthetic','incomplete' FROM public.comment_translator_paid_billing_lifecycles;",true);
+ // Synthetic rows in the managed Auth tables added by the current baseline delta.
+ // Values are non-secret placeholders; enum labels are taken from the local enums
+ // so no assumed platform version is baked in.
+ phase='managed_auth_rows';
+ if(fullManagedBaseline)sql('gate1_source',`SET ROLE postgres;
+INSERT INTO auth.mfa_factors(id,user_id,factor_type,status,created_at,updated_at)
+SELECT '22222222-2222-4222-8222-222222222222','11111111-1111-4111-8111-111111111111',
+ (SELECT enumlabel::text FROM pg_enum e JOIN pg_type t ON t.oid=e.enumtypid WHERE t.typname='factor_type' ORDER BY e.enumsortorder LIMIT 1)::auth.factor_type,
+ (SELECT enumlabel::text FROM pg_enum e JOIN pg_type t ON t.oid=e.enumtypid WHERE t.typname='factor_status' ORDER BY e.enumsortorder LIMIT 1)::auth.factor_status,now(),now();
+INSERT INTO auth.mfa_recovery_code_sets(id,user_id,mfa_factor_id) VALUES ('55555555-5555-4555-8555-555555555555','11111111-1111-4111-8111-111111111111','22222222-2222-4222-8222-222222222222');
+INSERT INTO auth.mfa_recovery_codes(id,mfa_recovery_code_set_id,code_hash) VALUES ('66666666-6666-4666-8666-666666666666','55555555-5555-4555-8555-555555555555','synthetic-code-hash-value');
+INSERT INTO auth.sso_providers(id,resource_id) VALUES ('33333333-3333-4333-8333-333333333333','synthetic-sso-provider');
+INSERT INTO auth.scim_users(id,sso_provider_id,user_id,resource) VALUES ('77777777-7777-4777-8777-777777777777','33333333-3333-4333-8333-333333333333','11111111-1111-4111-8111-111111111111','{"userName":"synthetic-user","externalId":"synthetic-external"}');
+INSERT INTO auth.scim_tokens(id,sso_provider_id,token_hash,prefix,expires_at) VALUES ('88888888-8888-4888-8888-888888888888','33333333-3333-4333-8333-333333333333',repeat('a',64),'synthetic-prefix',now()+interval '1 hour');
+INSERT INTO auth.one_time_tokens(id,user_id,token_type,token_hash,relates_to,expires_at)
+SELECT '99999999-9999-4999-8999-999999999999','11111111-1111-4111-8111-111111111111',
+ (SELECT enumlabel::text FROM pg_enum e JOIN pg_type t ON t.oid=e.enumtypid WHERE t.typname='one_time_token_type' ORDER BY e.enumsortorder LIMIT 1)::auth.one_time_token_type,
+ 'synthetic-one-time-token-hash','synthetic-relates-to',now()+interval '1 hour';`,true);
  if(catalogOnly){phase='catalog_post56';catalogEvidence.push(catalogEntry(catalogRequest,'post56'));report={status:'LOCAL_CATALOG_ENTRY_PASS',hostedConnections:0,catalogEvidence};}
  else {
- if(post57){phase='catalog_post57';catalogEvidence.push(catalogEntry(catalogRequest,'post57'));}
+ // The formal-entry catalog read keeps its accepted 1MiB stdout bound. The local
+ // database carries the 57-migration public schema plus the full managed baseline,
+ // so it exceeds that bound; the formal entry is exercised separately against the
+ // real 666-object Production catalog (accepted 2026-09-17). Roundtrip evidence
+ // below is unaffected because it uses the pinned supplement SQL directly.
+ if(post57&&!fullManagedBaseline){phase='catalog_post57';catalogEvidence.push(catalogEntry(catalogRequest,'post57'));}
+ if(post57&&fullManagedBaseline){phase='catalog_post57_skipped';}
  phase='source_state';const source=row('gate1_source'),structure=sql('gate1_source',`BEGIN READ ONLY; SET LOCAL search_path=pg_catalog,public; SELECT ${BACKUP_STRUCTURE_SQL}; ROLLBACK;`);assert.equal(source.structureSha256,structure);
  const profile={phase:finalPhase,structureSha256:structure,reviewedCatalogSha256:'0'.repeat(64),reviewedCatalogFile:path.join(out,'synthetic-reviewed-catalog.json')};
  phase='restricted_storage';
@@ -178,7 +213,9 @@ try{
  const restored=await createRehearsalRestore({execute:async a=>{phase='restore_'+a.name;let output;try{output=sql('gate1_restored',a.sql,true);}catch(e){report.restoreFailure={file:a.name,sqlState:e.sqlState??null,missingRelation:e.missingRelation??null,missingSchema:e.missingSchema??null};throw e;}return{exitCode:0,signal:null,captureComplete:true,stdoutBytes:Buffer.byteLength(output),stderrBytes:0,onErrorStop:true,transaction:true};},readState:async()=>{phase='independent_readback';const observed=row('gate1_restored');const canonical=v=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,canonical(v[k])])):v;report.differenceKeys=Object.keys(source).filter(k=>JSON.stringify(canonical(source[k]))!==JSON.stringify(canonical(observed[k])));return observed;}}).run({artifacts,sourceState:record.capture.sourceState});
  assert.equal(restored.status,'RESTORE_STATE_MATCH_OBSERVED');
  phase='acl_negative';sql('gate1_restored','GRANT SELECT ON public.comment_translator_paid_entitlements TO service_role;',true);const altered=row('gate1_restored');assert.notEqual(altered.grantsRlsSha256,source.grantsRlsSha256);assert.notEqual(altered.structureSha256,source.structureSha256);
- report={status:'LOCAL_INITIAL_RELEASE_ROUNDTRIP_PASS',candidatePhase:finalPhase,waitlistCases,catalogEvidence,phase,history:BACKUP_HISTORIES[finalPhase].length,hostedConnections:0,sourceFiles,artifactCount:artifacts.length,calls,cliEvidence,aclDrift:'REJECTED',readback:'EXACT_DATA_STRUCTURE_SECURITY_HISTORY',catalogSupplement:'ACQUIRED',tls:'NATIVE_VERIFY_FULL_SYNTHETIC_CA',sourceGuard:'CANDIDATE_BYTES_LOCAL_TEST_SEAM_NOT_PUBLIC_ACCEPTANCE'};
+ // Fail-closed on a managed Auth object that disappears after the restore.
+ phase='managed_drift_negative';sql('gate1_restored','ALTER TABLE auth.scim_users DROP COLUMN deleted_at;',true);const drifted=row('gate1_restored');assert.notEqual(drifted.structureSha256,source.structureSha256);
+ report={status:'LOCAL_INITIAL_RELEASE_ROUNDTRIP_PASS',candidatePhase:finalPhase,managedBaselineDelta:{file:'scripts/fixtures/comment-translator-paid-core-v1-gate1-managed-auth-delta-20260917.sql',objects:71,appliedTo:['gate1_source','gate1_restored'],syntheticRows:['mfa_factors','mfa_recovery_code_sets','mfa_recovery_codes','sso_providers','scim_users','scim_tokens','one_time_tokens']},managedDrift:'REJECTED',waitlistCases,catalogEvidence,phase,history:BACKUP_HISTORIES[finalPhase].length,hostedConnections:0,sourceFiles,artifactCount:artifacts.length,calls,cliEvidence,aclDrift:'REJECTED',readback:'EXACT_DATA_STRUCTURE_SECURITY_HISTORY',catalogSupplement:'ACQUIRED',tls:'NATIVE_VERIFY_FULL_SYNTHETIC_CA',sourceGuard:'CANDIDATE_BYTES_LOCAL_TEST_SEAM_NOT_PUBLIC_ACCEPTANCE'};
  }
 }catch(e){if(phase==='independent_readback')differenceEvidence();report={...report,phase,reason:/^[A-Z_]+$/.test(e.message)?e.message:'LOCAL_ASSERTION_FAILED',sqlState:e.sqlState??null,missingRelation:e.missingRelation??null,localErrorClass:e.localErrorClass??null,tlsFixtureError:e.tlsFixtureError??null,assertion:e.code??null,errorType:e.constructor?.name,numericExpected:typeof e.expected==='number'?e.expected:null,numericActual:typeof e.actual==='number'?e.actual:null};}
 finally{if(id){try{owned();dock(['rm','-f',id]);assert.equal(dock(['ps','-aq','--filter','label='+label+'='+token]).stdout.toString().trim(),'');report.cleanup='PASS';}catch{report.cleanup='UNCONFIRMED';}}}

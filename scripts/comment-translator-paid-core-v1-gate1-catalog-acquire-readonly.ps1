@@ -26,6 +26,24 @@ $artifactDirectory = Join-Path $readbackRoot $target
 $artifactName = if ($ReadbackKind -eq "WaitlistChecks") { "$target-waitlist-checks.json" } else { "$target-catalog-readback.json" }
 $artifactPath = Join-Path $artifactDirectory $artifactName
 $maxOutputBytes = 1024 * 1024
+# Only the post57 full catalog carries the 57-migration public scope together
+# with the current managed baseline, and that output is larger than the 1MiB
+# bound every other readback keeps. Raise only that path, to the same 4MiB
+# safety bound the post-apply catalog entry already uses
+# (POSTAPPLY_MAX_OUTPUT_BYTES), and carry the function definition together with
+# a newline-normalised digest so definitions can be compared without changing
+# the existing raw definitionMd5 field.
+$post57FunctionDefinitionFields = ''
+$script:functionRowExpectedKeys = @("schema", "name", "identityArguments", "resultType", "owner", "securityDefiner", "config", "acls", "definitionMd5")
+if ($ReadbackKind -eq "Catalog" -and $BackupPhase -eq "post57") {
+  $maxOutputBytes = 4 * 1024 * 1024
+  $post57FunctionDefinitionFields = @'
+,
+      'definition', pg_catalog.pg_get_functiondef(fc.oid),
+      'definitionLfNormalizedMd5', pg_catalog.md5(pg_catalog.replace(pg_catalog.pg_get_functiondef(fc.oid), E'\r\n', E'\n'))
+'@
+  $script:functionRowExpectedKeys += @("definition", "definitionLfNormalizedMd5")
+}
 $processTimeoutMilliseconds = 5 * 60 * 1000
 $secureValues = @()
 $script:failureDetails = $null
@@ -347,7 +365,7 @@ function Assert-AclRow {
 
 function Assert-FunctionRow {
   param([object]$Row, [string]$Label)
-  Assert-ExactPropertyNames -Value $Row -Expected @("schema", "name", "identityArguments", "resultType", "owner", "securityDefiner", "config", "acls", "definitionMd5") -Label $Label
+  Assert-ExactPropertyNames -Value $Row -Expected $script:functionRowExpectedKeys -Label $Label
   if ([string]::IsNullOrWhiteSpace([string]$Row.schema) -or
       [string]::IsNullOrWhiteSpace([string]$Row.name) -or
       $Row.identityArguments -isnot [string] -or
@@ -358,6 +376,12 @@ function Assert-FunctionRow {
       $Row.config -isnot [array] -or
       $Row.acls -isnot [array]) {
     throw "${Label}_VALUE_INVALID"
+  }
+  if ($script:functionRowExpectedKeys -contains "definition") {
+    if ([string]::IsNullOrWhiteSpace([string]$Row.definition) -or
+        [string]$Row.definitionLfNormalizedMd5 -notmatch "^[0-9a-f]{32}$") {
+      throw "${Label}_DEFINITION_INVALID"
+    }
   }
   foreach ($value in @($Row.config)) {
     if ($value -isnot [string]) { throw "${Label}_CONFIG_INVALID" }
@@ -633,7 +657,7 @@ function_rows as (
         )
         from pg_catalog.aclexplode(coalesce(fc.function_acl, pg_catalog.acldefault('f', fc.owner_oid))) as acl
       ), '[]'::jsonb),
-      'definitionMd5', pg_catalog.md5(pg_catalog.pg_get_functiondef(fc.oid))
+      'definitionMd5', pg_catalog.md5(pg_catalog.pg_get_functiondef(fc.oid))__FUNCTION_DEFINITION_FIELDS__
     ) as row_json
   from function_catalog as fc
 )
@@ -929,7 +953,7 @@ function_rows as (
           acl.is_grantable)
         from pg_catalog.aclexplode(coalesce(fc.function_acl, pg_catalog.acldefault('f', fc.owner_oid))) as acl
       ), '[]'::jsonb),
-      'definitionMd5', pg_catalog.md5(pg_catalog.pg_get_functiondef(fc.oid))
+      'definitionMd5', pg_catalog.md5(pg_catalog.pg_get_functiondef(fc.oid))__FUNCTION_DEFINITION_FIELDS__
     ) as row_json
   from function_catalog as fc
 ),
@@ -1104,6 +1128,7 @@ try {
   }
   $sql = $sql.Replace("__TARGET__", $target)
   $sql = $sql.Replace("__BACKUP_PHASE__", $BackupPhase)
+  $sql = $sql.Replace("__FUNCTION_DEFINITION_FIELDS__", $post57FunctionDefinitionFields)
   $sql += [Environment]::NewLine + $supplementSql
   $sql += [Environment]::NewLine + "rollback;" + [Environment]::NewLine
 

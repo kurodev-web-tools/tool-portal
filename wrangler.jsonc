@@ -4,6 +4,8 @@
   "main": "workers/comment-translator-paid-open-next-wrapper.mjs",
   "compatibility_date": "2026-05-27",
   "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
@@ -11,7 +13,12 @@
   "observability": {
     "enabled": true
   },
+  // Cloudflare Cron stays empty until Paid activation. The scheduled handler in
+  // workers/comment-translator-paid-open-next-wrapper.mjs is the Paid-only
+  // fallback and no-ops unless COMMENT_TRANSLATOR_PAID_SCHEDULER_AUTHORITY is
+  // exactly cloudflare-cron-fallback and COMMENT_TRANSLATOR_PAID_CRON_TOKEN is
+  // set; Production currently has neither binding.
   "triggers": {
-    "crons": ["*/5 * * * *"]
+    "crons": []
   }
 }

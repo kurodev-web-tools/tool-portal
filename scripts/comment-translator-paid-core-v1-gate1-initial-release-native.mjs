@@ -8,7 +8,7 @@ import { createBackupAcquisition,BACKUP_ACQUISITION_PRODUCERS } from './lib/comm
 import { createBackupCapture } from './lib/comment-translator-paid-core-v1-gate1-backup-capture.mjs';
 import { createBackupArtifactStore } from './lib/comment-translator-paid-core-v1-gate1-backup-artifacts.mjs';
 import { createRehearsalRestore } from './lib/comment-translator-paid-core-v1-gate1-rehearsal-restore.mjs';
-import { BACKUP_SOURCE_STATE_SQL,CURRENT_BACKUP_STATE_SQL,validateBackupSourceState } from './lib/comment-translator-paid-core-v1-gate1-backup-state.mjs';
+import { BACKUP_SOURCE_STATE_SQL,CURRENT_BACKUP_STATE_SQL,REQUIRED_EXTERNAL_VAULT_SECRET_NAMES,validateBackupSourceState } from './lib/comment-translator-paid-core-v1-gate1-backup-state.mjs';
 import { BACKUP_HISTORIES,BACKUP_STRUCTURE_CTES,BACKUP_STRUCTURE_SQL } from './lib/comment-translator-paid-core-v1-gate1-backup-profile.mjs';
 import { CATALOG_SUPPLEMENT_SQL } from './lib/comment-translator-paid-core-v1-gate1-catalog-supplement.mjs';
 import { computeBindingSha256 } from './comment-translator-paid-core-v1-gate1-preflight-readonly.mjs';
@@ -27,6 +27,11 @@ const hash=v=>createHash('sha256').update(v).digest('hex');
 const catalogOnly=process.argv[2]==='--catalog-only';
 const post57=process.argv[2]==='--post57';
 const fullManagedBaseline=process.argv.includes('--full-managed-baseline');
+// Local-only paid-scheduler Vault fixture. Production Vault values are never
+// backed up or restored; the recovery contract is an explicit external
+// re-provision, so only the non-secret allowlist is captured.
+const vaultPaid=process.argv.includes('--vault-paid');
+const VAULT_FIXTURE_SECRET_VALUES=Object.freeze(['synthetic-vault-maintenance-url-value','synthetic-vault-cron-token-value']);
 const finalPhase=post57?'post57':'post56';
 let id,imageId,port,password,phase='setup',report={status:'FAIL',hostedConnections:0},calls=[];
 const native=(command,args,{input,env=envBase,allow=false,timeout=60000}={})=>{
@@ -132,7 +137,7 @@ try{
  // 2026-09-17 managed catalog (71 objects). Applied identically to both databases
  // so the roundtrip exercises the current managed baseline, not the older image one.
  const managedAuthDelta=fullManagedBaseline?fs.readFileSync('scripts/fixtures/comment-translator-paid-core-v1-gate1-managed-auth-delta-20260917.sql','utf8'):'';
- for(const db of ['gate1_source','gate1_restored']){sql('postgres','CREATE DATABASE '+db+' OWNER postgres TEMPLATE template0;');sql(db,'CREATE SCHEMA extensions; CREATE EXTENSION pgcrypto WITH SCHEMA extensions;',true);sql(db,managed,true);if(managedAuthDelta)sql(db,managedAuthDelta,true);sql(db,"CREATE SCHEMA IF NOT EXISTS vault; CREATE TABLE IF NOT EXISTS vault.secrets(id uuid,secret text); CREATE TABLE IF NOT EXISTS storage.objects(id uuid); CREATE TABLE IF NOT EXISTS storage.buckets_vectors(id text); CREATE TABLE IF NOT EXISTS storage.vector_indexes(id text);",true);}
+for(const db of ['gate1_source','gate1_restored']){sql('postgres','CREATE DATABASE '+db+' OWNER postgres TEMPLATE template0;');sql(db,'CREATE SCHEMA extensions; CREATE EXTENSION pgcrypto WITH SCHEMA extensions;',true);sql(db,managed,true);if(managedAuthDelta)sql(db,managedAuthDelta,true);sql(db,`CREATE SCHEMA IF NOT EXISTS vault; CREATE TABLE IF NOT EXISTS vault.secrets(id uuid${vaultPaid?',name text':''},secret text); CREATE TABLE IF NOT EXISTS storage.objects(id uuid); CREATE TABLE IF NOT EXISTS storage.buckets_vectors(id text); CREATE TABLE IF NOT EXISTS storage.vector_indexes(id text);`,true);}
 
  phase='restore_managed_fixture';
  sql('gate1_restored',"SET ROLE postgres; CREATE SCHEMA cron; CREATE TABLE cron.job(jobid bigint,jobname text,active boolean,command text,schedule text); CREATE EXTENSION IF NOT EXISTS pg_net WITH SCHEMA extensions;",true);
@@ -169,6 +174,10 @@ INSERT INTO auth.one_time_tokens(id,user_id,token_type,token_hash,relates_to,exp
 SELECT '99999999-9999-4999-8999-999999999999','11111111-1111-4111-8111-111111111111',
  (SELECT enumlabel::text FROM pg_enum e JOIN pg_type t ON t.oid=e.enumtypid WHERE t.typname='one_time_token_type' ORDER BY e.enumsortorder LIMIT 1)::auth.one_time_token_type,
  'synthetic-one-time-token-hash','synthetic-relates-to',now()+interval '1 hour';`,true);
+ // Local-only paid-scheduler Vault fixture: the exact accepted allowlist names
+ // with synthesised values that must never reach a protected artifact.
+ if(vaultPaid){phase='vault_paid_fixture';assert.equal(REQUIRED_EXTERNAL_VAULT_SECRET_NAMES.length,VAULT_FIXTURE_SECRET_VALUES.length);sql('gate1_source',`INSERT INTO vault.secrets(id,name,secret) VALUES ('aaaaaaaa-0000-4000-8000-000000000001','${REQUIRED_EXTERNAL_VAULT_SECRET_NAMES[0]}','${VAULT_FIXTURE_SECRET_VALUES[0]}'),
+ ('aaaaaaaa-0000-4000-8000-000000000002','${REQUIRED_EXTERNAL_VAULT_SECRET_NAMES[1]}','${VAULT_FIXTURE_SECRET_VALUES[1]}');`,true);}
  if(catalogOnly){phase='catalog_post56';catalogEvidence.push(catalogEntry(catalogRequest,'post56'));report={status:'LOCAL_CATALOG_ENTRY_PASS',hostedConnections:0,catalogEvidence};}
  else {
  // The formal-entry catalog read keeps its accepted 1MiB stdout bound. The local
@@ -186,7 +195,7 @@ SELECT '99999999-9999-4999-8999-999999999999','11111111-1111-4111-8111-111111111
  for(const child of ['artifacts','receipt'])assert.equal(native('powershell',['-NoProfile','-NonInteractive','-Command',acl],{input:privateRoot+'/'+child}).status,0);
  const binding={schemaVersion:1,target:'production',connectionMode:'direct',projectRef:'fixtureproject',host:'db.fixtureproject.supabase.co',port:5432,database:'postgres',user:'postgres',sslMode:'verify-full',caSha256:hash(ca)};
  const reviewed=Buffer.from(JSON.stringify({target:'production',targetBindingSha256:computeBindingSha256(binding),readOnly:{transactionReadOnly:'on',transactionIsolation:'repeatable read'},history:{rows:BACKUP_HISTORIES[finalPhase]},initialReleaseSupplement:JSON.parse(sql('gate1_source','BEGIN READ ONLY; ' + CATALOG_SUPPLEMENT_SQL+'ROLLBACK;'))}));fs.writeFileSync(profile.reviewedCatalogFile,reviewed);profile.reviewedCatalogSha256=hash(reviewed);
- const input={target:'production',bindingJson:JSON.stringify(binding),expectedBindingSha256:computeBindingSha256(binding),env:{PATH:pgBin+path.delimiter+envBase.PATH,SystemRoot:envBase.SystemRoot,PGHOST:binding.host,PGPORT:'5432',PGDATABASE:'postgres',PGUSER:'postgres',PGSSLMODE:'verify-full',PGSSLROOTCERT:caPath,PGPASSWORD:password},authStorageSql:'',authStorageSha256:hash(''),preconditions:{vaultTotal:0,vaultReserved:0,storageObjects:0},backupProfile:profile};
+ const input={target:'production',bindingJson:JSON.stringify(binding),expectedBindingSha256:computeBindingSha256(binding),env:{PATH:pgBin+path.delimiter+envBase.PATH,SystemRoot:envBase.SystemRoot,PGHOST:binding.host,PGPORT:'5432',PGDATABASE:'postgres',PGUSER:'postgres',PGSSLMODE:'verify-full',PGSSLROOTCERT:caPath,PGPASSWORD:password},authStorageSql:'',authStorageSha256:hash(''),preconditions:{vaultTotal:vaultPaid?2:0,vaultReserved:0,storageObjects:0},backupProfile:profile};
  phase='cli_connection';const cliEvidence=[];
  for(const mode of ['list','plan']){
   const config=boundMigrationRunnerConfig(input,{mode,cliFile:'C:/Users/taka/.codex/worktrees/2d79/V_streamer_tools/.tmp/tools/supabase-2.109.0/supabase-go.exe',workDirectory:root});
@@ -209,13 +218,18 @@ SELECT '99999999-9999-4999-8999-999999999999','11111111-1111-4111-8111-111111111
  const store=createBackupArtifactStore(),record=store.inspectRecord({directory:privateRoot+'/receipt',expectedSha256:result.recordSha256}).record;
  const files=JSON.parse(fs.readFileSync(privateRoot+'/artifacts/backup-artifacts.json','utf8'));
  const artifacts=['roles.sql','schema.sql','auth_storage_changes.sql','data.sql','history_schema.sql','history_data.sql'].map(name=>{const sql=fs.readFileSync(privateRoot+'/artifacts/'+name,'utf8');return{name,sql,bytes:Buffer.byteLength(sql),sha256:hash(sql)};});
+ // No Vault secret value may appear anywhere in the protected output tree.
+ if(vaultPaid){phase='vault_plaintext_leakage';for(const dir of ['artifacts','receipt'])for(const n of fs.readdirSync(privateRoot+'/'+dir)){const text=fs.readFileSync(privateRoot+'/'+dir+'/'+n,'utf8');for(const v of VAULT_FIXTURE_SECRET_VALUES)assert.ok(!text.includes(v),'VAULT_SECRET_LEAKED');}}
  phase='restore';
  const restored=await createRehearsalRestore({execute:async a=>{phase='restore_'+a.name;let output;try{output=sql('gate1_restored',a.sql,true);}catch(e){report.restoreFailure={file:a.name,sqlState:e.sqlState??null,missingRelation:e.missingRelation??null,missingSchema:e.missingSchema??null};throw e;}return{exitCode:0,signal:null,captureComplete:true,stdoutBytes:Buffer.byteLength(output),stderrBytes:0,onErrorStop:true,transaction:true};},readState:async()=>{phase='independent_readback';const observed=row('gate1_restored');const canonical=v=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,canonical(v[k])])):v;report.differenceKeys=Object.keys(source).filter(k=>JSON.stringify(canonical(source[k]))!==JSON.stringify(canonical(observed[k])));return observed;}}).run({artifacts,sourceState:record.capture.sourceState});
- assert.equal(restored.status,'RESTORE_STATE_MATCH_OBSERVED');
+ assert.equal(restored.status,vaultPaid?'RESTORE_EXTERNAL_SECRETS_REPROVISION_REQUIRED':'RESTORE_STATE_MATCH_OBSERVED');
+ if(vaultPaid)assert.deepEqual(restored.externalSecrets,{requiredSecretNames:[...REQUIRED_EXTERNAL_VAULT_SECRET_NAMES],restoredSecretValues:'intentionally-absent',schedulerActivation:'prohibited'});
  phase='acl_negative';sql('gate1_restored','GRANT SELECT ON public.comment_translator_paid_entitlements TO service_role;',true);const altered=row('gate1_restored');assert.notEqual(altered.grantsRlsSha256,source.grantsRlsSha256);assert.notEqual(altered.structureSha256,source.structureSha256);
  // Fail-closed on a managed Auth object that disappears after the restore.
  phase='managed_drift_negative';sql('gate1_restored','ALTER TABLE auth.scim_users DROP COLUMN deleted_at;',true);const drifted=row('gate1_restored');assert.notEqual(drifted.structureSha256,source.structureSha256);
- report={status:'LOCAL_INITIAL_RELEASE_ROUNDTRIP_PASS',candidatePhase:finalPhase,managedBaselineDelta:{file:'scripts/fixtures/comment-translator-paid-core-v1-gate1-managed-auth-delta-20260917.sql',objects:71,appliedTo:['gate1_source','gate1_restored'],syntheticRows:['mfa_factors','mfa_recovery_code_sets','mfa_recovery_codes','sso_providers','scim_users','scim_tokens','one_time_tokens']},managedDrift:'REJECTED',waitlistCases,catalogEvidence,phase,history:BACKUP_HISTORIES[finalPhase].length,hostedConnections:0,sourceFiles,artifactCount:artifacts.length,calls,cliEvidence,aclDrift:'REJECTED',readback:'EXACT_DATA_STRUCTURE_SECURITY_HISTORY',catalogSupplement:'ACQUIRED',tls:'NATIVE_VERIFY_FULL_SYNTHETIC_CA',sourceGuard:'CANDIDATE_BYTES_LOCAL_TEST_SEAM_NOT_PUBLIC_ACCEPTANCE'};
+ // Fail-closed when an unexpected Vault secret name appears in the source.
+ if(vaultPaid){phase='vault_policy_negative';sql('gate1_source',"INSERT INTO vault.secrets(id,name,secret) VALUES ('aaaaaaaa-0000-4000-8000-000000000003','comment_translator_unrelated','synthetic-vault-unexpected-value');",true);let vaultRejected=false;try{row('gate1_source');}catch(e){vaultRejected=e.message==='BACKUP_SOURCE_STATE_INVALID';}assert.equal(vaultRejected,true);}
+ report={status:'LOCAL_INITIAL_RELEASE_ROUNDTRIP_PASS',candidatePhase:finalPhase,managedBaselineDelta:{file:'scripts/fixtures/comment-translator-paid-core-v1-gate1-managed-auth-delta-20260917.sql',objects:71,appliedTo:['gate1_source','gate1_restored'],syntheticRows:['mfa_factors','mfa_recovery_code_sets','mfa_recovery_codes','sso_providers','scim_users','scim_tokens','one_time_tokens']},managedDrift:'REJECTED',waitlistCases,catalogEvidence,phase,history:BACKUP_HISTORIES[finalPhase].length,hostedConnections:0,sourceFiles,artifactCount:artifacts.length,calls,cliEvidence,aclDrift:'REJECTED',readback:'EXACT_DATA_STRUCTURE_SECURITY_HISTORY',catalogSupplement:'ACQUIRED',tls:'NATIVE_VERIFY_FULL_SYNTHETIC_CA',sourceGuard:'CANDIDATE_BYTES_LOCAL_TEST_SEAM_NOT_PUBLIC_ACCEPTANCE',...(vaultPaid?{vaultRoundtrip:{fixtureRows:2,sourceMode:'paid-scheduler-external-reprovision',restore:'RESTORE_EXTERNAL_SECRETS_REPROVISION_REQUIRED',plaintextLeakage:'NONE',unexpectedSecret:'REJECTED'}}:{})};
  }
 }catch(e){if(phase==='independent_readback')differenceEvidence();report={...report,phase,reason:/^[A-Z_]+$/.test(e.message)?e.message:'LOCAL_ASSERTION_FAILED',sqlState:e.sqlState??null,missingRelation:e.missingRelation??null,localErrorClass:e.localErrorClass??null,tlsFixtureError:e.tlsFixtureError??null,assertion:e.code??null,errorType:e.constructor?.name,numericExpected:typeof e.expected==='number'?e.expected:null,numericActual:typeof e.actual==='number'?e.actual:null};}
 finally{if(id){try{owned();dock(['rm','-f',id]);assert.equal(dock(['ps','-aq','--filter','label='+label+'='+token]).stdout.toString().trim(),'');report.cleanup='PASS';}catch{report.cleanup='UNCONFIRMED';}}}

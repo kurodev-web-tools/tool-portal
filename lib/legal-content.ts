@@ -24,6 +24,11 @@ const sharedDates = {
   updatedDate: "2026年8月15日"
 };
 
+const legalDocumentDates = {
+  effectiveDate: "2026年5月30日",
+  updatedDate: "2026年9月20日"
+};
+
 export const tokushohoDocuments: Record<Locale, LegalDocument> = {
   ja: {
     eyebrow: "Specified Commercial Transactions Act",
@@ -117,7 +122,7 @@ export const legalDocuments = {
     eyebrow: "Terms of Service",
     title: "利用規約",
     lead: "本規約は、KuroDev が提供する Kuro Stream Kit の利用条件を定めるものです。",
-    ...sharedDates,
+    ...legalDocumentDates,
     sections: [
       {
         heading: "第1条（適用）",
@@ -165,7 +170,8 @@ export const legalDocuments = {
         paragraphs: [
           "本サービスのツール内データは、機能により、利用者のブラウザ内保存、アカウントに紐づく表示設定、または将来提供される同期機能で扱われます。",
           "現時点でサーバー保存の対象となる情報は、アカウント認証、表示言語、テーマなどの軽量な設定を中心とします。画像、素材、予定文、下書き等が自動的にアップロードされるものではありません。",
-          "利用者は、重要な出力物や下書きを自身の責任で保存、バックアップするものとします。"
+          "利用者は、重要な出力物や下書きを自身の責任で保存、バックアップするものとします。",
+          "当方は、障害復旧・データ保全のため、本サービスで扱うデータのバックアップを作成することがあります。バックアップには作成時点のデータの写しが含まれる場合があり、その写しは復旧・保全の目的に限定して使用し、通常のサービス提供には使用しません。バックアップは通常のローテーションにより管理され、最大30日以内に消去します。"
         ]
       },
       {
@@ -187,6 +193,7 @@ export const legalDocuments = {
           "無料利用枠の初期上限は、1日最大30分、1セッション最大30分、同時に1セッション、30翻訳メッセージ/分、月20,000入力文字です。月間上限は翻訳 provider に送る入力/ソース文字を基準に扱います。",
           "Paidプランでは、コメント本文は翻訳処理のためOpenAIまたはAzureへ送信されます。Providerとモデルの選択はサーバー側のPaid条件で行い、利用者が任意に変更することはできません。",
           "当サービスDBでは、画面表示とセッション復元に必要なsanitized feed snapshot（表示用コメント本文、翻訳結果、safe author display name）をセッション終了後最大24時間保存します。Provider request detail、ログ、集計、冪等台帳にはコメント本文を複製しません。OpenAIは標準のabuse monitoringにより最大30日保持される可能性があり、Azure TranslatorはMicrosoftのNo-Trace方針を前提とします。これは当サービスDBの24時間snapshotとは別のProvider側の処理・保持方針です。",
+          "当サービスDB上のsanitized feed snapshotは、セッション終了後最大24時間で削除対象となります。一方、障害復旧用バックアップには作成時点の写しが残る場合があります。この写しは復旧・保全の目的に限定して使用し、通常のサービス提供や翻訳処理には使用せず、通常のバックアップローテーションにより最大30日以内に消去します。",
           "外部プラットフォームやAI翻訳サービスの仕様変更、クォータ、通信状態、配信状態、認証状態、利用上限により、セッションを開始できない、または途中で停止する場合があります。"
         ]
       },
@@ -225,7 +232,7 @@ export const legalDocuments = {
     eyebrow: "Privacy Policy",
     title: "プライバシーポリシー",
     lead: "本ポリシーは、Kuro Stream Kit における情報の取扱いを説明するものです。",
-    ...sharedDates,
+    ...legalDocumentDates,
     sections: [
       {
         heading: "第1条（取得する情報）",
@@ -260,7 +267,8 @@ export const legalDocuments = {
           "YouTube API の呼び出しとAI翻訳処理は、利用者が明示的に翻訳セッションを開始した場合に限って行います。アカウント接続のみでバックグラウンド監視、ポーリング、翻訳、クォータ消費は開始しません。",
           "Free plan は Azure Translator を主な翻訳 provider として利用します。Paid plan は OpenAI mini model を主な翻訳 provider とし、復帰可能な provider error の場合のみ Azure Translator fallback を使います。DeepL、Gemini Flash/Lite、Cloudflare Workers AI は初期公開時点の production translation provider ではありません。",
           "provider policy の説明は処理先とfallback方針の開示に限定し、provider target metadata、liveChatId、owner値、OAuth値、Authorization header、Stripe secret、service-role値は表示しません。利用者画面へ返す情報は、接続状態、再接続要否、利用状況、停止理由などのサニタイズ済みメタデータに限定します。",
-          "当サービスDBでは、画面表示とセッション復元に必要なsanitized feed snapshot（表示用コメント本文、翻訳結果、safe author display name）をセッション終了後最大24時間保存します。これはコメント本文を保存しないという意味ではありません。Provider request detail、ログ、集計、冪等台帳にはコメント本文を複製せず、文字数、Provider、モデル、token数、処理時間、成功・失敗分類などの最小限の集計だけを保持します。"
+          "当サービスDBでは、画面表示とセッション復元に必要なsanitized feed snapshot（表示用コメント本文、翻訳結果、safe author display name）をセッション終了後最大24時間保存します。これはコメント本文を保存しないという意味ではありません。Provider request detail、ログ、集計、冪等台帳にはコメント本文を複製せず、文字数、Provider、モデル、token数、処理時間、成功・失敗分類などの最小限の集計だけを保持します。",
+          "また、障害復旧・データ保全のため当サービスDBのバックアップを作成する場合、バックアップには作成時点で当サービスDBに存在したsanitized feed snapshotその他のデータの写しが含まれることがあります。バックアップ内の写しは復旧・保全の目的に限定して使用し、通常のサービス提供、画面表示、翻訳処理その他の通常サービス用途には使用しません。バックアップは通常のローテーションにより管理され、バックアップ内の写しは最大30日以内に消去します。"
         ]
       },
       {
@@ -300,6 +308,7 @@ export const legalDocuments = {
           "利用者本人から、当方が保有する個人情報の開示、訂正、削除、利用停止等の請求があった場合、本人確認のうえ、法令に従い合理的な範囲で対応します。",
           "Comment Translator のYouTube連携は、Kuro Stream Kit側のアカウント連携ページで切断できます。この切断はserver-only credential referenceを無効化しますが、Google側で許可したアクセス権は取り消しません。Google側のアクセス権は、Googleアカウントの「サードパーティとの接続」で Kuro Live Comment Translator を選び、アクセス権を削除してください。",
           "Paid契約中のアカウント削除では、原則としてSubscriptionを期間終了時解約へ変更し、支払済み期間終了後にアプリ側のアカウントと関連データを削除します。Stripe側の法定・会計情報はStripeの保持方針に従います。disputeや返金の確認に必要な契約、同意version、利用集計、ログイン・Provider集計は、必要最小限の期間だけ保持します。",
+          "アプリ側のデータを削除した後も、障害復旧用バックアップには削除前の写しが一時的に残る場合があります。この写しは個別の即時削除ではなく通常のバックアップローテーションにより削除され、最大30日以内に消去します。バックアップ内のデータを通常のサービス用途へ再利用することはありません。",
           "disputeは対象ownerとSubscriptionを一意に特定できた場合だけその範囲で処理し、利用者勝訴時はPaid即時停止、idempotentなcancel、canceled確認後のcapacity解放を行います。失敗時は停止・保持・manual reconciliationとし、運営勝訴時は現在Subscription/periodが有効で他の停止理由がない場合だけ復元します。問い合わせは feedback@kuro-lab.com または本サービス内のフィードバック導線からご連絡ください。"
         ]
       },

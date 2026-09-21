@@ -2,6 +2,64 @@ import { BACKUP_STRUCTURE_SQL, BACKUP_HISTORIES } from './comment-translator-pai
 // Shared with the pinned data-dump recipe. History is captured separately.
 export const BACKUP_DATA_EXCLUDED_SCHEMAS = Object.freeze('information_schema pg_* graphql graphql_public pgsodium pgsodium_masks pgtle repack tiger tiger_data timescaledb_* _timescaledb_* topology vault etl extensions pgbouncer realtime supabase_migrations _analytics _realtime _supavisor'.split(' '));
 export const BACKUP_DATA_EXCLUDED_TABLES = Object.freeze(['auth.schema_migrations', 'storage.migrations', 'supabase_functions.migrations', 'storage.buckets_vectors', 'storage.vector_indexes']);
+// Paid scheduler activation stores exactly two Vault references. Their values
+// are never part of a backup artifact: the recovery contract is an explicit
+// external re-provision, and only the non-secret name set is captured.
+export const VAULT_POLICY_VERSION = 1;
+export const REQUIRED_EXTERNAL_VAULT_SECRET_NAMES = Object.freeze([
+  'comment_translator_paid_maintenance_url',
+  'comment_translator_paid_cron_token'
+]);
+export const VAULT_MODE_FREE = 'free-vault-zero';
+export const VAULT_MODE_PAID = 'paid-scheduler-external-reprovision';
+export const VAULT_RESTORE_REPROVISION_REQUIRED = 'RESTORE_EXTERNAL_SECRETS_REPROVISION_REQUIRED';
+
+function vaultPolicyReject(reason) {
+  return Object.freeze({ status: 'rejected', reason });
+}
+
+// Deny-by-default Vault policy. Only the exact allowlist below is accepted;
+// every other count, name, or duplicate fails closed.
+export function classifyVaultPolicy(input) {
+  const policy = input && typeof input === 'object' && !Array.isArray(input) ? input : null;
+  const names = policy?.names;
+  const observedCount = policy?.observedCount;
+  if (!Number.isSafeInteger(observedCount) || observedCount < 0 || !Array.isArray(names) ||
+      names.some(name => typeof name !== 'string' || name.length === 0 || name.trim() !== name) ||
+      names.length !== observedCount) return vaultPolicyReject('vault-policy-invalid');
+  const unique = new Set(names);
+  if (unique.size !== names.length) return vaultPolicyReject('vault-policy-duplicate-name');
+  if (observedCount === 0) {
+    return Object.freeze({ status: 'accepted', policyVersion: VAULT_POLICY_VERSION, mode: VAULT_MODE_FREE,
+      observedCount, requiredExternalSecretNames: REQUIRED_EXTERNAL_VAULT_SECRET_NAMES,
+      missingRequiredNames: REQUIRED_EXTERNAL_VAULT_SECRET_NAMES, unexpectedSecretNames: [], duplicateNames: [],
+      reprovisionRequired: false });
+  }
+  const required = new Set(REQUIRED_EXTERNAL_VAULT_SECRET_NAMES);
+  const unexpectedSecretNames = names.filter(name => !required.has(name)).sort();
+  const missingRequiredNames = REQUIRED_EXTERNAL_VAULT_SECRET_NAMES.filter(name => !unique.has(name));
+  if (observedCount > REQUIRED_EXTERNAL_VAULT_SECRET_NAMES.length) return vaultPolicyReject('vault-policy-unexpected-secret');
+  if (unexpectedSecretNames.length > 0) return vaultPolicyReject('vault-policy-unexpected-secret');
+  if (observedCount < REQUIRED_EXTERNAL_VAULT_SECRET_NAMES.length || missingRequiredNames.length > 0)
+    return vaultPolicyReject('vault-policy-incomplete');
+  return Object.freeze({ status: 'accepted', policyVersion: VAULT_POLICY_VERSION, mode: VAULT_MODE_PAID,
+    observedCount, requiredExternalSecretNames: REQUIRED_EXTERNAL_VAULT_SECRET_NAMES,
+    missingRequiredNames: [], unexpectedSecretNames: [], duplicateNames: [], reprovisionRequired: true });
+}
+
+// Validates the captured non-secret policy object. Returns the accepted policy
+// or throws; secret values are never part of this record.
+export function validateVaultPolicyState(policy, vaultRows) {
+  const keys = ['policyVersion', 'observedCount', 'names'];
+  if (!policy || typeof policy !== 'object' || Array.isArray(policy) ||
+      Object.keys(policy).sort().join(',') !== keys.sort().join(',') ||
+      policy.policyVersion !== VAULT_POLICY_VERSION || policy.observedCount !== vaultRows) {
+    throw Error('BACKUP_SOURCE_STATE_INVALID');
+  }
+  const classified = classifyVaultPolicy(policy);
+  if (classified.status !== 'accepted') throw Error('BACKUP_SOURCE_STATE_INVALID');
+  return classified;
+}
 const excludedPattern = '^(' + BACKUP_DATA_EXCLUDED_SCHEMAS.map(s => s.replaceAll('*', '.*')).join('|') + ')$';
 // Fixed aggregate-only readback. Execute inside the held RR/read-only exporter;
 // never accept a caller's SQL, table names, counts or digest as native evidence.
@@ -92,7 +150,7 @@ function validateSourceState(state, expectedHistoryCount) {
 }
 
 export function validateBackupSourceState(state) {
-  if (state?.schemaVersion === 2) return validateCurrentBackupState(state);
+  if (state?.schemaVersion === 2 || state?.schemaVersion === 3) return validateCurrentBackupState(state);
   return validateSourceState(state, 22); // Historical receipts only.
 }
 // Internal local replay only; never used by Production capture or stage validation.
@@ -111,7 +169,12 @@ export const CURRENT_BACKUP_STATE_SQL = `(WITH base AS (SELECT ${sourceStateSql(
  'SELECT encode(sha256(convert_to(coalesce(string_agg(h, '''' ORDER BY h COLLATE "C"), ''''), ''UTF8'')), ''hex'') AS d FROM (SELECT encode(sha256(convert_to(to_jsonb(t)::text,''UTF8'')),''hex'') h FROM ONLY %I.%I t) r',
  nspname,relname),false,false,'')))[1]::text) digest FROM retained
  ), history AS (SELECT coalesce(jsonb_agg(jsonb_build_object('version',version,'name',name) ORDER BY version COLLATE "C"),'[]') rows FROM supabase_migrations.schema_migrations)
- SELECT value || jsonb_build_object('schemaVersion',2,'history',(SELECT rows FROM history),
+ SELECT value || jsonb_build_object('schemaVersion',3,
+ 'vaultPolicy',jsonb_build_object('policyVersion',${VAULT_POLICY_VERSION},
+ 'observedCount',(SELECT count(*) FROM vault.secrets),
+ 'names',(SELECT coalesce(jsonb_agg(nm ORDER BY nm COLLATE "C"),'[]'::jsonb)
+   FROM (SELECT to_jsonb(s)->>'name' AS nm FROM vault.secrets s) x WHERE nm IS NOT NULL)),
+ 'history',(SELECT rows FROM history),
  'structureSha256',${BACKUP_STRUCTURE_SQL},
  'sequencesSha256',(SELECT encode(sha256(convert_to(coalesce(jsonb_agg(jsonb_build_array(n.nspname,c.relname,query_to_xml(format('SELECT last_value,is_called FROM %I.%I',n.nspname,c.relname),false,false,'')::text) ORDER BY n.nspname COLLATE "C",c.relname COLLATE "C"),'[]')::text,'UTF8')),'hex') FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE c.relkind='S' AND n.nspname !~ '${excludedPattern}'),
  'archiveSchemaCount',(SELECT count(*) FROM pg_namespace WHERE nspname='comment_translator_paid_legacy_archive'),
@@ -123,12 +186,16 @@ export const CURRENT_BACKUP_STATE_SQL = `(WITH base AS (SELECT ${sourceStateSql(
  'rowDigests',(SELECT jsonb_agg(jsonb_build_object('identitySha256',identity,'sha256',digest) ORDER BY identity COLLATE "C") FROM contents)) FROM base)`;
 
 function validateCurrentBackupState(state) {
-  const keys=['schemaVersion','phase','history','structureSha256','sequencesSha256','archiveSchemaCount','archiveUnsafeCount','archiveActiveTriggers','archiveRows','rowDigests'];
-  if (!keys.every(k=>Object.hasOwn(state,k)) || !Object.hasOwn(BACKUP_HISTORIES,state.phase)) throw Error('BACKUP_SOURCE_STATE_INVALID');
+  const baseKeys=['schemaVersion','phase','history','structureSha256','sequencesSha256','archiveSchemaCount','archiveUnsafeCount','archiveActiveTriggers','archiveRows','rowDigests'];
+  const supported=state?.schemaVersion===2||state?.schemaVersion===3;
+  const keys=state?.schemaVersion===3?[...baseKeys,'vaultPolicy']:baseKeys;
+  if (!supported || !keys.every(k=>Object.hasOwn(state,k)) || !Object.hasOwn(BACKUP_HISTORIES,state.phase)) throw Error('BACKUP_SOURCE_STATE_INVALID');
   const legacy=Object.fromEntries(Object.entries(state).filter(([k])=>!keys.includes(k)));
   const expected=BACKUP_HISTORIES[state.phase];
   // Canonical business rows may grow. Historic retired archive rows stay zero.
-  validateSourceState({...legacy,legacyRows:0,historyCount:22},22);
+  validateSourceState({...legacy,legacyRows:0,vaultRows:0,historyCount:22},22);
+  if (state.schemaVersion===3) validateVaultPolicyState(state.vaultPolicy,state.vaultRows);
+  else if (state.vaultRows!==0) throw Error('BACKUP_SOURCE_STATE_INVALID');
   const identities=v=>v.map(x=>[x.version,x.name]);
   if (state.historyCount!==expected.length || !Array.isArray(state.history) ||
     state.history.some(x=>Object.keys(x).sort().join()!=='name,version') ||

@@ -88,7 +88,8 @@ export function createBackupCapture({ spawnImpl = spawn, spawnSyncImpl = spawnSy
           computeBindingSha256(parsed.binding) !== expectedBindingSha256 ||
           (signal !== undefined && !(signal instanceof AbortSignal)) || !validText(authStorageSql) ||
           !/^[a-f0-9]{64}$/.test(authStorageSha256 ?? '') || hash(authStorageSql) !== authStorageSha256 ||
-          !preconditions || ['vaultTotal', 'vaultReserved', 'storageObjects'].some(key => preconditions[key] !== 0)) {
+          !preconditions || preconditions.storageObjects !== 0 || preconditions.vaultReserved !== 0 ||
+          !(preconditions.vaultTotal === 0 || preconditions.vaultTotal === 2)) {
         throw error('BACKUP_CONTEXT_INVALID');
       }
       const invocation = buildPsqlInvocation(parsed.binding, env, fsApi);

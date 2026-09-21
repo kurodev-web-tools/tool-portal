@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { validateBackupSourceState, validateLocalReplaySourceState } from './comment-translator-paid-core-v1-gate1-backup-state.mjs';
+import { validateBackupSourceState, validateLocalReplaySourceState, validateVaultPolicyState, VAULT_MODE_FREE } from './comment-translator-paid-core-v1-gate1-backup-state.mjs';
 const names = ['roles.sql', 'schema.sql', 'auth_storage_changes.sql', 'data.sql', 'history_schema.sql', 'history_data.sql'];
 const hash = x => createHash('sha256').update(x).digest('hex');
 const exact = (v, keys) => v && typeof v === 'object' && !Array.isArray(v) && Object.keys(v).sort().join(',') === [...keys].sort().join(',');
@@ -40,8 +40,23 @@ export function createRehearsalRestore({ execute, readState, now = Date.now, loc
       }
       phase = 'readback';
       const restoredState = structuredClone(validateState(await readState()));
-      require(JSON.stringify(canonical(restoredState)) === JSON.stringify(canonical(sourceState)));
-      return { status: 'RESTORE_STATE_MATCH_OBSERVED', startedAt, completedAt: stamp(), transactions, restoredState,
+      // Vault references are external re-provision inputs, not restorable data.
+      // A paid-scheduler source may therefore restore to Vault zero with an
+      // explicit reprovision requirement instead of a byte-equal Vault state.
+      const sourceVault = sourceState.schemaVersion >= 3
+        ? validateVaultPolicyState(sourceState.vaultPolicy, sourceState.vaultRows) : null;
+      const restoredVault = restoredState.schemaVersion >= 3
+        ? validateVaultPolicyState(restoredState.vaultPolicy, restoredState.vaultRows) : null;
+      const externalReprovision = Boolean(sourceVault?.reprovisionRequired && restoredState.vaultRows === 0 &&
+        restoredVault?.mode === VAULT_MODE_FREE);
+      const comparable = externalReprovision
+        ? { ...sourceState, vaultRows: restoredState.vaultRows, vaultPolicy: structuredClone(restoredState.vaultPolicy) }
+        : sourceState;
+      require(JSON.stringify(canonical(restoredState)) === JSON.stringify(canonical(comparable)));
+      return { status: externalReprovision ? 'RESTORE_EXTERNAL_SECRETS_REPROVISION_REQUIRED' : 'RESTORE_STATE_MATCH_OBSERVED',
+        startedAt, completedAt: stamp(), transactions, restoredState,
+        ...(externalReprovision ? { externalSecrets: { requiredSecretNames: sourceVault.requiredExternalSecretNames,
+          restoredSecretValues: 'intentionally-absent', schedulerActivation: 'prohibited' } } : {}),
         stageAuthority: false, gate: 'NO-GO' };
     } catch { throw Object.assign(Error('REHEARSAL_RESTORE_REJECTED'), { phase }); }
   } };

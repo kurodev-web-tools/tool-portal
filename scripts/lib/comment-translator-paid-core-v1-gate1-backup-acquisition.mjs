@@ -6,7 +6,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { createBackupCapture } from './comment-translator-paid-core-v1-gate1-backup-capture.mjs';
 import { validBackupDumpTransport } from './comment-translator-paid-core-v1-gate1-backup-dump-transport.mjs';
 import { createBackupArtifactStore } from './comment-translator-paid-core-v1-gate1-backup-artifacts.mjs';
-import { validateBackupSourceState } from './comment-translator-paid-core-v1-gate1-backup-state.mjs';
+import { validateBackupSourceState, REQUIRED_EXTERNAL_VAULT_SECRET_NAMES } from './comment-translator-paid-core-v1-gate1-backup-state.mjs';
 import { BACKUP_HISTORIES, backupProfileReference, validateProfileState } from './comment-translator-paid-core-v1-gate1-backup-profile.mjs';
 
 const repository = fileURLToPath(new URL('../..', import.meta.url));
@@ -106,10 +106,15 @@ function validateCapture(result, binding, inspection, profile) {
   require(exact(vector, ['snapshotSha256', 'counts']) && vector.snapshotSha256 === o.snapshotSha256 &&
     exact(vector.counts, ['storage.buckets_vectors', 'storage.vector_indexes']) && Object.values(vector.counts).every(value => value === 0));
   validateBackupSourceState(e.sourceState);
-  const current=e.sourceState.schemaVersion===2;
+  const current=e.sourceState.schemaVersion>=2;
   if(current){validateProfileState(e.sourceState,profile);require(same(e.backupProfile,backupProfileReference(profile)));}
+  const vaultPolicy=e.sourceState.schemaVersion>=3?e.sourceState.vaultPolicy:null;
+  if(vaultPolicy&&vaultPolicy.reprovisionRequired&&vaultPolicy.observedCount!==REQUIRED_EXTERNAL_VAULT_SECRET_NAMES.length)
+    require(false);
   return { ...o, checksumCompletedAt: p.checksumCompletedAt, vectorExclusion: vector, sourceState: e.sourceState,
-    ...(current?{backupProfile:e.backupProfile}:{}) };
+    ...(current?{backupProfile:e.backupProfile}:{}),
+    ...(vaultPolicy?{externalSecrets:{requiredSecretNames:vaultPolicy.requiredExternalSecretNames,
+      reprovisionRequired:vaultPolicy.reprovisionRequired,vaultMode:vaultPolicy.mode}}:{}) };
 }
 
 // Factory seams are only for local tests. This creates a source/run-bound

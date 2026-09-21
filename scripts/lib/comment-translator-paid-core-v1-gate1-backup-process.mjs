@@ -155,9 +155,10 @@ export function createBackupProcessReceipt({ store = createBackupArtifactStore()
           file.bytes >= (i === 2 ? 0 : 1) && file.bytes <= 32 * 1024 * 1024));
         const c = record.capture;
         require(exact(c, ['startedAt', 'completedAt', 't0', 'sourceBindingSha256', 'snapshotSha256', 'exporterClosedObservedAt',
-          'dumps', 'checksumCompletedAt', 'vectorExclusion', 'sourceState', ...(c.sourceState?.schemaVersion===2?['backupProfile']:[])]) && c.sourceBindingSha256 === record.sourceBindingSha256 && isHash(c.snapshotSha256));
+          'dumps', 'checksumCompletedAt', 'vectorExclusion', 'sourceState', ...(c.sourceState?.schemaVersion>=2?['backupProfile']:[]),
+          ...(c.sourceState?.schemaVersion>=3?['externalSecrets']:[])]) && c.sourceBindingSha256 === record.sourceBindingSha256 && isHash(c.snapshotSha256));
         validateBackupSourceState(c.sourceState);
-        if(c.sourceState.schemaVersion===2){validateProfileState(c.sourceState,acquisition.captureInput.backupProfile);require(same(c.backupProfile,backupProfileReference(acquisition.captureInput.backupProfile)));}
+        if(c.sourceState.schemaVersion>=2){validateProfileState(c.sourceState,acquisition.captureInput.backupProfile);require(same(c.backupProfile,backupProfileReference(acquisition.captureInput.backupProfile)));}
         require(time(observed.startedAt) <= time(c.startedAt) && time(c.startedAt) <= time(c.t0) + 1000 &&
           time(c.t0) - 1000 <= time(c.checksumCompletedAt) && time(c.checksumCompletedAt) <= time(c.exporterClosedObservedAt) &&
           time(c.exporterClosedObservedAt) <= time(c.completedAt) && time(c.completedAt) <= time(record.createdAt));

@@ -13,6 +13,29 @@
   "observability": {
     "enabled": true
   },
+  // Incident regression (2026-09-21): a fresh `wrangler versions upload`
+  // without `--keep-vars` dropped every Production plain-text var, because the
+  // values only existed as remote bindings. Losing NEXT_PUBLIC_SUPABASE_URL
+  // made the trusted stores unavailable and paid-maintenance answered 503.
+  // These public values are now the source of truth for a fresh upload, so the
+  // upload no longer depends on the previous deployment. The 16 secret
+  // bindings stay remote secrets and are inherited by an upload; never move a
+  // secret into this block.
+  "vars": {
+    "AZURE_TRANSLATOR_ENDPOINT": "https://api.cognitive.microsofttranslator.com/",
+    "AZURE_TRANSLATOR_REGION": "japaneast",
+    "COMMENT_TRANSLATOR_AZURE_MONTHLY_CHARACTER_CAP": "500000",
+    "COMMENT_TRANSLATOR_EDGE_RATE_LIMITING": "enabled",
+    "GOOGLE_OAUTH_CLIENT_ID": "802207624176-gd098dq00ih6807ek775lto5kd20bqqt.apps.googleusercontent.com",
+    "GOOGLE_OAUTH_REDIRECT_URI": "https://streamer-tools.kuro-lab.com/api/comment-translator/youtube/oauth/callback",
+    "NEXT_PUBLIC_SITE_URL": "https://streamer-tools.kuro-lab.com",
+    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_W_vbID6B0Wo_Ju2_gmEceQ_2xUwYXwM",
+    "NEXT_PUBLIC_SUPABASE_URL": "https://jcmutakletqisakunzmn.supabase.co",
+    "NEXT_PUBLIC_TURNSTILE_SITE_KEY": "0x4AAAAAADZRqKAqezIyrY3y",
+    "VERCEL_ENV": "production",
+    "YOUTUBE_OAUTH_TOKEN_STORE_KEY_REF": "youtube-token-store-main",
+    "YOUTUBE_OAUTH_TOKEN_STORE_KEY_VERSION": "v1"
+  },
   // Cloudflare Cron stays empty until Paid activation. The scheduled handler in
   // workers/comment-translator-paid-open-next-wrapper.mjs is the Paid-only
   // fallback and no-ops unless COMMENT_TRANSLATOR_PAID_SCHEDULER_AUTHORITY is

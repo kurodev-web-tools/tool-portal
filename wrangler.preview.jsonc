@@ -7,6 +7,31 @@
   },
   "compatibility_date": "2026-05-27",
   "compatibility_flags": ["nodejs_compat"],
+  // Preview plain-text vars recovered read-only from the newest preview upload
+  // (Version 9e1a72be-5648-4b04-a902-d5c5e20ae4d3, 2026-08-31) so a fresh
+  // upload reproduces them instead of inheriting remote bindings. Preview
+  // values are environment specific: never copy Production values into this
+  // block. Preview secrets stay remote secrets and are inherited by an upload.
+  "vars": {
+    "COMMENT_TRANSLATOR_PAID_ATTEMPT_KEY_VERSION": "v1",
+    "COMMENT_TRANSLATOR_PAID_AUTOMATIC_TAX_ENABLED": "false",
+    "COMMENT_TRANSLATOR_PAID_AZURE_FALLBACK_ENABLED": "false",
+    "COMMENT_TRANSLATOR_PAID_CHECKOUT_ENABLED": "true",
+    "COMMENT_TRANSLATOR_PAID_CONDITIONS_VERSION": "paid-v1",
+    "COMMENT_TRANSLATOR_PAID_OPENAI_ENABLED": "false",
+    "COMMENT_TRANSLATOR_PAID_POLL_DAILY_BUDGET": "79000",
+    "COMMENT_TRANSLATOR_PAID_SCHEDULER_AUTHORITY": "supabase-cron",
+    "COMMENT_TRANSLATOR_PAID_TAX_REGISTRATION_READY": "false",
+    "COMMENT_TRANSLATOR_PAID_TRANSLATION_ENABLED": "false",
+    "COMMENT_TRANSLATOR_PAID_US_CHECKOUT_ENABLED": "false",
+    "COMMENT_TRANSLATOR_PRIVACY_VERSION": "privacy-v1",
+    "COMMENT_TRANSLATOR_STRIPE_PAID_PRICE_ID": "price_1U5JPp0MPTMdbZdsXEDz6ZXZ",
+    "COMMENT_TRANSLATOR_STRIPE_PAID_PRODUCT_ID": "prod_V5UO1XNXgXSWaj",
+    "COMMENT_TRANSLATOR_TERMS_VERSION": "terms-v1",
+    "NEXT_PUBLIC_SITE_URL": "https://v-streamer-tools-preview.kurodev-web-tools.workers.dev/",
+    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY": "sb_publishable_XAsFS4KOTRUluuGaEqtfrA_eCj8Nesw",
+    "NEXT_PUBLIC_SUPABASE_URL": "https://elwkfbqbzysjfyuukjci.supabase.co"
+  },
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"

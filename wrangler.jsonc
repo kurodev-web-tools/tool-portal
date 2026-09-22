@@ -26,6 +26,14 @@
     "AZURE_TRANSLATOR_REGION": "japaneast",
     "COMMENT_TRANSLATOR_AZURE_MONTHLY_CHARACTER_CAP": "500000",
     "COMMENT_TRANSLATOR_EDGE_RATE_LIMITING": "enabled",
+    // Paid checkout safety authority fallback. Without a UTC-day
+    // comment_translator_paid_poll_budget_buckets row the billing runtime
+    // falls back to this configured daily poll budget, so a missing value makes
+    // Checkout fail closed with poll-budget-stop.
+    // Measured from account-wide Cloudflare Workers requests over the last seven
+    // complete UTC days (2026-09-15..2026-09-21): nearest-rank P95 = 2,276, so
+    // 100000 - 2276 - 20000 = 77724. Preview keeps its own measured value.
+    "COMMENT_TRANSLATOR_PAID_POLL_DAILY_BUDGET": "77724",
     "GOOGLE_OAUTH_CLIENT_ID": "802207624176-gd098dq00ih6807ek775lto5kd20bqqt.apps.googleusercontent.com",
     "GOOGLE_OAUTH_REDIRECT_URI": "https://streamer-tools.kuro-lab.com/api/comment-translator/youtube/oauth/callback",
     "NEXT_PUBLIC_SITE_URL": "https://streamer-tools.kuro-lab.com",

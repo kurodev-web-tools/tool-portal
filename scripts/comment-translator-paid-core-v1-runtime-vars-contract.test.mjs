@@ -58,6 +58,11 @@ const productionPlainVars = {
   AZURE_TRANSLATOR_REGION: "japaneast",
   COMMENT_TRANSLATOR_AZURE_MONTHLY_CHARACTER_CAP: "500000",
   COMMENT_TRANSLATOR_EDGE_RATE_LIMITING: "enabled",
+  // Paid checkout safety authority: without a UTC-day bucket row the billing
+  // runtime falls back to this configured daily poll budget. The value is
+  // measured from the account-wide Cloudflare Workers requests over the last
+  // seven complete UTC days (P95 = 2,276) as 100000 - 2276 - 20000.
+  COMMENT_TRANSLATOR_PAID_POLL_DAILY_BUDGET: "77724",
   GOOGLE_OAUTH_CLIENT_ID: "802207624176-gd098dq00ih6807ek775lto5kd20bqqt.apps.googleusercontent.com",
   GOOGLE_OAUTH_REDIRECT_URI: "https://streamer-tools.kuro-lab.com/api/comment-translator/youtube/oauth/callback",
   NEXT_PUBLIC_SITE_URL: "https://streamer-tools.kuro-lab.com",

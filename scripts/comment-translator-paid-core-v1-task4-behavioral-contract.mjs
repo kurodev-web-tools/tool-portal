@@ -330,12 +330,13 @@ async function checkout({
 
 let defaultReaderReservedPolls = 0;
 let defaultReaderCapacityCount = 0;
+let defaultReaderDailyBudget = null;
 const defaultReaderSupabase = {
   async rpc() {
     return {
       data: [{
         utc_day: "2026-08-13",
-        daily_budget: null,
+        daily_budget: defaultReaderDailyBudget,
         reserved_polls: defaultReaderReservedPolls,
         session_reserved_polls: 0,
         session_reservation_present: false,
@@ -430,6 +431,16 @@ for (const invalidDailyBudget of ["1e5", "+100000", "0x186a0"]) {
     `${invalidDailyBudget} must not make Checkout appear safe when the daily poll budget is malformed`
   );
 }
+defaultReaderDailyBudget = 50_000;
+assert.deepEqual(
+  await defaultCheckoutSafetyReader.readCheckoutSafetyAuthority({
+    ownerUserId: "default-reader-utc-bucket-priority",
+    nowIso: new Date(baseNowMs).toISOString()
+  }),
+  { status: "ready", capacityAvailable: true, dailyPollBudget: 50_000, reservedPolls: 0 },
+  "the UTC-day bucket daily budget takes priority over the configured fallback budget"
+);
+defaultReaderDailyBudget = null;
 
 const portalLifecycleFixture = {
   lifecycleState: "active",
